@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 109 · Enviando e-mail com smtplib — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte uma mensagem de e-mail com email.message e envie com smtplib usando uma senha de app guardada fora do código.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 109 · Enviando e-mail com smtplib</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Montar uma mensagem com <code>email.message.EmailMessage</code></li>
+        <li>Enviar com <code>smtplib</code> usando SSL</li>
+        <li>Usar senha de app e variáveis de ambiente em vez da senha real</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Montando a mensagem</h2>
+    <p>O Python separa duas tarefas: o módulo <code>email</code> <strong>monta</strong> a mensagem e o <code>smtplib</code> <strong>envia</strong>. Montar não precisa de internet, então dá para testar primeiro:</p>
+<pre class="codigo"><code>from email.message import EmailMessage
+
+msg = EmailMessage()
+msg["Subject"] = "Lembrete: entrega do trabalho"
+msg["From"] = "turma7b@exemplo.com"
+msg["To"] = "aluno@exemplo.com"
+msg.set_content("Oi! O trabalho de ciências deve ser entregue na sexta.")
+
+print(msg["Subject"])
+print(msg.get_content())</code></pre>
+    <p class="saida">Lembrete: entrega do trabalho<br>
+Oi! O trabalho de ciências deve ser entregue na sexta.</p>
+
+    <h2>Enviando com smtplib</h2>
+    <p>Para enviar, o programa conversa com um <strong>servidor SMTP</strong> do seu provedor de e-mail. No Gmail, o servidor é <code>smtp.gmail.com</code>, porta 465. Este código só funciona no seu computador, com internet e uma conta configurada:</p>
+<pre class="codigo"><code>import os
+import smtplib
+from email.message import EmailMessage
+
+remetente = os.environ["EMAIL_USUARIO"]
+senha = os.environ["EMAIL_SENHA_APP"]
+
+msg = EmailMessage()
+msg["Subject"] = "Teste do Python"
+msg["From"] = remetente
+msg["To"] = remetente          # mande para você mesmo
+msg.set_content("Funcionou! Este e-mail foi enviado por um programa.")
+
+with smtplib.SMTP_SSL("smtp.gmail.com", 465) as servidor:
+    servidor.login(remetente, senha)
+    servidor.send_message(msg)
+print("Enviado!")</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Nunca escreva sua senha dentro do código e nunca use a senha principal da conta. Provedores como o Gmail exigem uma <strong>senha de app</strong> (criada nas configurações de segurança da conta, com verificação em duas etapas ligada). Guarde-a numa variável de ambiente ou num <code>.env</code> (aula 108). Se você tem menos de 18 anos, peça ajuda a um responsável para configurar a conta.</div>
+    <div class="dica"><strong>Dica:</strong> Para treinar sem e-mail de verdade, mande as mensagens só para você mesmo. Um programa com erro num laço pode disparar dezenas de e-mails sem querer.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>msg["Subject"] = "Lembrete da aula"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Monte (sem enviar) um e-mail com assunto <code>Notas do bimestre</code> cujo texto liste três matérias e notas, uma por linha.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from email.message import EmailMessage
+
+notas = {"Português": 8.5, "Matemática": 7.0, "Ciências": 9.0}
+texto = "\n".join(f"{materia}: {nota}" for materia, nota in notas.items())
+
+msg = EmailMessage()
+msg["Subject"] = "Notas do bimestre"
+msg["To"] = "familia@exemplo.com"
+msg.set_content(texto)
+print(msg.get_content())</code></pre>
+      <p class="saida">Português: 8.5<br>
+Matemática: 7.0<br>
+Ciências: 9.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Por que usamos <code>os.environ["EMAIL_SENHA_APP"]</code> em vez de escrever a senha no código?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Para a senha não ficar no arquivo .py. Assim você pode mostrar ou publicar<br>
+o código sem expor a senha, e cada pessoa usa a própria conta.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="108-string-template.html" rel="prev">← Aula anterior</a>
+      <a href="110-argumentos-linha-comando.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

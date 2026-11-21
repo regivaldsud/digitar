@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 176 · MySQL com pymysql e Docker — Curso de Python · DIGITAR</title>
+<meta name="description" content="Suba um servidor MySQL com Docker no seu computador e conecte a ele pelo Python com a biblioteca pymysql.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 176 · MySQL com pymysql e Docker</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Subir um servidor MySQL com Docker</li>
+        <li>Instalar e usar a biblioteca pymysql</li>
+        <li>Ver o que muda do SQLite para o MySQL</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Por que MySQL</h2>
+    <p>O SQLite é um arquivo usado por um programa. O <strong>MySQL</strong> é um <strong>servidor</strong>: um programa que fica rodando e atende muitos programas ao mesmo tempo, até pela rede. Sites e sistemas grandes usam servidores assim (MySQL, PostgreSQL).</p>
+
+    <h2>Subindo o MySQL com Docker</h2>
+    <p>O <strong>Docker</strong> roda programas prontos dentro de "contêineres", sem instalação complicada. Instale o Docker Desktop (docker.com), abra-o e, no terminal, rode:</p>
+<pre class="codigo"><code>docker run --name mysql-curso -e MYSQL_ROOT_PASSWORD=troque_esta_senha -e MYSQL_DATABASE=escola -p 3306:3306 -d mysql:8
+docker ps</code></pre>
+    <p>O <code>-p 3306:3306</code> libera a porta do MySQL no seu computador e <code>-d</code> deixa rodando em segundo plano. Para parar: <code>docker stop mysql-curso</code>; para ligar de novo: <code>docker start mysql-curso</code>.</p>
+
+    <h2>Conectando com pymysql</h2>
+    <p>Dentro do seu ambiente virtual (aula 60), instale a biblioteca:</p>
+<pre class="codigo"><code>pip install pymysql</code></pre>
+<pre class="codigo"><code>import pymysql
+
+con = pymysql.connect(
+    host="localhost",
+    user="root",
+    password="troque_esta_senha",
+    database="escola",
+)
+with con:
+    with con.cursor() as cur:
+        cur.execute("CREATE TABLE IF NOT EXISTS alunos (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(80))")
+        cur.execute("INSERT INTO alunos (nome) VALUES (%s)", ("Ana",))
+    con.commit()
+    with con.cursor() as cur:
+        cur.execute("SELECT id, nome FROM alunos")
+        for linha in cur.fetchall():
+            print(linha)</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> No pymysql o placeholder é <code>%s</code>, não <code>?</code>. Mesmo parecendo formatação de texto, ele é seguro: passe os valores separados, como na aula 175. Nunca use <code>%</code> do Python para montar o comando.</div>
+    <div class="dica"><strong>Dica:</strong> Não deixe a senha escrita no código que vai para o GitHub. A aula 177 mostra como guardá-la num arquivo <code>.env</code>.</div>
+
+    <h2>O que muda do SQLite</h2>
+    <ul>
+      <li><code>INTEGER PRIMARY KEY</code> vira <code>INT AUTO_INCREMENT PRIMARY KEY</code>.</li>
+      <li>Textos costumam ter tamanho: <code>VARCHAR(80)</code>.</li>
+      <li>É preciso <code>commit()</code> para gravar, como no SQLite em arquivo.</li>
+      <li>O resto do SQL (<code>SELECT</code>, <code>WHERE</code>, <code>JOIN</code>, <code>GROUP BY</code>) é praticamente igual.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>cur.execute("INSERT INTO alunos (nome) VALUES (%s)", (nome,))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Qual comando do Docker mostra os contêineres rodando, e qual para o contêiner <code>mysql-curso</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>docker ps
+docker stop mysql-curso</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva o comando pymysql (só a linha do <code>execute</code>) que busca alunos pelo nome de forma segura, com a variável <code>nome</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>cur.execute("SELECT id, nome FROM alunos WHERE nome = %s", (nome,))</code></pre>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="175-placeholders.html" rel="prev">← Aula anterior</a>
+      <a href="177-env-segredos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

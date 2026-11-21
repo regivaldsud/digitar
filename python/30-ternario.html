@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 30 · if de uma linha (operação ternária) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a escolher entre dois valores numa linha só com a expressão condicional, e saiba quando ela deixa o código mais claro ou mais confuso.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 30 · if de uma linha (operação ternária)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Escrever a expressão condicional <code>valor_a if condição else valor_b</code></li>
+        <li>Trocar um <code>if/else</code> simples por uma linha</li>
+        <li>Usar o ternário dentro de f-strings e de laços</li>
+        <li>Saber quando <strong>não</strong> usar o ternário</li>
+      </ul>
+    </div>
+
+    <h2>Escolher entre dois valores</h2>
+    <p>Muitas vezes um <code>if/else</code> serve só para guardar um valor ou outro numa variável:</p>
+<pre class="codigo" data-executar="sim"><code>idade = 15
+if idade &gt;= 18:
+    situacao = "maior de idade"
+else:
+    situacao = "menor de idade"
+print(situacao)</code></pre>
+    <p class="saida">menor de idade</p>
+    <p>São quatro linhas para uma escolha simples. O Python tem uma forma curta, a <strong>expressão condicional</strong> (também chamada de <strong>operação ternária</strong>, porque junta três partes):</p>
+<pre class="codigo" data-executar="sim"><code>idade = 15
+situacao = "maior de idade" if idade &gt;= 18 else "menor de idade"
+print(situacao)</code></pre>
+    <p class="saida">menor de idade</p>
+    <p>Leia da esquerda para a direita: "guarde <code>"maior de idade"</code> <strong>se</strong> a idade for maior ou igual a 18, <strong>senão</strong> guarde <code>"menor de idade"</code>".</p>
+
+    <h2>As três partes</h2>
+    <p>A forma é sempre: <code>valor_se_verdadeiro if condição else valor_se_falso</code>. O <code>else</code> é <strong>obrigatório</strong>: a expressão sempre precisa produzir um valor.</p>
+<pre class="codigo" data-executar="sim"><code>numero = 7
+tipo = "par" if numero % 2 == 0 else "ímpar"
+print(f"{numero} é {tipo}")
+temperatura = 31
+print("Bora pra praia!" if temperatura &gt; 28 else "Melhor ficar em casa.")</code></pre>
+    <p class="saida">7 é ímpar<br>
+Bora pra praia!</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer o <code>else</code> dá <code>SyntaxError</code>: <code>x = "sim" if ok</code> não é válido. Se você não tem um valor para o caso falso, use um <code>if</code> comum.</div>
+
+    <h2>Dentro de f-strings e laços</h2>
+    <p>Como o ternário é uma <strong>expressão</strong> (produz um valor), ele cabe em qualquer lugar onde caberia um valor: dentro de uma f-string, de um <code>print</code>, de uma conta. Um uso clássico é acertar o plural:</p>
+<pre class="codigo" data-executar="sim"><code>for quantidade in range(0, 4):
+    palavra = "mensagem" if quantidade == 1 else "mensagens"
+    print(f"Você tem {quantidade} {palavra}")</code></pre>
+    <p class="saida">Você tem 0 mensagens<br>
+Você tem 1 mensagem<br>
+Você tem 2 mensagens<br>
+Você tem 3 mensagens</p>
+<pre class="codigo" data-executar="sim"><code>notas = [8.5, 4.0, 7.0, 6.9]
+for nota in notas:
+    print(f"{nota:4.1f} -&gt; {'aprovado' if nota &gt;= 7 else 'recuperação'}")</code></pre>
+    <p class="saida">&nbsp;8.5 -&gt; aprovado<br>
+&nbsp;4.0 -&gt; recuperação<br>
+&nbsp;7.0 -&gt; aprovado<br>
+&nbsp;6.9 -&gt; recuperação</p>
+    <p>Repare nas aspas simples dentro da f-string de aspas duplas: assim o Python não confunde onde o texto termina.</p>
+
+    <h2>Quando não usar</h2>
+    <p>O ternário é ótimo para escolhas <strong>simples</strong>. Encadear vários deixa o código difícil de ler:</p>
+<pre class="codigo" data-executar="sim"><code>nota = 6.5
+conceito = "A" if nota &gt;= 9 else "B" if nota &gt;= 7 else "C" if nota &gt;= 5 else "D"
+print(conceito)</code></pre>
+    <p class="saida">C</p>
+    <p>Funciona, mas um <code>if/elif/else</code> (aula 18) é muito mais claro para quem lê. Também não use o ternário só para rodar ações diferentes (como dois <code>print</code> com lógicas complicadas): ele serve para <strong>escolher um valor</strong>.</p>
+    <div class="dica"><strong>Dica:</strong> Uma boa regra: se o ternário não couber confortavelmente numa linha, ou se você precisou ler duas vezes para entender, volte para o <code>if/else</code> de várias linhas.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>tipo = "par" if n % 2 == 0 else "ímpar"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Reescreva em uma linha, com o ternário: se <code>saldo &gt;= 15</code>, <code>mensagem</code> recebe "Pode comprar o lanche"; senão, "Saldo insuficiente". Teste com <code>saldo = 12</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>saldo = 12
+mensagem = "Pode comprar o lanche" if saldo &gt;= 15 else "Saldo insuficiente"
+print(mensagem)</code></pre>
+      <p class="saida">Saldo insuficiente</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Guarde em <code>maior</code> o maior entre <code>a = 17</code> e <code>b = 23</code>, usando o ternário (sem usar <code>max</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>a = 17
+b = 23
+maior = a if a &gt; b else b
+print(maior)</code></pre>
+      <p class="saida">23</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Um cinema dá meia-entrada para quem tem menos de 18 anos ou 60 anos ou mais. O ingresso inteiro custa R$ 30. Com o ternário, calcule e mostre o preço para cada idade da lista <code>[10, 30, 65]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for idade in [10, 30, 65]:
+    preco = 15 if idade &lt; 18 or idade &gt;= 60 else 30
+    print(f"{idade} anos: R$ {preco}")</code></pre>
+      <p class="saida">10 anos: R$ 15<br>
+30 anos: R$ 30<br>
+65 anos: R$ 15</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre os números de 1 a 6, cada um seguido de "(par)" ou "(ímpar)", usando o ternário dentro de uma f-string.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for n in range(1, 7):
+    print(f"{n} ({'par' if n % 2 == 0 else 'ímpar'})")</code></pre>
+      <p class="saida">1 (ímpar)<br>
+2 (par)<br>
+3 (ímpar)<br>
+4 (par)<br>
+5 (ímpar)<br>
+6 (par)</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="29-float-decimal.html" rel="prev">← Aula anterior</a>
+      <a href="31-projeto-cpf.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

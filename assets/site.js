@@ -23,6 +23,18 @@
     repositorio: "https://github.com/regivaldsud/digitar"
   };
 
+  /* Contador de visitas (serviço em site-next/, publicado na Vercel). Vazio = desligado.
+     Este é o único lugar para configurar o endereço: ferramentas/montar.mjs também o leva para o app.
+     O contador nunca bloqueia a página: se o endereço não responder, nada acontece. */
+  var CONTADOR_URL = "";
+  function ligarContador() {
+    if (!CONTADOR_URL || !/^https?:$/.test(location.protocol) || window.Contador) return;
+    var s = document.createElement("script");
+    s.src = CONTADOR_URL.replace(/\/$/, "") + "/contador.js";
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
   function esc(t) {
     return String(t).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -102,7 +114,9 @@
       '<footer class="rodape"><div class="rodape-dentro">' +
       '<div class="rodape-marca"><img src="' + url("assets/digitar.svg") + '" alt="" width="40" height="40">' +
       "<div><p><strong>DIGITAR</strong> é um curso gratuito de digitação com os dez dedos e de programação em Python.</p>" +
-      "<p>Seus dados de treino ficam no seu navegador.</p></div></div>" +
+      "<p>Seus dados de treino ficam no seu navegador.</p>" +
+      (CONTADOR_URL ? '<p data-contador-selo hidden><span data-contador-visitantes></span> pessoas já visitaram o site.</p>' : "") +
+      "</div></div>" +
       '<div><h2>Aprender</h2><ul>' +
       '<li><a href="' + LINKS.aprender + '">Como aprender a digitar</a></li>' +
       '<li><a href="' + LINKS.programar + '">Digitar para programar</a></li>' +
@@ -365,6 +379,7 @@
     montarIndiceCurso();
     montarTecladosEstaticos();
     Array.prototype.forEach.call(document.querySelectorAll("[data-demo]"), montarDemo);
+    ligarContador();
   }
   window.DIGITAR = { base: BASE.href, url: url, carregarAulas: carregarAulas };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);

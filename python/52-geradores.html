@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 52 · Iteráveis, iteradores, geradores, yield e yield from — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda como o for funciona por dentro com iter e next e crie seus próprios geradores com yield e yield from.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 52 · Iteráveis, iteradores, geradores, yield e yield from</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um iterável e o que é um iterador</li>
+        <li>Usar <code>iter()</code> e <code>next()</code> e entender o <code>StopIteration</code></li>
+        <li>Criar funções geradoras com <code>yield</code></li>
+        <li>Repassar valores de outro iterável com <code>yield from</code></li>
+        <li>Escrever expressões geradoras e saber quando elas economizam memória</li>
+      </ul>
+    </div>
+
+    <h2>Iterável e iterador</h2>
+    <p>Um <strong>iterável</strong> é qualquer coisa que dá para percorrer com <code>for</code>: listas, tuplas, textos, dicionários, <code>range</code>...</p>
+    <p>Por dentro, o <code>for</code> pede ao iterável um <strong>iterador</strong>, com a função <code>iter()</code>. O iterador é como um marcador de página: ele lembra onde parou e entrega o próximo item cada vez que você chama <code>next()</code>:</p>
+<pre class="codigo" data-executar="sim"><code>frutas = ["caju", "açaí", "goiaba"]
+marcador = iter(frutas)
+print(next(marcador))
+print(next(marcador))
+print(next(marcador))</code></pre>
+    <p class="saida">caju<br>
+açaí<br>
+goiaba</p>
+
+    <h2>O fim da fila: StopIteration</h2>
+    <p>Quando os itens acabam, <code>next()</code> lança a exceção <code>StopIteration</code>. É assim que o <code>for</code> sabe a hora de parar — ele trata esse erro sozinho, sem você ver:</p>
+<pre class="codigo" data-executar="sim"><code>letras = iter("ok")
+print(next(letras))
+print(next(letras))
+print(next(letras))</code></pre>
+    <p class="saida">o<br>
+k<br>
+StopIteration</p>
+    <p>Você pode passar um segundo valor para <code>next()</code>, que é devolvido quando os itens acabam, em vez do erro:</p>
+<pre class="codigo" data-executar="sim"><code>numeros = iter([10, 20])
+print(next(numeros, "acabou"))
+print(next(numeros, "acabou"))
+print(next(numeros, "acabou"))</code></pre>
+    <p class="saida">10<br>
+20<br>
+acabou</p>
+    <div class="atencao"><strong>Atenção:</strong> Um iterador só anda para a frente e não volta. Depois de percorrido até o fim, ele fica vazio. Se precisar percorrer de novo, crie outro com <code>iter()</code>.</div>
+
+    <h2>Funções geradoras com yield</h2>
+    <p>Um <strong>gerador</strong> é uma função que entrega valores um de cada vez. No lugar de <code>return</code>, ela usa <code>yield</code>: entrega um valor, <strong>pausa</strong> e, no próximo pedido, continua de onde parou:</p>
+<pre class="codigo" data-executar="sim"><code>def contagem_regressiva(n):
+    while n &gt; 0:
+        yield n
+        n -= 1
+    yield "Feliz Ano Novo!"
+
+for valor in contagem_regressiva(5):
+    print(valor)</code></pre>
+    <p class="saida">5<br>
+4<br>
+3<br>
+2<br>
+1<br>
+Feliz Ano Novo!</p>
+    <p>Veja a pausa acontecendo. O texto "preparando" só aparece quando o primeiro valor é pedido:</p>
+<pre class="codigo" data-executar="sim"><code>def senhas_da_fila():
+    print("(preparando a fila do banco...)")
+    yield "A001"
+    print("(chamando o próximo...)")
+    yield "A002"
+
+fila = senhas_da_fila()
+print("Gerador criado, nada rodou ainda.")
+print(next(fila))
+print(next(fila))</code></pre>
+    <p class="saida">Gerador criado, nada rodou ainda.<br>
+(preparando a fila do banco...)<br>
+A001<br>
+(chamando o próximo...)<br>
+A002</p>
+
+    <h2>yield from: repassando outro iterável</h2>
+    <p><code>yield from iteravel</code> entrega, um por um, todos os itens de outro iterável (ou de outro gerador). É um atalho para <code>for item in iteravel: yield item</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def cardapio():
+    yield from ["arroz", "feijão"]
+    yield from ("bife", "salada")
+    yield "pudim"
+
+print(list(cardapio()))
+
+def achatar(listas):
+    for lista in listas:
+        yield from lista
+
+print(list(achatar([[1, 2], [3], [4, 5, 6]])))</code></pre>
+    <p class="saida">['arroz', 'feijão', 'bife', 'salada', 'pudim']<br>
+[1, 2, 3, 4, 5, 6]</p>
+    <p>Na aula 90 você vai usar <code>yield</code> para fazer suas próprias classes funcionarem dentro de um <code>for</code>.</p>
+
+    <h2>Gerador ou lista?</h2>
+    <p>Uma lista guarda <strong>todos</strong> os itens na memória ao mesmo tempo. Um gerador cria cada item só na hora em que ele é pedido. Para poucos itens tanto faz; para milhões, o gerador economiza muita memória.</p>
+    <p>Uma <strong>expressão geradora</strong> é igual a uma compreensão de lista, mas com parênteses no lugar de colchetes:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+
+quadrados_lista = [n * n for n in range(100_000)]
+quadrados_gerador = (n * n for n in range(100_000))
+
+print(sum(n * n for n in range(1, 4)))
+print("lista grande:", sys.getsizeof(quadrados_lista) &gt; 100_000)
+print("gerador pequeno:", sys.getsizeof(quadrados_gerador) &lt; 1_000)</code></pre>
+    <p class="saida">14<br>
+lista grande: True<br>
+gerador pequeno: True</p>
+    <p><code>sys.getsizeof</code> diz quantos bytes um objeto ocupa: a lista ocupa centenas de milhares; o gerador, só algumas centenas.</p>
+    <div class="dica"><strong>Dica:</strong> Quando a expressão geradora é o único argumento de uma função, como em <code>sum(n * n for n in numeros)</code>, não precisa de parênteses extras.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>quadrados = (n * n for n in range(10))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um iterador para a lista <code>["vermelho", "amarelo", "verde"]</code> e use <code>next()</code> três vezes para mostrar as cores do semáforo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>semaforo = iter(["vermelho", "amarelo", "verde"])
+print(next(semaforo))
+print(next(semaforo))
+print(next(semaforo))</code></pre>
+      <p class="saida">vermelho<br>
+amarelo<br>
+verde</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva um gerador <code>pares(limite)</code> que entregue os números pares de 0 até <code>limite</code> (incluindo o limite, se for par). Mostre <code>list(pares(10))</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def pares(limite):
+    n = 0
+    while n &lt;= limite:
+        yield n
+        n += 2
+
+print(list(pares(10)))</code></pre>
+      <p class="saida">[0, 2, 4, 6, 8, 10]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use uma expressão geradora com <code>sum</code> para calcular o total da compra <code>precos = [4.5, 12.0, 3.25]</code> com 10% de desconto em cada item.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>precos = [4.5, 12.0, 3.25]
+total = sum(p * 0.9 for p in precos)
+print(f"Total: R$ {total:.2f}")</code></pre>
+      <p class="saida">Total: R$ 17.78</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva um gerador <code>tabuada(n)</code> que entregue as linhas da tabuada de <code>n</code> de 1 a 10, como <code>"7 x 1 = 7"</code>. Mostre as três primeiras linhas usando <code>next()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def tabuada(n):
+    for i in range(1, 11):
+        yield f"{n} x {i} = {n * i}"
+
+linhas = tabuada(7)
+print(next(linhas))
+print(next(linhas))
+print(next(linhas))</code></pre>
+      <p class="saida">7 x 1 = 7<br>
+7 x 2 = 14<br>
+7 x 3 = 21</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva o gerador <code>semana()</code> que use <code>yield from</code> para entregar os dias úteis de uma lista e depois os dias do fim de semana de outra. Mostre todos com um <code>for</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def semana():
+    yield from ["segunda", "terça", "quarta", "quinta", "sexta"]
+    yield from ["sábado", "domingo"]
+
+for dia in semana():
+    print(dia)</code></pre>
+      <p class="saida">segunda<br>
+terça<br>
+quarta<br>
+quinta<br>
+sexta<br>
+sábado<br>
+domingo</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="51-truthy-falsy.html" rel="prev">← Aula anterior</a>
+      <a href="53-excecoes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

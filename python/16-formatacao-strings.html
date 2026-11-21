@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 16 · Formatando textos: f-strings, format e % — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte textos com valores dentro usando f-strings, o método format e o operador %, com casas decimais, alinhamento e preços em reais.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 16 · Formatando textos: f-strings, format e %</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Colocar variáveis e contas dentro de textos com f-strings</li>
+        <li>Controlar casas decimais com <code>:.2f</code> e mostrar preços em reais</li>
+        <li>Alinhar textos e números para montar tabelas</li>
+        <li>Reconhecer o método <code>format()</code> e o operador <code>%</code>, usados em códigos mais antigos</li>
+      </ul>
+    </div>
+
+    <h2>O que é uma f-string</h2>
+    <p>Uma <strong>f-string</strong> é um texto com a letra <code>f</code> antes das aspas. Dentro dela, tudo que estiver entre chaves <code>{}</code> é trocado pelo valor:</p>
+<pre class="codigo" data-executar="sim"><code>nome = "Caio"
+idade = 14
+print(f"Meu nome é {nome} e tenho {idade} anos.")
+print(f"Ano que vem terei {idade + 1} anos.")
+print(f"Meu nome em maiúsculas: {nome.upper()}")</code></pre>
+    <p class="saida">Meu nome é Caio e tenho 14 anos.<br>
+Ano que vem terei 15 anos.<br>
+Meu nome em maiúsculas: CAIO</p>
+    <p>Dentro das chaves vale qualquer expressão: contas, métodos, chamadas de função. Bem mais prático que juntar pedaços com <code>+</code> e <code>str()</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer o <code>f</code> é muito comum. Sem ele, as chaves aparecem do jeito que estão: <code>print("Olá, {nome}")</code> mostra literalmente <code>Olá, {nome}</code>.</div>
+
+    <h2>Casas decimais e preços em reais</h2>
+    <p>Depois do valor, um <code>:</code> abre a <strong>formatação</strong>. <code>:.2f</code> mostra o número com 2 casas decimais (o <code>f</code> é de "float"):</p>
+<pre class="codigo" data-executar="sim"><code>preco = 7.5
+media = 8.3333333
+print(f"Preço: {preco:.2f}")
+print(f"Média: {media:.1f}")
+print(f"Sem casas: {media:.0f}")</code></pre>
+    <p class="saida">Preço: 7.50<br>
+Média: 8.3<br>
+Sem casas: 8</p>
+    <p>O <code>:.2f</code> arredonda na hora de mostrar, mas não muda o valor da variável. No Brasil, usamos vírgula nos centavos e ponto nos milhares: <code>R$ 1.234,50</code>. O Python usa o padrão americano (<code>1,234.50</code>). Um truque: formate com <code>:,.2f</code> e depois troque os símbolos com <code>replace</code>:</p>
+<pre class="codigo" data-executar="sim"><code>valor = 1234.5
+texto = f"{valor:,.2f}"
+print(texto)
+brasil = texto.replace(",", "X").replace(".", ",").replace("X", ".")
+print(f"R$ {brasil}")
+print(f"R$ {19.9:.2f}".replace(".", ","))</code></pre>
+    <p class="saida">1,234.50<br>
+R$ 1.234,50<br>
+R$ 19,90</p>
+    <p>O <code>X</code> serve de "lugar temporário" para não misturar as vírgulas com os pontos durante as trocas.</p>
+
+    <h2>Alinhamento e largura</h2>
+    <p>Um número depois do <code>:</code> define a <strong>largura</strong> do campo. Os sinais escolhem o alinhamento: <code>&lt;</code> esquerda, <code>&gt;</code> direita, <code>^</code> centro. Um <code>0</code> antes da largura completa com zeros:</p>
+<pre class="codigo" data-executar="sim"><code>print(f"[{'pão':&lt;10}]")
+print(f"[{'pão':&gt;10}]")
+print(f"[{'pão':^10}]")
+print(f"[{7:03}]")
+print(f"{'Produto':&lt;15}{'Preço':&gt;8}")
+print(f"{'Coxinha':&lt;15}{6.5:&gt;8.2f}")
+print(f"{'Caldo de cana':&lt;15}{5.25:&gt;8.2f}")</code></pre>
+    <p class="saida">[pão &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+[ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pão]<br>
+[ &nbsp;&nbsp;pão &nbsp;&nbsp;&nbsp;]<br>
+[007]<br>
+Produto &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Preço<br>
+Coxinha &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6.50<br>
+Caldo de cana &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.25</p>
+    <div class="dica"><strong>Dica:</strong> Repare nas aspas simples dentro da f-string: <code>f"{'pão':&lt;10}"</code>. Se a f-string usa aspas duplas por fora, use simples dentro das chaves, para não confundir o Python.</div>
+
+    <h2>Porcentagem e conferência com {x=}</h2>
+    <p><code>:.1%</code> mostra um número como porcentagem. E <code>{variavel=}</code> mostra o nome e o valor juntos, ótimo para conferir o que está acontecendo no programa:</p>
+<pre class="codigo" data-executar="sim"><code>acertos = 17
+total = 20
+taxa = acertos / total
+print(f"Aproveitamento: {taxa:.1%}")
+print(f"{acertos=}")
+print(f"{acertos * 5=}")</code></pre>
+    <p class="saida">Aproveitamento: 85.0%<br>
+acertos=17<br>
+acertos * 5=85</p>
+
+    <h2>format() e %: os jeitos antigos</h2>
+    <p>Antes das f-strings existirem (elas chegaram no Python 3.6), formatava-se texto de outras duas formas. Você vai encontrá-las em códigos e tutoriais mais antigos, então vale reconhecer:</p>
+<pre class="codigo" data-executar="sim"><code>nome = "Bia"
+nota = 9.25
+print("Aluna: {}, nota: {:.1f}".format(nome, nota))
+print("Aluna: {0}, de novo {0}!".format(nome))
+print("Aluna: %s, nota: %.1f" % (nome, nota))
+print("Tenho %d anos" % 13)</code></pre>
+    <p class="saida">Aluna: Bia, nota: 9.2<br>
+Aluna: Bia, de novo Bia!<br>
+Aluna: Bia, nota: 9.2<br>
+Tenho 13 anos</p>
+    <ul>
+      <li>No <code>format()</code>, cada <code>{}</code> é trocado pelos valores, na ordem; <code>{0}</code> repete o primeiro valor.</li>
+      <li>No <code>%</code>, <code>%s</code> marca um texto, <code>%d</code> um inteiro e <code>%.1f</code> um real com uma casa.</li>
+    </ul>
+    <p>Para programas novos, prefira as f-strings: são mais fáceis de ler e de digitar.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(f"Total: R$ {total:.2f}".replace(".", ","))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Com <code>produto = "Açaí"</code> e <code>preco = 12.9</code>, mostre <code>Açaí custa R$ 12.90</code> usando f-string.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>produto = "Açaí"
+preco = 12.9
+print(f"{produto} custa R$ {preco:.2f}")</code></pre>
+      <p class="saida">Açaí custa R$ 12.90</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Calcule a média de 7, 8.5 e 6 e mostre <code>Sua média é 7.17</code> com duas casas decimais.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>media = (7 + 8.5 + 6) / 3
+print(f"Sua média é {media:.2f}")</code></pre>
+      <p class="saida">Sua média é 7.17</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Mostre o valor <code>2599.9</code> no formato brasileiro: <code>R$ 2.599,90</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>valor = 2599.9
+texto = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+print(f"R$ {texto}")</code></pre>
+      <p class="saida">R$ 2.599,90</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Monte uma tabelinha alinhada com o nome de 3 colegas (largura 10, à esquerda) e a nota (largura 5, à direita, uma casa decimal).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(f"{'Bia':&lt;10}{9.5:&gt;5.1f}")
+print(f"{'Gustavo':&lt;10}{7:&gt;5.1f}")
+print(f"{'Lia':&lt;10}{8.5:&gt;5.1f}")</code></pre>
+      <p class="saida">Bia &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9.5<br>
+Gustavo &nbsp;&nbsp;&nbsp;&nbsp;7.0<br>
+Lia &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8.5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Reescreva <code>print("Olá, %s! Você tem %d pontos." % ("Leo", 80))</code> usando f-string.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nome = "Leo"
+pontos = 80
+print(f"Olá, {nome}! Você tem {pontos} pontos.")</code></pre>
+      <p class="saida">Olá, Leo! Você tem 80 pontos.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="15-operadores-aritmeticos.html" rel="prev">← Aula anterior</a>
+      <a href="17-input.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 79 · Polimorfismo e o princípio de Liskov — Curso de Python · DIGITAR</title>
+<meta name="description" content="Escreva código que funciona com objetos de tipos diferentes e aprenda a regra que mantém as classes filhas confiáveis.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 79 · Polimorfismo e o princípio de Liskov</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é <strong>polimorfismo</strong>: o mesmo comando, comportamentos diferentes</li>
+        <li>Entender o *duck typing* do Python</li>
+        <li>Conhecer o <strong>princípio da substituição de Liskov</strong></li>
+        <li>Reconhecer uma herança que quebra a regra e consertá-la</li>
+      </ul>
+    </div>
+
+    <h2>Uma interface, muitas formas</h2>
+    <p><strong>Polimorfismo</strong> (do grego: "muitas formas") é quando o mesmo comando funciona com objetos de tipos diferentes, e cada um responde do seu jeito. Você já usa isso: <code>len("casa")</code>, <code>len([1, 2])</code> e <code>len({"a": 1})</code> funcionam com tipos bem diferentes.</p>
+<pre class="codigo" data-executar="sim"><code>class Pix:
+    def pagar(self, valor):
+        return f"Pix de R$ {valor:.2f} enviado"
+
+class Cartao:
+    def __init__(self, parcelas):
+        self.parcelas = parcelas
+
+    def pagar(self, valor):
+        return f"{self.parcelas}x de R$ {valor / self.parcelas:.2f} no cartão"
+
+class Dinheiro:
+    def pagar(self, valor):
+        return f"R$ {valor:.2f} em dinheiro, troco no caixa"
+
+def finalizar_compra(forma, valor):
+    print("Compra finalizada:", forma.pagar(valor))
+
+for forma in [Pix(), Cartao(3), Dinheiro()]:
+    finalizar_compra(forma, 150)</code></pre>
+    <p class="saida">Compra finalizada: Pix de R$ 150.00 enviado<br>
+Compra finalizada: 3x de R$ 50.00 no cartão<br>
+Compra finalizada: R$ 150.00 em dinheiro, troco no caixa</p>
+    <p>A função <code>finalizar_compra</code> não sabe nem quer saber qual é a forma de pagamento. Ela só confia que o objeto tem o método <code>pagar</code>. Para criar uma forma nova, é só fazer outra classe — sem mexer na função.</p>
+
+    <h2>Duck typing</h2>
+    <p>Repare que <code>Pix</code>, <code>Cartao</code> e <code>Dinheiro</code> nem herdam da mesma classe! Em Python vale o ditado: "se anda como pato e grasna como pato, então é um pato". Isso se chama *duck typing* (tipagem do pato): o que importa é o objeto ter os métodos certos, não a classe dele.</p>
+<pre class="codigo" data-executar="sim"><code>class Pato:
+    def falar(self):
+        return "quack"
+
+class Robo:
+    def falar(self):
+        return "bip bop"
+
+class Papagaio:
+    def falar(self):
+        return "curupaco!"
+
+for coisa in [Pato(), Robo(), Papagaio()]:
+    print(coisa.falar())</code></pre>
+    <p class="saida">quack<br>
+bip bop<br>
+curupaco!</p>
+    <div class="dica"><strong>Dica:</strong> Quando quiser <strong>garantir</strong> que todas as classes tenham o método, junte polimorfismo com classe abstrata (aula 78): o Python avisa na hora se alguma esquecer.</div>
+
+    <h2>Polimorfismo com herança</h2>
+    <p>Com herança, a mãe define a interface e cada filha sobrescreve do seu jeito. O código que usa os objetos trata todos igual:</p>
+<pre class="codigo" data-executar="sim"><code>class Funcionario:
+    def __init__(self, nome, base):
+        self.nome = nome
+        self.base = base
+
+    def salario(self):
+        return self.base
+
+class Vendedor(Funcionario):
+    def __init__(self, nome, base, vendas):
+        super().__init__(nome, base)
+        self.vendas = vendas
+
+    def salario(self):
+        return self.base + self.vendas * 0.05
+
+class Estagiario(Funcionario):
+    def salario(self):
+        return self.base * 0.6
+
+equipe = [Funcionario("Lúcia", 3000), Vendedor("Caio", 2000, 40000), Estagiario("Nina", 2500)]
+for f in equipe:
+    print(f"{f.nome}: R$ {f.salario():.2f}")
+print(f"Folha total: R$ {sum(f.salario() for f in equipe):.2f}")</code></pre>
+    <p class="saida">Lúcia: R$ 3000.00<br>
+Caio: R$ 4000.00<br>
+Nina: R$ 1500.00<br>
+Folha total: R$ 8500.00</p>
+
+    <h2>O princípio de Liskov</h2>
+    <p>A cientista da computação Barbara Liskov propôs uma regra para herança, que ficou conhecida como <strong>princípio da substituição de Liskov</strong>: <strong>um objeto da classe filha deve poder substituir um da classe mãe sem quebrar o programa</strong>. Em outras palavras, a filha pode fazer mais, mas não pode desrespeitar o que a mãe promete.</p>
+    <p>Veja uma herança que quebra a regra: toda <code>Ave</code> promete voar, mas pinguim não voa.</p>
+<pre class="codigo" data-executar="sim"><code>class Ave:
+    def voar(self):
+        return "voando alto"
+
+class Pinguim(Ave):
+    def voar(self):
+        raise NotImplementedError("pinguim não voa!")
+
+def passeio(aves):
+    for ave in aves:
+        try:
+            print(type(ave).__name__, ave.voar())
+        except NotImplementedError as e:
+            print(type(ave).__name__, "-&gt; ERRO:", e)
+
+passeio([Ave(), Pinguim()])</code></pre>
+    <p class="saida">Ave voando alto<br>
+Pinguim -&gt; ERRO: pinguim não voa!</p>
+    <p>A função <code>passeio</code> foi escrita para aves e quebrou com um pinguim. O problema não é a função: é a herança, que prometeu algo que a filha não cumpre.</p>
+
+    <h2>Consertando a hierarquia</h2>
+    <p>A solução é organizar as classes para que cada promessa seja verdadeira: toda ave se move, mas só as voadoras voam.</p>
+<pre class="codigo" data-executar="sim"><code>class Ave:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def mover(self):
+        return "anda"
+
+class AveVoadora(Ave):
+    def mover(self):
+        return "voa"
+
+    def voar(self):
+        return "voando alto"
+
+class Pinguim(Ave):
+    def mover(self):
+        return "nada"
+
+for ave in [AveVoadora("Bem-te-vi"), Pinguim("Pingu"), Ave("Ema")]:
+    print(ave.nome, ave.mover())</code></pre>
+    <p class="saida">Bem-te-vi voa<br>
+Pingu nada<br>
+Ema anda</p>
+    <p>Agora qualquer ave pode entrar no lugar de outra quando o assunto é <code>mover()</code>, e só quem é <code>AveVoadora</code> promete <code>voar()</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Sinais de que a herança fere o princípio de Liskov: a filha sobrescreve um método só para dar erro, ignora parâmetros que a mãe usa, ou devolve um tipo diferente do da mãe (a mãe devolve número e a filha devolve texto).</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>for forma in formas: print(forma.area())</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie as classes <code>Email</code>, <code>Sms</code> e <code>WhatsApp</code>, todas com o método <code>enviar(msg)</code> que mostra de que jeito a mensagem foi enviada. Faça uma função <code>avisar(canais, msg)</code> que envia por todos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Email:
+    def enviar(self, msg):
+        print("E-mail:", msg)
+
+class Sms:
+    def enviar(self, msg):
+        print("SMS:", msg[:20])
+
+class WhatsApp:
+    def enviar(self, msg):
+        print("Zap:", msg, "✔✔")
+
+def avisar(canais, msg):
+    for canal in canais:
+        canal.enviar(msg)
+
+avisar([Email(), Sms(), WhatsApp()], "Reunião de pais na sexta às 19h")</code></pre>
+      <p class="saida">E-mail: Reunião de pais na sexta às 19h<br>
+SMS: Reunião de pais na s<br>
+Zap: Reunião de pais na sexta às 19h ✔✔</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Usando polimorfismo, calcule a área total de uma lista com um <code>Retangulo(4, 5)</code>, um <code>Triangulo(6, 3)</code> (base e altura) e um <code>Quadrado(2)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Retangulo:
+    def __init__(self, b, h):
+        self.b = b
+        self.h = h
+
+    def area(self):
+        return self.b * self.h
+
+class Triangulo:
+    def __init__(self, b, h):
+        self.b = b
+        self.h = h
+
+    def area(self):
+        return self.b * self.h / 2
+
+class Quadrado:
+    def __init__(self, lado):
+        self.lado = lado
+
+    def area(self):
+        return self.lado ** 2
+
+formas = [Retangulo(4, 5), Triangulo(6, 3), Quadrado(2)]
+for forma in formas:
+    print(type(forma).__name__, forma.area())
+print("Total:", sum(f.area() for f in formas))</code></pre>
+      <p class="saida">Retangulo 20<br>
+Triangulo 9.0<br>
+Quadrado 4<br>
+Total: 33.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> A classe <code>Arquivo</code> tem <code>ler()</code> e <code>escrever(texto)</code>. Alguém criou <code>ArquivoSomenteLeitura(Arquivo)</code> em que <code>escrever</code> dá erro. Isso respeita o princípio de Liskov? Como reorganizar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Não respeita: quem recebe um Arquivo espera poder escrever, e a filha quebra essa promessa.<br>
+Uma saída é ter uma classe mãe ArquivoLeitura (só com ler) e uma filha ArquivoEditavel<br>
+(com ler e escrever). Assim cada classe só promete o que consegue cumprir.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça a função <code>descrever(x)</code> que funciona com qualquer objeto que tenha o método <code>resumo()</code>. Teste com uma classe <code>Livro</code> e uma classe <code>Filme</code>, sem herança entre elas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Livro:
+    def __init__(self, titulo, paginas):
+        self.titulo = titulo
+        self.paginas = paginas
+
+    def resumo(self):
+        return f"livro {self.titulo}, {self.paginas} páginas"
+
+class Filme:
+    def __init__(self, titulo, minutos):
+        self.titulo = titulo
+        self.minutos = minutos
+
+    def resumo(self):
+        return f"filme {self.titulo}, {self.minutos} min"
+
+def descrever(x):
+    print("Recomendação:", x.resumo())
+
+descrever(Livro("O Pequeno Príncipe", 96))
+descrever(Filme("Divertida Mente", 95))</code></pre>
+      <p class="saida">Recomendação: livro O Pequeno Príncipe, 96 páginas<br>
+Recomendação: filme Divertida Mente, 95 min</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="78-classes-abstratas.html" rel="prev">← Aula anterior</a>
+      <a href="80-excecoes-proprias.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

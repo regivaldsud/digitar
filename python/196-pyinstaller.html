@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 196 · Empacotando o programa com PyInstaller — Curso de Python · DIGITAR</title>
+<meta name="description" content="Transforme seu programa PySide6 num executável .exe que roda em computadores sem Python.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 10 · Interface gráfica com PySide6</p>
+    <h1>Aula 196 · Empacotando o programa com PyInstaller</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Instalar e usar o PyInstaller</li>
+        <li>Gerar um executável com janela, sem terminal, e com ícone</li>
+        <li>Achar o resultado na pasta <code>dist</code> e resolver problemas comuns</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Para que serve</h2>
+    <p>Para usar seu programa, um amigo precisaria instalar Python e PySide6. O <strong>PyInstaller</strong> junta seu código, o Python e as bibliotecas num pacote que roda sozinho. No Windows, o resultado é um <code>.exe</code>.</p>
+
+    <h2>Gerando o executável</h2>
+    <p>No ambiente virtual do projeto:</p>
+<pre class="codigo"><code>pip install pyinstaller
+pyinstaller --onefile --windowed --name Calculadora --icon icone.ico calculadora.py</code></pre>
+    <ul>
+      <li><code>--onefile</code> gera um único arquivo <code>.exe</code> (sem ela, sai uma pasta com vários arquivos, que abre mais rápido);</li>
+      <li><code>--windowed</code> não abre a janela preta do terminal junto;</li>
+      <li><code>--name</code> dá o nome do executável e <code>--icon</code> usa um ícone <code>.ico</code>.</li>
+    </ul>
+    <p class="saida">...<br>
+INFO: Building EXE from EXE-00.toc completed successfully.</p>
+    <p>O executável fica em <code>dist\Calculadora.exe</code>. As pastas <code>build</code> e o arquivo <code>Calculadora.spec</code> são de trabalho do PyInstaller.</p>
+
+    <h2>Arquivos extras, como o .ui</h2>
+    <p>Se o programa lê arquivos (um <code>.ui</code>, imagens), eles precisam ir junto. Use <code>--add-data "origem;destino"</code> e encontre o caminho certo no código:</p>
+<pre class="codigo"><code>pyinstaller --onefile --windowed --add-data "tela.ui;." main.py</code></pre>
+<pre class="codigo"><code>import sys
+from pathlib import Path
+
+
+def caminho_recurso(nome):
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+    return base / nome
+
+
+print(caminho_recurso("tela.ui"))</code></pre>
+    <p>Dentro do executável <code>--onefile</code>, os arquivos são descompactados numa pasta temporária guardada em <code>sys._MEIPASS</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> O executável só roda no sistema em que foi gerado: um <code>.exe</code> feito no Windows não roda no Linux nem no macOS. E alguns antivírus desconfiam de executáveis novos; isso é comum e não quer dizer que seu programa tem vírus.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>pyinstaller --onefile --windowed calculadora.py</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Qual comando gera um executável chamado <code>Contador.exe</code>, sem janela de terminal, a partir de <code>contador.py</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>pyinstaller --onefile --windowed --name Contador contador.py</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Rodei o <code>.exe</code> e ele abre e fecha na hora, sem mostrar nada. Como descobrir o erro?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Gere de novo SEM a opção --windowed e rode o .exe pelo terminal (cmd).<br>
+Assim a mensagem de erro (o traceback) aparece no terminal. Um erro comum<br>
+é um arquivo extra (como tela.ui) que não foi incluído com --add-data.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="195-qthread.html" rel="prev">← Aula anterior</a>
+      <a href="200-django-intro.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

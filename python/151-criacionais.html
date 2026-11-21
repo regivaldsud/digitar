@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 151 · Criacionais: Factory Method, Abstract Factory, Builder, Singleton, Prototype — Curso de Python · DIGITAR</title>
+<meta name="description" content="Padrões que organizam como os objetos são criados, com exemplos pequenos em Python.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 8 · Padrões de projeto</p>
+    <h1>Aula 151 · Criacionais: Factory Method, Abstract Factory, Builder, Singleton, Prototype</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Para que servem os padrões criacionais</li>
+        <li>Como criar objetos com uma fábrica (Factory Method)</li>
+        <li>Como montar objetos passo a passo (Builder) e copiar um modelo (Prototype)</li>
+        <li>Por que o Singleton deve ser usado com cuidado</li>
+      </ul>
+    </div>
+
+    <h2>Padrões de projeto</h2>
+    <p>Um <strong>padrão de projeto</strong> é uma solução conhecida para um problema que aparece muitas vezes. Os 23 padrões clássicos foram reunidos em 1994 num livro de quatro autores (a "Gangue dos Quatro", GoF). Os <strong>criacionais</strong> tratam de uma pergunta: como criar objetos sem espalhar <code>if</code> e detalhes pelo programa?</p>
+
+    <h2>Factory Method e Abstract Factory</h2>
+    <p>Uma <strong>fábrica</strong> é uma função ou método que decide qual classe criar. Quem pede o objeto não precisa conhecer as classes:</p>
+<pre class="codigo" data-executar="sim"><code>class Pix:
+    def pagar(self, valor):
+        return f"Pix de R$ {valor:.2f} enviado"
+
+
+class Boleto:
+    def pagar(self, valor):
+        return f"Boleto de R$ {valor:.2f} gerado"
+
+
+def criar_pagamento(tipo):
+    tipos = {"pix": Pix, "boleto": Boleto}
+    return tipos[tipo]()
+
+
+for tipo in ["pix", "boleto"]:
+    print(criar_pagamento(tipo).pagar(49.9))</code></pre>
+    <p class="saida">Pix de R$ 49.90 enviado<br>
+Boleto de R$ 49.90 gerado</p>
+    <p>A <strong>Abstract Factory</strong> vai um passo além: uma fábrica cria uma família inteira de objetos que combinam entre si (por exemplo, botão e janela do tema claro, ou botão e janela do tema escuro).</p>
+<pre class="codigo" data-executar="sim"><code>class TemaClaro:
+    def botao(self):
+        return "[botão branco]"
+
+    def fundo(self):
+        return "fundo branco"
+
+
+class TemaEscuro:
+    def botao(self):
+        return "[botão preto]"
+
+    def fundo(self):
+        return "fundo preto"
+
+
+def montar_tela(fabrica):
+    print(fabrica.fundo(), "com", fabrica.botao())
+
+
+montar_tela(TemaClaro())
+montar_tela(TemaEscuro())</code></pre>
+    <p class="saida">fundo branco com [botão branco]<br>
+fundo preto com [botão preto]</p>
+
+    <h2>Builder: montando passo a passo</h2>
+    <p>Quando um objeto tem muitas partes opcionais, o <strong>Builder</strong> monta aos poucos. Cada método devolve <code>self</code>, e por isso dá para encadear as chamadas:</p>
+<pre class="codigo" data-executar="sim"><code>class Pizza:
+    def __init__(self):
+        self.sabor = "mussarela"
+        self.borda = "simples"
+        self.extras = []
+
+    def __str__(self):
+        extras = ", ".join(self.extras) or "nenhum"
+        return f"Pizza de {self.sabor}, borda {self.borda}, extras: {extras}"
+
+
+class MontadorDePizza:
+    def __init__(self):
+        self.pizza = Pizza()
+
+    def sabor(self, s):
+        self.pizza.sabor = s
+        return self
+
+    def borda(self, b):
+        self.pizza.borda = b
+        return self
+
+    def extra(self, e):
+        self.pizza.extras.append(e)
+        return self
+
+    def pronta(self):
+        return self.pizza
+
+
+p = MontadorDePizza().sabor("calabresa").borda("catupiry").extra("cebola").pronta()
+print(p)</code></pre>
+    <p class="saida">Pizza de calabresa, borda catupiry, extras: cebola</p>
+
+    <h2>Singleton e Prototype</h2>
+    <p>O <strong>Singleton</strong> garante um único objeto de uma classe (por exemplo, a configuração do programa). Em Python, o jeito mais simples é usar um módulo, porque cada módulo é carregado uma vez só. Já o <strong>Prototype</strong> cria objetos novos copiando um modelo pronto, com <code>copy.deepcopy</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+
+class Configuracao:
+    _unica = None
+
+    def __new__(cls):
+        if cls._unica is None:
+            cls._unica = super().__new__(cls)
+            cls._unica.idioma = "pt-BR"
+        return cls._unica
+
+
+a = Configuracao()
+b = Configuracao()
+print(a is b)
+
+modelo = {"turma": "7º A", "alunos": ["Ana", "Rui"]}
+nova = copy.deepcopy(modelo)
+nova["turma"] = "7º B"
+nova["alunos"].append("Lia")
+print(modelo)
+print(nova)</code></pre>
+    <p class="saida">True<br>
+{'turma': '7º A', 'alunos': ['Ana', 'Rui']}<br>
+{'turma': '7º B', 'alunos': ['Ana', 'Rui', 'Lia']}</p>
+    <div class="atencao"><strong>Atenção:</strong> O Singleton cria um "estado global" escondido, o que dificulta testes. Use só quando realmente precisar de um objeto único.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>pagamento = criar_pagamento("pix")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Acrescente à fábrica <code>criar_pagamento</code> um tipo <code>"cartao"</code> com a classe <code>Cartao</code>, cujo <code>pagar</code> devolve <code>"Cartão: R$ 10.00 aprovado"</code> para o valor 10.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Pix:
+    def pagar(self, valor):
+        return f"Pix de R$ {valor:.2f} enviado"
+
+
+class Cartao:
+    def pagar(self, valor):
+        return f"Cartão: R$ {valor:.2f} aprovado"
+
+
+def criar_pagamento(tipo):
+    tipos = {"pix": Pix, "cartao": Cartao}
+    return tipos[tipo]()
+
+
+print(criar_pagamento("cartao").pagar(10))</code></pre>
+      <p class="saida">Cartão: R$ 10.00 aprovado</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Use o <code>MontadorDePizza</code> para montar uma pizza de frango com borda de cheddar e os extras milho e bacon. (Copie as classes do exemplo.)</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Pizza:
+    def __init__(self):
+        self.sabor = "mussarela"
+        self.borda = "simples"
+        self.extras = []
+
+    def __str__(self):
+        extras = ", ".join(self.extras) or "nenhum"
+        return f"Pizza de {self.sabor}, borda {self.borda}, extras: {extras}"
+
+
+class MontadorDePizza:
+    def __init__(self):
+        self.pizza = Pizza()
+
+    def sabor(self, s):
+        self.pizza.sabor = s
+        return self
+
+    def borda(self, b):
+        self.pizza.borda = b
+        return self
+
+    def extra(self, e):
+        self.pizza.extras.append(e)
+        return self
+
+    def pronta(self):
+        return self.pizza
+
+
+print(MontadorDePizza().sabor("frango").borda("cheddar").extra("milho").extra("bacon").pronta())</code></pre>
+      <p class="saida">Pizza de frango, borda cheddar, extras: milho, bacon</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="150-solid.html" rel="prev">← Aula anterior</a>
+      <a href="152-estruturais.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

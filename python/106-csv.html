@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 106 · Planilhas CSV: reader, DictReader, writer, DictWriter — Curso de Python · DIGITAR</title>
+<meta name="description" content="Leia e escreva planilhas CSV com o módulo csv, inclusive no padrão do Excel brasileiro com ponto e vírgula.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 106 · Planilhas CSV: reader, DictReader, writer, DictWriter</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um arquivo CSV e por que ele é tão usado</li>
+        <li>Escrever planilhas com <code>csv.writer</code> e <code>csv.DictWriter</code></li>
+        <li>Ler planilhas com <code>csv.reader</code> e <code>csv.DictReader</code></li>
+        <li>Usar <code>newline=""</code> e <code>delimiter=";"</code> para combinar com o Excel em português</li>
+        <li>Fazer contas com os dados lidos</li>
+      </ul>
+    </div>
+
+    <h2>O que é CSV</h2>
+    <p>CSV quer dizer *Comma-Separated Values*, "valores separados por vírgula". É uma planilha guardada como texto puro: cada linha do arquivo é uma linha da planilha, e as colunas são separadas por um caractere.</p>
+    <p class="saida">nome,nota<br>
+Ana,8.5<br>
+Bruno,7.0<br>
+Carla,9.5</p>
+    <p>Excel, LibreOffice e Google Planilhas abrem e salvam <code>.csv</code>. Por isso CSV é um jeito muito comum de trocar dados entre programas. Os exemplos gravam e leem o arquivo no mesmo bloco, como na aula 61.</p>
+
+    <h2>Escrevendo com csv.writer</h2>
+    <p>O <code>writerow</code> escreve uma linha a partir de uma lista. O módulo <code>csv</code> cuida dos detalhes, como colocar aspas quando um valor tem vírgula dentro:</p>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+with open("notas.csv", "w", newline="", encoding="utf-8") as f:
+    escritor = csv.writer(f)
+    escritor.writerow(["nome", "nota", "comentario"])
+    escritor.writerow(["Ana", 8.5, "ótima, caprichou"])
+    escritor.writerow(["Bruno", 7.0, "bom"])
+
+with open("notas.csv", encoding="utf-8") as f:
+    print(f.read(), end="")</code></pre>
+    <p class="saida">nome,nota,comentario<br>
+Ana,8.5,"ótima, caprichou"<br>
+Bruno,7.0,bom</p>
+    <p>Repare nas aspas em <code>"ótima, caprichou"</code>: sem elas, a vírgula do comentário seria confundida com uma nova coluna.</p>
+    <div class="atencao"><strong>Atenção:</strong> Ao abrir um arquivo para o <code>csv</code>, use sempre <code>newline=""</code>. Sem isso, no Windows aparece uma linha em branco entre cada linha da planilha.</div>
+
+    <h2>Lendo com csv.reader</h2>
+    <p>O <code>csv.reader</code> entrega cada linha como uma <strong>lista de strings</strong>. Use <code>next</code> para pular o cabeçalho:</p>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+with open("notas.csv", "w", newline="", encoding="utf-8") as f:
+    csv.writer(f).writerows([["nome", "nota"], ["Ana", 8.5], ["Bruno", 7.0], ["Carla", 9.5]])
+
+with open("notas.csv", newline="", encoding="utf-8") as f:
+    leitor = csv.reader(f)
+    cabecalho = next(leitor)
+    print("Colunas:", cabecalho)
+    soma = 0
+    quantidade = 0
+    for nome, nota in leitor:
+        print(nome, "tirou", nota)
+        soma += float(nota)
+        quantidade += 1
+
+print("Média da turma:", round(soma / quantidade, 2))</code></pre>
+    <p class="saida">Colunas: ['nome', 'nota']<br>
+Ana tirou 8.5<br>
+Bruno tirou 7.0<br>
+Carla tirou 9.5<br>
+Média da turma: 8.33</p>
+    <div class="atencao"><strong>Atenção:</strong> Tudo o que o <code>csv</code> lê é texto, mesmo que pareça número. Converta com <code>int()</code> ou <code>float()</code> antes de fazer contas, senão <code>"8.5" + "7.0"</code> vira <code>"8.57.0"</code>.</div>
+
+    <h2>DictReader e DictWriter</h2>
+    <p>Com <code>DictReader</code>, cada linha vira um <strong>dicionário</strong> cujas chaves são os nomes do cabeçalho: <code>linha["nota"]</code> em vez de <code>linha[1]</code>. O código fica muito mais fácil de ler.</p>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+alunos = [
+    {"nome": "Diego", "cidade": "Manaus", "nota": 6.5},
+    {"nome": "Elisa", "cidade": "Curitiba", "nota": 9.0},
+    {"nome": "Fábio", "cidade": "Salvador", "nota": 8.0},
+]
+
+with open("turma.csv", "w", newline="", encoding="utf-8") as f:
+    escritor = csv.DictWriter(f, fieldnames=["nome", "cidade", "nota"])
+    escritor.writeheader()
+    escritor.writerows(alunos)
+
+with open("turma.csv", newline="", encoding="utf-8") as f:
+    for linha in csv.DictReader(f):
+        situacao = "aprovado" if float(linha["nota"]) &gt;= 7 else "recuperação"
+        print(f"{linha['nome']} ({linha['cidade']}): {situacao}")</code></pre>
+    <p class="saida">Diego (Manaus): recuperação<br>
+Elisa (Curitiba): aprovado<br>
+Fábio (Salvador): aprovado</p>
+
+    <h2>O Excel em português usa ponto e vírgula</h2>
+    <p>No Brasil, a vírgula é o separador decimal (<code>8,5</code>). Por isso o Excel em português costuma usar <strong>ponto e vírgula</strong> entre as colunas. Use <code>delimiter=";"</code> para combinar:</p>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+with open("gastos.csv", "w", newline="", encoding="utf-8") as f:
+    f.write("item;valor\nlanche;12,50\nônibus;4,40\ncaderno;18,90\n")
+
+total = 0
+with open("gastos.csv", newline="", encoding="utf-8") as f:
+    for linha in csv.DictReader(f, delimiter=";"):
+        total += float(linha["valor"].replace(",", "."))
+
+print(f"Total gasto: R$ {total:.2f}".replace(".", ","))</code></pre>
+    <p class="saida">Total gasto: R$ 35,80</p>
+    <div class="dica"><strong>Dica:</strong> Se os acentos aparecerem estranhos ao abrir no Excel um CSV gravado pelo Python, grave com <code>encoding="utf-8-sig"</code>. Essa marca invisível no começo do arquivo avisa o Excel de que o texto é UTF-8.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>escritor.writerow(["nome", "nota"])</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie <code>filmes.csv</code> com as colunas <code>titulo</code> e <code>ano</code> e três filmes brasileiros. Depois leia com <code>csv.reader</code> e mostre cada um no formato <code>Titulo (ano)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+with open("filmes.csv", "w", newline="", encoding="utf-8") as f:
+    escritor = csv.writer(f)
+    escritor.writerow(["titulo", "ano"])
+    escritor.writerow(["Central do Brasil", 1998])
+    escritor.writerow(["Cidade de Deus", 2002])
+    escritor.writerow(["O Auto da Compadecida", 2000])
+
+with open("filmes.csv", newline="", encoding="utf-8") as f:
+    leitor = csv.reader(f)
+    next(leitor)
+    for titulo, ano in leitor:
+        print(f"{titulo} ({ano})")</code></pre>
+      <p class="saida">Central do Brasil (1998)<br>
+Cidade de Deus (2002)<br>
+O Auto da Compadecida (2000)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Grave uma planilha com <code>produto</code> e <code>preco</code> (três produtos) usando <code>DictWriter</code> e calcule o total usando <code>DictReader</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+with open("loja.csv", "w", newline="", encoding="utf-8") as f:
+    escritor = csv.DictWriter(f, fieldnames=["produto", "preco"])
+    escritor.writeheader()
+    escritor.writerow({"produto": "pão francês", "preco": 0.75})
+    escritor.writerow({"produto": "leite", "preco": 5.49})
+    escritor.writerow({"produto": "café", "preco": 18.90})
+
+total = 0
+with open("loja.csv", newline="", encoding="utf-8") as f:
+    for linha in csv.DictReader(f):
+        total += float(linha["preco"])
+
+print(f"Total: R$ {total:.2f}")</code></pre>
+      <p class="saida">Total: R$ 25.14</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Leia o CSV <code>nome;nota</code>, <code>Gabi;7,5</code>, <code>Heitor;9,0</code>, <code>Iara;8,5</code> (grave-o no próprio programa) e mostre quem tirou a maior nota.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+with open("notas.csv", "w", newline="", encoding="utf-8") as f:
+    f.write("nome;nota\nGabi;7,5\nHeitor;9,0\nIara;8,5\n")
+
+with open("notas.csv", newline="", encoding="utf-8") as f:
+    linhas = list(csv.DictReader(f, delimiter=";"))
+
+melhor = max(linhas, key=lambda l: float(l["nota"].replace(",", ".")))
+print("Maior nota:", melhor["nome"], melhor["nota"])</code></pre>
+      <p class="saida">Maior nota: Heitor 9,0</p>
+      <p>O <code>key</code> com <code>lambda</code> (aula 49) diz ao <code>max</code> como comparar as linhas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que acontece se você esquecer o <code>newline=""</code> ao gravar um CSV no Windows? E se esquecer de converter a nota antes de somar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Sem newline="", o Windows grava uma linha em branco entre as linhas da planilha.<br>
+Sem float(), a nota continua sendo texto: "8.5" + "7.0" vira "8.57.0",<br>
+e 0 + "8.5" dá TypeError.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="105-json-avancado.html" rel="prev">← Aula anterior</a>
+      <a href="107-random-secrets.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 200 · O que é Django; startproject, manage.py, apps — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça o Django, crie seu primeiro projeto e rode o servidor de desenvolvimento no computador.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 200 · O que é Django; startproject, manage.py, apps</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um framework web e o que o Django faz por você</li>
+        <li>Criar um projeto com <code>django-admin startproject</code> e rodar o servidor</li>
+        <li>Entender o <code>manage.py</code> e criar um app com <code>startapp</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que é o Django</h2>
+    <p>Um site tem muitas partes repetitivas: receber o pedido do navegador, falar com o banco de dados, montar o HTML, cuidar de login e segurança. O <strong>Django</strong> é um <strong>framework</strong>: um conjunto de peças prontas, em Python, que resolve tudo isso. Sites grandes como o Instagram começaram com Django.</p>
+    <p>Um site precisa de um servidor rodando, então todo este módulo é feito no seu computador.</p>
+
+    <h2>Criando o projeto</h2>
+<pre class="codigo"><code>mkdir meusite
+cd meusite
+python -m venv .venv
+.venv\Scripts\activate
+pip install django
+django-admin startproject config .
+python manage.py runserver</code></pre>
+    <p class="saida">Starting development server at http://127.0.0.1:8000/<br>
+Quit the server with CTRL-BREAK.</p>
+    <p>Abra <code>http://127.0.0.1:8000/</code> no navegador: aparece a página com um foguete dizendo que deu certo. Para parar o servidor, aperte <code>Ctrl+C</code> no terminal.</p>
+    <div class="dica"><strong>Dica:</strong> O ponto no fim de <code>startproject config .</code> cria o projeto na pasta atual, sem uma pasta extra dentro da outra. Chamar o projeto de <code>config</code> deixa claro que ali ficam as configurações.</div>
+
+    <h2>O que foi criado</h2>
+    <p class="saida">meusite/<br>
+├── manage.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- seu "controle remoto" do projeto<br>
+└── config/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── settings.py &nbsp;&nbsp;&nbsp;&lt;- configurações (apps, banco, idioma...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── urls.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- quais endereços o site tem<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── asgi.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── wsgi.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- usados para publicar o site</p>
+    <p>O <code>manage.py</code> roda os comandos do projeto: <code>runserver</code>, <code>startapp</code>, <code>migrate</code>, <code>createsuperuser</code> e outros.</p>
+
+    <h2>Apps: as partes do site</h2>
+    <p>Um projeto Django é dividido em <strong>apps</strong>, cada um cuidando de uma parte (blog, loja, contatos). Crie um e registre no <code>settings.py</code>:</p>
+<pre class="codigo"><code>python manage.py startapp contatos</code></pre>
+<pre class="codigo"><code># config/settings.py (trecho)
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "contatos",
+]
+
+LANGUAGE_CODE = "pt-br"
+TIME_ZONE = "America/Sao_Paulo"</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer de pôr o app em <code>INSTALLED_APPS</code> é um erro clássico: os models e templates dele não são encontrados.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>python manage.py startapp contatos</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Quais comandos criam um projeto <code>config</code> na pasta atual e um app chamado <code>receitas</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>django-admin startproject config .
+python manage.py startapp receitas</code></pre>
+      <p>Depois, acrescente <code>"receitas"</code> em <code>INSTALLED_APPS</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O servidor mostrou <code>Error: That port is already in use.</code> O que fazer?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>python manage.py runserver 8001</code></pre>
+      <p>Outro programa (talvez outro servidor seu) já usa a porta 8000. Feche-o com <code>Ctrl+C</code> ou rode em outra porta, como 8001.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="196-pyinstaller.html" rel="prev">← Aula anterior</a>
+      <a href="201-urls-views.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

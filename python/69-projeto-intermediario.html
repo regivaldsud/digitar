@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 69 · Projeto: lista de tarefas que salva em arquivo — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa um gerenciador de tarefas no terminal com menu, que lembra das suas tarefas salvando tudo num arquivo JSON.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 69 · Projeto: lista de tarefas que salva em arquivo</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Representar tarefas como uma lista de dicionários</li>
+        <li>Criar funções para adicionar, listar, concluir e remover tarefas</li>
+        <li>Salvar e carregar os dados em um arquivo JSON</li>
+        <li>Tratar o caso do arquivo que ainda não existe (ou que está estragado)</li>
+        <li>Montar um menu que repete até o usuário escolher sair</li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>Um programa de terminal para organizar o seu dia: lição de casa, treino de digitação, levar o lixo para fora. O mais importante: quando você fecha o programa e abre de novo, as tarefas continuam lá, porque ficam guardadas num arquivo <code>tarefas.json</code>.</p>
+    <p>O menu vai ficar assim:</p>
+    <p class="saida">1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair</p>
+
+    <h2>Passo 1: como guardar uma tarefa</h2>
+    <p>Cada tarefa tem um título e uma informação de "feita ou não". Um dicionário guarda isso muito bem, e uma lista guarda várias tarefas:</p>
+<pre class="codigo" data-executar="sim"><code>tarefas = [
+    {"titulo": "Fazer a lição de matemática", "feita": False},
+    {"titulo": "Levar o cachorro para passear", "feita": True},
+]
+
+for tarefa in tarefas:
+    print(tarefa["titulo"], "-&gt;", tarefa["feita"])</code></pre>
+    <p class="saida">Fazer a lição de matemática -&gt; False<br>
+Levar o cachorro para passear -&gt; True</p>
+    <p>Essa estrutura (lista de dicionários com textos, números e <code>True</code>/<code>False</code>) tem uma vantagem enorme: ela pode ser salva em JSON sem nenhuma adaptação.</p>
+
+    <h2>Passo 2: adicionar e listar</h2>
+<pre class="codigo" data-executar="sim"><code>def adicionar(tarefas, titulo):
+    titulo = titulo.strip()
+    if not titulo:
+        print("O título não pode ficar vazio.")
+        return
+    tarefas.append({"titulo": titulo, "feita": False})
+    print(f"Tarefa adicionada: {titulo}")
+
+
+def listar(tarefas):
+    if not tarefas:
+        print("Nenhuma tarefa. Aproveite o dia!")
+        return
+    for numero, tarefa in enumerate(tarefas, start=1):
+        marca = "x" if tarefa["feita"] else " "
+        print(f"{numero}. [{marca}] {tarefa['titulo']}")
+
+
+minhas = []
+listar(minhas)
+adicionar(minhas, "Estudar Python")
+adicionar(minhas, "   ")
+adicionar(minhas, "Treinar digitação no DIGITAR")
+minhas[0]["feita"] = True
+listar(minhas)</code></pre>
+    <p class="saida">Nenhuma tarefa. Aproveite o dia!<br>
+Tarefa adicionada: Estudar Python<br>
+O título não pode ficar vazio.<br>
+Tarefa adicionada: Treinar digitação no DIGITAR<br>
+1. [x] Estudar Python<br>
+2. [ ] Treinar digitação no DIGITAR</p>
+    <p>O <code>enumerate(tarefas, start=1)</code> numera as tarefas a partir de 1, que é como as pessoas contam. Já a lista do Python começa no índice 0 — vamos lidar com isso no próximo passo.</p>
+    <div class="atencao"><strong>Atenção:</strong> Dentro de uma f-string com aspas duplas, use aspas simples para a chave do dicionário: <code>f"{tarefa['titulo']}"</code>. Se usar aspas duplas nos dois lugares, versões mais antigas do Python dão erro de sintaxe.</div>
+
+    <h2>Passo 3: concluir e remover pelo número</h2>
+    <p>O usuário digita um número (um texto, na verdade). Precisamos conferir se é um número e se existe uma tarefa com ele. Essa conferência vai para uma função própria, usada por <code>concluir</code> e por <code>remover</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def pegar_indice(tarefas, texto):
+    """Converte o número digitado no índice da lista, ou devolve None."""
+    texto = texto.strip()
+    if not texto.isdigit():
+        return None
+    indice = int(texto) - 1
+    if 0 &lt;= indice &lt; len(tarefas):
+        return indice
+    return None
+
+
+def concluir(tarefas, texto):
+    indice = pegar_indice(tarefas, texto)
+    if indice is None:
+        print("Número inválido.")
+        return
+    tarefas[indice]["feita"] = True
+    print(f"Concluída: {tarefas[indice]['titulo']}")
+
+
+def remover(tarefas, texto):
+    indice = pegar_indice(tarefas, texto)
+    if indice is None:
+        print("Número inválido.")
+        return
+    removida = tarefas.pop(indice)
+    print(f"Removida: {removida['titulo']}")
+
+
+tarefas = [
+    {"titulo": "Arrumar o quarto", "feita": False},
+    {"titulo": "Comprar pão", "feita": False},
+]
+concluir(tarefas, "1")
+concluir(tarefas, "7")
+remover(tarefas, "dois")
+remover(tarefas, "2")
+print(tarefas)</code></pre>
+    <p class="saida">Concluída: Arrumar o quarto<br>
+Número inválido.<br>
+Número inválido.<br>
+Removida: Comprar pão<br>
+[{'titulo': 'Arrumar o quarto', 'feita': True}]</p>
+    <p>O usuário vê "1", mas no Python é o índice <code>0</code>. Por isso fazemos <code>int(texto) - 1</code>.</p>
+
+    <h2>Passo 4: salvar e carregar em JSON</h2>
+    <p>Como você viu nas aulas 61 e 62, o módulo <code>json</code> transforma a lista em texto (<code>json.dump</code>) e o texto de volta em lista (<code>json.load</code>). Na primeira vez que o programa roda, o arquivo ainda não existe — e isso não é um erro do usuário, então tratamos com <code>try/except</code> (aula 53):</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+
+def salvar(tarefas, caminho):
+    with open(caminho, "w", encoding="utf-8") as arquivo:
+        json.dump(tarefas, arquivo, ensure_ascii=False, indent=2)
+
+
+def carregar(caminho):
+    try:
+        with open(caminho, encoding="utf-8") as arquivo:
+            return json.load(arquivo)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        print("Aviso: o arquivo de tarefas estava estragado. Começando do zero.")
+        return []
+
+
+print(carregar("nao_existe.json"))
+salvar([{"titulo": "Estudar para a prova", "feita": False}], "teste.json")
+print(carregar("teste.json"))
+
+with open("teste.json", encoding="utf-8") as arquivo:
+    print(arquivo.read())</code></pre>
+    <p class="saida">[]<br>
+[{'titulo': 'Estudar para a prova', 'feita': False}]<br>
+[<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"titulo": "Estudar para a prova",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"feita": false<br>
+&nbsp;&nbsp;}<br>
+]</p>
+    <ul>
+      <li><code>ensure_ascii=False</code> guarda palavras como "pão" e "lição" com acento de verdade, em vez de códigos como <code>ã</code>.</li>
+      <li><code>indent=2</code> deixa o arquivo organizado, fácil de ler num editor.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Sempre use <code>encoding="utf-8"</code> ao abrir arquivos de texto. No Windows, sem isso, palavras com acento podem virar símbolos estranhos.</div>
+
+    <h2>Passo 5: o programa completo</h2>
+    <p>Agora o menu: um <code>while True</code> que mostra as opções, lê a escolha e chama a função certa. Depois de cada mudança, o programa salva o arquivo — assim nada se perde se a luz acabar.</p>
+<pre class="codigo"><code>import json
+
+ARQUIVO = "tarefas.json"
+
+
+def carregar(caminho=ARQUIVO):
+    try:
+        with open(caminho, encoding="utf-8") as arquivo:
+            return json.load(arquivo)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        print("Aviso: o arquivo de tarefas estava estragado. Começando do zero.")
+        return []
+
+
+def salvar(tarefas, caminho=ARQUIVO):
+    with open(caminho, "w", encoding="utf-8") as arquivo:
+        json.dump(tarefas, arquivo, ensure_ascii=False, indent=2)
+
+
+def pegar_indice(tarefas, texto):
+    texto = texto.strip()
+    if not texto.isdigit():
+        return None
+    indice = int(texto) - 1
+    if 0 &lt;= indice &lt; len(tarefas):
+        return indice
+    return None
+
+
+def listar(tarefas):
+    if not tarefas:
+        print("Nenhuma tarefa. Aproveite o dia!")
+        return
+    for numero, tarefa in enumerate(tarefas, start=1):
+        marca = "x" if tarefa["feita"] else " "
+        print(f"{numero}. [{marca}] {tarefa['titulo']}")
+
+
+def adicionar(tarefas):
+    titulo = input("Título da tarefa: ").strip()
+    if not titulo:
+        print("O título não pode ficar vazio.")
+        return
+    tarefas.append({"titulo": titulo, "feita": False})
+    salvar(tarefas)
+    print(f"Tarefa adicionada: {titulo}")
+
+
+def concluir(tarefas):
+    listar(tarefas)
+    indice = pegar_indice(tarefas, input("Número da tarefa concluída: "))
+    if indice is None:
+        print("Número inválido.")
+        return
+    tarefas[indice]["feita"] = True
+    salvar(tarefas)
+    print(f"Muito bem! Concluída: {tarefas[indice]['titulo']}")
+
+
+def remover(tarefas):
+    listar(tarefas)
+    indice = pegar_indice(tarefas, input("Número da tarefa a remover: "))
+    if indice is None:
+        print("Número inválido.")
+        return
+    removida = tarefas.pop(indice)
+    salvar(tarefas)
+    print(f"Removida: {removida['titulo']}")
+
+
+def main():
+    tarefas = carregar()
+    print(f"=== MINHAS TAREFAS === ({len(tarefas)} carregada(s))")
+    while True:
+        print()
+        print("1 - Listar tarefas")
+        print("2 - Adicionar tarefa")
+        print("3 - Concluir tarefa")
+        print("4 - Remover tarefa")
+        print("0 - Sair")
+        opcao = input("Escolha: ").strip()
+        if opcao == "1":
+            listar(tarefas)
+        elif opcao == "2":
+            adicionar(tarefas)
+        elif opcao == "3":
+            concluir(tarefas)
+        elif opcao == "4":
+            remover(tarefas)
+        elif opcao == "0":
+            print(f"Até logo! Suas tarefas estão salvas em {ARQUIVO}.")
+            break
+        else:
+            print("Opção inválida. Digite um número do menu.")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p class="saida"><em>(exemplo digitando 2, Estudar Python, 2, Arrumar o quarto, 2, Comprar pão, 3, 1, 4, 3, 1, 9, 0)</em><br>
+=== MINHAS TAREFAS === (0 carregada(s))<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 2<br>
+Título da tarefa: Estudar Python<br>
+Tarefa adicionada: Estudar Python<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 2<br>
+Título da tarefa: Arrumar o quarto<br>
+Tarefa adicionada: Arrumar o quarto<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 2<br>
+Título da tarefa: Comprar pão<br>
+Tarefa adicionada: Comprar pão<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 3<br>
+1. [ ] Estudar Python<br>
+2. [ ] Arrumar o quarto<br>
+3. [ ] Comprar pão<br>
+Número da tarefa concluída: 1<br>
+Muito bem! Concluída: Estudar Python<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 4<br>
+1. [x] Estudar Python<br>
+2. [ ] Arrumar o quarto<br>
+3. [ ] Comprar pão<br>
+Número da tarefa a remover: 3<br>
+Removida: Comprar pão<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 1<br>
+1. [x] Estudar Python<br>
+2. [ ] Arrumar o quarto<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 9<br>
+Opção inválida. Digite um número do menu.<br>
+&nbsp;<br>
+1 - Listar tarefas<br>
+2 - Adicionar tarefa<br>
+3 - Concluir tarefa<br>
+4 - Remover tarefa<br>
+0 - Sair<br>
+Escolha: 0<br>
+Até logo! Suas tarefas estão salvas em tarefas.json.</p>
+    <p>Repare que as funções <code>adicionar</code>, <code>concluir</code> e <code>remover</code> agora fazem a pergunta com <code>input</code> dentro delas. Assim o <code>main</code> fica curto e fácil de ler: só decide qual função chamar.</p>
+
+    <h2>Como rodar no seu computador</h2>
+    <ul>
+      <li>Salve o código como <code>tarefas.py</code> na pasta <code>curso-python</code>.</li>
+      <li>No terminal do VS Code, rode <code>python tarefas.py</code>, adicione algumas tarefas e saia com <code>0</code>.</li>
+      <li>Rode de novo: a mensagem vai dizer quantas tarefas foram carregadas.</li>
+      <li>Abra o arquivo <code>tarefas.json</code> no VS Code e veja como os seus dados ficaram guardados.</li>
+    </ul>
+<pre class="codigo"><code>python tarefas.py</code></pre>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Adicione uma data de entrega (com <code>datetime</code>, aula 101) em cada tarefa e mostre as atrasadas em destaque.</li>
+      <li>Crie uma opção para editar o título de uma tarefa.</li>
+      <li>Permita prioridades (alta, média, baixa) e liste as de prioridade alta primeiro.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>tarefas.append({"titulo": titulo, "feita": False})</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva <code>resumo(tarefas)</code>, que devolve um texto como <code>"2 feita(s), 1 pendente(s)"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def resumo(tarefas):
+    feitas = sum(1 for t in tarefas if t["feita"])
+    pendentes = len(tarefas) - feitas
+    return f"{feitas} feita(s), {pendentes} pendente(s)"
+
+
+tarefas = [
+    {"titulo": "Lição de casa", "feita": True},
+    {"titulo": "Lavar a louça", "feita": False},
+    {"titulo": "Treinar digitação", "feita": True},
+]
+print(resumo(tarefas))</code></pre>
+      <p class="saida">2 feita(s), 1 pendente(s)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie <code>editar(tarefas, texto_numero, novo_titulo)</code>, que troca o título de uma tarefa, conferindo se o número existe e se o novo título não está vazio.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def editar(tarefas, texto_numero, novo_titulo):
+    texto_numero = texto_numero.strip()
+    novo_titulo = novo_titulo.strip()
+    if not texto_numero.isdigit() or not 1 &lt;= int(texto_numero) &lt;= len(tarefas):
+        print("Número inválido.")
+        return
+    if not novo_titulo:
+        print("O título não pode ficar vazio.")
+        return
+    tarefas[int(texto_numero) - 1]["titulo"] = novo_titulo
+    print("Título atualizado!")
+
+
+tarefas = [{"titulo": "Estudar", "feita": False}]
+editar(tarefas, "5", "Estudar Python")
+editar(tarefas, "1", "")
+editar(tarefas, "1", "Estudar Python")
+print(tarefas)</code></pre>
+      <p class="saida">Número inválido.<br>
+O título não pode ficar vazio.<br>
+Título atualizado!<br>
+[{'titulo': 'Estudar Python', 'feita': False}]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Faça <code>limpar_concluidas(tarefas)</code>, que devolve uma nova lista só com as tarefas pendentes. Use uma compreensão de lista.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def limpar_concluidas(tarefas):
+    return [t for t in tarefas if not t["feita"]]
+
+
+tarefas = [
+    {"titulo": "Arrumar a cama", "feita": True},
+    {"titulo": "Estudar história", "feita": False},
+    {"titulo": "Regar as plantas", "feita": True},
+]
+print(limpar_concluidas(tarefas))</code></pre>
+      <p class="saida">[{'titulo': 'Estudar história', 'feita': False}]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre as tarefas com as pendentes primeiro e as feitas no fim, sem mudar a lista original. Dica: <code>False</code> vem antes de <code>True</code> quando o Python ordena.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>tarefas = [
+    {"titulo": "Arrumar a cama", "feita": True},
+    {"titulo": "Estudar história", "feita": False},
+    {"titulo": "Regar as plantas", "feita": True},
+    {"titulo": "Ler um capítulo", "feita": False},
+]
+for t in sorted(tarefas, key=lambda t: t["feita"]):
+    marca = "x" if t["feita"] else " "
+    print(f"[{marca}] {t['titulo']}")</code></pre>
+      <p class="saida">[ ] Estudar história<br>
+[ ] Ler um capítulo<br>
+[x] Arrumar a cama<br>
+[x] Regar as plantas</p>
+      <p><code>sorted</code> cria uma lista nova e é <strong>estável</strong>: tarefas com o mesmo valor de <code>feita</code> mantêm a ordem original.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Salve uma lista com a tarefa <code>"Comprar pão de queijo"</code> num arquivo, carregue de volta e confira se o que voltou é igual ao que foi salvo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+original = [{"titulo": "Comprar pão de queijo", "feita": False}]
+with open("tarefas.json", "w", encoding="utf-8") as arquivo:
+    json.dump(original, arquivo, ensure_ascii=False)
+
+with open("tarefas.json", encoding="utf-8") as arquivo:
+    carregado = json.load(arquivo)
+
+print(carregado)
+print("Igual ao original?", carregado == original)</code></pre>
+      <p class="saida">[{'titulo': 'Comprar pão de queijo', 'feita': False}]<br>
+Igual ao original? True</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="68-projeto-treino-de-digitacao.html" rel="prev">← Aula anterior</a>
+      <a href="70-classes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

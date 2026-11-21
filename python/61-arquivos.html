@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 61 · Lendo e gravando arquivos com with open; modos e encoding — Curso de Python · DIGITAR</title>
+<meta name="description" content="Salve e leia textos em arquivos com open e with, escolha o modo certo (r, w, a, x) e use sempre encoding=&quot;utf-8&quot;.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 61 · Lendo e gravando arquivos com with open; modos e encoding</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Abrir arquivos com <code>open</code> e escolher o modo: <code>"r"</code>, <code>"w"</code>, <code>"a"</code> ou <code>"x"</code></li>
+        <li>Usar o bloco <code>with</code> para o arquivo fechar sozinho</li>
+        <li>Ler o arquivo inteiro com <code>read</code>, em lista com <code>readlines</code> ou linha por linha com <code>for</code></li>
+        <li>Escrever várias linhas de uma vez com <code>writelines</code> e com <code>print(..., file=f)</code></li>
+        <li>Por que sempre usar <code>encoding="utf-8"</code> com textos em português</li>
+      </ul>
+    </div>
+
+    <h2>Por que usar arquivos</h2>
+    <p>Tudo o que fica numa variável some quando o programa termina. Se você quer guardar a lista de compras, o placar de um jogo ou as notas da turma para usar amanhã, precisa salvar num <strong>arquivo</strong>.</p>
+    <p>Um arquivo de texto (<code>.txt</code>) é o tipo mais simples: só letras, números e quebras de linha, como os que você abre no Bloco de Notas.</p>
+    <div class="dica"><strong>Dica:</strong> Aqui no navegador, os arquivos são criados num <strong>sistema de arquivos virtual</strong>, que existe só enquanto a página está aberta. No seu computador, o arquivo aparece de verdade na pasta onde o terminal está. Por isso, todos os exemplos desta aula escrevem o arquivo e o leem de volta no mesmo bloco.</div>
+
+    <h2>Escrevendo: o modo "w"</h2>
+    <p>A função <code>open</code> abre um arquivo. O primeiro valor é o nome do arquivo; o segundo é o <strong>modo</strong>: <code>"w"</code> (de *write*, escrever) cria o arquivo — ou apaga o que já existia nele — e deixa escrever.</p>
+<pre class="codigo" data-executar="sim"><code>with open("compras.txt", "w", encoding="utf-8") as arquivo:
+    arquivo.write("arroz\n")
+    arquivo.write("feijão\n")
+    arquivo.write("farinha de mandioca\n")
+
+print("Arquivo salvo!")</code></pre>
+    <p class="saida">Arquivo salvo!</p>
+    <p>O <code>with</code> abre o arquivo, guarda ele na variável <code>arquivo</code> e, quando o bloco indentado termina, <strong>fecha o arquivo sozinho</strong> — mesmo que aconteça um erro no meio. Sem fechar, parte do texto pode não ser gravada.</p>
+    <p>O <code>write</code> não pula linha por conta própria: é você quem coloca o <code>\n</code> (quebra de linha) no fim de cada linha.</p>
+    <div class="atencao"><strong>Atenção:</strong> O modo <code>"w"</code> <strong>apaga</strong> tudo o que havia no arquivo antes de escrever. Se você quer acrescentar no final, use o modo <code>"a"</code>, que você vai ver logo abaixo.</div>
+
+    <h2>Lendo: o modo "r" e o read</h2>
+    <p>O modo <code>"r"</code> (de *read*, ler) é o padrão. O método <code>read</code> devolve o arquivo inteiro como uma única string.</p>
+<pre class="codigo" data-executar="sim"><code>with open("recado.txt", "w", encoding="utf-8") as f:
+    f.write("Mãe, fui para o treino de futsal.\n")
+    f.write("Volto às 18h.\n")
+
+with open("recado.txt", "r", encoding="utf-8") as f:
+    conteudo = f.read()
+
+print(conteudo, end="")
+print("Caracteres:", len(conteudo))</code></pre>
+    <p class="saida">Mãe, fui para o treino de futsal.<br>
+Volto às 18h.<br>
+Caracteres: 48</p>
+    <p>O <code>end=""</code> no <code>print</code> evita uma linha vazia extra: o texto já termina com <code>\n</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Sem <code>encoding="utf-8"</code>, o Windows pode usar outra codificação, e palavras como <code>feijão</code> e <code>às</code> aparecem estragadas (por exemplo <code>feijÃ£o</code>). Use sempre <code>encoding="utf-8"</code> ao ler <strong>e</strong> ao escrever.</div>
+
+    <h2>Linha por linha: for, readlines e strip</h2>
+    <p>Um arquivo aberto pode ser percorrido com <code>for</code>, uma linha de cada vez. Cada linha vem com o <code>\n</code> no fim; o método <code>strip()</code> tira esses espaços e quebras das pontas.</p>
+<pre class="codigo" data-executar="sim"><code>with open("times.txt", "w", encoding="utf-8") as f:
+    f.write("Flamengo\nPalmeiras\nGrêmio\nBahia\n")
+
+with open("times.txt", encoding="utf-8") as f:
+    for numero, linha in enumerate(f, start=1):
+        print(numero, linha.strip())</code></pre>
+    <p class="saida">1 Flamengo<br>
+2 Palmeiras<br>
+3 Grêmio<br>
+4 Bahia</p>
+    <p>Já o <code>readlines()</code> devolve uma lista com todas as linhas, cada uma ainda com seu <code>\n</code>:</p>
+<pre class="codigo" data-executar="sim"><code>with open("times.txt", "w", encoding="utf-8") as f:
+    f.write("Flamengo\nPalmeiras\nGrêmio\n")
+
+with open("times.txt", encoding="utf-8") as f:
+    linhas = f.readlines()
+
+print(linhas)
+print([linha.strip() for linha in linhas])</code></pre>
+    <p class="saida">['Flamengo\n', 'Palmeiras\n', 'Grêmio\n']<br>
+['Flamengo', 'Palmeiras', 'Grêmio']</p>
+    <p>Para escrever uma lista de uma vez, há o <code>writelines</code> (que também não põe <code>\n</code> sozinho) e o <code>print</code> com <code>file=</code>, que põe:</p>
+<pre class="codigo" data-executar="sim"><code>alunos = ["Ana", "Bruno", "Carla"]
+
+with open("chamada.txt", "w", encoding="utf-8") as f:
+    f.writelines(nome + "\n" for nome in alunos)
+    print("Total:", len(alunos), file=f)
+
+with open("chamada.txt", encoding="utf-8") as f:
+    print(f.read(), end="")</code></pre>
+    <p class="saida">Ana<br>
+Bruno<br>
+Carla<br>
+Total: 3</p>
+
+    <h2>Acrescentando: os modos "a" e "x"</h2>
+    <p>O modo <code>"a"</code> (de *append*, acrescentar) escreve no <strong>final</strong> do arquivo, sem apagar o que já estava lá. Ótimo para um diário ou um registro de pontuações.</p>
+<pre class="codigo" data-executar="sim"><code>with open("diario.txt", "w", encoding="utf-8") as f:
+    f.write("Segunda: prova de matemática.\n")
+
+with open("diario.txt", "a", encoding="utf-8") as f:
+    f.write("Terça: aula de digitação, 35 PPM!\n")
+
+with open("diario.txt", encoding="utf-8") as f:
+    print(f.read(), end="")</code></pre>
+    <p class="saida">Segunda: prova de matemática.<br>
+Terça: aula de digitação, 35 PPM!</p>
+    <p>O modo <code>"x"</code> cria um arquivo <strong>novo</strong> e dá erro se ele já existir — uma proteção para não apagar nada sem querer:</p>
+<pre class="codigo" data-executar="sim"><code>with open("unico.txt", "x", encoding="utf-8") as f:
+    f.write("primeira vez\n")
+
+try:
+    with open("unico.txt", "x", encoding="utf-8") as f:
+        f.write("segunda vez\n")
+except FileExistsError:
+    print("O arquivo já existe; nada foi apagado.")</code></pre>
+    <p class="saida">O arquivo já existe; nada foi apagado.</p>
+    <div class="dica"><strong>Dica:</strong> Resumo dos modos: <code>"r"</code> lê (erro se não existir), <code>"w"</code> cria ou apaga e escreve, <code>"a"</code> cria ou acrescenta no fim, <code>"x"</code> só cria (erro se existir). Juntando <code>"+"</code>, como <code>"r+"</code>, dá para ler e escrever no mesmo arquivo, mas isso raramente é necessário.</div>
+    <div class="atencao"><strong>Atenção:</strong> Abrir no modo <code>"r"</code> um arquivo que não existe causa <code>FileNotFoundError</code>. Confira o nome e se o terminal está na pasta certa — e trate o erro com <code>try</code> (aula 53).</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>with open("notas.txt", "w", encoding="utf-8") as f:</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um programa que crie o arquivo <code>frutas.txt</code> com três frutas (uma por linha) e depois leia e mostre o conteúdo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>with open("frutas.txt", "w", encoding="utf-8") as f:
+    f.write("manga\n")
+    f.write("caju\n")
+    f.write("açaí\n")
+
+with open("frutas.txt", encoding="utf-8") as f:
+    print(f.read(), end="")</code></pre>
+      <p class="saida">manga<br>
+caju<br>
+açaí</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Grave os números de 1 a 5 no arquivo <code>numeros.txt</code>, um por linha, usando um <code>for</code>. Depois leia o arquivo e mostre a soma dos números.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>with open("numeros.txt", "w", encoding="utf-8") as f:
+    for n in range(1, 6):
+        f.write(str(n) + "\n")
+
+soma = 0
+with open("numeros.txt", encoding="utf-8") as f:
+    for linha in f:
+        soma += int(linha)
+
+print("Soma:", soma)</code></pre>
+      <p class="saida">Soma: 15</p>
+      <p>O <code>write</code> só aceita texto, por isso o <code>str(n)</code>. Na leitura, <code>int(linha)</code> funciona mesmo com o <code>\n</code> no fim, porque o <code>int</code> ignora espaços e quebras de linha nas pontas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie um arquivo <code>placar.txt</code> com a linha <code>Jogo 1: 120 pontos</code>. Depois, com o modo <code>"a"</code>, acrescente <code>Jogo 2: 95 pontos</code> e mostre o arquivo inteiro.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>with open("placar.txt", "w", encoding="utf-8") as f:
+    f.write("Jogo 1: 120 pontos\n")
+
+with open("placar.txt", "a", encoding="utf-8") as f:
+    f.write("Jogo 2: 95 pontos\n")
+
+with open("placar.txt", encoding="utf-8") as f:
+    print(f.read(), end="")</code></pre>
+      <p class="saida">Jogo 1: 120 pontos<br>
+Jogo 2: 95 pontos</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Grave um arquivo com as palavras <code>bola</code>, <code>casa</code>, <code>banana</code> e <code>bicicleta</code>, uma por linha. Leia o arquivo e mostre só as palavras que começam com a letra <code>b</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>with open("palavras.txt", "w", encoding="utf-8") as f:
+    f.write("bola\ncasa\nbanana\nbicicleta\n")
+
+with open("palavras.txt", encoding="utf-8") as f:
+    for linha in f:
+        palavra = linha.strip()
+        if palavra.startswith("b"):
+            print(palavra)</code></pre>
+      <p class="saida">bola<br>
+banana<br>
+bicicleta</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça uma função <code>ler_ou_vazio(nome)</code> que devolve a lista de linhas (sem <code>\n</code>) de um arquivo, ou uma lista vazia se o arquivo não existir. Teste com um arquivo que existe e outro que não.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def ler_ou_vazio(nome):
+    try:
+        with open(nome, encoding="utf-8") as f:
+            return [linha.strip() for linha in f]
+    except FileNotFoundError:
+        return []
+
+with open("lista.txt", "w", encoding="utf-8") as f:
+    f.write("pão\nleite\n")
+
+print(ler_ou_vazio("lista.txt"))
+print(ler_ou_vazio("nao_existe.txt"))</code></pre>
+      <p class="saida">['pão', 'leite']<br>
+[]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="60-venv-pip.html" rel="prev">← Aula anterior</a>
+      <a href="62-json.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 06 · Lendo mensagens de erro — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a ler um traceback do Python e a reconhecer os erros mais comuns de quem está começando.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 1 · Primeiros passos</p>
+    <h1>Aula 06 · Lendo mensagens de erro</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender as três partes de uma mensagem de erro: onde, qual tipo e por quê</li>
+        <li>Reconhecer <code>SyntaxError</code>, <code>NameError</code>, <code>TypeError</code>, <code>IndentationError</code> e <code>ZeroDivisionError</code></li>
+        <li>Corrigir erros com calma, começando pela última linha da mensagem</li>
+        <li>Perceber que erro não é fracasso: é o Python tentando ajudar</li>
+      </ul>
+    </div>
+
+    <h2>O erro é um recado, não uma bronca</h2>
+    <p>Quando algo dá errado, o Python para o programa e mostra uma mensagem chamada <strong>traceback</strong> ("rastro"). Parece assustadora no começo, mas ela diz exatamente o que aconteceu. Veja um exemplo de traceback completo:</p>
+    <p class="saida">Traceback (most recent call last):<br>
+&nbsp;&nbsp;File "C:\Users\Ana\curso-python\teste.py", line 2, in &lt;module&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(nome)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^^^^<br>
+NameError: name 'nome' is not defined</p>
+    <p>Leia assim:</p>
+    <ul>
+      <li><strong>Onde:</strong> arquivo <code>teste.py</code>, linha 2. A linha com problema aparece logo abaixo, e os <code>^^^^</code> apontam o pedaço exato.</li>
+      <li><strong>Tipo:</strong> <code>NameError</code> — o nome do erro.</li>
+      <li><strong>Por quê:</strong> <code>name 'nome' is not defined</code> — "o nome 'nome' não foi definido".</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Comece sempre pela <strong>última linha</strong>. Ela tem o tipo e a explicação do erro. Depois suba para ver em que linha aconteceu.</div>
+    <p>Aqui no site, ao executar um exemplo com erro, a saída mostra essa última linha.</p>
+
+    <h2>NameError: nome desconhecido</h2>
+    <p>Acontece quando você usa um nome que o Python não conhece: uma variável que não existe, ou uma palavra escrita errada.</p>
+<pre class="codigo" data-executar="sim"><code>cidade = "Salvador"
+print(cidad)</code></pre>
+    <p class="saida">NameError: name 'cidad' is not defined. Did you mean: 'cidade'?</p>
+    <p>Aqui faltou a letra "e". O Python até sugere: <code>Did you mean: 'cidade'?</code> ("Você quis dizer 'cidade'?").</p>
+<pre class="codigo" data-executar="sim"><code>Print("Olá")</code></pre>
+    <p class="saida">NameError: name 'Print' is not defined. Did you mean: 'print'?</p>
+    <p><code>Print</code> com P maiúsculo não existe. O certo é <code>print</code>.</p>
+
+    <h2>SyntaxError: escrita errada</h2>
+    <p><strong>Sintaxe</strong> é a "gramática" da linguagem. Um <code>SyntaxError</code> aparece quando o código não segue as regras: faltou fechar parênteses, aspas, ou sobrou algum símbolo. Com esse erro, <strong>nada</strong> do programa roda, nem as linhas que estavam certas.</p>
+<pre class="codigo"><code>print("Bom dia"</code></pre>
+    <p class="saida">&nbsp;&nbsp;File "teste.py", line 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print("Bom dia"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^<br>
+SyntaxError: '(' was never closed</p>
+    <p>A mensagem diz que o parêntese <code>(</code> foi aberto e nunca fechado. Outro clássico é esquecer de fechar as aspas:</p>
+<pre class="codigo"><code>print("Bom dia)</code></pre>
+    <p class="saida">&nbsp;&nbsp;File "teste.py", line 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print("Bom dia)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^<br>
+SyntaxError: unterminated string literal (detected at line 1)</p>
+    <p>"Unterminated string literal" quer dizer "texto que não terminou": faltou a aspa do final.</p>
+    <div class="atencao"><strong>Atenção:</strong> Às vezes o Python aponta a linha <strong>seguinte</strong> à do erro real, porque só percebe o problema depois. Se a linha indicada parece certa, olhe a linha de cima.</div>
+
+    <h2>TypeError e ZeroDivisionError</h2>
+    <p>O <code>TypeError</code> acontece quando você mistura coisas que não combinam, como juntar um texto com um número:</p>
+<pre class="codigo" data-executar="sim"><code>idade = 12
+print("Tenho " + idade + " anos")</code></pre>
+    <p class="saida">TypeError: can only concatenate str (not "int") to str</p>
+    <p>A mensagem diz que só dá para juntar (concatenar) texto com texto, não com número (<code>int</code>). Uma solução é usar vírgulas no <code>print</code>:</p>
+<pre class="codigo" data-executar="sim"><code>idade = 12
+print("Tenho", idade, "anos")</code></pre>
+    <p class="saida">Tenho 12 anos</p>
+    <p>Já o <code>ZeroDivisionError</code> aparece quando o programa tenta dividir por zero, que é impossível também na matemática:</p>
+<pre class="codigo" data-executar="sim"><code>pizzas = 3
+pessoas = 0
+print(pizzas / pessoas)</code></pre>
+    <p class="saida">ZeroDivisionError: division by zero</p>
+
+    <h2>IndentationError: espaços no começo da linha</h2>
+    <p>No Python, os espaços no começo da linha (a <strong>indentação</strong>) têm significado. Um espaço sobrando já causa erro:</p>
+<pre class="codigo"><code>print("linha 1")
+    print("linha 2")</code></pre>
+    <p class="saida">&nbsp;&nbsp;File "teste.py", line 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print("linha 2")<br>
+IndentationError: unexpected indent</p>
+    <p>"Unexpected indent" é "recuo inesperado". Por enquanto, todas as suas linhas devem começar encostadas na margem. Nas aulas 18 (<code>if</code>) e 22 (<code>while</code>) você vai ver quando o recuo é necessário.</p>
+
+    <h2>Um roteiro para corrigir erros</h2>
+    <ul>
+      <li>Leia a última linha: qual é o tipo e a explicação?</li>
+      <li>Veja o número da linha e o pedaço marcado com <code>^</code>.</li>
+      <li>Confira letras maiúsculas, aspas, parênteses e espaços.</li>
+      <li>Corrija <strong>um</strong> erro por vez e rode de novo.</li>
+      <li>Se não entender, copie a última linha e pesquise na internet: alguém já teve o mesmo erro.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print("Corrija um erro de cada vez!")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Rode o código abaixo, leia o erro e corrija: <code>print("Feliz aniversário!"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Feliz aniversário!")</code></pre>
+      <p class="saida">Feliz aniversário!</p>
+      <p>O erro era <code>SyntaxError: '(' was never closed</code>: faltava fechar o parêntese.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Qual é o tipo de erro e como corrigir? <code>numero = 7</code> e depois <code>print(Numero)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numero = 7
+print(numero)</code></pre>
+      <p class="saida">7</p>
+      <p>É um <code>NameError</code>: <code>Numero</code> com N maiúsculo é outro nome, diferente de <code>numero</code>. O Python diferencia maiúsculas de minúsculas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Este código dá <code>TypeError</code>. Corrija para mostrar <code>Pontos: 50</code>: <code>pontos = 50</code> e <code>print("Pontos: " + pontos)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>pontos = 50
+print("Pontos:", pontos)</code></pre>
+      <p class="saida">Pontos: 50</p>
+      <p>Também funcionaria <code>print("Pontos: " + str(pontos))</code>, convertendo o número em texto. Você vai ver o <code>str()</code> na aula 13.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Numa mensagem de erro, em qual linha você deve começar a ler e o que ela informa?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Na última linha. Ela informa o tipo do erro (por exemplo, NameError)<br>
+e uma explicação curta do que aconteceu.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> O programa abaixo tem dois erros. Encontre e corrija os dois: <code>print("Olá)</code> e, na linha seguinte, <code> print("Tchau")</code> com um espaço no começo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Olá")
+print("Tchau")</code></pre>
+      <p class="saida">Olá<br>
+Tchau</p>
+      <p>Faltava fechar as aspas na primeira linha (<code>SyntaxError</code>) e havia um espaço sobrando no começo da segunda (<code>IndentationError</code>).</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="05-ambiente-moderno.html" rel="prev">← Aula anterior</a>
+      <a href="10-print.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

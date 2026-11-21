@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 65 · Organizando um projeto — Curso de Python · DIGITAR</title>
+<meta name="description" content="Organize seus programas em funções, módulos e pastas, use main() com if __name__ == &quot;__main__&quot; e documente com README e requirements.txt.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 65 · Organizando um projeto</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Estruturar um programa com constantes, funções e uma função <code>main()</code></li>
+        <li>Entender o <code>if __name__ == "__main__":</code></li>
+        <li>Separar o código em módulos que se importam</li>
+        <li>Organizar as pastas de um projeto com README e requirements.txt</li>
+      </ul>
+    </div>
+
+    <h2>A ordem dentro de um arquivo</h2>
+    <p>Um arquivo Python bem organizado costuma seguir esta ordem, de cima para baixo:</p>
+    <ul>
+      <li>uma docstring curta dizendo o que o programa faz;</li>
+      <li>os <code>import</code>;</li>
+      <li>as constantes;</li>
+      <li>as funções (e classes);</li>
+      <li>a função <code>main()</code>, que coordena tudo, e a linha que a chama.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>"""Calcula a média bimestral de um aluno."""
+
+import statistics
+
+MEDIA_PARA_PASSAR = 6.0
+
+
+def calcular_media(notas):
+    return statistics.mean(notas)
+
+
+def situacao(media):
+    return "aprovado" if media &gt;= MEDIA_PARA_PASSAR else "recuperação"
+
+
+def main():
+    notas = [5.5, 7.0, 8.0]
+    media = calcular_media(notas)
+    print(f"Média {media:.1f}: {situacao(media)}")
+
+
+main()</code></pre>
+    <p class="saida">Média 6.8: aprovado</p>
+    <div class="dica"><strong>Dica:</strong> Nada de código "solto" espalhado entre as funções. Quem abre o arquivo deve achar tudo no lugar esperado.</div>
+
+    <h2>if __name__ == "__main__"</h2>
+    <p>Este assunto aparece com calma nas aulas 55 e 100; aqui vai o essencial para organizar o projeto. Todo arquivo Python tem uma variável especial chamada <code>__name__</code>. Quando você <strong>roda</strong> o arquivo diretamente, ela vale <code>"__main__"</code>. Quando o arquivo é <strong>importado</strong> por outro, ela vale o nome do módulo.</p>
+    <p>Por isso, em vez de chamar <code>main()</code> direto, programadores escrevem assim. Rode este arquivo <code>conversor.py</code>:</p>
+<pre class="codigo"><code>"""Funções para converter temperaturas."""
+
+
+def celsius_para_fahrenheit(c):
+    return c * 9 / 5 + 32
+
+
+def main():
+    print("Testando o conversor:")
+    print(celsius_para_fahrenheit(30))
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p class="saida">Testando o conversor:<br>
+86.0</p>
+    <p>Agora, outro arquivo na mesma pasta importa o conversor. Repare que o teste de dentro dele <strong>não</strong> aparece, porque <code>__name__</code> agora vale <code>"conversor"</code>:</p>
+<pre class="codigo"><code>import conversor
+
+print("Hoje faz", conversor.celsius_para_fahrenheit(25), "°F")
+print(conversor.__name__)</code></pre>
+    <p class="saida">Hoje faz 77.0 °F<br>
+conversor</p>
+    <div class="atencao"><strong>Atenção:</strong> São dois sublinhados de cada lado: <code>__name__</code> e <code>"__main__"</code>. Com um só, o <code>if</code> nunca é verdadeiro e o programa não faz nada — sem mostrar erro.</div>
+
+    <h2>Dividindo em módulos</h2>
+    <p>Quando o programa cresce, separe por assunto. Cada arquivo <code>.py</code> é um <strong>módulo</strong> (você aprendeu a criar os seus na aula 55). Por exemplo, um módulo só com as perguntas de um quiz:</p>
+<pre class="codigo"><code>PERGUNTAS = [
+    ("Qual é a capital do Brasil?", "brasília"),
+    ("Quantos estados tem o Brasil?", "26"),
+]</code></pre>
+    <p>E o programa principal, que importa o que precisa:</p>
+<pre class="codigo"><code>from perguntas import PERGUNTAS
+
+
+def corrigir(resposta, gabarito):
+    return resposta.strip().lower() == gabarito
+
+
+respostas_do_aluno = ["Brasília", "27"]
+acertos = 0
+for (pergunta, gabarito), resposta in zip(PERGUNTAS, respostas_do_aluno):
+    if corrigir(resposta, gabarito):
+        acertos += 1
+print(f"Você acertou {acertos} de {len(PERGUNTAS)}.")</code></pre>
+    <p class="saida">Você acertou 1 de 2.</p>
+    <div class="atencao"><strong>Atenção:</strong> Não dê ao seu arquivo o nome de um módulo do Python, como <code>random.py</code> ou <code>math.py</code>. O <code>import random</code> passa a importar o seu arquivo e nada funciona.</div>
+
+    <h2>A estrutura de pastas</h2>
+    <p>Um projeto pequeno e bem organizado fica mais ou menos assim:</p>
+    <p class="saida">quiz-brasil/<br>
+├── README.md &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;explica o projeto e como rodar<br>
+├── requirements.txt &nbsp;&nbsp;bibliotecas que o projeto usa<br>
+├── .gitignore &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arquivos que o Git deve ignorar<br>
+├── quiz.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;programa principal (tem o main)<br>
+├── perguntas.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;módulo com os dados<br>
+└── tests/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── test_quiz.py &nbsp;&nbsp;testes automáticos</p>
+    <p>O <code>requirements.txt</code> lista as bibliotecas instaladas com pip, uma por linha. Gere ele com <code>pip freeze</code> e instale tudo de uma vez em outro computador:</p>
+<pre class="codigo"><code>pip freeze &gt; requirements.txt
+pip install -r requirements.txt</code></pre>
+    <p>Gere o <code>requirements.txt</code> com o ambiente virtual ativado (aula 60); assim ele lista só as bibliotecas deste projeto.</p>
+    <p>O <code>README.md</code> é a "capa" do projeto. Escreva pelo menos: o que ele faz, como instalar e como rodar.</p>
+<pre class="codigo"><code># Quiz Brasil
+
+Quiz de perguntas sobre o Brasil, no terminal.
+
+## Como rodar
+
+    python quiz.py</code></pre>
+
+    <h2>Funções pequenas e com um só trabalho</h2>
+    <p>Cada função deve fazer <strong>uma</strong> coisa. Se o nome precisa de "e" (<code>ler_e_calcular_e_mostrar</code>), provavelmente são três funções. Funções pequenas são mais fáceis de testar, como você vai ver na aula 131.</p>
+<pre class="codigo" data-executar="sim"><code>def ler_precos(texto):
+    return [float(p) for p in texto.split(";")]
+
+
+def somar(precos):
+    return sum(precos)
+
+
+def formatar_reais(valor):
+    return f"R$ {valor:.2f}".replace(".", ",")
+
+
+total = somar(ler_precos("12.5;3.75;20"))
+print(formatar_reais(total))</code></pre>
+    <p class="saida">R$ 36,25</p>
+    <p>Compare com a versão "tudo junto", que faz as mesmas três tarefas numa função só. Funciona, mas não dá para reaproveitar só a parte de formatar em reais em outro lugar:</p>
+<pre class="codigo" data-executar="sim"><code>def ler_calcular_e_mostrar(texto):
+    total = 0
+    for p in texto.split(";"):
+        total += float(p)
+    print(f"R$ {total:.2f}".replace(".", ","))
+
+
+ler_calcular_e_mostrar("12.5;3.75;20")</code></pre>
+    <p class="saida">R$ 36,25</p>
+    <p>Com as funções separadas, dá para conferir cada parte sozinha, sem rodar o programa inteiro:</p>
+<pre class="codigo" data-executar="sim"><code>def ler_precos(texto):
+    return [float(p) for p in texto.split(";")]
+
+
+def formatar_reais(valor):
+    return f"R$ {valor:.2f}".replace(".", ",")
+
+
+print(ler_precos("2.5;1"))
+print(formatar_reais(2.5))
+print(formatar_reais(1234.5))</code></pre>
+    <p class="saida">[2.5, 1.0]<br>
+R$ 2,50<br>
+R$ 1234,50</p>
+    <p>Essa é a ideia dos testes automáticos: verificar pedaços pequenos, um de cada vez.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if __name__ == "__main__":</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Reorganize este programa com constante, função e <code>main()</code> protegida por <code>if __name__</code>: <code>print(50 * 1.1)</code> (preço com 10% de taxa de serviço).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>TAXA_DE_SERVICO = 0.10
+
+
+def com_taxa(valor):
+    return valor * (1 + TAXA_DE_SERVICO)
+
+
+def main():
+    print(f"Total: R$ {com_taxa(50):.2f}")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+      <p class="saida">Total: R$ 55.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie um módulo <code>saudacoes.py</code> com a função <code>ola(nome)</code> e importe-a em outro arquivo para cumprimentar a Maria.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># arquivo saudacoes.py
+def ola(nome):
+    return f"Olá, {nome}!"
+
+
+# arquivo principal.py, na mesma pasta
+from saudacoes import ola
+
+print(ola("Maria"))</code></pre>
+      <p>São dois arquivos na mesma pasta. Rodando <code>python principal.py</code>, aparece <code>Olá, Maria!</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que o seu arquivo não pode se chamar <code>random.py</code> se você quer usar <code>import random</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque o Python procura os módulos primeiro na pasta do programa.<br>
+O "import random" encontraria o seu random.py, e não o módulo do Python,<br>
+e funções como random.randint deixariam de existir.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Separe o código abaixo em três funções pequenas (ler, calcular, mostrar): ele recebe <code>"8,7,9"</code>, calcula a média e mostra <code>Média: 8.0</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def ler_notas(texto):
+    return [float(n) for n in texto.split(",")]
+
+
+def calcular_media(notas):
+    return sum(notas) / len(notas)
+
+
+def mostrar(media):
+    print(f"Média: {media:.1f}")
+
+
+mostrar(calcular_media(ler_notas("8,7,9")))</code></pre>
+      <p class="saida">Média: 8.0</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="64-pep8-e-bons-nomes.html" rel="prev">← Aula anterior</a>
+      <a href="66-depuracao.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

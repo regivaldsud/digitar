@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 111 · HTTP com requests e http.server — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda como a web funciona por HTTP, busque dados de uma API com a biblioteca requests e sirva arquivos com http.server.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 111 · HTTP com requests e http.server</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que são HTTP, requisição, resposta e código de status</li>
+        <li>Buscar dados de uma API com <code>requests.get</code></li>
+        <li>Servir uma pasta no navegador com <code>python -m http.server</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Como a web conversa</h2>
+    <p>Quando você abre um site, o navegador manda uma <strong>requisição</strong> HTTP para um servidor, e o servidor devolve uma <strong>resposta</strong>. Toda resposta tem um <strong>código de status</strong>: <code>200</code> quer dizer "deu certo", <code>404</code> "não encontrado" e <code>500</code> "erro no servidor".</p>
+    <p>Uma <strong>API</strong> é um endereço feito para programas, e não para pessoas: em vez de uma página bonita, ela devolve dados, quase sempre em JSON (aula 105).</p>
+
+    <h2>Instalando e usando requests</h2>
+    <p>A biblioteca <code>requests</code> não vem com o Python. Instale dentro do seu ambiente virtual (aula 60):</p>
+<pre class="codigo"><code>pip install requests</code></pre>
+    <p>Este exemplo consulta um CEP no ViaCEP, um serviço público brasileiro:</p>
+<pre class="codigo"><code>import requests
+
+resposta = requests.get("https://viacep.com.br/ws/01001000/json/", timeout=10)
+print("Status:", resposta.status_code)
+
+if resposta.status_code == 200:
+    dados = resposta.json()          # transforma o JSON em dicionário
+    print(dados["logradouro"], "-", dados["localidade"], "/", dados["uf"])
+else:
+    print("Algo deu errado.")</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Sempre passe <code>timeout</code>. Sem ele, se o servidor não responder, seu programa pode ficar esperando para sempre. E trate erros de conexão com <code>try/except requests.RequestException</code> (aula 53).</div>
+    <p>O <code>resposta.json()</code> faz o mesmo que <code>json.loads(resposta.text)</code>. Dá para treinar essa parte sem internet, com uma resposta de exemplo guardada num texto:</p>
+<pre class="codigo"><code>import json
+
+texto = '{"cep": "01001-000", "logradouro": "Praça da Sé", "localidade": "São Paulo", "uf": "SP"}'
+dados = json.loads(texto)
+print(f"{dados['logradouro']}, {dados['localidade']} - {dados['uf']}")</code></pre>
+    <p class="saida">Praça da Sé, São Paulo - SP</p>
+
+    <h2>Um servidor em um comando</h2>
+    <p>O Python traz um servidor web simples. Entre numa pasta com um arquivo <code>index.html</code> e rode:</p>
+<pre class="codigo"><code>python -m http.server 8000</code></pre>
+    <p>Agora abra <code>http://localhost:8000</code> no navegador: a página é servida pelo seu computador. Aperte <code>Ctrl+C</code> no terminal para parar. É ótimo para testar sites estáticos, como os das aulas 241 a 243.</p>
+    <div class="dica"><strong>Dica:</strong> <code>localhost</code> quer dizer "este computador". Só você consegue abrir esse endereço; não é um site público.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>resposta = requests.get(url, timeout=10)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva uma função <code>descrever_status(codigo)</code> que devolve <code>"sucesso"</code> para 200, <code>"não encontrado"</code> para 404 e <code>"erro"</code> para os outros. Teste com 200, 404 e 500.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def descrever_status(codigo):
+    if codigo == 200:
+        return "sucesso"
+    if codigo == 404:
+        return "não encontrado"
+    return "erro"
+
+for c in [200, 404, 500]:
+    print(c, descrever_status(c))</code></pre>
+      <p class="saida">200 sucesso<br>
+404 não encontrado<br>
+500 erro</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Modifique o exemplo do ViaCEP para pedir um CEP ao usuário com <code>input</code> e tratar falta de internet.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import requests
+
+cep = input("CEP (só números): ").strip()
+try:
+    resposta = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=10)
+    dados = resposta.json()
+    if "erro" in dados:
+        print("CEP não encontrado.")
+    else:
+        print(dados["logradouro"], "-", dados["localidade"])
+except requests.RequestException:
+    print("Não consegui conectar. Confira sua internet.")</code></pre>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="110-argumentos-linha-comando.html" rel="prev">← Aula anterior</a>
+      <a href="112-web-scraping.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

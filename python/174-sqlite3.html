@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 174 · sqlite3: conectar, criar tabela, CRUD — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use o módulo sqlite3 do Python para montar um pequeno sistema completo: conectar, criar a tabela e fazer o CRUD com funções.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 174 · sqlite3: conectar, criar tabela, CRUD</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Conectar a um banco SQLite em memória ou em arquivo</li>
+        <li>Usar cursor, fetchone, fetchall e lastrowid</li>
+        <li>Organizar o CRUD em funções reutilizáveis</li>
+        <li>Ler as linhas como dicionários com row_factory</li>
+      </ul>
+    </div>
+
+    <h2>Conexão e cursor</h2>
+    <p>A conexão (<code>connect</code>) representa o banco. O <strong>cursor</strong> é quem executa os comandos e percorre os resultados. O <code>con.execute</code> que usamos até aqui é um atalho que cria um cursor para você.</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT, autor TEXT)")
+cur.execute("INSERT INTO livros (titulo, autor) VALUES (?, ?)", ("Dom Casmurro", "Machado de Assis"))
+print("id do novo livro:", cur.lastrowid)
+cur.execute("SELECT titulo, autor FROM livros")
+print(cur.fetchone())
+print(cur.fetchone())
+con.close()</code></pre>
+    <p class="saida">id do novo livro: 1<br>
+('Dom Casmurro', 'Machado de Assis')<br>
+None</p>
+    <p><code>lastrowid</code> diz o <code>id</code> gerado no último <code>INSERT</code>. Quando não há mais linhas, <code>fetchone()</code> devolve <code>None</code>.</p>
+
+    <h2>CRUD em funções</h2>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+
+def criar_banco():
+    con = sqlite3.connect(":memory:")
+    con.execute("CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT, autor TEXT)")
+    return con
+
+
+def adicionar(con, titulo, autor):
+    with con:
+        cur = con.execute("INSERT INTO livros (titulo, autor) VALUES (?, ?)", (titulo, autor))
+    return cur.lastrowid
+
+
+def listar(con):
+    return con.execute("SELECT id, titulo, autor FROM livros ORDER BY titulo").fetchall()
+
+
+def trocar_autor(con, id_livro, autor):
+    with con:
+        con.execute("UPDATE livros SET autor = ? WHERE id = ?", (autor, id_livro))
+
+
+def remover(con, id_livro):
+    with con:
+        con.execute("DELETE FROM livros WHERE id = ?", (id_livro,))
+
+
+con = criar_banco()
+adicionar(con, "O Cortiço", "Aluísio Azevedo")
+n = adicionar(con, "Vidas Secas", "Graciliano")
+adicionar(con, "Iracema", "José de Alencar")
+trocar_autor(con, n, "Graciliano Ramos")
+remover(con, 1)
+for livro in listar(con):
+    print(livro)
+con.close()</code></pre>
+    <p class="saida">(3, 'Iracema', 'José de Alencar')<br>
+(2, 'Vidas Secas', 'Graciliano Ramos')</p>
+    <div class="atencao"><strong>Atenção:</strong> Uma tupla de um item só precisa de vírgula: <code>(id_livro,)</code>. Sem a vírgula, <code>(id_livro)</code> é só um número entre parênteses e o <code>sqlite3</code> reclama.</div>
+
+    <h2>Linhas como dicionários</h2>
+    <p>Com <code>row_factory = sqlite3.Row</code>, cada linha pode ser lida pelo nome da coluna:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.row_factory = sqlite3.Row
+con.execute("CREATE TABLE times (nome TEXT, estado TEXT, titulos INTEGER)")
+con.executemany("INSERT INTO times VALUES (?, ?, ?)",
+                [("Bahia", "BA", 2), ("Fortaleza", "CE", 0)])
+for t in con.execute("SELECT * FROM times"):
+    print(t["nome"], "-", t["estado"], "-", t["titulos"], "título(s) brasileiro(s)")
+con.close()</code></pre>
+    <p class="saida">Bahia - BA - 2 título(s) brasileiro(s)<br>
+Fortaleza - CE - 0 título(s) brasileiro(s)</p>
+    <div class="dica"><strong>Dica:</strong> Quando você roda este código no seu computador com <code>sqlite3.connect("biblioteca.db")</code>, o arquivo <code>biblioteca.db</code> aparece na pasta. Programas como o DB Browser for SQLite abrem esse arquivo para você ver as tabelas.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>cur.execute("SELECT * FROM livros WHERE id = ?", (1,))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva a função <code>buscar_por_autor(con, trecho)</code> que devolve os títulos cujo autor contém o trecho (use <code>LIKE</code> com <code>%</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+
+def buscar_por_autor(con, trecho):
+    sql = "SELECT titulo FROM livros WHERE autor LIKE ? ORDER BY titulo"
+    return [linha[0] for linha in con.execute(sql, (f"%{trecho}%",))]
+
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT, autor TEXT)")
+con.executemany("INSERT INTO livros (titulo, autor) VALUES (?, ?)", [
+    ("Dom Casmurro", "Machado de Assis"),
+    ("Memórias Póstumas de Brás Cubas", "Machado de Assis"),
+    ("A Hora da Estrela", "Clarice Lispector"),
+])
+print(buscar_por_autor(con, "Machado"))
+con.close()</code></pre>
+      <p class="saida">['Dom Casmurro', 'Memórias Póstumas de Brás Cubas']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva <code>contar_livros(con)</code>, que devolve quantos livros existem na tabela, usando <code>fetchone()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+
+def contar_livros(con):
+    return con.execute("SELECT COUNT(*) FROM livros").fetchone()[0]
+
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT)")
+con.executemany("INSERT INTO livros (titulo) VALUES (?)", [("A",), ("B",), ("C",)])
+print(contar_livros(con))
+con.close()</code></pre>
+      <p class="saida">3</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="173-sql-relacoes.html" rel="prev">← Aula anterior</a>
+      <a href="175-placeholders.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

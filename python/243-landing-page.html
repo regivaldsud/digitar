@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 243 · Projeto: uma landing page com HTML e CSS — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte uma landing page de verdade, com cabeçalho, destaques, depoimentos e rodapé, gerada por um script Python.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 12 · Extras</p>
+    <h1>Aula 243 · Projeto: uma landing page com HTML e CSS</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Planejar as partes de uma landing page</li>
+        <li>Escrever o HTML e o CSS de cada parte</li>
+        <li>Gerar a página a partir de dados guardados em Python</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que vamos construir</h2>
+    <p>Uma <strong>landing page</strong> é uma página única que apresenta um produto e convida a pessoa a fazer algo, como se inscrever. A nossa vai divulgar uma (imaginária) <strong>Feira de Ciências da Escola</strong>. Ela terá:</p>
+    <ul>
+      <li>um cabeçalho com o nome do evento e um botão;</li>
+      <li>três cartões com os destaques, lado a lado (flexbox);</li>
+      <li>um rodapé com a data e o local.</li>
+    </ul>
+    <p>Use o que você viu nas aulas 241 (HTML) e 242 (CSS).</p>
+
+    <h2>Passo 1: o CSS</h2>
+    <p>Salve como <code>estilo.css</code>:</p>
+<pre class="codigo"><code>body { margin: 0; font-family: Arial, sans-serif; color: #222; }
+.topo { background: #0b6e4f; color: white; text-align: center; padding: 48px 16px; }
+.botao { background: #ffd23f; color: #222; padding: 12px 24px;
+         border-radius: 8px; text-decoration: none; font-weight: bold; }
+.destaques { display: flex; flex-wrap: wrap; gap: 16px; padding: 32px 16px;
+             justify-content: center; }
+.cartao { flex: 1 1 220px; max-width: 300px; padding: 16px;
+          border: 2px solid #0b6e4f; border-radius: 8px; }
+.rodape { background: #eee; text-align: center; padding: 16px; }</code></pre>
+    <p>O <code>flex-wrap: wrap</code> com <code>flex: 1 1 220px</code> faz os cartões descerem um embaixo do outro no celular, quando não cabem lado a lado.</p>
+
+    <h2>Passo 2: os dados em Python</h2>
+    <p>Em vez de escrever cada cartão à mão, guardamos o conteúdo numa lista de dicionários. Para mudar a página, basta mudar os dados:</p>
+<pre class="codigo"><code>evento = {
+    "nome": "Feira de Ciências 2026",
+    "frase": "Venha ver os projetos dos alunos!",
+    "data": "12 de setembro, das 9h às 16h",
+    "local": "Quadra da escola",
+}
+
+destaques = [
+    {"titulo": "Robótica", "texto": "Robôs feitos com sucata e Arduino."},
+    {"titulo": "Química", "texto": "Vulcão de bicarbonato e outras reações."},
+    {"titulo": "Programação", "texto": "Jogos criados em Python pelos alunos."},
+]</code></pre>
+
+    <h2>Passo 3: o gerador da página</h2>
+    <p>Este script lê os dados e escreve <code>index.html</code>. Salve como <code>gerar_pagina.py</code>, na mesma pasta de <code>dados.py</code> e <code>estilo.css</code>, e rode com <code>python gerar_pagina.py</code>:</p>
+<pre class="codigo"><code>from pathlib import Path
+from dados import evento, destaques
+
+
+def cartao(item):
+    return (f'    &lt;div class="cartao"&gt;\n'
+            f'      &lt;h2&gt;{item["titulo"]}&lt;/h2&gt;\n'
+            f'      &lt;p&gt;{item["texto"]}&lt;/p&gt;\n'
+            f'    &lt;/div&gt;')
+
+
+cartoes = "\n".join(cartao(item) for item in destaques)
+
+pagina = f"""&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;{evento["nome"]}&lt;/title&gt;
+  &lt;link rel="stylesheet" href="estilo.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header class="topo"&gt;
+    &lt;h1&gt;{evento["nome"]}&lt;/h1&gt;
+    &lt;p&gt;{evento["frase"]}&lt;/p&gt;
+    &lt;a class="botao" href="#local"&gt;Quero participar&lt;/a&gt;
+  &lt;/header&gt;
+  &lt;main class="destaques"&gt;
+{cartoes}
+  &lt;/main&gt;
+  &lt;footer class="rodape" id="local"&gt;
+    &lt;p&gt;{evento["data"]} · {evento["local"]}&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"""
+
+Path("index.html").write_text(pagina, encoding="utf-8")
+print(f"Página gerada com {len(destaques)} cartões em index.html")</code></pre>
+    <p class="saida">Página gerada com 3 cartões em index.html</p>
+    <p>Abra <code>index.html</code> no navegador. O botão leva até o rodapé porque o link <code>href="#local"</code> aponta para o elemento com <code>id="local"</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>&lt;meta name="viewport" ...&gt;</code> é o que faz a página ficar boa no celular. Sem ele, o celular mostra a página minúscula, como se fosse uma tela de computador.</div>
+    <div class="dica"><strong>Dica:</strong> Desafios extras: adicione uma seção de depoimentos, troque as cores do tema, ou publique a página de graça com o GitHub Pages (veja a aula 244).</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>&lt;a class="botao" href="#local"&gt;Quero participar&lt;/a&gt;</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Adicione aos dados um quarto destaque, "Astronomia", e rode o gerador de novo. Quantos cartões a página passa a ter?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>destaques = [
+    {"titulo": "Robótica", "texto": "Robôs feitos com sucata e Arduino."},
+    {"titulo": "Química", "texto": "Vulcão de bicarbonato e outras reações."},
+    {"titulo": "Programação", "texto": "Jogos criados em Python pelos alunos."},
+    {"titulo": "Astronomia", "texto": "Telescópio caseiro e mapa do céu."},
+]
+print(len(destaques), "cartões")</code></pre>
+      <p class="saida">4 cartões</p>
+      <p>Basta acrescentar o dicionário na lista <code>destaques</code> do arquivo <code>dados.py</code>; o gerador cria o cartão novo sozinho.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva uma função <code>depoimento(nome, texto)</code> que devolva o HTML de um depoimento dentro de <code>&lt;blockquote&gt;</code>, com o nome numa tag <code>&lt;cite&gt;</code>, e teste com um exemplo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def depoimento(nome, texto):
+    return f"&lt;blockquote&gt;&lt;p&gt;{texto}&lt;/p&gt;&lt;cite&gt;{nome}&lt;/cite&gt;&lt;/blockquote&gt;"
+
+
+print(depoimento("Prof. Carla", "A melhor feira dos últimos anos!"))</code></pre>
+      <p class="saida">&lt;blockquote&gt;&lt;p&gt;A melhor feira dos últimos anos!&lt;/p&gt;&lt;cite&gt;Prof. Carla&lt;/cite&gt;&lt;/blockquote&gt;</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="242-css.html" rel="prev">← Aula anterior</a>
+      <a href="244-git-github.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 113 · Automatizando o navegador com Selenium — Curso de Python · DIGITAR</title>
+<meta name="description" content="Controle um navegador de verdade com Selenium para abrir páginas, preencher campos e clicar em botões automaticamente.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 113 · Automatizando o navegador com Selenium</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Para que serve o Selenium e quando ele é melhor que <code>requests</code></li>
+        <li>Abrir uma página e encontrar elementos</li>
+        <li>Digitar, clicar e esperar a página carregar</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Um robô que usa o navegador</h2>
+    <p>O <code>requests</code> (aula 111) só baixa o HTML. Muitos sites montam a página com JavaScript, e aí o conteúdo só aparece num navegador de verdade. O <strong>Selenium</strong> abre o Chrome ou o Firefox e controla tudo pelo Python: digita, clica, rola a página. Também é muito usado para <strong>testar</strong> sites automaticamente.</p>
+<pre class="codigo"><code>pip install selenium</code></pre>
+    <p>As versões novas do Selenium baixam sozinhas o "driver" do navegador. Você só precisa ter o Chrome (ou Firefox) instalado.</p>
+
+    <h2>Primeiro robô</h2>
+    <p>Este exemplo abre o site de documentação do Python, pesquisa uma palavra e mostra o título da página de resultados:</p>
+<pre class="codigo"><code>from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+navegador = webdriver.Chrome()
+try:
+    navegador.get("https://docs.python.org/pt-br/3/")
+    busca = navegador.find_element(By.NAME, "q")
+    busca.send_keys("pathlib")
+    busca.send_keys(Keys.ENTER)
+
+    WebDriverWait(navegador, 10).until(EC.title_contains("Buscar"))
+    print("Título:", navegador.title)
+finally:
+    navegador.quit()</code></pre>
+    <ul>
+      <li><code>find_element(By.NAME, "q")</code> acha o campo pelo atributo <code>name</code>; também existem <code>By.ID</code>, <code>By.CSS_SELECTOR</code> e outros;</li>
+      <li><code>send_keys</code> digita (que nem você no DIGITAR!) e <code>click()</code> clica;</li>
+      <li><code>WebDriverWait</code> espera até uma condição acontecer, em vez de chutar um tempo.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Não use robôs para fazer login em contas, comprar, votar em enquetes ou burlar CAPTCHAs. Além de ir contra as regras da maioria dos sites, pode bloquear a sua conta. Use o Selenium para tarefas suas e para testar os seus próprios sites.</div>
+    <div class="dica"><strong>Dica:</strong> O <code>try/finally</code> garante que o navegador fecha mesmo se der erro no meio (aula 53). Sem ele, janelas de Chrome vão se acumulando.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>navegador.find_element(By.ID, "busca").click()</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um robô que abre <code>https://www.python.org</code>, mostra o título da página e fecha o navegador.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from selenium import webdriver
+
+navegador = webdriver.Chrome()
+try:
+    navegador.get("https://www.python.org")
+    print(navegador.title)
+finally:
+    navegador.quit()</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Por que <code>WebDriverWait</code> é melhor do que <code>time.sleep(5)</code> para esperar a página?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">time.sleep(5) espera sempre 5 segundos: às vezes é pouco (a página ainda não<br>
+carregou) e às vezes é demais (perde tempo). O WebDriverWait espera só até a<br>
+condição acontecer, com um limite máximo.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="112-web-scraping.html" rel="prev">← Aula anterior</a>
+      <a href="114-subprocess.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

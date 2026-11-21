@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 240 · Comandos de terminal mais usados (Linux, Mac, WSL2) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Os comandos de terminal que todo programador usa no Linux, no macOS e no WSL2 do Windows, comparados com os do Prompt de Comando.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 12 · Extras</p>
+    <h1>Aula 240 · Comandos de terminal mais usados (Linux, Mac, WSL2)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Navegar e mexer em pastas e arquivos com <code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>mkdir</code>, <code>cp</code>, <code>mv</code> e <code>rm</code></li>
+        <li>Comparar os comandos do Linux/Mac com os do Prompt de Comando do Windows</li>
+        <li>Instalar o WSL2 para ter um Linux dentro do Windows</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Por que aprender o terminal do Linux</h2>
+    <p>Na aula 03 você usou o Prompt de Comando do Windows. Só que a maioria dos servidores da internet roda Linux, e o macOS usa praticamente os mesmos comandos. Por isso vale aprender os dois "sotaques" do terminal.</p>
+    <p>No Windows 10 e 11 dá para ter um Linux de verdade, sem apagar nada, com o <strong>WSL2</strong> (Subsistema do Windows para Linux). Abra o PowerShell como administrador e digite:</p>
+<pre class="codigo"><code>wsl --install</code></pre>
+    <p>Depois de reiniciar o computador, procure <strong>Ubuntu</strong> no menu Iniciar, crie um usuário e uma senha, e pronto: você tem um terminal Linux.</p>
+
+    <h2>Os comandos do dia a dia</h2>
+<pre class="codigo"><code>pwd                     # mostra em que pasta você está
+ls                      # lista os arquivos (ls -la mostra os ocultos e detalhes)
+cd projetos             # entra na pasta projetos
+cd ..                   # volta uma pasta
+cd ~                    # vai para a sua pasta pessoal
+mkdir jogos             # cria a pasta jogos
+touch anotacoes.txt     # cria um arquivo vazio
+cat anotacoes.txt       # mostra o conteúdo do arquivo
+cp ola.py copia.py      # copia um arquivo
+mv copia.py velho.py    # move ou renomeia
+rm velho.py             # apaga o arquivo (não vai para a lixeira!)
+clear                   # limpa a tela</code></pre>
+    <p>No terminal do Linux, o texto depois de <code>#</code> é um comentário, igual no Python.</p>
+    <p>Comparando com o Windows: <code>dir</code> vira <code>ls</code>, <code>cls</code> vira <code>clear</code>, <code>copy</code> vira <code>cp</code>, <code>move</code> vira <code>mv</code>, <code>del</code> vira <code>rm</code> e <code>type</code> vira <code>cat</code>. No Linux, as pastas são separadas por <code>/</code> (como em <code>/home/ana/projetos</code>); no Windows, por <code>\</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>rm</code> apaga para sempre, sem lixeira. E <code>rm -r pasta</code> apaga a pasta inteira com tudo dentro. Confira duas vezes o nome antes de apertar Enter.</div>
+    <div class="dica"><strong>Dica:</strong> No Linux e no Mac, o Python costuma se chamar <code>python3</code> no terminal: use <code>python3 ola.py</code> e <code>python3 -m venv .venv</code>.</div>
+
+    <h2>O mesmo trabalho feito pelo Python</h2>
+    <p>Tudo o que você faz no terminal também dá para fazer em Python, com o <code>pathlib</code> (visto na aula 103). Este script cria uma pasta, coloca um arquivo nela e lista o que tem dentro — o equivalente a <code>mkdir</code>, <code>touch</code> e <code>ls</code>:</p>
+<pre class="codigo"><code>from pathlib import Path
+
+pasta = Path("exercicios")
+pasta.mkdir(exist_ok=True)
+(pasta / "ola.py").write_text('print("oi")\n', encoding="utf-8")
+(pasta / "notas.txt").write_text("Estudar terminal\n", encoding="utf-8")
+
+for arquivo in sorted(pasta.iterdir()):
+    print(arquivo.name)</code></pre>
+    <p class="saida">notas.txt<br>
+ola.py</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>mkdir -p projetos/jogos &amp;&amp; cd projetos/jogos</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva os comandos do Linux para criar a pasta <code>escola</code>, entrar nela, criar o arquivo <code>tarefas.txt</code> e listar o conteúdo da pasta.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>mkdir escola
+cd escola
+touch tarefas.txt
+ls</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Qual é o comando do Linux equivalente a cada comando do Windows: <code>dir</code>, <code>cls</code>, <code>del nota.txt</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>ls
+clear
+rm nota.txt</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Faça um script Python que crie a pasta <code>backup</code> e, dentro dela, os arquivos <code>dia1.txt</code>, <code>dia2.txt</code> e <code>dia3.txt</code>, mostrando os nomes no fim.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from pathlib import Path
+
+backup = Path("backup")
+backup.mkdir(exist_ok=True)
+for numero in range(1, 4):
+    (backup / f"dia{numero}.txt").write_text("", encoding="utf-8")
+
+for arquivo in sorted(backup.iterdir()):
+    print(arquivo.name)</code></pre>
+      <p class="saida">dia1.txt<br>
+dia2.txt<br>
+dia3.txt</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="225-api-rest.html" rel="prev">← Aula anterior</a>
+      <a href="241-html.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

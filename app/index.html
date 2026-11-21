@@ -915,8 +915,8 @@ const PALAVRAS = [...new Set((
 // plantas e bichos
 "planta flor folha raiz semente horta fazenda gado vaca boi cavalo porco galinha pato ganso carneiro cabra ovelha coelho cachorro "+
 "baleia golfinho polvo caranguejo lagosta ostra inseto formiga abelha mosca mosquito aranha cobra lagarto crocodilo tartaruga sapo urso lobo raposa veado javali tigre elefante girafa zebra macaco gorila canguru coala pinguim coruja pomba andorinha pardal papagaio arara tucano avestruz morcego texugo castor esquilo "+
-// trabalho e gestao
-"gestor gerente planilha tabela coluna soma percentual lucro despesa contrato cliente fornecedor produto venda compra estoque entrega pedido fatura boleto dinheiro moeda banco conta senha "+
+// escola e brincadeiras
+"escola caderno borracha mochila estojo tesoura cola livro recreio quadra futebol corrida pular brincar desenho pintura teatro festa amigo colega turma professor diretor biblioteca prova nota tarefa projeto feira dinheiro moeda banco conta senha "+
 // seguranca e cidadania
 "acidente bombeiro cidade bairro vizinho advogado tribunal direito dever eleitor governo prefeito senador deputado presidente ministro reforma projeto "+
 // palavras curtas e comuns
@@ -1153,7 +1153,8 @@ function gerarGrupos(teclas, nGrupos, tam, ponderar){
     let s="";
     for(let i=0;i<tam;i++){
       let c = ponderar ? escolherPonderado(teclas) : escolher(teclas);
-      if (s.length && s[s.length-1]===c && teclas.length>1){
+      const dobraOk = teclas.length<=2 && Math.random()<0.4;   // "ffjj", "fjjf": com 2 teclas, alternar só não treina
+      if (s.length && s[s.length-1]===c && teclas.length>1 && !dobraOk){
         const alt=teclas.filter(x=>x!==c);
         c = ponderar ? escolherPonderado(alt) : escolher(alt);
       }
@@ -1239,8 +1240,16 @@ function gerarTexto(licao, parteId){
   if (parteId==="tecla2") return comReforcoBigramas(gerarGrupos(L.base, 14, 5, true), L.base);
   if (parteId==="palavra"){
     if (L.n===11){ // pontuação: palavras seguidas de sinal
-      const ps=gerarPalavras(ALFABETO, 10).split(" ");
-      return ps.map((p,i)=>p+escolher([",",".",";"])).join(" ");
+      const ps=gerarPalavras(ALFABETO, 18).split(" "), frases=[];
+      for (let i=0; i<ps.length; ){
+        let n=Math.min(ps.length-i, 3+Math.floor(Math.random()*3));
+        if (ps.length-i-n < 3) n=ps.length-i;            // não deixa uma sobra de 1 ou 2 palavras virar frase
+        const f=ps.slice(i, i+n);
+        if (n>=4) f[1]+=",";                       // vírgula depois da segunda palavra
+        f[n-1]+= frases.length%3===2 ? ";" : ".";  // ponto no fim; às vezes ponto e vírgula
+        frases.push(f.join(" ")); i+=n;
+      }
+      return frases.join(" ");
     }
     if (L.n===12) return exercicioNumeros();
     // lições 1–3 ainda não têm vogais: padrões curtos de mão alternada e rolagens da linha principal
@@ -2431,6 +2440,9 @@ focarCaptura();
 </script>
 <!-- MODULOS:INICIO — gerado por ferramentas/montar.mjs; edite os arquivos em fonte/ e rode o script -->
 <script>
+window.DIGITAR_TRECHOS = {"trechos":[{"aula":"01-o-que-e-python.html","codigo":"print(\"Olá, mundo!\")"},{"aula":"01-o-que-e-python.html","codigo":"print(\"2 + 3 =\", 2 + 3)"},{"aula":"04-comentarios-docstrings.html","codigo":"# Este programa calcula a media da turma"},{"aula":"10-print.html","codigo":"print(\"Dia\", \"mês\", \"ano\", sep=\"/\")"},{"aula":"14-variaveis.html","codigo":"nome_do_aluno = \"Pedro\""},{"aula":"12-tipos-numeros-bool.html","codigo":"populacao = 215_000_000"},{"aula":"13-conversao-tipos.html","codigo":"total = int(\"12\") + float(\"7.5\")"},{"aula":"17-input.html","codigo":"idade = int(input(\"Quantos anos você tem? \"))"},{"aula":"15-operadores-aritmeticos.html","codigo":"media = (nota1 + nota2 + nota3) / 3"},{"aula":"15-operadores-aritmeticos.html","codigo":"horas, resto = minutos // 60, minutos % 60"},{"aula":"19-operadores-relacionais-logicos.html","codigo":"pode_entrar = 1.40 \u003c= altura \u003c= 1.95 and not chovendo"},{"aula":"18-if-elif-else.html","codigo":"if nota >= 7: print(\"Aprovado\")"},{"aula":"21-none-is-id.html","codigo":"if apelido is None: print(\"Sem apelido\")"},{"aula":"20-fatiamento-len.html","codigo":"print(frase[0:3], frase[-6:], frase[::-1])"},{"aula":"28-split-join-strip.html","codigo":"print(frase.strip().lower().replace(\" \", \"_\"))"},{"aula":"16-formatacao-strings.html","codigo":"print(f\"{'Produto':\u003c12}{preco:>8.2f}\")"},{"aula":"22-while.html","codigo":"while contador \u003c= 10: contador = contador + 1"},{"aula":"24-for-range.html","codigo":"for i in range(1, 11): print(i * 2)"},{"aula":"25-listas.html","codigo":"cores = [\"azul\", \"verde\", \"amarelo\"]"},{"aula":"27-tuplas-enumerate.html","codigo":"for i, nome in enumerate(nomes, start=1):"},{"aula":"29-float-decimal.html","codigo":"from decimal import Decimal"},{"aula":"31-projeto-cpf.html","codigo":"d1 = 0 if resto \u003c 2 else 11 - resto"},{"aula":"32-projeto-jogo-de-adivinhacao.html","codigo":"secreto = random.randint(1, 100)"},{"aula":"40-funcoes.html","codigo":"def dobro(n): return n * 2"},{"aula":"41-argumentos.html","codigo":"def pedir(sabor, tamanho=\"média\"):"},{"aula":"43-args-kwargs.html","codigo":"def somar(*args): return sum(args)"},{"aula":"46-dicionarios.html","codigo":"contagem[voto] = contagem.get(voto, 0) + 1"},{"aula":"49-lambda.html","codigo":"ranking = sorted(alunos, key=lambda a: a[1], reverse=True)"},{"aula":"50-comprehensions.html","codigo":"pares = [n for n in range(20) if n % 2 == 0]"},{"aula":"52-geradores.html","codigo":"numeros = (n * 2 for n in range(10))"},{"aula":"62-json.html","codigo":"json.dump(dados, f, indent=2, ensure_ascii=False)"},{"aula":"61-arquivos.html","codigo":"with open(\"notas.txt\", \"w\", encoding=\"utf-8\") as f:"},{"aula":"53-excecoes.html","codigo":"raise ValueError(\"a nota deve estar entre 0 e 10\")"},{"aula":"66-depuracao.html","codigo":"print(f\"{idade=} {type(idade)=}\")"},{"aula":"68-projeto-treino-de-digitacao.html","codigo":"ppm = (len(digitado) / 5) / (segundos / 60)"},{"aula":"70-classes.html","codigo":"def __init__(self, nome, idade):"},{"aula":"76-heranca.html","codigo":"class Gerente(Funcionario):"},{"aula":"91-type-hints.html","codigo":"precos: dict[str, float] = {\"pão\": 0.75}"},{"aula":"88-dataclasses.html","codigo":"itens: list[str] = field(default_factory=list)"},{"aula":"56-decoradores.html","codigo":"def embrulho(*args, **kwargs):"},{"aula":"81-metodos-especiais.html","codigo":"def __add__(self, outro): return Vetor(self.x + outro.x)"},{"aula":"100-name-main.html","codigo":"if __name__ == \"__main__\":"},{"aula":"140-regex-intro.html","codigo":"cep = re.search(r\"\\d{5}-\\d{3}\", texto)"},{"aula":"175-placeholders.html","codigo":"con.execute(\"DELETE FROM alunos WHERE nome = ?\", (nome,))"}]};
+</script>
+<script>
 /* =====================================================================
    DIGITAR — trilha Programar: digitar símbolos e código Python de verdade
    Embutido no DIGITAR.html por ferramentas/montar.mjs. Os trechos de código
@@ -2755,6 +2767,7 @@ const DICAS = [
 function conselhos(ev){
   const { sessao, errosPorTecla, prog } = ev, out = [];
   if (sessao.prec < 90) out.push("Calma: <b>precisão primeiro</b>. Repita este exercício mais devagar, até errar menos de 1 tecla a cada 10.");
+  else if (sessao.prec < 95) out.push("Boa precisão! Para passar de <b>95%</b>, desacelere só nas teclas em que errou e confira o dedo na mão 3D antes de teclar.");
   else if (sessao.prec >= 97 && sessao.ppm < 25) out.push("Precisão ótima! Na próxima vez tente <b>um pouco mais rápido</b>, sem perder o ritmo.");
   const porDedo = {};
   for (const k in errosPorTecla){
@@ -3064,6 +3077,39 @@ if (retomar){ atual.licao = retomar.li; atual.parte = retomar.pi; iniciarExercic
 renderListaLicoes();
 mudarVista("inicio");
 if (!alunoAtual().nome) abrirAlunos(true);
+})();
+
+</script>
+<script>
+/* Contador de visitas do site (serviço em site-next/).
+ * Só roda quando o DIGITAR é aberto pelo site (http/https). No programa instalado (file://) não carrega
+ * nada e não envia nada. Se o endereço do contador não estiver configurado ou não responder, nada quebra.
+ * O endereço vem de CONTADOR_URL em site/assets/site.js (ferramentas/montar.mjs coloca aqui).
+ * Escuta os eventos do motor pelo aoEvento: não mexe em lições, teste nem jogo. */
+(function(){
+  const CONTADOR_URL = "";
+  if (!/^https?:$/.test(location.protocol)) return;
+  if (!CONTADOR_URL || CONTADOR_URL.indexOf("__") === 0) return;
+
+  const fila = [];
+  let pronto = false;
+  function fase(id){
+    if (pronto && window.Contador) { try { window.Contador.fase(id); } catch(e) {} }
+    else if (fila.length < 50) fila.push(id);
+  }
+  const s = document.createElement("script");
+  s.src = CONTADOR_URL.replace(/\/$/, "") + "/contador.js";
+  s.defer = true;
+  s.setAttribute("data-fase", "app");
+  s.onload = () => { pronto = true; fila.splice(0).forEach(fase); };
+  s.onerror = () => { fila.length = 0; };
+  document.head.appendChild(s);
+
+  aoEvento("sessao", ev => {
+    fase("exercicio");
+    if (!ev.custom && !ev.prog && typeof ev.licao === "number") fase("licao-" + (ev.licao + 1));
+  });
+  aoEvento("teste", () => fase("teste"));
 })();
 
 </script>

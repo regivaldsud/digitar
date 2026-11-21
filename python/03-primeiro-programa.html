@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 03 · Primeiro arquivo .py, o interpretador e o terminal — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda o que é o interpretador do Python, os comandos básicos do terminal e como criar e rodar um arquivo .py no VS Code.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 1 · Primeiros passos</p>
+    <h1>Aula 03 · Primeiro arquivo .py, o interpretador e o terminal</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é o interpretador do Python e como ele lê o seu código</li>
+        <li>Navegar entre pastas no terminal com <code>cd</code>, <code>dir</code> e <code>mkdir</code></li>
+        <li>Criar uma pasta de projeto e abrir no VS Code</li>
+        <li>Escrever, salvar e rodar um arquivo <code>.py</code> pelo botão do VS Code e pelo terminal</li>
+      </ul>
+    </div>
+
+    <h2>O interpretador</h2>
+    <p>O computador não entende Python diretamente. Quem entende é o <strong>interpretador</strong>: o programa <code>python</code> que você instalou na aula 02. Ele lê o seu arquivo e executa as instruções uma de cada vez, de cima para baixo.</p>
+    <p>Aqui no site, o interpretador roda dentro do navegador. Repare que cada linha só roda depois da anterior:</p>
+<pre class="codigo" data-executar="sim"><code>print("Linha 1: o interpretador começou a ler.")
+print("Linha 2: 10 vezes 3 é", 10 * 3)
+print("Linha 3: fim do programa.")</code></pre>
+    <p class="saida">Linha 1: o interpretador começou a ler.<br>
+Linha 2: 10 vezes 3 é 30<br>
+Linha 3: fim do programa.</p>
+    <p>Se uma linha tem um problema, o interpretador para ali. As linhas de cima já rodaram; as de baixo não rodam mais:</p>
+<pre class="codigo" data-executar="sim"><code>print("Esta linha roda.")
+print("Esta também.")
+prinnt("Aqui tem um erro de digitação.")
+print("Esta nunca vai aparecer.")</code></pre>
+    <p class="saida">Esta linha roda.<br>
+Esta também.<br>
+NameError: name 'prinnt' is not defined. Did you mean: 'print'?</p>
+    <p>É por isso que digitar com atenção importa tanto em programação: uma letra trocada para o programa inteiro. Na aula 06 você aprende a ler essas mensagens de erro.</p>
+
+    <h2>O que é o terminal</h2>
+    <p>O <strong>terminal</strong> (no Windows: Prompt de Comando ou PowerShell) é uma janela onde você dá ordens ao computador digitando, em vez de clicar. Parece antigo, mas programadores usam o terminal todos os dias — e quem digita bem tem vantagem!</p>
+    <p>O terminal está sempre "dentro" de uma pasta. O caminho antes do <code>&gt;</code> mostra onde você está, por exemplo <code>C:\Users\Ana&gt;</code>.</p>
+<pre class="codigo"><code>dir                 :: lista o que existe na pasta atual (no PowerShell, no Linux e no macOS: ls)
+mkdir projetos      :: cria a pasta "projetos"
+cd projetos         :: entra na pasta "projetos"
+cd ..               :: volta uma pasta para cima
+cls                 :: limpa a tela (no Linux e no macOS: clear)</code></pre>
+    <p>O texto depois de <code>::</code> é só explicação; digite apenas o comando.</p>
+    <div class="dica"><strong>Dica:</strong> Aperte a tecla <strong>Tab</strong> para completar nomes de pastas e arquivos, e a <strong>seta para cima</strong> para repetir comandos anteriores. Economiza muita digitação.</div>
+
+    <h2>Criando o projeto</h2>
+    <p>Vamos criar uma pasta para os exercícios do curso e abrir no VS Code:</p>
+<pre class="codigo"><code>cd %USERPROFILE%\Documents
+mkdir curso-python
+cd curso-python
+code .</code></pre>
+    <p>O comando <code>code .</code> abre a pasta atual (o ponto significa "aqui") no VS Code. Se ele não funcionar, abra o VS Code e use <strong>Arquivo › Abrir Pasta</strong>. No Linux e no macOS, troque a primeira linha por <code>cd ~/Documents</code>.</p>
+
+    <h2>Seu primeiro arquivo .py</h2>
+    <p>No VS Code, clique em <strong>Novo Arquivo</strong>, dê o nome <code>ola.py</code> e escreva o código abaixo. Você também pode executá-lo aqui para ver o que vai acontecer:</p>
+<pre class="codigo" data-executar="sim"><code>print("Olá! Este é meu primeiro arquivo Python.")
+print("Ele está salvo no meu computador.")</code></pre>
+    <p class="saida">Olá! Este é meu primeiro arquivo Python.<br>
+Ele está salvo no meu computador.</p>
+    <p>Salve com <code>Ctrl+S</code>. A extensão <code>.py</code> avisa ao computador que o arquivo é um programa Python.</p>
+    <p>Um arquivo pode ter quantas linhas você quiser. Este aqui monta um pequeno cartão de apresentação:</p>
+<pre class="codigo" data-executar="sim"><code>print("==========================")
+print("  Nome: Pedro Henrique")
+print("  Cidade: Fortaleza - CE")
+print("  Time: Ceará")
+print("==========================")</code></pre>
+    <p class="saida">==========================<br>
+&nbsp;&nbsp;Nome: Pedro Henrique<br>
+&nbsp;&nbsp;Cidade: Fortaleza - CE<br>
+&nbsp;&nbsp;Time: Ceará<br>
+==========================</p>
+
+    <h2>Rodando o programa</h2>
+    <p>Há dois jeitos:</p>
+    <ul>
+      <li>Clique no triângulo <strong>▶ Run Python File</strong> no canto superior direito do VS Code.</li>
+      <li>Ou abra o terminal do próprio VS Code (<strong>Terminal › Novo Terminal</strong>, ou <code>Ctrl+'</code>) e digite o comando abaixo.</li>
+    </ul>
+<pre class="codigo"><code>python ola.py</code></pre>
+    <p class="saida">Olá! Este é meu primeiro arquivo Python.<br>
+Ele está salvo no meu computador.</p>
+    <div class="atencao"><strong>Atenção:</strong> Para rodar <code>python ola.py</code>, o terminal precisa estar <strong>na mesma pasta</strong> do arquivo. Se aparecer <code>can't open file ... No such file or directory</code>, use <code>cd</code> para entrar na pasta certa ou confira se o arquivo foi salvo.</div>
+    <div class="atencao"><strong>Atenção:</strong> Não digite <code>python ola.py</code> dentro do modo interativo (<code>&gt;&gt;&gt;</code>). Esse comando é do terminal. Se você estiver no <code>&gt;&gt;&gt;</code>, saia com <code>exit()</code> primeiro.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>cd curso-python</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva os comandos de terminal para criar uma pasta chamada <code>jogos</code>, entrar nela e listar o conteúdo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>mkdir jogos
+cd jogos
+dir</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie um arquivo <code>apresentacao.py</code> que mostre seu nome, sua idade e sua comida favorita, cada um em uma linha. Qual comando roda esse arquivo no terminal?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Meu nome é Lucas")
+print("Tenho 13 anos")
+print("Minha comida favorita é feijoada")</code></pre>
+      <p class="saida">Meu nome é Lucas<br>
+Tenho 13 anos<br>
+Minha comida favorita é feijoada</p>
+      <p>No terminal, dentro da pasta do arquivo: <code>python apresentacao.py</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Você está na pasta <code>C:\Users\Ana\Documents\curso-python\jogos</code> e quer voltar para <code>curso-python</code>. Qual comando usa?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>cd ..</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O programa abaixo tem quatro linhas, mas só duas aparecem na tela. Por quê? Corrija para todas aparecerem: <code>print("Um")</code>, <code>print("Dois")</code>, <code>pritn("Três")</code>, <code>print("Quatro")</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Um")
+print("Dois")
+print("Três")
+print("Quatro")</code></pre>
+      <p class="saida">Um<br>
+Dois<br>
+Três<br>
+Quatro</p>
+      <p>A terceira linha tinha <code>pritn</code> em vez de <code>print</code>. O interpretador parou nela com um erro, e por isso a quarta linha também não rodou.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> O que significa o ponto em <code>code .</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O ponto significa "a pasta atual". code . abre no VS Code a pasta onde o terminal está.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="02-instalando-python.html" rel="prev">← Aula anterior</a>
+      <a href="04-comentarios-docstrings.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

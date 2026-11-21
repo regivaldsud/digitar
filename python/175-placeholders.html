@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 175 · Placeholders e como evitar SQL Injection — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda o ataque de SQL Injection e por que sempre usar placeholders (?) para colocar valores nos comandos SQL.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 175 · Placeholders e como evitar SQL Injection</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é SQL Injection e por que é perigoso</li>
+        <li>Como usar placeholders <code>?</code> e com nome (<code>:nome</code>)</li>
+        <li>Por que nunca montar SQL com f-string ou <code>+</code></li>
+      </ul>
+    </div>
+
+    <h2>O perigo de montar SQL com texto</h2>
+    <p>Imagine uma tela de login que monta o comando juntando textos. Se alguém digitar um "nome" esperto, ele muda o sentido do SQL. Isso se chama <strong>SQL Injection</strong> e é uma das falhas de segurança mais comuns do mundo:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE usuarios (nome TEXT, senha TEXT)")
+con.execute("INSERT INTO usuarios VALUES ('ana', 'segredo123')")
+
+nome = "qualquer' OR '1'='1"
+sql = f"SELECT * FROM usuarios WHERE nome = '{nome}'"
+print(sql)
+print("Linhas encontradas:", len(con.execute(sql).fetchall()))
+con.close()</code></pre>
+    <p class="saida">SELECT * FROM usuarios WHERE nome = 'qualquer' OR '1'='1'<br>
+Linhas encontradas: 1</p>
+    <p>O texto digitado fechou a aspa e acrescentou <code>OR '1'='1'</code>, que é sempre verdadeiro. Resultado: o comando devolve usuários sem saber o nome certo.</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca monte comandos SQL com f-string, <code>+</code> ou <code>format</code> usando dados que vieram do usuário, de um formulário ou de um arquivo.</div>
+
+    <h2>A solução: placeholders</h2>
+    <p>Com o <strong>placeholder</strong> <code>?</code>, você manda o comando e os valores separados. O banco trata o valor sempre como dado, nunca como parte do comando:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE usuarios (nome TEXT, senha TEXT)")
+con.execute("INSERT INTO usuarios VALUES (?, ?)", ("ana", "segredo123"))
+
+nome = "qualquer' OR '1'='1"
+linhas = con.execute("SELECT * FROM usuarios WHERE nome = ?", (nome,)).fetchall()
+print("Linhas encontradas:", len(linhas))
+print(con.execute("SELECT nome FROM usuarios WHERE nome = ?", ("ana",)).fetchall())
+con.close()</code></pre>
+    <p class="saida">Linhas encontradas: 0<br>
+[('ana',)]</p>
+
+    <h2>Placeholders com nome</h2>
+    <p>Quando há muitos valores, use <code>:nome</code> e passe um dicionário. Fica mais fácil de ler:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE contatos (nome TEXT, cidade TEXT, telefone TEXT)")
+contato = {"nome": "Beto", "cidade": "Belém", "telefone": "(91) 90000-0000"}
+con.execute("INSERT INTO contatos VALUES (:nome, :cidade, :telefone)", contato)
+print(con.execute("SELECT * FROM contatos WHERE cidade = :c", {"c": "Belém"}).fetchone())
+con.close()</code></pre>
+    <p class="saida">('Beto', 'Belém', '(91) 90000-0000')</p>
+    <div class="dica"><strong>Dica:</strong> Placeholders servem só para <strong>valores</strong>. Nomes de tabela ou de coluna não podem ser <code>?</code>. Se precisar escolher a coluna, confira o nome contra uma lista de nomes permitidos.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>con.execute("SELECT * FROM usuarios WHERE nome = ?", (nome,))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Reescreva este código de forma segura: <code>con.execute(f"DELETE FROM alunos WHERE nome = '{nome}'")</code>. Teste com uma tabela de dois alunos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (nome TEXT)")
+con.executemany("INSERT INTO alunos VALUES (?)", [("Ana",), ("Caio",)])
+nome = "Ana"
+con.execute("DELETE FROM alunos WHERE nome = ?", (nome,))
+print(con.execute("SELECT * FROM alunos").fetchall())
+con.close()</code></pre>
+      <p class="saida">[('Caio',)]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Insira três produtos com <code>executemany</code> e placeholders com nome, usando uma lista de dicionários.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE produtos (nome TEXT, preco REAL)")
+lista = [
+    {"nome": "Açaí", "preco": 15.0},
+    {"nome": "Tapioca", "preco": 8.0},
+    {"nome": "Pastel", "preco": 7.5},
+]
+con.executemany("INSERT INTO produtos VALUES (:nome, :preco)", lista)
+print(con.execute("SELECT COUNT(*), SUM(preco) FROM produtos").fetchone())
+con.close()</code></pre>
+      <p class="saida">(3, 30.5)</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="174-sqlite3.html" rel="prev">← Aula anterior</a>
+      <a href="176-mysql-pymysql.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

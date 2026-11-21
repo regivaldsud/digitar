@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 101 · Datas e horas: datetime, fuso horário, timestamp — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie datas e horas com datetime, entenda fuso horário e converta momentos para timestamp e de volta.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 101 · Datas e horas: datetime, fuso horário, timestamp</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar datas com <code>date</code> e momentos com <code>datetime</code></li>
+        <li>Pegar a data e a hora atuais</li>
+        <li>Entender o que é fuso horário e usar <code>timezone</code></li>
+        <li>Converter um momento em timestamp e de volta</li>
+        <li>Ler e escrever datas no formato ISO</li>
+      </ul>
+    </div>
+
+    <h2>date e datetime</h2>
+    <p>O módulo <code>datetime</code> tem dois tipos principais: <code>date</code> guarda só a data e <code>datetime</code> guarda data <strong>e</strong> hora.</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import date, datetime
+
+independencia = date(1822, 9, 7)
+print(independencia)
+print(independencia.day, independencia.month, independencia.year)
+
+final_copa = datetime(2026, 7, 19, 16, 0)
+print(final_copa)
+print(final_copa.hour, "horas")</code></pre>
+    <p class="saida">1822-09-07<br>
+7 9 1822<br>
+2026-07-19 16:00:00<br>
+16 horas</p>
+    <p>A ordem dos números é <strong>ano, mês, dia</strong> — o contrário do jeito brasileiro. Na aula 102 você aprende a mostrar no formato <code>dd/mm/aaaa</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Uma data impossível dá erro na hora: <code>date(2025, 2, 30)</code> gera <code>ValueError: day is out of range for month</code>. Isso é bom — o Python não deixa você guardar o dia 30 de fevereiro por engano.</div>
+
+    <h2>Hoje e agora</h2>
+<pre class="codigo" data-executar="sim"><code>from datetime import date, datetime
+
+print("Hoje é", date.today())
+agora = datetime.now()
+print("Agora são", agora.hour, "horas e", agora.minute, "minutos")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+Hoje é 2026-11-21<br>
+Agora são 14 horas e 30 minutos</p>
+    <p><code>date.today()</code> e <code>datetime.now()</code> leem o relógio do computador. No navegador, a hora vem do relógio do seu aparelho.</p>
+
+    <h2>Fuso horário</h2>
+    <p>O Brasil tem quatro fusos. Quando são 12h em Brasília, são 11h em Manaus. Para o computador, um horário sem fuso é ambíguo: "16h" de onde?</p>
+    <p>Os horários do mundo inteiro são medidos a partir do <strong>UTC</strong>, o horário de referência. Brasília fica 3 horas atrás: UTC−3. No Python, um fuso fixo é criado com <code>timezone</code> e <code>timedelta</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime, timezone, timedelta
+
+brasilia = timezone(timedelta(hours=-3))
+manaus = timezone(timedelta(hours=-4))
+
+aula = datetime(2026, 3, 10, 14, 0, tzinfo=brasilia)
+print("Em Brasília:", aula)
+print("Em Manaus:  ", aula.astimezone(manaus))
+print("Em UTC:     ", aula.astimezone(timezone.utc))</code></pre>
+    <p class="saida">Em Brasília: 2026-03-10 14:00:00-03:00<br>
+Em Manaus: &nbsp;&nbsp;2026-03-10 13:00:00-04:00<br>
+Em UTC: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2026-03-10 17:00:00+00:00</p>
+    <p>Um <code>datetime</code> com <code>tzinfo</code> é chamado de <strong>consciente</strong> (sabe o seu fuso); sem <code>tzinfo</code>, é <strong>ingênuo</strong>. <code>astimezone</code> mostra o mesmo instante no relógio de outro lugar.</p>
+    <p>No computador você pode usar fusos com nome, que já sabem até as regras de horário de verão:</p>
+<pre class="codigo"><code>from datetime import datetime
+from zoneinfo import ZoneInfo
+
+agora_sp = datetime.now(ZoneInfo("America/Sao_Paulo"))
+print(agora_sp)</code></pre>
+    <div class="dica"><strong>Dica:</strong> No Windows, o <code>zoneinfo</code> precisa do pacote <code>tzdata</code>: rode <code>pip install tzdata</code> (veja a aula 60). Sem ele aparece <code>ZoneInfoNotFoundError</code>.</div>
+
+    <h2>Timestamp: o momento como número</h2>
+    <p>Um <strong>timestamp</strong> é a quantidade de segundos desde 1º de janeiro de 1970, à meia-noite em UTC. Computadores adoram esse número: é fácil de guardar e comparar.</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime, timezone, timedelta
+
+brasilia = timezone(timedelta(hours=-3))
+momento = datetime(2026, 1, 1, 0, 0, tzinfo=brasilia)
+
+ts = momento.timestamp()
+print("Timestamp:", ts)
+
+de_volta = datetime.fromtimestamp(ts, tz=brasilia)
+print("De volta:", de_volta)
+print("Início da contagem:", datetime.fromtimestamp(0, tz=timezone.utc))</code></pre>
+    <p class="saida">Timestamp: 1767236400.0<br>
+De volta: 2026-01-01 00:00:00-03:00<br>
+Início da contagem: 1970-01-01 00:00:00+00:00</p>
+    <div class="atencao"><strong>Atenção:</strong> Use <code>timestamp()</code> só com datas que têm fuso. Num <code>datetime</code> ingênuo, o Python supõe o fuso do computador, e o mesmo código dá números diferentes em máquinas diferentes.</div>
+
+    <h2>Formato ISO</h2>
+    <p>O formato <code>AAAA-MM-DD HH:MM:SS</code> se chama <strong>ISO 8601</strong>. É o jeito padrão de guardar datas em texto (em arquivos JSON, por exemplo), porque não tem confusão entre dia e mês.</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime, date
+
+texto = "2026-06-12T20:30:00"
+jogo = datetime.fromisoformat(texto)
+print(f"Jogo em {jogo.day}/{jogo.month} às {jogo.hour}h{jogo.minute}")
+
+print(date(2026, 12, 25).isoformat())</code></pre>
+    <p class="saida">Jogo em 12/6 às 20h30<br>
+2026-12-25</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>agora = datetime.now(tz=timezone.utc)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a data do seu aniversário de 2026 com <code>date</code> e mostre o dia, o mês e o ano separados.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import date
+
+aniversario = date(2026, 4, 23)
+print(aniversario.day, aniversario.month, aniversario.year)</code></pre>
+      <p class="saida">23 4 2026</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Um show começa às 21h de 20/12/2026 em Brasília (UTC−3). Mostre que horas serão em Fernando de Noronha (UTC−2) e no Acre (UTC−5).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime, timezone, timedelta
+
+brasilia = timezone(timedelta(hours=-3))
+noronha = timezone(timedelta(hours=-2))
+acre = timezone(timedelta(hours=-5))
+
+show = datetime(2026, 12, 20, 21, 0, tzinfo=brasilia)
+print("Noronha:", show.astimezone(noronha).strftime("%H:%M"))
+print("Acre:", show.astimezone(acre).strftime("%H:%M"))</code></pre>
+      <p class="saida">Noronha: 22:00<br>
+Acre: 19:00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Converta o timestamp <code>1767225600</code> em data e hora UTC.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime, timezone
+
+print(datetime.fromtimestamp(1767225600, tz=timezone.utc))</code></pre>
+      <p class="saida">2026-01-01 00:00:00+00:00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Transforme o texto <code>"2026-07-19"</code> numa <code>date</code> e mostre em que dia da semana cai. Dica: <code>weekday()</code> devolve 0 para segunda e 6 para domingo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import date
+
+dias = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
+final = date.fromisoformat("2026-07-19")
+print(dias[final.weekday()])</code></pre>
+      <p class="saida">domingo</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="100-name-main.html" rel="prev">← Aula anterior</a>
+      <a href="102-timedelta-strftime.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

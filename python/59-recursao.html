@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 59 · Funções recursivas e o limite de recursão — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda funções que chamam a si mesmas, a importância do caso base, o limite de recursão do Python e quando trocar recursão por laço.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 59 · Funções recursivas e o limite de recursão</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma função recursiva</li>
+        <li>Por que todo problema recursivo precisa de um caso base</li>
+        <li>Resolver fatorial, somas e textos de forma recursiva</li>
+        <li>O que é o <code>RecursionError</code> e o limite de recursão</li>
+        <li>Usar recursão em estruturas com "coisas dentro de coisas"</li>
+      </ul>
+    </div>
+
+    <h2>Uma função que chama a si mesma</h2>
+    <p>Uma função <strong>recursiva</strong> chama <strong>ela mesma</strong>. Parece estranho, mas é como as bonecas russas: dentro de cada boneca há outra menor, até chegar na menor de todas, que não abre.</p>
+<pre class="codigo" data-executar="sim"><code>def contagem(n):
+    if n == 0:
+        print("Feliz Ano Novo!")
+        return
+    print(n)
+    contagem(n - 1)
+
+contagem(5)</code></pre>
+    <p class="saida">5<br>
+4<br>
+3<br>
+2<br>
+1<br>
+Feliz Ano Novo!</p>
+    <p>A cada chamada, <code>n</code> diminui 1. Quando chega a 0, a função para de chamar a si mesma.</p>
+    <p>Toda função recursiva tem duas partes:</p>
+    <ul>
+      <li>o <strong>caso base</strong>: a situação simples em que a resposta é direta e a função <strong>não</strong> se chama de novo (no exemplo, <code>n == 0</code>);</li>
+      <li>o <strong>passo recursivo</strong>: a função se chama com um problema <strong>menor</strong>, chegando cada vez mais perto do caso base.</li>
+    </ul>
+
+    <h2>Fatorial</h2>
+    <p>O fatorial de 5 (escrito 5!) é 5 × 4 × 3 × 2 × 1 = 120. Repare que 5! = 5 × 4!, e 4! = 4 × 3!, e assim por diante, até 1! = 1. Isso vira recursão naturalmente:</p>
+<pre class="codigo" data-executar="sim"><code>def fatorial(n):
+    if n &lt;= 1:
+        return 1
+    return n * fatorial(n - 1)
+
+print(fatorial(5))
+print(fatorial(10))</code></pre>
+    <p class="saida">120<br>
+3628800</p>
+    <p>Para ver a recursão "por dentro", podemos mostrar cada chamada com recuo:</p>
+<pre class="codigo" data-executar="sim"><code>def fatorial(n, nivel=0):
+    print("  " * nivel + f"fatorial({n})")
+    if n &lt;= 1:
+        return 1
+    return n * fatorial(n - 1, nivel + 1)
+
+print("Resultado:", fatorial(4))</code></pre>
+    <p class="saida">fatorial(4)<br>
+&nbsp;&nbsp;fatorial(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fatorial(2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fatorial(1)<br>
+Resultado: 24</p>
+
+    <h2>O limite de recursão</h2>
+    <p>Cada chamada que ainda não terminou fica guardada na memória, numa "pilha" de chamadas. Sem caso base (ou com um que nunca é alcançado), a pilha cresce sem parar. O Python tem um limite — normalmente 1000 chamadas — e, ao passar dele, para o programa com <code>RecursionError</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def infinita(n):
+    return infinita(n - 1)
+
+infinita(10)</code></pre>
+    <p class="saida">RecursionError: maximum recursion depth exceeded</p>
+    <p>Você pode consultar o limite com o módulo <code>sys</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+
+print(sys.getrecursionlimit())</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+1000</p>
+    <div class="atencao"><strong>Atenção:</strong> Confira sempre: (1) existe um caso base? (2) cada chamada se aproxima dele? Um <code>fatorial(-3)</code> com o caso base <code>n == 1</code> nunca chegaria lá — por isso usamos <code>n &lt;= 1</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Existe <code>sys.setrecursionlimit</code> para aumentar o limite, mas isso raramente é a solução: se a recursão é muito funda, troque por um laço. Um limite alto demais pode derrubar o programa inteiro.</div>
+
+    <h2>Recursão ou laço?</h2>
+    <p>Todo problema recursivo também pode ser resolvido com <code>for</code> ou <code>while</code>, e em Python o laço costuma ser mais rápido e não tem limite. Compare:</p>
+<pre class="codigo" data-executar="sim"><code>def soma_recursiva(lista):
+    if not lista:
+        return 0
+    return lista[0] + soma_recursiva(lista[1:])
+
+def soma_com_laco(lista):
+    total = 0
+    for n in lista:
+        total += n
+    return total
+
+print(soma_recursiva([5, 10, 15, 20]))
+print(soma_com_laco([5, 10, 15, 20]))
+print(soma_com_laco(list(range(5000))))</code></pre>
+    <p class="saida">50<br>
+50<br>
+12497500</p>
+    <p><code>soma_recursiva(list(range(5000)))</code> passaria do limite de chamadas; o laço resolve sem problemas.</p>
+    <p>A recursão brilha quando os dados têm "coisas dentro de coisas", como pastas dentro de pastas ou listas dentro de listas:</p>
+<pre class="codigo" data-executar="sim"><code>def contar_itens(caixa):
+    total = 0
+    for item in caixa:
+        if isinstance(item, list):
+            total += contar_itens(item)
+        else:
+            total += 1
+    return total
+
+mochila = ["caderno", ["lápis", "borracha", ["apontador"]], "garrafa"]
+print(contar_itens(mochila))</code></pre>
+    <p class="saida">5</p>
+    <div class="dica"><strong>Dica:</strong> Quando estiver em dúvida, escreva primeiro o caso base e depois pergunte: "se eu já soubesse resolver um pedaço menor, como usaria isso para resolver o todo?".</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if n &lt;= 1: return 1</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva uma função recursiva <code>potencia(base, exp)</code> que calcula base elevada a exp (com exp maior ou igual a 0), sem usar <code>**</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def potencia(base, exp):
+    if exp == 0:
+        return 1
+    return base * potencia(base, exp - 1)
+
+print(potencia(2, 10))
+print(potencia(5, 0))</code></pre>
+      <p class="saida">1024<br>
+1</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva uma função recursiva <code>inverter(texto)</code> que devolve o texto de trás para frente. Dica: o inverso é o inverso do resto mais a primeira letra.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def inverter(texto):
+    if texto == "":
+        return ""
+    return inverter(texto[1:]) + texto[0]
+
+print(inverter("DIGITAR"))</code></pre>
+      <p class="saida">RATIGID</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva uma função recursiva <code>contar_digitos(n)</code> que diz quantos dígitos tem um número inteiro positivo. Dica: <code>n // 10</code> tira o último dígito.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def contar_digitos(n):
+    if n &lt; 10:
+        return 1
+    return 1 + contar_digitos(n // 10)
+
+print(contar_digitos(7))
+print(contar_digitos(2025))</code></pre>
+      <p class="saida">1<br>
+4</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Os números de Fibonacci começam com 0 e 1, e cada um é a soma dos dois anteriores: 0, 1, 1, 2, 3, 5, 8... Escreva <code>fib(n)</code> recursiva e mostre os 10 primeiros.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def fib(n):
+    if n &lt; 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+for i in range(10):
+    print(fib(i), end=" ")
+print()</code></pre>
+      <p class="saida">0 1 1 2 3 5 8 13 21 34</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva <code>achatar(lista)</code>, que recebe uma lista que pode ter listas dentro (de qualquer profundidade) e devolve uma lista simples. Teste com <code>[1, [2, 3], [4, [5, 6]]]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def achatar(lista):
+    resultado = []
+    for item in lista:
+        if isinstance(item, list):
+            resultado.extend(achatar(item))
+        else:
+            resultado.append(item)
+    return resultado
+
+print(achatar([1, [2, 3], [4, [5, 6]]]))</code></pre>
+      <p class="saida">[1, 2, 3, 4, 5, 6]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="58-map-filter-reduce.html" rel="prev">← Aula anterior</a>
+      <a href="60-venv-pip.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

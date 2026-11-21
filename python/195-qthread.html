@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 195 · Tarefas longas sem travar a tela: QThread — Curso de Python · DIGITAR</title>
+<meta name="description" content="Rode tarefas demoradas em segundo plano com QThread para a janela continuar respondendo.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 10 · Interface gráfica com PySide6</p>
+    <h1>Aula 195 · Tarefas longas sem travar a tela: QThread</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender por que tarefas demoradas congelam a janela</li>
+        <li>Mover o trabalho para um QThread com um objeto trabalhador</li>
+        <li>Mandar o progresso de volta para a tela com sinais próprios</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Por que a janela "congela"</h2>
+    <p>A janela só redesenha e responde a cliques quando o laço de eventos (<code>app.exec()</code>) está livre. Se um slot fica 10 segundos baixando um arquivo ou fazendo contas, o laço para e o Windows mostra "Não respondendo". A solução é rodar o trabalho em outra <strong>thread</strong> — uma linha de execução paralela.</p>
+
+    <h2>O padrão trabalhador + QThread</h2>
+<pre class="codigo"><code>import sys
+import time
+from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
+                               QPushButton, QProgressBar)
+
+
+class Trabalhador(QObject):
+    progresso = Signal(int)
+    terminou = Signal()
+
+    def rodar(self):
+        for i in range(1, 101):
+            time.sleep(0.05)  # finge um trabalho demorado
+            self.progresso.emit(i)
+        self.terminou.emit()
+
+
+class Janela(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.barra = QProgressBar()
+        self.botao = QPushButton("Começar")
+        self.botao.clicked.connect(self.comecar)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.barra)
+        layout.addWidget(self.botao)
+
+    def comecar(self):
+        self.botao.setEnabled(False)
+        self.thread = QThread()
+        self.trabalhador = Trabalhador()
+        self.trabalhador.moveToThread(self.thread)
+        self.thread.started.connect(self.trabalhador.rodar)
+        self.trabalhador.progresso.connect(self.barra.setValue)
+        self.trabalhador.terminou.connect(self.thread.quit)
+        self.thread.finished.connect(lambda: self.botao.setEnabled(True))
+        self.thread.start()
+
+
+app = QApplication(sys.argv)
+janela = Janela()
+janela.show()
+sys.exit(app.exec())</code></pre>
+    <p>O <code>Trabalhador</code> nunca mexe nos widgets diretamente: ele só <strong>emite sinais</strong> (<code>progresso</code>, <code>terminou</code>). O Qt entrega esses sinais na thread da janela, que atualiza a barra com segurança.</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca altere um widget de dentro da outra thread (por exemplo, <code>self.barra.setValue(i)</code> dentro de <code>rodar</code>). Isso pode travar ou fechar o programa sem aviso. Use sinais.</div>
+    <div class="dica"><strong>Dica:</strong> Guarde a thread e o trabalhador em <code>self.</code> — se forem variáveis locais, o Python os apaga no fim do método enquanto ainda estão rodando.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>progresso = Signal(int)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um sinal <code>mensagem</code> que envia um texto (<code>str</code>) e emita "Metade feita!" quando <code>i</code> chegar a 50. Mostre só a classe Trabalhador.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import time
+from PySide6.QtCore import QObject, Signal
+
+
+class Trabalhador(QObject):
+    progresso = Signal(int)
+    mensagem = Signal(str)
+    terminou = Signal()
+
+    def rodar(self):
+        for i in range(1, 101):
+            time.sleep(0.05)
+            self.progresso.emit(i)
+            if i == 50:
+                self.mensagem.emit("Metade feita!")
+        self.terminou.emit()</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Por que o botão "Começar" é desativado em <code>comecar</code> e só reativado no <code>finished</code> da thread?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Para o usuário não clicar de novo e iniciar uma segunda thread enquanto a primeira<br>
+ainda está rodando. Quando a thread termina, o botão volta a funcionar.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="194-qt-designer.html" rel="prev">← Aula anterior</a>
+      <a href="196-pyinstaller.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 43 · *args, **kwargs, empacotar e desempacotar — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie funções que aceitam quantos argumentos você quiser com *args e **kwargs e aprenda a empacotar e desempacotar listas e dicionários.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 43 · *args, **kwargs, empacotar e desempacotar</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Como receber qualquer número de argumentos com <code>*args</code></li>
+        <li>Como receber argumentos nomeados variáveis com <code>**kwargs</code></li>
+        <li>Como desempacotar listas e dicionários ao chamar uma função</li>
+        <li>Como empacotar "o resto" numa atribuição com <code>*</code></li>
+      </ul>
+    </div>
+
+    <h2>Quantos argumentos? Não sei!</h2>
+    <p>O <code>print</code> aceita um, dois ou cinquenta valores. Para criar uma função assim, coloque um asterisco antes do nome do parâmetro:</p>
+<pre class="codigo" data-executar="sim"><code>def somar_tudo(*numeros):
+    print("Recebi:", numeros)
+    return sum(numeros)
+
+print(somar_tudo(1, 2))
+print(somar_tudo(10, 20, 30, 40))
+print(somar_tudo())</code></pre>
+    <p class="saida">Recebi: (1, 2)<br>
+3<br>
+Recebi: (10, 20, 30, 40)<br>
+100<br>
+Recebi: ()<br>
+0</p>
+    <p>O <code>*numeros</code> <strong>empacota</strong> todos os argumentos posicionais numa <strong>tupla</strong>. Por costume, esse parâmetro se chama <code>args</code> (de "arguments"), mas o que importa é o asterisco. Os parâmetros normais vêm antes e o <code>*args</code> pega "o resto":</p>
+<pre class="codigo" data-executar="sim"><code>def lista_de_chamada(turma, *alunos):
+    print(f"Turma {turma}: {len(alunos)} alunos")
+    for aluno in alunos:
+        print(" -", aluno)
+
+lista_de_chamada("7º A", "Ana", "Caio", "Duda")</code></pre>
+    <p class="saida">Turma 7º A: 3 alunos<br>
+&nbsp;- Ana<br>
+&nbsp;- Caio<br>
+&nbsp;- Duda</p>
+
+    <h2>**kwargs: argumentos nomeados à vontade</h2>
+    <p>Com <strong>dois</strong> asteriscos, a função recebe qualquer argumento nomeado. Eles chegam num <strong>dicionário</strong>. Por costume, esse parâmetro se chama <code>kwargs</code> ("keyword arguments"):</p>
+<pre class="codigo" data-executar="sim"><code>def ficha(**dados):
+    for chave, valor in dados.items():
+        print(f"{chave}: {valor}")
+
+ficha(nome="Luana", idade=13, time="Bahia")</code></pre>
+    <p class="saida">nome: Luana<br>
+idade: 13<br>
+time: Bahia</p>
+
+    <h2>Desempacotando na chamada</h2>
+    <p>O asterisco também funciona ao contrário, na <strong>chamada</strong>: <code>*</code> espalha os itens de uma lista como argumentos separados, e <code>**</code> espalha um dicionário como argumentos nomeados:</p>
+<pre class="codigo" data-executar="sim"><code>def apresentar(nome, idade, cidade):
+    print(f"{nome} tem {idade} anos e mora em {cidade}.")
+
+pessoa = ["Igor", 15, "Natal"]
+apresentar(*pessoa)
+
+outra = {"nome": "Sofia", "idade": 12, "cidade": "Belém"}
+apresentar(**outra)
+
+numeros = [3, 1, 2]
+print(*numeros)</code></pre>
+    <p class="saida">Igor tem 15 anos e mora em Natal.<br>
+Sofia tem 12 anos e mora em Belém.<br>
+3 1 2</p>
+    <div class="atencao"><strong>Atenção:</strong> Ao desempacotar um dicionário com <code>**</code>, as chaves precisam ter exatamente os nomes dos parâmetros. Uma chave a mais ou com nome diferente dá <code>TypeError: ... got an unexpected keyword argument</code>.</div>
+
+    <h2>Empacotando numa atribuição</h2>
+    <p>O <code>*</code> também aparece no desempacotamento de variáveis: a variável com asterisco recebe uma <strong>lista</strong> com tudo o que sobrou:</p>
+<pre class="codigo" data-executar="sim"><code>primeiro, *resto = ["ouro", "prata", "bronze", "4º", "5º"]
+print(primeiro)
+print(resto)
+
+*comeco, ultimo = [7, 8, 9, 10]
+print(comeco, ultimo)
+
+lista_a = [1, 2]
+lista_b = [3, 4]
+print([*lista_a, *lista_b])
+print({**{"a": 1}, **{"b": 2}})</code></pre>
+    <p class="saida">ouro<br>
+['prata', 'bronze', '4º', '5º']<br>
+[7, 8, 9] 10<br>
+[1, 2, 3, 4]<br>
+{'a': 1, 'b': 2}</p>
+
+    <h2>A ordem de tudo</h2>
+    <p>Quando a função usa todos os tipos, a ordem é: parâmetros normais, <code>*args</code>, parâmetros que só aceitam nome e <code>**kwargs</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def pedido(mesa, *itens, garcom="Zé", **extras):
+    print("Mesa", mesa, "| garçom:", garcom)
+    print("Itens:", itens)
+    print("Extras:", extras)
+
+pedido(5, "feijoada", "guaraná", garcom="Rita", gelo=True)</code></pre>
+    <p class="saida">Mesa 5 | garçom: Rita<br>
+Itens: ('feijoada', 'guaraná')<br>
+Extras: {'gelo': True}</p>
+    <div class="dica"><strong>Dica:</strong> Não saia usando <code>*args</code> e <code>**kwargs</code> em tudo. Eles são ótimos quando o número de valores realmente varia; quando você sabe quais parâmetros a função precisa, nomeá-los deixa o código mais claro.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def somar(*args): return sum(args)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a função <code>maior(*numeros)</code> que devolve o maior número recebido (use <code>max</code>). Teste com 4, 19, 7 e 12.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def maior(*numeros):
+    return max(numeros)
+
+print(maior(4, 19, 7, 12))</code></pre>
+      <p class="saida">19</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a função <code>media(*notas)</code> que devolve a média das notas. Se nenhuma nota for passada, devolva 0.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def media(*notas):
+    if len(notas) == 0:
+        return 0
+    return sum(notas) / len(notas)
+
+print(media(7, 8, 9))
+print(media())</code></pre>
+      <p class="saida">8.0<br>
+0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a função <code>perfil(**info)</code> que mostre cada informação no formato <code>chave -&gt; valor</code>. Chame com <code>nome</code>, <code>jogo_favorito</code> e <code>ppm</code> (palavras por minuto).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def perfil(**info):
+    for chave, valor in info.items():
+        print(chave, "-&gt;", valor)
+
+perfil(nome="Theo", jogo_favorito="Minecraft", ppm=42)</code></pre>
+      <p class="saida">nome -&gt; Theo<br>
+jogo_favorito -&gt; Minecraft<br>
+ppm -&gt; 42</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Você tem a lista <code>data = [7, 9, 2022]</code> e a função <code>mostrar_data(dia, mes, ano)</code>. Chame a função usando a lista desempacotada para mostrar <code>7/9/2022</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def mostrar_data(dia, mes, ano):
+    print(f"{dia}/{mes}/{ano}")
+
+data = [7, 9, 2022]
+mostrar_data(*data)</code></pre>
+      <p class="saida">7/9/2022</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Na lista de chegada <code>["Bia", "Davi", "Gui", "Lara", "Rui"]</code>, separe numa linha só o campeão, o vice e o resto dos corredores.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>campeao, vice, *outros = ["Bia", "Davi", "Gui", "Lara", "Rui"]
+print("Campeão:", campeao)
+print("Vice:", vice)
+print("Outros:", outros)</code></pre>
+      <p class="saida">Campeão: Bia<br>
+Vice: Davi<br>
+Outros: ['Gui', 'Lara', 'Rui']</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="42-escopo.html" rel="prev">← Aula anterior</a>
+      <a href="44-parametros-especiais.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

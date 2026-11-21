@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 103 · Pastas e arquivos: os, os.path, pathlib, os.walk — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte caminhos, crie pastas, liste e percorra arquivos com os, os.path, pathlib e os.walk.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 103 · Pastas e arquivos: os, os.path, pathlib, os.walk</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um caminho e por que Windows e Linux escrevem diferente</li>
+        <li>Montar caminhos e pegar nome e extensão com <code>pathlib.Path</code></li>
+        <li>Criar pastas, gravar, listar e procurar arquivos</li>
+        <li>Reconhecer as funções equivalentes em <code>os</code> e <code>os.path</code></li>
+        <li>Percorrer uma pasta inteira com <code>os.walk</code></li>
+      </ul>
+    </div>
+
+    <h2>Caminhos</h2>
+    <p>Todo arquivo mora numa pasta, que mora em outra pasta... O <strong>caminho</strong> é o endereço do arquivo. No Windows ele usa barra invertida, como <code>C:\Users\Ana\Documents\notas.txt</code>. No Linux, no macOS e no Python do navegador, barra normal: <code>/home/pyodide/notas.txt</code>.</p>
+    <p>Um caminho <strong>absoluto</strong> começa da raiz do disco. Um caminho <strong>relativo</strong>, como <code>fotos/praia.jpg</code>, é procurado a partir da pasta atual do programa.</p>
+    <div class="dica"><strong>Dica:</strong> Os exemplos desta aula rodam num sistema de arquivos de mentira, dentro do navegador. Pode criar e apagar à vontade: nada acontece com os arquivos do seu computador, e tudo some ao recarregar a página.</div>
+
+    <h2>pathlib.Path e o operador /</h2>
+    <p><code>Path</code> representa um caminho, e o operador <code>/</code> junta pedaços com a barra certa para cada sistema:</p>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+arquivo = Path("escola") / "notas" / "matematica.txt"
+print(arquivo)
+print(arquivo.name)
+print(arquivo.stem)
+print(arquivo.suffix)
+print(arquivo.parent)</code></pre>
+    <p class="saida">escola/notas/matematica.txt<br>
+matematica.txt<br>
+matematica<br>
+.txt<br>
+escola/notas</p>
+    <p>No Windows, o mesmo código mostra <code>escola\notas\matematica.txt</code>. O programa é o mesmo; o Python cuida da diferença.</p>
+    <ul>
+      <li><code>name</code>: nome completo; <code>stem</code>: nome sem extensão;</li>
+      <li><code>suffix</code>: a extensão com o ponto; <code>parent</code>: a pasta onde ele está.</li>
+    </ul>
+
+    <h2>Criando pastas e arquivos</h2>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+pasta = Path("diario")
+print("Existe antes?", pasta.exists())
+pasta.mkdir(exist_ok=True)
+print("Existe depois?", pasta.exists())
+
+pagina = pasta / "segunda.txt"
+pagina.write_text("Hoje treinei digitação por 20 minutos.", encoding="utf-8")
+print(pagina.read_text(encoding="utf-8"))
+print("É arquivo?", pagina.is_file(), "| É pasta?", pasta.is_dir())</code></pre>
+    <p class="saida">Existe antes? False<br>
+Existe depois? True<br>
+Hoje treinei digitação por 20 minutos.<br>
+É arquivo? True | É pasta? True</p>
+    <div class="atencao"><strong>Atenção:</strong> Sem <code>exist_ok=True</code>, chamar <code>mkdir</code> numa pasta que já existe dá <code>FileExistsError</code>. Para criar várias pastas de uma vez (<code>a/b/c</code>), use também <code>parents=True</code>.</div>
+
+    <h2>Listando e procurando</h2>
+    <p><code>iterdir()</code> percorre o que existe numa pasta e <code>glob("*.jpg")</code> filtra por um padrão. O <code>*</code> quer dizer "qualquer coisa":</p>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+fotos = Path("fotos")
+fotos.mkdir(exist_ok=True)
+for nome in ["praia.jpg", "festa.png", "lista.txt", "bolo.jpg"]:
+    (fotos / nome).write_text("conteúdo", encoding="utf-8")
+
+print("Tudo:", sorted(p.name for p in fotos.iterdir()))
+print("Só JPG:", sorted(p.name for p in fotos.glob("*.jpg")))</code></pre>
+    <p class="saida">Tudo: ['bolo.jpg', 'festa.png', 'lista.txt', 'praia.jpg']<br>
+Só JPG: ['bolo.jpg', 'praia.jpg']</p>
+    <p>Usamos <code>sorted</code> porque a ordem em que o sistema devolve os arquivos não é garantida.</p>
+
+    <h2>O jeito antigo: os e os.path</h2>
+    <p>Antes do <code>pathlib</code>, tudo era feito com funções dos módulos <code>os</code> e <code>os.path</code>. Você vai encontrar muito código assim:</p>
+<pre class="codigo" data-executar="sim"><code>import os
+
+os.makedirs("projetos/jogo", exist_ok=True)
+caminho = os.path.join("projetos", "jogo", "placar.txt")
+print(caminho)
+print(os.path.exists(caminho))
+print(os.path.basename(caminho))
+print(os.path.splitext(caminho))
+print(os.listdir("projetos"))</code></pre>
+    <p class="saida">projetos/jogo/placar.txt<br>
+False<br>
+placar.txt<br>
+('projetos/jogo/placar', '.txt')<br>
+['jogo']</p>
+    <ul>
+      <li><code>os.path.join</code> equivale ao <code>/</code> do <code>Path</code>;</li>
+      <li><code>os.path.basename</code> equivale a <code>.name</code>, e <code>os.path.splitext</code> separa a extensão;</li>
+      <li><code>os.listdir</code> equivale a <code>iterdir</code>, e <code>os.getcwd()</code> mostra a pasta atual.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Em código novo, prefira <code>pathlib</code>: é mais legível. Mas vale reconhecer os dois, porque tutoriais antigos usam <code>os.path</code> o tempo todo.</div>
+
+    <h2>Percorrendo tudo com os.walk</h2>
+    <p><code>os.walk</code> visita uma pasta e <strong>todas</strong> as subpastas. A cada passo ele entrega três coisas: a pasta atual, a lista de subpastas e a lista de arquivos.</p>
+<pre class="codigo" data-executar="sim"><code>import os
+from pathlib import Path
+
+for caminho in ["site/css/estilo.css", "site/index.html", "site/img/logo.png", "site/img/foto.jpg"]:
+    Path(caminho).parent.mkdir(parents=True, exist_ok=True)
+    Path(caminho).write_text("x", encoding="utf-8")
+
+for pasta, subpastas, arquivos in os.walk("site"):
+    subpastas.sort()
+    print(pasta, "-&gt;", sorted(arquivos))</code></pre>
+    <p class="saida">site -&gt; ['index.html']<br>
+site/css -&gt; ['estilo.css']<br>
+site/img -&gt; ['foto.jpg', 'logo.png']</p>
+    <p>O <code>subpastas.sort()</code> deixa a visita em ordem alfabética. Com <code>Path</code>, o equivalente é <code>Path("site").rglob("*")</code>, que procura em todas as subpastas.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>caminho = Path("fotos") / "praia.jpg"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Dado <code>Path("musicas/forro/asa_branca.mp3")</code>, mostre o nome sem extensão, a extensão e a pasta.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+musica = Path("musicas/forro/asa_branca.mp3")
+print(musica.stem)
+print(musica.suffix)
+print(musica.parent)</code></pre>
+      <p class="saida">asa_branca<br>
+.mp3<br>
+musicas/forro</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a pasta <code>materias</code> com um arquivo <code>.txt</code> para cada matéria de <code>["portugues", "matematica", "historia"]</code> e liste os arquivos em ordem alfabética.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+pasta = Path("materias")
+pasta.mkdir(exist_ok=True)
+for materia in ["portugues", "matematica", "historia"]:
+    (pasta / f"{materia}.txt").write_text("", encoding="utf-8")
+
+print(sorted(p.name for p in pasta.iterdir()))</code></pre>
+      <p class="saida">['historia.txt', 'matematica.txt', 'portugues.txt']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Verifique se <code>config.txt</code> existe. Se não existir, crie-o com o texto <code>volume=50</code>. Depois mostre o conteúdo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+config = Path("config.txt")
+if not config.exists():
+    config.write_text("volume=50", encoding="utf-8")
+print(config.read_text(encoding="utf-8"))</code></pre>
+      <p class="saida">volume=50</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie os arquivos <code>escola/trabalho.pdf</code>, <code>escola/fotos/excursao.jpg</code> e <code>escola/provas/mat.pdf</code> e use <code>os.walk</code> para contar quantos PDFs existem ao todo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import os
+from pathlib import Path
+
+for caminho in ["escola/trabalho.pdf", "escola/fotos/excursao.jpg", "escola/provas/mat.pdf"]:
+    Path(caminho).parent.mkdir(parents=True, exist_ok=True)
+    Path(caminho).write_text("x", encoding="utf-8")
+
+total = 0
+for pasta, subpastas, arquivos in os.walk("escola"):
+    total += sum(1 for nome in arquivos if nome.endswith(".pdf"))
+print(total, "PDFs")</code></pre>
+      <p class="saida">2 PDFs</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="102-timedelta-strftime.html" rel="prev">← Aula anterior</a>
+      <a href="104-shutil.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

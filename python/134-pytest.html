@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 134 · Introdução ao pytest — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use o pytest, a ferramenta de testes mais popular do Python, com assert simples, pytest.raises e testes parametrizados.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 6 · Testes automatizados</p>
+    <h1>Aula 134 · Introdução ao pytest</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Instalar o pytest com pip e rodar testes no terminal</li>
+        <li>Escrever testes como funções simples com <code>assert</code></li>
+        <li>Testar erros com <code>pytest.raises</code></li>
+        <li>Testar vários casos de uma vez com <code>@pytest.mark.parametrize</code></li>
+        <li>Ler a saída do pytest quando um teste falha</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Por que pytest</h2>
+    <p>O <strong>pytest</strong> faz o mesmo trabalho do unittest (aula 131), só que com menos código: os testes são funções comuns e você usa o <code>assert</code> do próprio Python (aula 130). Ele não vem com o Python; instale com o pip, de preferência dentro do ambiente virtual do projeto (aula 60):</p>
+<pre class="codigo"><code>pip install pytest
+pytest --version</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> O pytest roda no seu computador, pelo terminal — por isso os exemplos desta aula não têm o botão Executar. As saídas mostradas são as reais.</div>
+
+    <h2>O código que vamos testar</h2>
+    <p>Imagine o arquivo <code>notas.py</code>, de um programa da escola:</p>
+<pre class="codigo"><code>def media(notas):
+    if not notas:
+        raise ValueError("lista de notas vazia")
+    return sum(notas) / len(notas)
+
+
+def situacao(media_final):
+    if media_final &gt;= 7:
+        return "aprovado"
+    if media_final &gt;= 5:
+        return "recuperação"
+    return "reprovado"</code></pre>
+
+    <h2>Seu primeiro teste</h2>
+    <p>Na mesma pasta, crie <code>test_notas.py</code>. Cada função com nome começando por <code>test_</code> é um teste. Dentro dela, <code>assert</code> seguido de algo que deve ser verdadeiro:</p>
+<pre class="codigo"><code>from notas import media, situacao
+
+
+def test_media_simples():
+    assert media([6, 8, 10]) == 8
+
+
+def test_aprovado():
+    assert situacao(7.5) == "aprovado"
+
+
+def test_reprovado():
+    assert situacao(3) == "reprovado"</code></pre>
+    <p>Para rodar, abra o terminal na pasta e digite só <code>pytest</code> (ou <code>pytest -q</code>, para uma saída mais curta). Ele encontra sozinho os arquivos <code>test_*.py</code>:</p>
+<pre class="codigo"><code>pytest -q</code></pre>
+    <p class="saida">... &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+3 passed in 0.01s</p>
+    <div class="dica"><strong>Dica:</strong> Os três pontinhos são os três testes que passaram. Use <code>pytest -v</code> para ver o nome de cada um.</div>
+
+    <h2>Testando erros com pytest.raises</h2>
+    <p>Para garantir que um erro acontece, use <code>with pytest.raises(TipoDoErro):</code>. Se o erro <strong>não</strong> acontecer, o teste falha.</p>
+<pre class="codigo"><code>import pytest
+
+from notas import media
+
+
+def test_media_de_lista_vazia_da_erro():
+    with pytest.raises(ValueError):
+        media([])</code></pre>
+    <p class="saida">. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+1 passed in 0.01s</p>
+
+    <h2>Vários casos de uma vez: parametrize</h2>
+    <p>Em vez de copiar o mesmo teste várias vezes, o decorador <code>@pytest.mark.parametrize</code> roda a função uma vez para cada caso da lista:</p>
+<pre class="codigo"><code>import pytest
+
+from notas import situacao
+
+
+@pytest.mark.parametrize("nota, esperado", [
+    (10, "aprovado"),
+    (7, "aprovado"),
+    (6.9, "recuperação"),
+    (5, "recuperação"),
+    (4.9, "reprovado"),
+])
+def test_situacao(nota, esperado):
+    assert situacao(nota) == esperado</code></pre>
+    <p class="saida">..... &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+5 passed in 0.01s</p>
+    <p>Repare nos casos escolhidos: <code>7</code> e <code>6.9</code>, <code>5</code> e <code>4.9</code>. Os valores logo antes e logo depois de cada limite são onde os erros costumam se esconder.</p>
+
+    <h2>Quando um teste falha</h2>
+    <p>Vamos ver uma falha de verdade. Este teste espera a média errada de propósito:</p>
+<pre class="codigo"><code>from notas import media
+
+
+def test_media_errada():
+    assert media([5, 6]) == 6</code></pre>
+    <p class="saida">F &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+============ FAILURES ============<br>
+________ test_media_errada ________<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;def test_media_errada():<br>
+&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert media([5, 6]) == 6<br>
+E &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert 5.5 == 6<br>
+E &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ &nbsp;where 5.5 = media([5, 6])<br>
+&nbsp;<br>
+test_falha.py:5: AssertionError<br>
+===== short test summary info =====<br>
+FAILED test_falha.py::test_media_errada - assert 5.5 == 6<br>
+1 failed in 0.01s</p>
+    <p>O pytest mostra a linha que falhou (marcada com <code>&gt;</code>) e, nas linhas com <code>E</code>, o valor de verdade: <code>media([5, 6])</code> deu <code>5.5</code>, não <code>6</code>. Aqui o erro estava no teste, não na função — também acontece!</p>
+    <div class="atencao"><strong>Atenção:</strong> Se o pytest disser <code>no tests ran</code> (nenhum teste rodou), confira os nomes: o arquivo precisa começar com <code>test_</code> e as funções também.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>assert media([6, 8, 10]) == 8</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva a função <code>celsius_para_fahrenheit(c)</code> num arquivo <code>temperatura.py</code> e um teste pytest para 0 °C (32 °F) e 100 °C (212 °F).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def celsius_para_fahrenheit(c):
+    return c * 9 / 5 + 32</code></pre>
+<pre class="codigo"><code>from temperatura import celsius_para_fahrenheit
+
+
+def test_congelamento():
+    assert celsius_para_fahrenheit(0) == 32
+
+
+def test_fervura():
+    assert celsius_para_fahrenheit(100) == 212</code></pre>
+      <p class="saida">.. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+2 passed in 0.01s</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva um teste que garanta que <code>int("dez")</code> lança <code>ValueError</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import pytest
+
+
+def test_texto_nao_vira_numero():
+    with pytest.raises(ValueError):
+        int("dez")</code></pre>
+      <p class="saida">. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+1 passed in 0.01s</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>parametrize</code> para testar a função <code>e_bissexto(ano)</code> com 2024 (sim), 2023 (não), 1900 (não) e 2000 (sim). Escreva a função no próprio arquivo de teste.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import pytest
+
+
+def e_bissexto(ano):
+    return ano % 4 == 0 and (ano % 100 != 0 or ano % 400 == 0)
+
+
+@pytest.mark.parametrize("ano, esperado", [
+    (2024, True),
+    (2023, False),
+    (1900, False),
+    (2000, True),
+])
+def test_bissexto(ano, esperado):
+    assert e_bissexto(ano) == esperado</code></pre>
+      <p class="saida">.... &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[100%]<br>
+4 passed in 0.01s</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Você rodou <code>pytest</code> e apareceu <code>no tests ran</code>. O arquivo se chama <code>testes_jogo.py</code> e a função <code>verifica_pontos()</code>. O que está errado?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Os nomes não seguem o padrão do pytest.<br>
+O arquivo deve começar com test_ (por exemplo, test_jogo.py)<br>
+e a função também (por exemplo, test_verifica_pontos).</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="133-mocks.html" rel="prev">← Aula anterior</a>
+      <a href="140-regex-intro.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

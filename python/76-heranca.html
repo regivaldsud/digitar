@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 76 · Herança simples, super() — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie classes novas a partir de outras com herança, reaproveitando código com super() e sobrescrevendo métodos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 76 · Herança simples, super()</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar uma classe filha que herda atributos e métodos da classe mãe</li>
+        <li>Sobrescrever um método para mudar o comportamento na filha</li>
+        <li>Chamar o método da mãe com <code>super()</code></li>
+        <li>Verificar o tipo de um objeto com <code>isinstance</code> e <code>issubclass</code></li>
+      </ul>
+    </div>
+
+    <h2>Herdar é reaproveitar</h2>
+    <p>Imagine um jogo com vários tipos de personagens: guerreiro, mago, arqueiro. Todos têm nome e vida e todos andam, mas cada um ataca de um jeito. Em vez de copiar o mesmo código três vezes, você escreve o que é comum numa classe <strong>mãe</strong> (ou superclasse) e cria classes <strong>filhas</strong> (subclasses) que herdam tudo dela.</p>
+    <p>Para herdar, coloque o nome da classe mãe entre parênteses:</p>
+<pre class="codigo" data-executar="sim"><code>class Animal:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def comer(self):
+        print(f"{self.nome} está comendo.")
+
+class Cachorro(Animal):
+    def latir(self):
+        print(f"{self.nome}: Au au!")
+
+caramelo = Cachorro("Caramelo")
+caramelo.comer()
+caramelo.latir()</code></pre>
+    <p class="saida">Caramelo está comendo.<br>
+Caramelo: Au au!</p>
+    <p>O <code>Cachorro</code> não tem <code>__init__</code> nem <code>comer</code>, mas herdou os dois de <code>Animal</code>. Dizemos que um cachorro <strong>é um</strong> animal.</p>
+
+    <h2>Sobrescrevendo métodos</h2>
+    <p>Se a filha define um método com o mesmo nome de um da mãe, o da filha vence. Isso se chama <strong>sobrescrever</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>class Animal:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def som(self):
+        return "..."
+
+    def falar(self):
+        print(f"{self.nome} faz {self.som()}")
+
+class Gato(Animal):
+    def som(self):
+        return "miau"
+
+class Vaca(Animal):
+    def som(self):
+        return "muuu"
+
+for bicho in [Gato("Mimi"), Vaca("Mimosa"), Animal("Peixe")]:
+    bicho.falar()</code></pre>
+    <p class="saida">Mimi faz miau<br>
+Mimosa faz muuu<br>
+Peixe faz ...</p>
+    <p>O <code>falar</code> está só na mãe, mas cada objeto usa o seu próprio <code>som</code>. Na aula 79 você vai ver que isso tem nome: <strong>polimorfismo</strong>.</p>
+
+    <h2>super(): aproveitando o método da mãe</h2>
+    <p>Quando a filha precisa de atributos a mais, ela escreve o próprio <code>__init__</code> e chama o da mãe com <code>super().__init__(...)</code> para não repetir código. O <code>super()</code> funciona em qualquer método, não só no <code>__init__</code>.</p>
+<pre class="codigo" data-executar="sim"><code>class Funcionario:
+    def __init__(self, nome, salario):
+        self.nome = nome
+        self.salario = salario
+
+    def __str__(self):
+        return f"{self.nome} ganha R$ {self.salario:.2f}"
+
+class Gerente(Funcionario):
+    def __init__(self, nome, salario, equipe):
+        super().__init__(nome, salario)
+        self.equipe = equipe
+
+    def __str__(self):
+        return super().__str__() + f" e lidera {len(self.equipe)} pessoas"
+
+print(Funcionario("Paulo", 3200))
+print(Gerente("Renata", 7500, ["Paulo", "Sueli", "Tiago"]))</code></pre>
+    <p class="saida">Paulo ganha R$ 3200.00<br>
+Renata ganha R$ 7500.00 e lidera 3 pessoas</p>
+    <div class="atencao"><strong>Atenção:</strong> Se a filha tem <code>__init__</code> próprio e você esquece o <code>super().__init__(...)</code>, os atributos da mãe não são criados. Depois aparece <code>AttributeError: 'Gerente' object has no attribute 'nome'</code>.</div>
+
+    <h2>isinstance e issubclass</h2>
+    <p><code>isinstance(objeto, Classe)</code> responde <code>True</code> se o objeto é daquela classe <strong>ou de uma filha dela</strong>. <code>issubclass(Filha, Mae)</code> compara duas classes.</p>
+<pre class="codigo" data-executar="sim"><code>class Veiculo:
+    pass
+
+class Carro(Veiculo):
+    pass
+
+class Bicicleta(Veiculo):
+    pass
+
+fusca = Carro()
+caloi = Bicicleta()
+
+print(isinstance(fusca, Carro))
+print(isinstance(fusca, Veiculo))
+print(isinstance(fusca, Bicicleta))
+print(isinstance(caloi, Veiculo))
+print(issubclass(Carro, Veiculo))
+print(issubclass(Veiculo, Carro))</code></pre>
+    <p class="saida">True<br>
+True<br>
+False<br>
+True<br>
+True<br>
+False</p>
+    <div class="dica"><strong>Dica:</strong> Use herança quando a frase "X <strong>é um</strong> Y" faz sentido: um gato é um animal, um gerente é um funcionário. Se a frase for "X <strong>tem um</strong> Y", use composição (aula 75).</div>
+
+    <h2>Um exemplo de jogo</h2>
+<pre class="codigo" data-executar="sim"><code>class Personagem:
+    def __init__(self, nome, vida=100):
+        self.nome = nome
+        self.vida = vida
+
+    def atacar(self):
+        return 10
+
+    def __str__(self):
+        return f"{self.nome} ({type(self).__name__}) causa {self.atacar()} de dano"
+
+class Guerreiro(Personagem):
+    def atacar(self):
+        return 25
+
+class Mago(Personagem):
+    def __init__(self, nome, mana=50):
+        super().__init__(nome, vida=70)
+        self.mana = mana
+
+    def atacar(self):
+        return 15 + self.mana // 10
+
+for p in [Personagem("Aldeão"), Guerreiro("Lampião"), Mago("Iara")]:
+    print(p, "| vida:", p.vida)</code></pre>
+    <p class="saida">Aldeão (Personagem) causa 10 de dano | vida: 100<br>
+Lampião (Guerreiro) causa 25 de dano | vida: 100<br>
+Iara (Mago) causa 20 de dano | vida: 70</p>
+    <p><code>type(self).__name__</code> devolve o nome da classe do objeto, então o mesmo <code>__str__</code> mostra <code>Guerreiro</code> ou <code>Mago</code> conforme o caso.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>class Gerente(Funcionario):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Forma</code> com o método <code>area()</code> que devolve 0, e as filhas <code>Quadrado(lado)</code> e <code>Circulo(raio)</code> que sobrescrevem <code>area()</code>. Mostre a área de um quadrado de lado 4 e de um círculo de raio 2 (use 3.14 para pi).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Forma:
+    def area(self):
+        return 0
+
+class Quadrado(Forma):
+    def __init__(self, lado):
+        self.lado = lado
+
+    def area(self):
+        return self.lado ** 2
+
+class Circulo(Forma):
+    def __init__(self, raio):
+        self.raio = raio
+
+    def area(self):
+        return 3.14 * self.raio ** 2
+
+for f in [Quadrado(4), Circulo(2)]:
+    print(type(f).__name__, f.area())</code></pre>
+      <p class="saida">Quadrado 16<br>
+Circulo 12.56</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Aluno(nome)</code> e a filha <code>Monitor(nome, materia)</code>, usando <code>super().__init__</code>. O <code>Monitor</code> deve ter um método <code>ajudar()</code> que mostra <code>&lt;nome&gt; ajuda em &lt;materia&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __init__(self, nome):
+        self.nome = nome
+
+class Monitor(Aluno):
+    def __init__(self, nome, materia):
+        super().__init__(nome)
+        self.materia = materia
+
+    def ajudar(self):
+        print(f"{self.nome} ajuda em {self.materia}")
+
+Monitor("Clara", "matemática").ajudar()</code></pre>
+      <p class="saida">Clara ajuda em matemática</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Com as classes <code>Animal</code>, <code>Gato(Animal)</code> e <code>Vaca(Animal)</code>, conte quantos objetos de uma lista são gatos e quantos são animais usando <code>isinstance</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Animal:
+    pass
+
+class Gato(Animal):
+    pass
+
+class Vaca(Animal):
+    pass
+
+bichos = [Gato(), Vaca(), Gato(), Animal(), Gato()]
+print("Gatos:", sum(1 for b in bichos if isinstance(b, Gato)))
+print("Animais:", sum(1 for b in bichos if isinstance(b, Animal)))</code></pre>
+      <p class="saida">Gatos: 3<br>
+Animais: 5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe <code>Conta(titular, saldo)</code> com <code>sacar(valor)</code> que não deixa o saldo ficar negativo, e a filha <code>ContaEspecial</code> com um limite extra de R$ 500.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Conta:
+    def __init__(self, titular, saldo=0):
+        self.titular = titular
+        self.saldo = saldo
+
+    def limite(self):
+        return 0
+
+    def sacar(self, valor):
+        if valor &gt; self.saldo + self.limite():
+            print(f"{self.titular}: saque de {valor} negado")
+        else:
+            self.saldo -= valor
+            print(f"{self.titular}: novo saldo {self.saldo}")
+
+class ContaEspecial(Conta):
+    def limite(self):
+        return 500
+
+Conta("Rui", 100).sacar(300)
+ContaEspecial("Sara", 100).sacar(300)</code></pre>
+      <p class="saida">Rui: saque de 300 negado<br>
+Sara: novo saldo -200</p>
+      <p>A filha sobrescreve só o método <code>limite</code>, e o <code>sacar</code> da mãe já funciona para as duas. Sobrescrever o próprio <code>sacar</code> também é uma resposta certa.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Crie a classe <code>Notificacao</code> com o método <code>enviar(texto)</code> que mostra <code>Enviando: texto</code>, e a filha <code>NotificacaoUrgente</code>, que sobrescreve <code>enviar</code> para colocar <code>URGENTE! </code> antes do texto, chamando o <code>enviar</code> da mãe com <code>super()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Notificacao:
+    def enviar(self, texto):
+        print("Enviando:", texto)
+
+class NotificacaoUrgente(Notificacao):
+    def enviar(self, texto):
+        super().enviar("URGENTE! " + texto)
+
+Notificacao().enviar("Prova amanhã")
+NotificacaoUrgente().enviar("A aula começou")</code></pre>
+      <p class="saida">Enviando: Prova amanhã<br>
+Enviando: URGENTE! A aula começou</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="75-associacao-agregacao-composicao.html" rel="prev">← Aula anterior</a>
+      <a href="77-heranca-multipla.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

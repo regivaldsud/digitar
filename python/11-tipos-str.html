@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 11 · Textos: o tipo str — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça o tipo str: aspas simples, duplas e triplas, sequências de escape, tamanho do texto e os primeiros métodos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 11 · Textos: o tipo str</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Escrever textos com aspas simples, duplas e triplas</li>
+        <li>Usar sequências de escape como <code>\n</code>, <code>\t</code>, <code>\"</code> e <code>\\</code></li>
+        <li>Descobrir o tipo e o tamanho de um texto com <code>type()</code> e <code>len()</code></li>
+        <li>Usar os primeiros métodos de texto: <code>upper</code>, <code>lower</code> e <code>title</code></li>
+      </ul>
+    </div>
+
+    <h2>O que é uma string</h2>
+    <p>Em Python, texto se chama <strong>string</strong>, e o tipo dele é <code>str</code>. Uma string é qualquer sequência de caracteres entre aspas: letras, números, espaços, símbolos e até emojis.</p>
+<pre class="codigo" data-executar="sim"><code>print("Fortaleza")
+print("123")
+print("")
+print(type("Fortaleza"))
+print(type("123"))</code></pre>
+    <p class="saida">Fortaleza<br>
+123<br>
+&nbsp;<br>
+&lt;class 'str'&gt;<br>
+&lt;class 'str'&gt;</p>
+    <p><code>"123"</code> entre aspas é texto, não número. E <code>""</code> é a <strong>string vazia</strong>: um texto sem nenhum caractere. A função <code>type()</code> mostra o tipo de qualquer valor.</p>
+
+    <h2>Aspas simples ou duplas?</h2>
+    <p>Texto pode ficar entre aspas duplas <code>"..."</code> ou simples <code>'...'</code>. As duas funcionam igual. Escolha a que facilita: se o texto tem aspas duplas dentro, use simples por fora, e vice-versa.</p>
+<pre class="codigo" data-executar="sim"><code>print('Ela disse: "Bom dia!"')
+print("Copo d'água")
+print('Pão de queijo' == "Pão de queijo")</code></pre>
+    <p class="saida">Ela disse: "Bom dia!"<br>
+Copo d'água<br>
+True</p>
+    <p>A última linha mostra <code>True</code>: para o Python, as duas formas dão o mesmo texto.</p>
+    <div class="atencao"><strong>Atenção:</strong> As aspas precisam ser do mesmo tipo no começo e no fim. <code>print("Olá')</code> dá <code>SyntaxError</code>, porque o texto abriu com aspas duplas e nunca fechou.</div>
+
+    <h2>Sequências de escape</h2>
+    <p>A barra invertida <code>\</code> avisa que o próximo caractere é especial. Isso se chama <strong>sequência de escape</strong>:</p>
+    <ul>
+      <li><code>\n</code> pula uma linha;</li>
+      <li><code>\t</code> é uma tabulação (um espaço largo);</li>
+      <li><code>\"</code> e <code>\'</code> mostram aspas sem fechar o texto;</li>
+      <li><code>\\</code> mostra uma barra invertida de verdade.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>print("Nome:\tAna\nIdade:\t13")
+print("Ele gritou: \"Gol!\"")
+print("Pasta: C:\\Users\\Ana")</code></pre>
+    <p class="saida">Nome:	Ana<br>
+Idade:	13<br>
+Ele gritou: "Gol!"<br>
+Pasta: C:\Users\Ana</p>
+    <div class="dica"><strong>Dica:</strong> Caminhos de pasta do Windows têm muitas barras invertidas. Lembre de escrever <code>\\</code> para cada uma, ou o Python pode confundir, por exemplo, <code>\n</code> de <code>C:\novos</code> com uma quebra de linha.</div>
+
+    <h2>Textos de várias linhas</h2>
+    <p>Três aspas seguidas (<code>"""</code> ou <code>'''</code>) criam um texto que pode ocupar várias linhas, do jeito que você digitou:</p>
+<pre class="codigo" data-executar="sim"><code>print("""Cardápio da cantina
+  - coxinha
+  - pastel
+  - suco de laranja""")</code></pre>
+    <p class="saida">Cardápio da cantina<br>
+&nbsp;&nbsp;- coxinha<br>
+&nbsp;&nbsp;- pastel<br>
+&nbsp;&nbsp;- suco de laranja</p>
+
+    <h2>Tamanho e primeiros métodos</h2>
+    <p><code>len()</code> conta quantos caracteres um texto tem, incluindo espaços. E todo texto tem <strong>métodos</strong>: funções que você chama com um ponto depois do texto.</p>
+<pre class="codigo" data-executar="sim"><code>print(len("Brasil"))
+print(len("São Paulo"))
+print("palmeiras".upper())
+print("CORINTHIANS".lower())
+print("rio grande do sul".title())</code></pre>
+    <p class="saida">6<br>
+9<br>
+PALMEIRAS<br>
+corinthians<br>
+Rio Grande Do Sul</p>
+    <ul>
+      <li><code>upper()</code> deixa tudo em maiúsculas;</li>
+      <li><code>lower()</code> deixa tudo em minúsculas;</li>
+      <li><code>title()</code> deixa a primeira letra de cada palavra maiúscula.</li>
+    </ul>
+    <p>Você vai aprender muitos outros métodos de texto na aula 28.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print('Ela disse: "Bom dia!"')</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Mostre a frase <code>Hoje é dia de "Python"!</code> com as aspas duplas aparecendo na tela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print('Hoje é dia de "Python"!')</code></pre>
+      <p class="saida">Hoje é dia de "Python"!</p>
+      <p>Também funciona <code>print("Hoje é dia de \"Python\"!")</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Com um único <code>print</code> e <code>\t</code>, mostre <code>Produto</code>, uma tabulação e <code>Preço</code> na primeira linha, e <code>Pastel</code>, uma tabulação e <code>8.00</code> na segunda.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Produto\tPreço\nPastel\t8.00")</code></pre>
+      <p class="saida">Produto	Preço<br>
+Pastel	8.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Quantos caracteres tem o nome <code>"Rio de Janeiro"</code>? Use <code>len()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(len("Rio de Janeiro"))</code></pre>
+      <p class="saida">14</p>
+      <p>Os espaços também contam: são 12 letras e 2 espaços.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre o nome <code>"maria eduarda"</code> de três jeitos: tudo maiúsculo, tudo minúsculo e com as iniciais maiúsculas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("maria eduarda".upper())
+print("maria eduarda".lower())
+print("maria eduarda".title())</code></pre>
+      <p class="saida">MARIA EDUARDA<br>
+maria eduarda<br>
+Maria Eduarda</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Mostre o caminho <code>C:\Users\Joao\Documentos</code> na tela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("C:\\Users\\Joao\\Documentos")</code></pre>
+      <p class="saida">C:\Users\Joao\Documentos</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="10-print.html" rel="prev">← Aula anterior</a>
+      <a href="12-tipos-numeros-bool.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

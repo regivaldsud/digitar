@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 45 · Funções como valores, funções de ordem superior e closures — Curso de Python · DIGITAR</title>
+<meta name="description" content="Descubra que funções podem ser guardadas em variáveis, passadas para outras funções e criadas dentro de funções.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 45 · Funções como valores, funções de ordem superior e closures</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Guardar funções em variáveis, listas e dicionários</li>
+        <li>Escrever funções de ordem superior, que recebem outras funções</li>
+        <li>Criar uma função dentro de outra e devolvê-la</li>
+        <li>Entender o que é uma closure e por que ela "lembra" valores</li>
+      </ul>
+    </div>
+
+    <h2>Funções também são valores</h2>
+    <p>Em Python, uma função é um valor como um número ou um texto: dá para guardá-la numa variável, colocá-la numa lista e passá-la para outra função. O segredo é <strong>não</strong> colocar os parênteses — sem eles você não chama a função, só fala dela:</p>
+<pre class="codigo" data-executar="sim"><code>def gritar(texto):
+    return texto.upper() + "!"
+
+falar_alto = gritar
+print(falar_alto("gol do Brasil"))
+print(gritar)
+print(type(gritar))</code></pre>
+    <p class="saida">GOL DO BRASIL!<br>
+&lt;function gritar at 0x000002144AE4A480&gt;<br>
+&lt;class 'function'&gt;</p>
+
+    <h2>Funções de ordem superior</h2>
+    <p>Uma função que <strong>recebe</strong> outra função como argumento (ou devolve uma) é chamada de <strong>função de ordem superior</strong>. Assim, o "jeito de fazer" vira um parâmetro:</p>
+<pre class="codigo" data-executar="sim"><code>def gritar(texto):
+    return texto.upper() + "!"
+
+def sussurrar(texto):
+    return texto.lower() + "..."
+
+def falar(frase, jeito):
+    return jeito(frase)
+
+print(falar("Gol do Brasil", gritar))
+print(falar("Gol do Brasil", sussurrar))</code></pre>
+    <p class="saida">GOL DO BRASIL!<br>
+gol do brasil...</p>
+    <p>Você já usou isso: <code>sorted(nomes, key=len)</code> recebe a função <code>len</code> para decidir a ordem. A aula 49 mostra mais disso com <code>lambda</code>.</p>
+
+    <h2>Dicionário de funções</h2>
+    <p>Como funções são valores, um dicionário pode ligar um nome a uma ação. É um jeito elegante de trocar uma fila de <code>if</code>/<code>elif</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def somar(a, b):
+    return a + b
+
+def subtrair(a, b):
+    return a - b
+
+def multiplicar(a, b):
+    return a * b
+
+operacoes = {"+": somar, "-": subtrair, "*": multiplicar}
+
+for simbolo in ["+", "-", "*"]:
+    conta = operacoes[simbolo]
+    print(f"8 {simbolo} 2 =", conta(8, 2))</code></pre>
+    <p class="saida">8 + 2 = 10<br>
+8 - 2 = 6<br>
+8 * 2 = 16</p>
+
+    <h2>Função dentro de função</h2>
+    <p>Uma função pode criar outra lá dentro e <strong>devolvê-la</strong>. Cada função criada assim é uma "fábrica" personalizada:</p>
+<pre class="codigo" data-executar="sim"><code>def criar_multiplicador(fator):
+    def multiplicar(numero):
+        return numero * fator
+    return multiplicar
+
+dobro = criar_multiplicador(2)
+triplo = criar_multiplicador(3)
+print(dobro(5))
+print(triplo(5))</code></pre>
+    <p class="saida">10<br>
+15</p>
+
+    <h2>Closures: funções que lembram</h2>
+    <p>Repare que <code>criar_multiplicador</code> já terminou quando chamamos <code>dobro(5)</code>, e mesmo assim <code>dobro</code> ainda sabe que <code>fator</code> vale 2. A função de dentro "carrega" as variáveis de fora de que precisa. Isso se chama <strong>closure</strong> (fechamento):</p>
+<pre class="codigo" data-executar="sim"><code>def criar_desconto(porcentagem):
+    def aplicar(preco):
+        return round(preco * (1 - porcentagem / 100), 2)
+    return aplicar
+
+black_friday = criar_desconto(30)
+aniversario = criar_desconto(10)
+print(black_friday(200))
+print(aniversario(200))
+print(black_friday.__closure__[0].cell_contents)</code></pre>
+    <p class="saida">140.0<br>
+180.0<br>
+30</p>
+    <p>O atributo <code>__closure__</code> mostra o valor guardado (30). Você não precisa usá-lo no dia a dia, mas ajuda a ver que a closure existe de verdade.</p>
+    <div class="atencao"><strong>Atenção:</strong> Cuidado para não chamar a função na hora errada: <code>falar("oi", gritar())</code> dá erro, porque <code>gritar()</code> tenta rodar <code>gritar</code> sem argumento. Para <strong>passar</strong> a função, escreva o nome sem parênteses.</div>
+    <div class="dica"><strong>Dica:</strong> Closures são a base dos <strong>decoradores</strong>, que você vai aprender na aula 56.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>dobro = criar_multiplicador(2)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a função <code>aplicar(funcao, lista)</code> que devolve uma nova lista com a função aplicada a cada item. Teste com <code>len</code> e com <code>str.upper</code> na lista <code>["sol", "praia", "mar"]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def aplicar(funcao, lista):
+    return [funcao(item) for item in lista]
+
+print(aplicar(len, ["sol", "praia", "mar"]))
+print(aplicar(str.upper, ["sol", "praia", "mar"]))</code></pre>
+      <p class="saida">[3, 5, 3]<br>
+['SOL', 'PRAIA', 'MAR']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva <code>criar_saudacao(saudacao)</code> que devolva uma função que recebe um nome e devolve a frase completa. Crie <code>bom_dia</code> e <code>boa_noite</code> com ela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def criar_saudacao(saudacao):
+    def saudar(nome):
+        return f"{saudacao}, {nome}!"
+    return saudar
+
+bom_dia = criar_saudacao("Bom dia")
+boa_noite = criar_saudacao("Boa noite")
+print(bom_dia("Joana"))
+print(boa_noite("Pedro"))</code></pre>
+      <p class="saida">Bom dia, Joana!<br>
+Boa noite, Pedro!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Monte um dicionário que ligue os comandos <code>"maiúsculas"</code>, <code>"minúsculas"</code> e <code>"título"</code> aos métodos <code>str.upper</code>, <code>str.lower</code> e <code>str.title</code>. Aplique cada comando ao texto <code>"são luís do maranhão"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>comandos = {"maiúsculas": str.upper, "minúsculas": str.lower, "título": str.title}
+texto = "são luís do maranhão"
+for nome, funcao in comandos.items():
+    print(nome, "-&gt;", funcao(texto))</code></pre>
+      <p class="saida">maiúsculas -&gt; SÃO LUÍS DO MARANHÃO<br>
+minúsculas -&gt; são luís do maranhão<br>
+título -&gt; São Luís Do Maranhão</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva <code>repetir(funcao, vezes)</code> que chama a função recebida (sem argumentos) a quantidade de vezes pedida. Teste com uma função que mostra <code>Bip!</code> três vezes.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def repetir(funcao, vezes):
+    for _ in range(vezes):
+        funcao()
+
+def bip():
+    print("Bip!")
+
+repetir(bip, 3)</code></pre>
+      <p class="saida">Bip!<br>
+Bip!<br>
+Bip!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva <code>criar_conversor(taxa)</code>, que devolve uma função que converte reais para outra moeda dividindo pela taxa. Crie <code>para_dolar</code> com taxa 5.0 e <code>para_euro</code> com taxa 6.25 e converta R$ 100.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def criar_conversor(taxa):
+    def converter(reais):
+        return reais / taxa
+    return converter
+
+para_dolar = criar_conversor(5.0)
+para_euro = criar_conversor(6.25)
+print(f"US$ {para_dolar(100):.2f}")
+print(f"€ {para_euro(100):.2f}")</code></pre>
+      <p class="saida">US$ 20.00<br>
+€ 16.00</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="44-parametros-especiais.html" rel="prev">← Aula anterior</a>
+      <a href="46-dicionarios.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

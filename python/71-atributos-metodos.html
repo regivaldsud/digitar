@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 71 · Atributos de instância e de classe; __dict__ e vars — Curso de Python · DIGITAR</title>
+<meta name="description" content="Diferencie atributos de cada objeto e atributos compartilhados pela classe, e espie por dentro dos objetos com __dict__ e vars.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 71 · Atributos de instância e de classe; __dict__ e vars</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>A diferença entre atributo de <strong>instância</strong> e atributo de <strong>classe</strong></li>
+        <li>Usar um atributo de classe como contador compartilhado</li>
+        <li>Evitar a armadilha da lista compartilhada na classe</li>
+        <li>Ver os atributos de um objeto com <code>__dict__</code> e <code>vars()</code></li>
+      </ul>
+    </div>
+
+    <h2>Atributos de instância</h2>
+    <p>Tudo o que você guarda em <code>self</code> dentro dos métodos é um <strong>atributo de instância</strong>: cada objeto tem o seu. Foi o que você fez na aula 70.</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __init__(self, nome, serie):
+        self.nome = nome
+        self.serie = serie
+
+ana = Aluno("Ana", "7º ano")
+beto = Aluno("Beto", "8º ano")
+print(ana.nome, "-", ana.serie)
+print(beto.nome, "-", beto.serie)</code></pre>
+    <p class="saida">Ana - 7º ano<br>
+Beto - 8º ano</p>
+
+    <h2>Atributos de classe</h2>
+    <p>Um atributo escrito <strong>direto na classe</strong>, fora dos métodos, é um <strong>atributo de classe</strong>: ele é compartilhado por todos os objetos. Serve para informações que valem para todo mundo daquele tipo.</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    escola = "Escola Estadual Monteiro Lobato"
+
+    def __init__(self, nome):
+        self.nome = nome
+
+    def apresentar(self):
+        print(f"Sou {self.nome}, da {self.escola}.")
+
+Aluno("Ana").apresentar()
+Aluno("Beto").apresentar()
+print(Aluno.escola)</code></pre>
+    <p class="saida">Sou Ana, da Escola Estadual Monteiro Lobato.<br>
+Sou Beto, da Escola Estadual Monteiro Lobato.<br>
+Escola Estadual Monteiro Lobato</p>
+    <p>Quando o Python procura <code>self.escola</code>, ele olha primeiro no objeto; como não acha, olha na classe.</p>
+
+    <h2>Um contador compartilhado</h2>
+    <p>Um uso clássico do atributo de classe é contar quantos objetos foram criados. Para mudar o valor, use o nome da <strong>classe</strong>, não o <code>self</code>.</p>
+<pre class="codigo" data-executar="sim"><code>class Senha:
+    proxima = 1
+
+    def __init__(self, nome):
+        self.nome = nome
+        self.numero = Senha.proxima
+        Senha.proxima += 1
+
+for pessoa in ["Dona Rosa", "Seu Jorge", "Bia"]:
+    s = Senha(pessoa)
+    print(f"{s.nome}: senha {s.numero:03d}")
+print("Próxima senha:", Senha.proxima)</code></pre>
+    <p class="saida">Dona Rosa: senha 001<br>
+Seu Jorge: senha 002<br>
+Bia: senha 003<br>
+Próxima senha: 4</p>
+    <div class="atencao"><strong>Atenção:</strong> Se você escrever <code>self.proxima += 1</code>, o Python cria um atributo <strong>novo no objeto</strong> com esse nome e o da classe fica igual. O contador não anda! Para mudar o atributo de classe, escreva <code>NomeDaClasse.atributo</code>.</div>
+
+    <h2>A armadilha da lista na classe</h2>
+    <p>Cuidado com listas e dicionários como atributo de classe: como são compartilhados, mexer na lista de um objeto mexe na de todos.</p>
+<pre class="codigo" data-executar="sim"><code>class Mochila:
+    itens = []  # ERRADO: uma única lista para todas as mochilas
+
+    def __init__(self, dono):
+        self.dono = dono
+
+    def guardar(self, coisa):
+        self.itens.append(coisa)
+
+m1 = Mochila("Caio")
+m2 = Mochila("Duda")
+m1.guardar("caderno")
+print(m2.dono, "tem:", m2.itens)</code></pre>
+    <p class="saida">Duda tem: ['caderno']</p>
+    <p>A Duda nunca guardou nada, mas a mochila dela "tem" o caderno do Caio. O certo é criar a lista dentro do <code>__init__</code>:</p>
+<pre class="codigo" data-executar="sim"><code>class Mochila:
+    def __init__(self, dono):
+        self.dono = dono
+        self.itens = []  # uma lista nova para cada mochila
+
+    def guardar(self, coisa):
+        self.itens.append(coisa)
+
+m1 = Mochila("Caio")
+m2 = Mochila("Duda")
+m1.guardar("caderno")
+print(m1.dono, "tem:", m1.itens)
+print(m2.dono, "tem:", m2.itens)</code></pre>
+    <p class="saida">Caio tem: ['caderno']<br>
+Duda tem: []</p>
+
+    <h2>Espiando o objeto: __dict__ e vars</h2>
+    <p>Todo objeto guarda seus atributos de instância num dicionário chamado <code>__dict__</code>. A função <code>vars(objeto)</code> devolve esse mesmo dicionário. É ótimo para depurar.</p>
+<pre class="codigo" data-executar="sim"><code>class Filme:
+    genero = "animação"
+
+    def __init__(self, titulo, ano):
+        self.titulo = titulo
+        self.ano = ano
+
+f = Filme("O Menino e o Mundo", 2013)
+print(f.__dict__)
+print(vars(f))
+f.nota = 9.5
+print(vars(f))
+print("genero" in vars(f), f.genero)</code></pre>
+    <p class="saida">{'titulo': 'O Menino e o Mundo', 'ano': 2013}<br>
+{'titulo': 'O Menino e o Mundo', 'ano': 2013}<br>
+{'titulo': 'O Menino e o Mundo', 'ano': 2013, 'nota': 9.5}<br>
+False animação</p>
+    <p>Repare que <code>genero</code> não aparece no <code>vars(f)</code>: ele é da classe, não do objeto. Mas <code>f.genero</code> funciona, porque o Python procura na classe.</p>
+    <div class="dica"><strong>Dica:</strong> <code>vars</code> também ajuda a criar objetos a partir de dicionários e a salvar objetos em JSON (aula 62): <code>json.dumps(vars(f))</code> vira texto rapidinho.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(vars(aluno))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Carro</code> com o atributo de classe <code>rodas = 4</code> e os atributos de instância <code>marca</code> e <code>cor</code>. Crie dois carros e mostre marca, cor e rodas de cada um.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Carro:
+    rodas = 4
+
+    def __init__(self, marca, cor):
+        self.marca = marca
+        self.cor = cor
+
+for c in [Carro("Fiat", "vermelho"), Carro("VW", "prata")]:
+    print(c.marca, c.cor, c.rodas)</code></pre>
+      <p class="saida">Fiat vermelho 4<br>
+VW prata 4</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Jogador</code> que conta, num atributo de classe <code>total</code>, quantos jogadores foram criados. Crie três e mostre o total.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Jogador:
+    total = 0
+
+    def __init__(self, nome):
+        self.nome = nome
+        Jogador.total += 1
+
+for nome in ["Marta", "Formiga", "Cristiane"]:
+    Jogador(nome)
+print("Jogadores:", Jogador.total)</code></pre>
+      <p class="saida">Jogadores: 3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O código abaixo deveria guardar as notas de cada aluno separadamente, mas todos ficam com as mesmas notas. Corrija: <code>class Boletim:</code> com <code>notas = []</code> na classe e <code>def adicionar(self, n): self.notas.append(n)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Boletim:
+    def __init__(self):
+        self.notas = []
+
+    def adicionar(self, n):
+        self.notas.append(n)
+
+a = Boletim()
+b = Boletim()
+a.adicionar(8)
+print(a.notas, b.notas)</code></pre>
+      <p class="saida">[8] []</p>
+      <p>A lista precisa ser criada no <code>__init__</code>, para que cada boletim tenha a sua.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie um objeto da classe <code>Receita</code> com <code>nome</code> e <code>porcoes</code>, depois acrescente o atributo <code>tempo = 40</code> e mostre o <code>vars()</code> antes e depois.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Receita:
+    def __init__(self, nome, porcoes):
+        self.nome = nome
+        self.porcoes = porcoes
+
+r = Receita("Brigadeiro", 30)
+print(vars(r))
+r.tempo = 40
+print(vars(r))</code></pre>
+      <p class="saida">{'nome': 'Brigadeiro', 'porcoes': 30}<br>
+{'nome': 'Brigadeiro', 'porcoes': 30, 'tempo': 40}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Sem rodar, diga o que aparece. A classe <code>Placa</code> tem <code>pais = "Brasil"</code>. Fazemos <code>p = Placa()</code>, depois <code>p.pais = "Argentina"</code> e mostramos <code>p.pais</code> e <code>Placa.pais</code>. Depois rode para conferir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Placa:
+    pais = "Brasil"
+
+p = Placa()
+p.pais = "Argentina"
+print(p.pais)
+print(Placa.pais)</code></pre>
+      <p class="saida">Argentina<br>
+Brasil</p>
+      <p><code>p.pais = ...</code> cria um atributo novo <strong>no objeto</strong>, que esconde o da classe só para ele. A classe continua com <code>"Brasil"</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="70-classes.html" rel="prev">← Aula anterior</a>
+      <a href="72-classmethod-staticmethod.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 133 · Isolando dependências com unittest.mock — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use objetos falsos (mocks) para testar funções que dependem de sorteios, horários ou serviços externos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 6 · Testes automatizados</p>
+    <h1>Aula 133 · Isolando dependências com unittest.mock</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Por que algumas funções são difíceis de testar</li>
+        <li>Criar objetos falsos com <code>Mock</code> e <code>return_value</code></li>
+        <li>Substituir uma função temporariamente com <code>patch</code></li>
+        <li>Conferir como um mock foi chamado</li>
+      </ul>
+    </div>
+
+    <h2>O problema: resultados que mudam</h2>
+    <p>Como testar uma função que sorteia um dado? Cada vez que você roda, sai um número diferente. E uma função que manda uma mensagem pela internet? No teste você não quer mandar mensagem de verdade.</p>
+    <p>A solução é trocar essa parte imprevisível (a <strong>dependência</strong>) por um dublê que você controla. Esse dublê se chama <strong>mock</strong> (imitação, em inglês). O módulo <code>unittest.mock</code> já vem com o Python.</p>
+
+    <h2>Mock: um objeto que aceita tudo</h2>
+    <p>Um <code>Mock</code> aceita qualquer chamada e você escolhe o que ele devolve com <code>return_value</code>. Ele também anota como foi chamado:</p>
+<pre class="codigo" data-executar="sim"><code>from unittest.mock import Mock
+
+enviar = Mock(return_value=True)
+
+resultado = enviar("Oi, vó!", para="Vó Maria")
+print(resultado)
+print(enviar.call_count)
+enviar.assert_called_once_with("Oi, vó!", para="Vó Maria")
+print("Foi chamado do jeito certo")</code></pre>
+    <p class="saida">True<br>
+1<br>
+Foi chamado do jeito certo</p>
+    <p>Se a chamada fosse diferente, <code>assert_called_once_with</code> daria <code>AssertionError</code>.</p>
+
+    <h2>patch: troca temporária</h2>
+    <p>O <code>patch</code> substitui uma função por um mock <strong>só durante o teste</strong> e depois devolve a original. Veja um jogo em que o jogador ganha se tirar 6 no dado:</p>
+<pre class="codigo" data-executar="sim"><code>import random
+import unittest
+from unittest.mock import patch
+
+
+def jogar_dado():
+    numero = random.randint(1, 6)
+    if numero == 6:
+        return "Você ganhou!"
+    return f"Tirou {numero}. Tente de novo."
+
+
+class TestDado(unittest.TestCase):
+    @patch("random.randint", return_value=6)
+    def test_ganha_com_seis(self, falso_randint):
+        self.assertEqual(jogar_dado(), "Você ganhou!")
+        falso_randint.assert_called_once_with(1, 6)
+
+    @patch("random.randint", return_value=2)
+    def test_perde_com_dois(self, falso_randint):
+        self.assertEqual(jogar_dado(), "Tirou 2. Tente de novo.")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <p>O <code>@patch</code> (um decorador, como na aula 56) entrega o mock como parâmetro extra do teste. Dentro do teste, <code>random.randint</code> devolve o número que escolhemos.</p>
+    <div class="atencao"><strong>Atenção:</strong> O texto do <code>patch</code> é o caminho de onde a função é <strong>usada</strong>. Se o seu código faz <code>from random import randint</code> dentro do arquivo <code>jogo.py</code>, o patch é <code>patch("jogo.randint")</code>, e não <code>patch("random.randint")</code>.</div>
+
+    <h2>patch como bloco with</h2>
+    <p>Também dá para usar o <code>patch</code> num bloco <code>with</code>, só em parte do código. Use <code>side_effect</code> para devolver um valor diferente em cada chamada:</p>
+<pre class="codigo" data-executar="sim"><code>import random
+from unittest.mock import patch
+
+
+def sortear_time(nomes):
+    return [random.choice(nomes) for _ in range(2)]
+
+
+with patch("random.choice", side_effect=["Bia", "Caio"]):
+    print(sortear_time(["Ana", "Bia", "Caio"]))
+
+print("Fora do with, o random volta ao normal.")</code></pre>
+    <p class="saida">['Bia', 'Caio']<br>
+Fora do with, o random volta ao normal.</p>
+    <div class="dica"><strong>Dica:</strong> Use mocks só para o que é imprevisível ou lento (sorteio, data, internet, banco de dados). Se você mockar tudo, o teste deixa de testar o seu código de verdade.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>@patch("random.randint", return_value=6)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um <code>Mock</code> chamado <code>pegar_temperatura</code> que devolve <code>31</code>, chame-o e mostre o resultado e quantas vezes ele foi chamado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from unittest.mock import Mock
+
+pegar_temperatura = Mock(return_value=31)
+print(pegar_temperatura("Recife"))
+print(pegar_temperatura.call_count)</code></pre>
+      <p class="saida">31<br>
+1</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> A função <code>moeda()</code> devolve <code>"cara"</code> se <code>random.random()</code> for menor que 0.5 e <code>"coroa"</code> caso contrário. Teste os dois casos com <code>patch</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import random
+import unittest
+from unittest.mock import patch
+
+
+def moeda():
+    return "cara" if random.random() &lt; 0.5 else "coroa"
+
+
+class TestMoeda(unittest.TestCase):
+    @patch("random.random", return_value=0.1)
+    def test_cara(self, _):
+        self.assertEqual(moeda(), "cara")
+
+    @patch("random.random", return_value=0.9)
+    def test_coroa(self, _):
+        self.assertEqual(moeda(), "coroa")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>side_effect</code> para fazer um mock devolver 1, depois 2, depois 3, e mostre as três chamadas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from unittest.mock import Mock
+
+contador = Mock(side_effect=[1, 2, 3])
+print(contador(), contador(), contador())</code></pre>
+      <p class="saida">1 2 3</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="132-tdd-na-pratica.html" rel="prev">← Aula anterior</a>
+      <a href="134-pytest.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

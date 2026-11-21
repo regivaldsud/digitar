@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 63 · Código limpo: guard clause e menos if aninhado — Curso de Python · DIGITAR</title>
+<meta name="description" content="Deixe o código mais fácil de ler trocando ifs aninhados por guard clauses, retornos antecipados e continue nos laços.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 63 · Código limpo: guard clause e menos if aninhado</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Reconhecer o código "em escadinha", com muitos <code>if</code> um dentro do outro</li>
+        <li>Usar <strong>guard clauses</strong>: tratar os casos de erro primeiro e sair cedo com <code>return</code></li>
+        <li>Usar <code>continue</code> para pular itens num laço sem aumentar o recuo</li>
+        <li>Trocar cadeias de <code>elif</code> por um dicionário quando fizer sentido</li>
+      </ul>
+    </div>
+
+    <h2>O problema da escadinha</h2>
+    <p>Veja esta função que decide se uma pessoa pode alugar uma bicicleta. Ela funciona, mas cada condição empurra o código mais para a direita:</p>
+<pre class="codigo" data-executar="sim"><code>def pode_alugar(idade, tem_cadastro, saldo):
+    if idade &gt;= 12:
+        if tem_cadastro:
+            if saldo &gt;= 5:
+                return "Pode alugar!"
+            else:
+                return "Saldo insuficiente"
+        else:
+            return "Faça o cadastro primeiro"
+    else:
+        return "Idade mínima: 12 anos"
+
+print(pode_alugar(13, True, 10))
+print(pode_alugar(13, False, 10))
+print(pode_alugar(10, True, 10))</code></pre>
+    <p class="saida">Pode alugar!<br>
+Faça o cadastro primeiro<br>
+Idade mínima: 12 anos</p>
+    <p>Para entender o <code>else</code> lá de baixo, você precisa voltar os olhos várias linhas e descobrir a qual <code>if</code> ele pertence. Com mais regras, fica impossível de ler.</p>
+
+    <h2>Guard clause: saia cedo</h2>
+    <p>Uma <strong>guard clause</strong> ("cláusula de guarda") é um <code>if</code> no começo da função que trata um caso problemático e sai na hora com <code>return</code>. Depois de todas as guardas, sobra só o caminho feliz, sem recuo nenhum:</p>
+<pre class="codigo" data-executar="sim"><code>def pode_alugar(idade, tem_cadastro, saldo):
+    if idade &lt; 12:
+        return "Idade mínima: 12 anos"
+    if not tem_cadastro:
+        return "Faça o cadastro primeiro"
+    if saldo &lt; 5:
+        return "Saldo insuficiente"
+    return "Pode alugar!"
+
+print(pode_alugar(13, True, 10))
+print(pode_alugar(13, False, 10))
+print(pode_alugar(10, True, 10))</code></pre>
+    <p class="saida">Pode alugar!<br>
+Faça o cadastro primeiro<br>
+Idade mínima: 12 anos</p>
+    <p>O resultado é o mesmo, mas agora cada regra é uma linha que se lê de cima para baixo, como uma lista de conferência.</p>
+    <div class="dica"><strong>Dica:</strong> Repare que as condições ficaram <strong>invertidas</strong>: em vez de "se a idade é suficiente, continue", escrevemos "se a idade <strong>não</strong> é suficiente, saia". Esse é o truque da guard clause.</div>
+
+    <h2>Guardas com raise</h2>
+    <p>As guardas também combinam com <code>raise</code> (aula 53): primeiro você recusa os dados ruins, depois faz a conta tranquilo.</p>
+<pre class="codigo" data-executar="sim"><code>def media(notas):
+    if not notas:
+        raise ValueError("a lista de notas está vazia")
+    if any(n &lt; 0 or n &gt; 10 for n in notas):
+        raise ValueError("toda nota deve estar entre 0 e 10")
+    return sum(notas) / len(notas)
+
+print(media([7, 8, 9]))
+for ruim in ([], [5, 11]):
+    try:
+        media(ruim)
+    except ValueError as e:
+        print("Erro:", e)</code></pre>
+    <p class="saida">8.0<br>
+Erro: a lista de notas está vazia<br>
+Erro: toda nota deve estar entre 0 e 10</p>
+
+    <h2>continue: guardas dentro de laços</h2>
+    <p>Dentro de um <code>for</code>, o <code>continue</code> faz o papel do <code>return</code>: pula para o próximo item. Compare as duas versões de um programa que soma só os pedidos válidos:</p>
+<pre class="codigo" data-executar="sim"><code>pedidos = [("pastel", 2), ("", 1), ("caldo de cana", 0), ("coxinha", 3)]
+
+total_aninhado = 0
+for nome, qtd in pedidos:
+    if nome:
+        if qtd &gt; 0:
+            total_aninhado += qtd
+
+total_guarda = 0
+for nome, qtd in pedidos:
+    if not nome:
+        continue
+    if qtd &lt;= 0:
+        continue
+    total_guarda += qtd
+
+print(total_aninhado, total_guarda)</code></pre>
+    <p class="saida">5 5</p>
+    <div class="atencao"><strong>Atenção:</strong> Guard clause não é desculpa para funções enormes. Se uma função tem guardas demais, talvez ela esteja fazendo coisas demais e deva ser dividida em funções menores.</div>
+
+    <h2>Um dicionário no lugar de muitos elif</h2>
+    <p>Quando uma cadeia de <code>if/elif</code> só escolhe um valor de acordo com outro, um dicionário faz o mesmo trabalho em menos linhas:</p>
+<pre class="codigo" data-executar="sim"><code>def frete_com_elif(regiao):
+    if regiao == "Nordeste":
+        return 15.0
+    elif regiao == "Sudeste":
+        return 10.0
+    elif regiao == "Sul":
+        return 12.0
+    else:
+        return 20.0
+
+FRETES = {"Nordeste": 15.0, "Sudeste": 10.0, "Sul": 12.0}
+
+def frete_com_dicionario(regiao):
+    return FRETES.get(regiao, 20.0)
+
+for r in ["Sul", "Norte"]:
+    print(r, frete_com_elif(r), frete_com_dicionario(r))</code></pre>
+    <p class="saida">Sul 12.0 12.0<br>
+Norte 20.0 20.0</p>
+    <p>O <code>get</code> com um valor padrão (aula 46) faz o papel do <code>else</code>. E, para mudar um preço, basta mexer no dicionário.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if not tem_cadastro: return "Faça o cadastro"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Reescreva com guard clauses: <code>def entrar(ingresso, idade):</code> se tem ingresso, então se a idade é maior ou igual a 14 devolve <code>"Entrada liberada"</code>, senão <code>"Show para maiores de 14"</code>; se não tem ingresso, devolve <code>"Compre o ingresso"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def entrar(ingresso, idade):
+    if not ingresso:
+        return "Compre o ingresso"
+    if idade &lt; 14:
+        return "Show para maiores de 14"
+    return "Entrada liberada"
+
+print(entrar(True, 15))
+print(entrar(True, 12))
+print(entrar(False, 20))</code></pre>
+      <p class="saida">Entrada liberada<br>
+Show para maiores de 14<br>
+Compre o ingresso</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva <code>dividir(a, b)</code> com uma guarda que gera <code>ZeroDivisionError</code> com a mensagem <code>não dá para dividir por zero</code> quando <code>b</code> é 0, e devolve <code>a / b</code> no caminho feliz.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def dividir(a, b):
+    if b == 0:
+        raise ZeroDivisionError("não dá para dividir por zero")
+    return a / b
+
+print(dividir(10, 4))
+try:
+    dividir(1, 0)
+except ZeroDivisionError as e:
+    print("Erro:", e)</code></pre>
+      <p class="saida">2.5<br>
+Erro: não dá para dividir por zero</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Na lista <code>["Ana", "", "  ", "Bruno", "carla"]</code>, mostre os nomes com a primeira letra maiúscula, pulando com <code>continue</code> os vazios ou só com espaços.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nomes = ["Ana", "", "  ", "Bruno", "carla"]
+for nome in nomes:
+    if not nome.strip():
+        continue
+    print(nome.strip().capitalize())</code></pre>
+      <p class="saida">Ana<br>
+Bruno<br>
+Carla</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Troque esta cadeia por um dicionário: <code>"seg"</code> vale <code>"segunda"</code>, <code>"ter"</code> vale <code>"terça"</code>, <code>"qua"</code> vale <code>"quarta"</code> e qualquer outro vale <code>"dia desconhecido"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>DIAS = {"seg": "segunda", "ter": "terça", "qua": "quarta"}
+
+def dia_por_extenso(abreviado):
+    return DIAS.get(abreviado, "dia desconhecido")
+
+print(dia_por_extenso("ter"))
+print(dia_por_extenso("dom"))</code></pre>
+      <p class="saida">terça<br>
+dia desconhecido</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva <code>validar_senha(senha)</code> com guard clauses: devolve <code>"curta demais"</code> se tiver menos de 8 caracteres, <code>"falta um número"</code> se não tiver nenhum dígito, e <code>"senha forte"</code> caso contrário.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def validar_senha(senha):
+    if len(senha) &lt; 8:
+        return "curta demais"
+    if not any(c.isdigit() for c in senha):
+        return "falta um número"
+    return "senha forte"
+
+for s in ["abc", "digitando", "digitar2026"]:
+    print(s, "-&gt;", validar_senha(s))</code></pre>
+      <p class="saida">abc -&gt; curta demais<br>
+digitando -&gt; falta um número<br>
+digitar2026 -&gt; senha forte</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="62-json.html" rel="prev">← Aula anterior</a>
+      <a href="64-pep8-e-bons-nomes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

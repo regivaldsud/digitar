@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 13 · Convertendo tipos (int(), float(), str(), bool()) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Transforme textos em números e números em textos com int, float, str e bool, e entenda o ValueError.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 13 · Convertendo tipos (int(), float(), str(), bool())</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Converter textos em números com <code>int()</code> e <code>float()</code></li>
+        <li>Converter números em texto com <code>str()</code></li>
+        <li>Descobrir o que vira <code>True</code> ou <code>False</code> com <code>bool()</code></li>
+        <li>Entender o <code>ValueError</code> quando a conversão não é possível</li>
+      </ul>
+    </div>
+
+    <h2>Por que converter?</h2>
+    <p>Às vezes um número chega como texto: um valor lido do teclado, uma linha de arquivo, um dado de planilha. Texto não serve para conta: o <code>+</code> entre textos <strong>junta</strong> em vez de somar.</p>
+<pre class="codigo" data-executar="sim"><code>print("12" + "7")
+print(12 + 7)
+print(int("12") + int("7"))</code></pre>
+    <p class="saida">127<br>
+19<br>
+19</p>
+    <p>Converter é transformar um valor de um tipo em outro. Cada tipo tem uma função com o próprio nome: <code>int()</code>, <code>float()</code>, <code>str()</code> e <code>bool()</code>.</p>
+
+    <h2>Texto para número: int e float</h2>
+    <ul>
+      <li><code>int("12")</code> vira o inteiro <code>12</code>;</li>
+      <li><code>float("1.75")</code> vira o número real <code>1.75</code>;</li>
+      <li><code>int()</code> também transforma um <code>float</code> em inteiro, <strong>cortando</strong> a parte decimal (não arredonda).</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>print(int("2025"))
+print(float("1.75"))
+print(float("3"))
+print(int(3.9))
+print(int(-3.9))
+print(int(" 42 "))</code></pre>
+    <p class="saida">2025<br>
+1.75<br>
+3.0<br>
+3<br>
+-3<br>
+42</p>
+    <p><code>int(3.9)</code> dá <code>3</code> e <code>int(-3.9)</code> dá <code>-3</code>: o corte sempre joga fora o que vem depois do ponto. Espaços nas pontas, como em <code>" 42 "</code>, são ignorados.</p>
+
+    <h2>Número para texto: str</h2>
+    <p>O caminho contrário também existe: <code>str()</code> transforma um número em texto. É útil para juntar números com outros textos usando <code>+</code>:</p>
+<pre class="codigo" data-executar="sim"><code>pontos = 250
+print("Você fez " + str(pontos) + " pontos!")
+print(str(3.5) + " km")
+print(len(str(2025)))</code></pre>
+    <p class="saida">Você fez 250 pontos!<br>
+3.5 km<br>
+4</p>
+    <p><code>len(str(2025))</code> conta os dígitos do número: primeiro vira o texto <code>"2025"</code>, depois <code>len</code> conta 4 caracteres.</p>
+
+    <h2>Quando a conversão falha: ValueError</h2>
+    <p>Se o texto não parece um número, a conversão falha com <code>ValueError</code>:</p>
+<pre class="codigo" data-executar="sim"><code>print(int("doze"))</code></pre>
+    <p class="saida">ValueError: invalid literal for int() with base 10: 'doze'</p>
+    <p>O mesmo acontece com <code>int("12.5")</code> (tem ponto, então não é inteiro), <code>float("1,5")</code> (vírgula não vale) e <code>int("")</code> (texto vazio). Um jeito de aceitar vírgula é trocá-la por ponto antes de converter:</p>
+<pre class="codigo" data-executar="sim"><code>valor = "1,5"
+print(float(valor.replace(",", ".")))
+print(int(float("12.5")))</code></pre>
+    <p class="saida">1.5<br>
+12</p>
+    <p><code>int(float("12.5"))</code> converte em duas etapas: primeiro para <code>float</code>, depois para <code>int</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>int("12.5")</code> dá erro, mas <code>int(12.5)</code> funciona. A diferença: o primeiro é um <strong>texto</strong> com ponto, o segundo já é um <strong>número</strong> <code>float</code>.</div>
+
+    <h2>bool(): o que é verdadeiro?</h2>
+    <p><code>bool()</code> converte qualquer valor em <code>True</code> ou <code>False</code>. A regra: o que é "vazio" ou "zero" vira <code>False</code>; o resto vira <code>True</code>.</p>
+<pre class="codigo" data-executar="sim"><code>print(bool(0))
+print(bool(15))
+print(bool(""))
+print(bool("oi"))
+print(bool(" "))
+print(bool("False"))</code></pre>
+    <p class="saida">False<br>
+True<br>
+False<br>
+True<br>
+True<br>
+True</p>
+    <p>Cuidado com as duas últimas: <code>" "</code> tem um espaço, então não é vazio. E <code>"False"</code> é um texto com 5 letras, então vira <code>True</code>!</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>total = int("12") + float("7.5")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Converta os textos <code>"15"</code> e <code>"27"</code> em números e mostre a soma.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(int("15") + int("27"))</code></pre>
+      <p class="saida">42</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Mostre a frase <code>Faltam 30 dias para as férias</code> juntando textos com <code>+</code> e o número <code>30</code> convertido com <code>str()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>dias = 30
+print("Faltam " + str(dias) + " dias para as férias")</code></pre>
+      <p class="saida">Faltam 30 dias para as férias</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O preço <code>"4,99"</code> veio de uma planilha brasileira. Converta para <code>float</code> e mostre o dobro do preço.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>preco = float("4,99".replace(",", "."))
+print(preco * 2)</code></pre>
+      <p class="saida">9.98</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Sem rodar, diga o resultado de <code>int(7.99)</code>, <code>bool(0.0)</code> e <code>bool("0")</code>. Depois confira.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(int(7.99))
+print(bool(0.0))
+print(bool("0"))</code></pre>
+      <p class="saida">7<br>
+False<br>
+True</p>
+      <p><code>int</code> corta as casas e dá <code>7</code>. <code>0.0</code> é zero, então dá <code>False</code>. Já <code>"0"</code> é um texto com um caractere, não vazio, então dá <code>True</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Quantos dígitos tem o número <code>9876543210</code>? Use <code>str()</code> e <code>len()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(len(str(9876543210)))</code></pre>
+      <p class="saida">10</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="12-tipos-numeros-bool.html" rel="prev">← Aula anterior</a>
+      <a href="14-variaveis.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

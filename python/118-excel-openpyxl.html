@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 118 · Planilhas do Excel com openpyxl — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie, leia e altere planilhas .xlsx do Excel pelo Python com a biblioteca openpyxl.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 118 · Planilhas do Excel com openpyxl</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar uma planilha <code>.xlsx</code> com <code>openpyxl</code></li>
+        <li>Escrever valores e fórmulas nas células</li>
+        <li>Ler uma planilha existente linha por linha</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>CSV ou Excel?</h2>
+    <p>Um CSV (aula 106) é só texto: não tem cores, fórmulas nem várias abas. Quando você precisa de uma planilha de verdade do Excel (<code>.xlsx</code>), use a biblioteca <code>openpyxl</code>:</p>
+<pre class="codigo"><code>pip install openpyxl</code></pre>
+
+    <h2>Criando uma planilha</h2>
+<pre class="codigo"><code>from openpyxl import Workbook
+from openpyxl.styles import Font
+
+livro = Workbook()
+aba = livro.active
+aba.title = "Mesada"
+
+aba.append(["Mês", "Recebi", "Gastei"])
+aba.append(["Janeiro", 100, 65])
+aba.append(["Fevereiro", 100, 80])
+aba.append(["Março", 120, 70])
+
+aba["D1"] = "Sobrou"
+for linha in range(2, 5):
+    aba[f"D{linha}"] = f"=B{linha}-C{linha}"    # fórmula do Excel
+
+for celula in aba[1]:
+    celula.font = Font(bold=True)
+
+livro.save("mesada.xlsx")
+print("Planilha salva!")</code></pre>
+    <ul>
+      <li><code>Workbook()</code> cria o arquivo; <code>active</code> é a primeira aba;</li>
+      <li><code>append</code> escreve uma linha inteira; <code>aba["D1"]</code> acessa uma célula pelo endereço;</li>
+      <li>um texto que começa com <code>=</code> vira fórmula, calculada quando o Excel abre o arquivo.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Feche a planilha no Excel antes de rodar o programa. Com o arquivo aberto, o Windows bloqueia a gravação e aparece <code>PermissionError</code>.</div>
+
+    <h2>Lendo uma planilha</h2>
+<pre class="codigo"><code>from openpyxl import load_workbook
+
+livro = load_workbook("mesada.xlsx")
+aba = livro["Mesada"]
+
+total_gasto = 0
+for mes, recebi, gastei, sobrou in aba.iter_rows(min_row=2, values_only=True):
+    print(mes, "gastou", gastei)
+    total_gasto += gastei
+print("Total gasto:", total_gasto)</code></pre>
+    <p><code>values_only=True</code> entrega só os valores. Fórmulas vêm como texto (<code>"=B2-C2"</code>), a não ser que você abra com <code>load_workbook(..., data_only=True)</code> um arquivo que já foi salvo pelo Excel.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>aba.append(["Janeiro", 100, 65])</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma planilha <code>tabuada.xlsx</code> com a tabuada do 7 (coluna A com o multiplicador, coluna B com o resultado).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from openpyxl import Workbook
+
+livro = Workbook()
+aba = livro.active
+aba.append(["Multiplicador", "Resultado"])
+for i in range(1, 11):
+    aba.append([i, 7 * i])
+livro.save("tabuada.xlsx")</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Que erro aparece se a planilha estiver aberta no Excel enquanto o programa tenta salvar, e como resolver?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">PermissionError: o Windows bloqueia o arquivo aberto. Feche a planilha no<br>
+Excel (ou salve com outro nome) e rode o programa de novo.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="117-deque.html" rel="prev">← Aula anterior</a>
+      <a href="119-imagens-pillow.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

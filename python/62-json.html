@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 62 · Salvando dados em JSON — Curso de Python · DIGITAR</title>
+<meta name="description" content="Salve e carregue listas e dicionários em arquivos JSON, o formato de dados mais usado na internet, para seus programas lembrarem das coisas.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 62 · Salvando dados em JSON</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é JSON e como ele se parece com dicionários e listas do Python</li>
+        <li>Converter dados em texto JSON com <code>json.dumps</code> e de volta com <code>json.loads</code></li>
+        <li>Salvar e carregar arquivos com <code>json.dump</code> e <code>json.load</code></li>
+        <li>Deixar o JSON bonito e com acentos usando <code>indent</code> e <code>ensure_ascii=False</code></li>
+        <li>Quais tipos do Python viram quais tipos do JSON</li>
+      </ul>
+    </div>
+
+    <h2>O que é JSON</h2>
+    <p>JSON (*JavaScript Object Notation*, lê-se "djêison") é um formato de texto para guardar dados organizados. Aplicativos e sites usam JSON o tempo todo para trocar informações — a previsão do tempo no seu celular, por exemplo, provavelmente chega em JSON.</p>
+    <p>A boa notícia: JSON é quase igual aos dicionários e listas que você já conhece.</p>
+    <p class="saida">{<br>
+&nbsp;&nbsp;"nome": "Bia",<br>
+&nbsp;&nbsp;"idade": 13,<br>
+&nbsp;&nbsp;"esportes": ["vôlei", "natação"],<br>
+&nbsp;&nbsp;"tem_bicicleta": true<br>
+}</p>
+    <p>Ele guarda dados <strong>aninhados</strong>: listas dentro de dicionários, dicionários dentro de listas, e assim por diante.</p>
+
+    <h2>De Python para texto: json.dumps</h2>
+    <p>O <code>json.dumps</code> (o "s" é de *string*) transforma dados do Python em um texto JSON.</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+aluno = {"nome": "Bia", "idade": 13, "esportes": ["vôlei", "natação"], "tem_bicicleta": True}
+
+texto = json.dumps(aluno)
+print(texto)
+print(type(texto))
+
+bonito = json.dumps(aluno, indent=2, ensure_ascii=False)
+print(bonito)</code></pre>
+    <p class="saida">{"nome": "Bia", "idade": 13, "esportes": ["v\u00f4lei", "nata\u00e7\u00e3o"], "tem_bicicleta": true}<br>
+&lt;class 'str'&gt;<br>
+{<br>
+&nbsp;&nbsp;"nome": "Bia",<br>
+&nbsp;&nbsp;"idade": 13,<br>
+&nbsp;&nbsp;"esportes": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"vôlei",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"natação"<br>
+&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;"tem_bicicleta": true<br>
+}</p>
+    <p>Por padrão, o JSON troca letras acentuadas por códigos como <code>\u00f4</code> (o "ô"). O <code>ensure_ascii=False</code> mantém os acentos, e o <code>indent=2</code> coloca cada item numa linha com 2 espaços de recuo.</p>
+
+    <h2>De texto para Python: json.loads</h2>
+    <p>O caminho de volta é o <code>json.loads</code>: ele lê um texto JSON e devolve dicionários, listas, números etc.</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+resposta = '{"cidade": "Fortaleza", "temperatura": 31.5, "chuva": false, "dias": [30, 31, 29]}'
+
+dados = json.loads(resposta)
+print(dados["cidade"])
+print(dados["temperatura"] + 1)
+print(dados["chuva"])
+print(max(dados["dias"]))</code></pre>
+    <p class="saida">Fortaleza<br>
+32.5<br>
+False<br>
+31</p>
+    <p>Repare: no texto JSON estava <code>false</code> (minúsculo); no Python virou <code>False</code>.</p>
+
+    <h2>Tipos do Python e do JSON</h2>
+    <ul>
+      <li><code>dict</code> vira objeto <code>{ }</code> e <code>list</code> (ou <code>tuple</code>) vira array <code>[ ]</code>;</li>
+      <li><code>str</code> vira texto, sempre entre <strong>aspas duplas</strong>;</li>
+      <li><code>int</code> e <code>float</code> viram números;</li>
+      <li><code>True</code> e <code>False</code> viram <code>true</code> e <code>false</code>;</li>
+      <li><code>None</code> vira <code>null</code>.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import json
+
+print(json.dumps([1, 2.5, "oi", True, False, None]))
+print(json.dumps((10, 20)))
+print(json.loads("[null, true, 3]"))</code></pre>
+    <p class="saida">[1, 2.5, "oi", true, false, null]<br>
+[10, 20]<br>
+[None, True, 3]</p>
+    <div class="atencao"><strong>Atenção:</strong> Em JSON as chaves dos objetos são sempre textos. Se você salvar <code>{1: "um"}</code>, ao carregar de volta a chave vira <code>"1"</code> (string), e <code>dados[1]</code> dá <code>KeyError</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> JSON não aceita aspas simples. <code>json.loads("{'a': 1}")</code> dá erro; o certo é <code>json.loads('{"a": 1}')</code>. Também não dá para salvar direto um <code>set</code> nem uma data: transforme antes em lista ou texto.</div>
+
+    <h2>Salvando e carregando arquivos: dump e load</h2>
+    <p>Para arquivos, use <code>json.dump</code> (grava) e <code>json.load</code> (lê), sem o "s". É o jeito mais fácil de fazer um programa "lembrar" das coisas entre uma execução e outra.</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+jogador = {"nome": "Caio", "fase": 7, "vidas": 3, "itens": ["espada", "escudo"]}
+
+with open("save.json", "w", encoding="utf-8") as f:
+    json.dump(jogador, f, indent=2, ensure_ascii=False)
+
+with open("save.json", encoding="utf-8") as f:
+    carregado = json.load(f)
+
+carregado["fase"] += 1
+print("Continuando da fase", carregado["fase"])
+print("Itens:", ", ".join(carregado["itens"]))</code></pre>
+    <p class="saida">Continuando da fase 8<br>
+Itens: espada, escudo</p>
+    <p>Na primeira vez que o programa roda, o arquivo ainda não existe. O padrão é tentar carregar e, se não der, começar com dados novos:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+def carregar(nome, padrao):
+    try:
+        with open(nome, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return padrao
+
+recordes = carregar("recordes.json", {"ppm": 0})
+print("Recorde atual:", recordes["ppm"])
+
+recordes["ppm"] = 42
+with open("recordes.json", "w", encoding="utf-8") as f:
+    json.dump(recordes, f)
+
+print("Depois de salvar:", carregar("recordes.json", {"ppm": 0}))</code></pre>
+    <p class="saida">Recorde atual: 0<br>
+Depois de salvar: {'ppm': 42}</p>
+    <div class="dica"><strong>Dica:</strong> Lembre-se: <code>dumps</code>/<code>loads</code> trabalham com <strong>string</strong>; <code>dump</code>/<code>load</code> trabalham com <strong>arquivo</strong>. O "s" no fim é de *string*. Você vai usar tudo isso no projeto da aula 69.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>dados = json.loads('{"nome": "Bia", "idade": 13}')</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Transforme o dicionário <code>{"time": "Corinthians", "titulos": 7}</code> em texto JSON e mostre o resultado e o tipo dele.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+texto = json.dumps({"time": "Corinthians", "titulos": 7})
+print(texto)
+print(type(texto))</code></pre>
+      <p class="saida">{"time": "Corinthians", "titulos": 7}<br>
+&lt;class 'str'&gt;</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Dado o texto JSON <code>'{"produto": "pastel", "preco": 8.0, "sabores": ["carne", "queijo", "palmito"]}'</code>, mostre o preço e quantos sabores existem.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+texto = '{"produto": "pastel", "preco": 8.0, "sabores": ["carne", "queijo", "palmito"]}'
+dados = json.loads(texto)
+print("Preço:", dados["preco"])
+print("Sabores:", len(dados["sabores"]))</code></pre>
+      <p class="saida">Preço: 8.0<br>
+Sabores: 3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Salve uma lista de três contatos (cada um um dicionário com <code>nome</code> e <code>telefone</code>) em <code>contatos.json</code>, com <code>indent=2</code>. Depois carregue o arquivo e mostre só os nomes.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+contatos = [
+    {"nome": "Vó Lurdes", "telefone": "(81) 99999-0001"},
+    {"nome": "Tio Zé", "telefone": "(81) 99999-0002"},
+    {"nome": "Júlia", "telefone": "(81) 99999-0003"},
+]
+
+with open("contatos.json", "w", encoding="utf-8") as f:
+    json.dump(contatos, f, indent=2, ensure_ascii=False)
+
+with open("contatos.json", encoding="utf-8") as f:
+    lidos = json.load(f)
+
+for contato in lidos:
+    print(contato["nome"])</code></pre>
+      <p class="saida">Vó Lurdes<br>
+Tio Zé<br>
+Júlia</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre a diferença entre <code>json.dumps({"fruta": "maçã"})</code> e <code>json.dumps({"fruta": "maçã"}, ensure_ascii=False)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+print(json.dumps({"fruta": "maçã"}))
+print(json.dumps({"fruta": "maçã"}, ensure_ascii=False))</code></pre>
+      <p class="saida">{"fruta": "ma\u00e7\u00e3"}<br>
+{"fruta": "maçã"}</p>
+      <p>Os dois textos são JSON válidos e carregam a mesma palavra; o segundo só é mais fácil para uma pessoa ler.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça um contador de visitas: o programa grava <code>{"visitas": 0}</code> em <code>contador.json</code>, depois, três vezes seguidas, carrega o arquivo, soma 1 e grava de novo. No fim, mostre o total.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+with open("contador.json", "w", encoding="utf-8") as f:
+    json.dump({"visitas": 0}, f)
+
+for _ in range(3):
+    with open("contador.json", encoding="utf-8") as f:
+        dados = json.load(f)
+    dados["visitas"] += 1
+    with open("contador.json", "w", encoding="utf-8") as f:
+        json.dump(dados, f)
+
+with open("contador.json", encoding="utf-8") as f:
+    print("Total de visitas:", json.load(f)["visitas"])</code></pre>
+      <p class="saida">Total de visitas: 3</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="61-arquivos.html" rel="prev">← Aula anterior</a>
+      <a href="63-guard-clause.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

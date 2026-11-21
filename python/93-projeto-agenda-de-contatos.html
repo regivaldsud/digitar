@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 93 · Projeto: agenda de contatos com classes — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa uma agenda de contatos usando classes, com busca, remoção, telefone validado e dados salvos em JSON.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 93 · Projeto: agenda de contatos com classes</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Validar e formatar telefones brasileiros com DDD</li>
+        <li>Criar a classe <code>Contato</code> com <code>__init__</code> e <code>__str__</code></li>
+        <li>Criar a classe <code>Agenda</code>, que guarda e organiza os contatos</li>
+        <li>Buscar, remover e listar contatos em ordem alfabética</li>
+        <li>Salvar e carregar a agenda num arquivo JSON</li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>Toda pessoa tem uma agenda no celular. Agora você vai construir a sua, em Python, usando orientação a objetos:</p>
+    <ul>
+      <li>a classe <code>Contato</code> representa <strong>uma</strong> pessoa (nome, telefone e e-mail);</li>
+      <li>a classe <code>Agenda</code> representa a <strong>coleção</strong> de contatos e sabe adicionar, buscar, remover, listar e salvar.</li>
+    </ul>
+    <p>Separar assim deixa cada classe responsável por uma coisa só, e o programa fica fácil de entender e de aumentar.</p>
+
+    <h2>Passo 1: validar e formatar o telefone</h2>
+    <p>Telefones brasileiros têm DDD com 2 dígitos e número com 8 dígitos (fixo) ou 9 dígitos (celular). Cada pessoa digita de um jeito: <code>11987654321</code>, <code>(11) 98765-4321</code>, <code>11 98765 4321</code>. Por isso, primeiro ficamos só com os dígitos:</p>
+<pre class="codigo" data-executar="sim"><code>def so_digitos(texto):
+    return "".join(c for c in texto if c.isdigit())
+
+
+def telefone_valido(texto):
+    return len(so_digitos(texto)) in (10, 11)
+
+
+def formatar_telefone(texto):
+    n = so_digitos(texto)
+    if len(n) == 11:
+        return f"({n[:2]}) {n[2:7]}-{n[7:]}"
+    if len(n) == 10:
+        return f"({n[:2]}) {n[2:6]}-{n[6:]}"
+    return texto
+
+
+for tel in ["11987654321", "(81) 3222-1234", "21 99876 5432", "12345"]:
+    print(tel, "-&gt;", telefone_valido(tel), formatar_telefone(tel))</code></pre>
+    <p class="saida">11987654321 -&gt; True (11) 98765-4321<br>
+(81) 3222-1234 -&gt; True (81) 3222-1234<br>
+21 99876 5432 -&gt; True (21) 99876-5432<br>
+12345 -&gt; False 12345</p>
+    <p>O fatiamento faz todo o trabalho: <code>n[:2]</code> é o DDD, e o resto é dividido em duas partes com o hífen no meio.</p>
+
+    <h2>Passo 2: a classe Contato</h2>
+    <p>O <code>__init__</code> confere os dados <strong>antes</strong> de criar o contato. Se algo estiver errado, ele levanta um <code>ValueError</code> com uma mensagem clara. O <code>__str__</code> define como o contato aparece no <code>print</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def so_digitos(texto):
+    return "".join(c for c in texto if c.isdigit())
+
+
+def formatar_telefone(texto):
+    n = so_digitos(texto)
+    if len(n) == 11:
+        return f"({n[:2]}) {n[2:7]}-{n[7:]}"
+    return f"({n[:2]}) {n[2:6]}-{n[6:]}"
+
+
+class Contato:
+    def __init__(self, nome, telefone, email=""):
+        nome = nome.strip()
+        if not nome:
+            raise ValueError("O nome não pode ficar vazio.")
+        if len(so_digitos(telefone)) not in (10, 11):
+            raise ValueError(f"Telefone inválido: {telefone}")
+        self.nome = nome
+        self.telefone = formatar_telefone(telefone)
+        self.email = email.strip()
+
+    def __str__(self):
+        texto = f"{self.nome} - {self.telefone}"
+        if self.email:
+            texto += f" - {self.email}"
+        return texto
+
+    def para_dict(self):
+        return {"nome": self.nome, "telefone": self.telefone, "email": self.email}
+
+
+maria = Contato("Maria Souza", "11987654321", "maria@email.com")
+print(maria)
+print(maria.para_dict())
+
+try:
+    Contato("Pedro", "123")
+except ValueError as erro:
+    print("Erro:", erro)</code></pre>
+    <p class="saida">Maria Souza - (11) 98765-4321 - maria@email.com<br>
+{'nome': 'Maria Souza', 'telefone': '(11) 98765-4321', 'email': 'maria@email.com'}<br>
+Erro: Telefone inválido: 123</p>
+    <p>O método <code>para_dict</code> transforma o contato num dicionário — é ele que vai permitir salvar a agenda em JSON, porque o <code>json</code> não sabe guardar objetos das nossas classes diretamente.</p>
+
+    <h2>Passo 3: a classe Agenda</h2>
+    <p>A agenda guarda os contatos num dicionário, usando o nome em minúsculas como chave. Assim, "Maria" e "maria" são reconhecidas como a mesma pessoa e não há contatos repetidos:</p>
+<pre class="codigo" data-executar="sim"><code>class Contato:
+    def __init__(self, nome, telefone, email=""):
+        self.nome = nome
+        self.telefone = telefone
+        self.email = email
+
+    def __str__(self):
+        return f"{self.nome} - {self.telefone}"
+
+
+class Agenda:
+    def __init__(self):
+        self.contatos = {}
+
+    def adicionar(self, contato):
+        chave = contato.nome.lower()
+        if chave in self.contatos:
+            raise ValueError(f"Já existe um contato chamado {contato.nome}.")
+        self.contatos[chave] = contato
+
+    def buscar(self, trecho):
+        trecho = trecho.lower()
+        return [c for c in self.listar() if trecho in c.nome.lower()]
+
+    def remover(self, nome):
+        return self.contatos.pop(nome.lower(), None) is not None
+
+    def listar(self):
+        return sorted(self.contatos.values(), key=lambda c: c.nome.lower())
+
+    def __len__(self):
+        return len(self.contatos)
+
+
+agenda = Agenda()
+agenda.adicionar(Contato("Pedro Alves", "(21) 99876-5432"))
+agenda.adicionar(Contato("Ana Lima", "(81) 3222-1234"))
+agenda.adicionar(Contato("Carla Dias", "(11) 98765-4321"))
+
+for contato in agenda.listar():
+    print(contato)
+print("Busca por 'li':", [c.nome for c in agenda.buscar("li")])
+print("Removeu Ana?", agenda.remover("ana lima"))
+print("Removeu Zeca?", agenda.remover("Zeca"))
+print("Contatos:", len(agenda))</code></pre>
+    <p class="saida">Ana Lima - (81) 3222-1234<br>
+Carla Dias - (11) 98765-4321<br>
+Pedro Alves - (21) 99876-5432<br>
+Busca por 'li': ['Ana Lima']<br>
+Removeu Ana? True<br>
+Removeu Zeca? False<br>
+Contatos: 2</p>
+    <ul>
+      <li><code>sorted(..., key=lambda c: c.nome.lower())</code> ordena pelo nome, sem se importar com maiúsculas.</li>
+      <li><code>pop(chave, None)</code> remove e devolve o contato, ou devolve <code>None</code> se ele não existir — sem dar erro.</li>
+      <li>O método especial <code>__len__</code> faz <code>len(agenda)</code> funcionar, como numa lista.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> A ordenação comum do Python coloca letras acentuadas depois do "z": "Álvaro" apareceria depois de "Zeca". Se isso incomodar, ordene pelo nome sem acentos, usando a função <code>sem_acentos</code> da aula 67 (analisador de texto) — o exercício 2 desta aula mostra como.</div>
+
+    <h2>Passo 4: salvar e carregar</h2>
+    <p>Para salvar, transformamos cada contato em dicionário. Para carregar, fazemos o caminho de volta, criando um <code>Contato</code> para cada dicionário:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+
+class Contato:
+    def __init__(self, nome, telefone, email=""):
+        self.nome = nome
+        self.telefone = telefone
+        self.email = email
+
+    def __str__(self):
+        return f"{self.nome} - {self.telefone}"
+
+    def para_dict(self):
+        return {"nome": self.nome, "telefone": self.telefone, "email": self.email}
+
+
+def salvar(contatos, caminho):
+    with open(caminho, "w", encoding="utf-8") as arquivo:
+        json.dump([c.para_dict() for c in contatos], arquivo, ensure_ascii=False, indent=2)
+
+
+def carregar(caminho):
+    try:
+        with open(caminho, encoding="utf-8") as arquivo:
+            dados = json.load(arquivo)
+    except FileNotFoundError:
+        return []
+    return [Contato(d["nome"], d["telefone"], d.get("email", "")) for d in dados]
+
+
+salvar([Contato("João Lima", "(81) 3222-1234", "joao@email.com")], "agenda.json")
+for contato in carregar("agenda.json"):
+    print(contato)
+print(carregar("nao_existe.json"))</code></pre>
+    <p class="saida">João Lima - (81) 3222-1234<br>
+[]</p>
+    <p>O <code>d.get("email", "")</code> garante que o programa não quebra se um contato antigo foi salvo sem e-mail.</p>
+
+    <h2>Passo 5: o programa completo</h2>
+    <p>Juntamos tudo e colocamos um menu. Repare como o <code>try/except ValueError</code> mostra a mensagem de erro do <code>Contato</code> ou da <code>Agenda</code> sem fechar o programa:</p>
+<pre class="codigo"><code>import json
+
+ARQUIVO = "agenda.json"
+
+
+def so_digitos(texto):
+    return "".join(c for c in texto if c.isdigit())
+
+
+def formatar_telefone(texto):
+    n = so_digitos(texto)
+    if len(n) == 11:
+        return f"({n[:2]}) {n[2:7]}-{n[7:]}"
+    return f"({n[:2]}) {n[2:6]}-{n[6:]}"
+
+
+class Contato:
+    def __init__(self, nome, telefone, email=""):
+        nome = nome.strip()
+        if not nome:
+            raise ValueError("O nome não pode ficar vazio.")
+        if len(so_digitos(telefone)) not in (10, 11):
+            raise ValueError(f"Telefone inválido: {telefone}. Use DDD + número.")
+        self.nome = nome
+        self.telefone = formatar_telefone(telefone)
+        self.email = email.strip()
+
+    def __str__(self):
+        texto = f"{self.nome} - {self.telefone}"
+        if self.email:
+            texto += f" - {self.email}"
+        return texto
+
+    def para_dict(self):
+        return {"nome": self.nome, "telefone": self.telefone, "email": self.email}
+
+
+class Agenda:
+    def __init__(self, caminho=ARQUIVO):
+        self.caminho = caminho
+        self.contatos = {}
+
+    def adicionar(self, contato):
+        chave = contato.nome.lower()
+        if chave in self.contatos:
+            raise ValueError(f"Já existe um contato chamado {contato.nome}.")
+        self.contatos[chave] = contato
+        self.salvar()
+
+    def buscar(self, trecho):
+        trecho = trecho.lower()
+        return [c for c in self.listar() if trecho in c.nome.lower()]
+
+    def remover(self, nome):
+        removido = self.contatos.pop(nome.strip().lower(), None)
+        if removido is not None:
+            self.salvar()
+        return removido is not None
+
+    def listar(self):
+        return sorted(self.contatos.values(), key=lambda c: c.nome.lower())
+
+    def __len__(self):
+        return len(self.contatos)
+
+    def salvar(self):
+        dados = [c.para_dict() for c in self.listar()]
+        with open(self.caminho, "w", encoding="utf-8") as arquivo:
+            json.dump(dados, arquivo, ensure_ascii=False, indent=2)
+
+    def carregar(self):
+        try:
+            with open(self.caminho, encoding="utf-8") as arquivo:
+                dados = json.load(arquivo)
+        except FileNotFoundError:
+            return
+        for d in dados:
+            contato = Contato(d["nome"], d["telefone"], d.get("email", ""))
+            self.contatos[contato.nome.lower()] = contato
+
+
+def mostrar(contatos):
+    if not contatos:
+        print("Nenhum contato encontrado.")
+    for contato in contatos:
+        print(" ", contato)
+
+
+def main():
+    agenda = Agenda()
+    agenda.carregar()
+    print(f"=== AGENDA === ({len(agenda)} contato(s))")
+    while True:
+        print()
+        print("1 - Adicionar  2 - Listar  3 - Buscar  4 - Remover  0 - Sair")
+        opcao = input("Escolha: ").strip()
+        if opcao == "1":
+            nome = input("Nome: ")
+            telefone = input("Telefone com DDD: ")
+            email = input("E-mail (opcional): ")
+            try:
+                agenda.adicionar(Contato(nome, telefone, email))
+                print("Contato salvo!")
+            except ValueError as erro:
+                print("Erro:", erro)
+        elif opcao == "2":
+            mostrar(agenda.listar())
+        elif opcao == "3":
+            mostrar(agenda.buscar(input("Buscar por: ")))
+        elif opcao == "4":
+            if agenda.remover(input("Nome completo para remover: ")):
+                print("Contato removido.")
+            else:
+                print("Não achei esse contato.")
+        elif opcao == "0":
+            print("Agenda salva. Até mais!")
+            break
+        else:
+            print("Opção inválida.")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p class="saida"><em>(exemplo digitando 1, Maria Souza, 11987654321, maria@email.com, 1, João Lima, (81) 3222-1234, , 1, Ana, 123, , 1, maria souza, 11911112222, , 2, 3, ma, 4, João Lima, 2, 0)</em><br>
+=== AGENDA === (0 contato(s))<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 1<br>
+Nome: Maria Souza<br>
+Telefone com DDD: 11987654321<br>
+E-mail (opcional): maria@email.com<br>
+Contato salvo!<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 1<br>
+Nome: João Lima<br>
+Telefone com DDD: (81) 3222-1234<br>
+E-mail (opcional): <br>
+Contato salvo!<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 1<br>
+Nome: Ana<br>
+Telefone com DDD: 123<br>
+E-mail (opcional): <br>
+Erro: Telefone inválido: 123. Use DDD + número.<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 1<br>
+Nome: maria souza<br>
+Telefone com DDD: 11911112222<br>
+E-mail (opcional): <br>
+Erro: Já existe um contato chamado maria souza.<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 2<br>
+&nbsp;&nbsp;João Lima - (81) 3222-1234<br>
+&nbsp;&nbsp;Maria Souza - (11) 98765-4321 - maria@email.com<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 3<br>
+Buscar por: ma<br>
+&nbsp;&nbsp;João Lima - (81) 3222-1234<br>
+&nbsp;&nbsp;Maria Souza - (11) 98765-4321 - maria@email.com<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 4<br>
+Nome completo para remover: João Lima<br>
+Contato removido.<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 2<br>
+&nbsp;&nbsp;Maria Souza - (11) 98765-4321 - maria@email.com<br>
+&nbsp;<br>
+1 - Adicionar &nbsp;2 - Listar &nbsp;3 - Buscar &nbsp;4 - Remover &nbsp;0 - Sair<br>
+Escolha: 0<br>
+Agenda salva. Até mais!</p>
+
+    <h2>Como rodar no seu computador</h2>
+    <ul>
+      <li>Salve o código como <code>agenda.py</code> e rode no terminal com o comando abaixo.</li>
+      <li>Adicione alguns contatos, saia com <code>0</code> e rode de novo: eles continuam lá, no arquivo <code>agenda.json</code>.</li>
+    </ul>
+<pre class="codigo"><code>python agenda.py</code></pre>
+    <div class="dica"><strong>Dica:</strong> Este projeto usa ideias de quase todos os módulos do curso: strings e fatiamento (telefone), dicionários (a agenda), funções, classes, exceções e arquivos JSON. Se alguma parte parecer difícil, volte à aula daquele assunto e depois releia o código. Entender um programa inteiro é um grande passo!</div>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Adicione o campo aniversário e mostre quem faz aniversário este mês, usando <code>datetime</code>.</li>
+      <li>Faça a busca ignorar acentos ("joao" encontra "João").</li>
+      <li>Permita editar o telefone de um contato.</li>
+      <li>Exporte a agenda para um arquivo CSV, que abre no Excel.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>return f"{self.nome} - {self.telefone}"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a função <code>contar_por_ddd(contatos)</code>, que recebe uma lista de telefones formatados como <code>"(11) 98765-4321"</code> e devolve um dicionário com quantos contatos há em cada DDD.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def contar_por_ddd(telefones):
+    contagem = {}
+    for tel in telefones:
+        ddd = tel[1:3]
+        contagem[ddd] = contagem.get(ddd, 0) + 1
+    return contagem
+
+
+telefones = ["(11) 98765-4321", "(81) 3222-1234", "(11) 3333-4444", "(71) 99999-0000"]
+print(contar_por_ddd(telefones))</code></pre>
+      <p class="saida">{'11': 2, '81': 1, '71': 1}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça a busca ignorar acentos e maiúsculas: buscar <code>"joao"</code> deve encontrar <code>"João Lima"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unicodedata
+
+
+def sem_acentos(texto):
+    decomposto = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
+
+
+def buscar(nomes, trecho):
+    trecho = sem_acentos(trecho).lower()
+    return [n for n in nomes if trecho in sem_acentos(n).lower()]
+
+
+nomes = ["João Lima", "Márcia Araújo", "Joana Dias"]
+print(buscar(nomes, "joao"))
+print(buscar(nomes, "ARAUJO"))
+print(buscar(nomes, "jo"))</code></pre>
+      <p class="saida">['João Lima']<br>
+['Márcia Araújo']<br>
+['João Lima', 'Márcia Araújo', 'Joana Dias']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Acrescente à classe <code>Agenda</code> o método <code>atualizar_telefone(nome, novo)</code>, que devolve <code>True</code> se conseguiu trocar e <code>False</code> se o contato não existe.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Contato:
+    def __init__(self, nome, telefone):
+        self.nome = nome
+        self.telefone = telefone
+
+    def __str__(self):
+        return f"{self.nome} - {self.telefone}"
+
+
+class Agenda:
+    def __init__(self):
+        self.contatos = {}
+
+    def adicionar(self, contato):
+        self.contatos[contato.nome.lower()] = contato
+
+    def atualizar_telefone(self, nome, novo):
+        contato = self.contatos.get(nome.lower())
+        if contato is None:
+            return False
+        contato.telefone = novo
+        return True
+
+
+agenda = Agenda()
+agenda.adicionar(Contato("Bia Costa", "(31) 98888-7777"))
+print(agenda.atualizar_telefone("bia costa", "(31) 97777-6666"))
+print(agenda.atualizar_telefone("Zeca", "(31) 90000-0000"))
+print(agenda.contatos["bia costa"])</code></pre>
+      <p class="saida">True<br>
+False<br>
+Bia Costa - (31) 97777-6666</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Exporte uma lista de contatos para um arquivo CSV com as colunas nome, telefone e email, e depois mostre o conteúdo do arquivo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import csv
+
+contatos = [
+    {"nome": "Maria Souza", "telefone": "(11) 98765-4321", "email": "maria@email.com"},
+    {"nome": "João Lima", "telefone": "(81) 3222-1234", "email": ""},
+]
+
+with open("contatos.csv", "w", encoding="utf-8", newline="") as arquivo:
+    escritor = csv.DictWriter(arquivo, fieldnames=["nome", "telefone", "email"])
+    escritor.writeheader()
+    escritor.writerows(contatos)
+
+with open("contatos.csv", encoding="utf-8") as arquivo:
+    print(arquivo.read())</code></pre>
+      <p class="saida">nome,telefone,email<br>
+Maria Souza,(11) 98765-4321,maria@email.com<br>
+João Lima,(81) 3222-1234,</p>
+      <p>O <code>newline=""</code> evita linhas em branco extras no Windows. Para abrir no Excel com os acentos certos, use <code>encoding="utf-8-sig"</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="92-match-case.html" rel="prev">← Aula anterior</a>
+      <a href="99-projeto-poo.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

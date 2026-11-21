@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 26 · Cuidado com tipos mutáveis: copy — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda por que b = a não copia uma lista, a diferença entre tipos mutáveis e imutáveis e como fazer cópias de verdade.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 26 · Cuidado com tipos mutáveis: copy</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Diferenciar tipos <strong>mutáveis</strong> (como listas) de <strong>imutáveis</strong> (como textos e números)</li>
+        <li>Entender por que <code>b = a</code> não cria uma lista nova</li>
+        <li>Copiar listas com <code>copy()</code>, <code>list()</code> e a fatia <code>[:]</code></li>
+        <li>Perceber o limite da cópia quando há listas dentro de listas</li>
+      </ul>
+    </div>
+
+    <h2>Mutável e imutável</h2>
+    <p>Alguns tipos do Python podem ser alterados depois de criados: são os <strong>mutáveis</strong>, como as listas. Outros não podem: são os <strong>imutáveis</strong>, como <code>int</code>, <code>float</code>, <code>str</code>, <code>bool</code> e as tuplas (aula 27).</p>
+<pre class="codigo" data-executar="sim"><code>lista = [1, 2, 3]
+lista[0] = 99
+print(lista)
+texto = "gato"
+maiusculo = texto.upper()
+print(texto, maiusculo)</code></pre>
+    <p class="saida">[99, 2, 3]<br>
+gato GATO</p>
+    <p>A lista mudou de verdade. Já o texto continua <code>"gato"</code>: o <code>upper()</code> criou um texto <strong>novo</strong>. Tentar mudar uma letra de um texto, como em <code>texto[0] = "p"</code>, dá <code>TypeError</code>.</p>
+
+    <h2>O nome é só uma etiqueta</h2>
+    <p>Uma variável funciona como uma <strong>etiqueta</strong> colada num valor. Quando você escreve <code>b = a</code>, não cria uma lista nova: cola uma segunda etiqueta na <strong>mesma</strong> lista.</p>
+<pre class="codigo" data-executar="sim"><code>original = ["lápis", "borracha"]
+apelido = original
+apelido.append("caderno")
+print(original)
+print(apelido is original)</code></pre>
+    <p class="saida">['lápis', 'borracha', 'caderno']<br>
+True</p>
+    <p>Mexemos no <code>apelido</code>, mas o <code>original</code> também mudou — porque é a mesma lista! O operador <code>is</code>, que você viu na aula 21, confirma: os dois nomes apontam para o mesmo objeto.</p>
+    <div class="atencao"><strong>Atenção:</strong> Essa é uma das maiores pegadinhas do Python. Se você quer uma lista independente, <strong>não</strong> use <code>b = a</code>; faça uma cópia.</div>
+
+    <h2>Fazendo cópias de verdade</h2>
+    <p>Há três jeitos comuns de copiar uma lista. Todos criam uma lista <strong>nova</strong>, com os mesmos itens:</p>
+<pre class="codigo" data-executar="sim"><code>original = ["lápis", "borracha"]
+copia1 = original.copy()
+copia2 = list(original)
+copia3 = original[:]
+copia1.append("régua")
+print(original)
+print(copia1)
+print(copia1 is original, copia1 == original)
+print(copia2 == original, copia3 == original)</code></pre>
+    <p class="saida">['lápis', 'borracha']<br>
+['lápis', 'borracha', 'régua']<br>
+False False<br>
+True True</p>
+    <p><code>==</code> pergunta "têm os mesmos itens?"; <code>is</code> pergunta "é o mesmo objeto?". Depois do <code>append</code>, a cópia ficou diferente e o original não mudou. O módulo <code>copy</code> também tem <code>copy.copy(lista)</code>, que faz o mesmo.</p>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+turma = ["Ana", "Bia"]
+reserva = copy.copy(turma)
+reserva.append("Caio")
+print(turma, reserva)</code></pre>
+    <p class="saida">['Ana', 'Bia'] ['Ana', 'Bia', 'Caio']</p>
+
+    <h2>E com imutáveis?</h2>
+    <p>Com números e textos, essa preocupação não existe: como eles não mudam, "alterar" sempre cria um valor novo e guarda na variável.</p>
+<pre class="codigo" data-executar="sim"><code>a = 10
+b = a
+b += 5
+print(a, b)
+nome = "Ana"
+outro = nome
+outro += " Clara"
+print(nome, "|", outro)</code></pre>
+    <p class="saida">10 15<br>
+Ana | Ana Clara</p>
+    <p><code>b += 5</code> criou o número 15 e colou a etiqueta <code>b</code> nele; o <code>a</code> continuou no 10.</p>
+
+    <h2>O limite da cópia simples</h2>
+    <p><code>copy()</code> faz uma <strong>cópia rasa</strong>: copia a lista de fora, mas as listas que estão <strong>dentro</strong> dela continuam compartilhadas.</p>
+<pre class="codigo" data-executar="sim"><code>grade = [["seg", "ter"], ["qua", "qui"]]
+copia = grade.copy()
+copia.append(["sex"])
+copia[0].append("EXTRA")
+print(grade)
+print(copia)</code></pre>
+    <p class="saida">[['seg', 'ter', 'EXTRA'], ['qua', 'qui']]<br>
+[['seg', 'ter', 'EXTRA'], ['qua', 'qui'], ['sex']]</p>
+    <p>O <code>append(["sex"])</code> mexeu só na cópia, mas <code>copia[0].append("EXTRA")</code> mudou a lista interna, que é a mesma nas duas. Para copiar tudo, inclusive as listas de dentro, existe a <strong>cópia profunda</strong> com <code>copy.deepcopy</code>, que você verá na aula 47.</p>
+    <div class="dica"><strong>Dica:</strong> Quando estiver confuso, use <code>print(id(x))</code> ou <code>x is y</code> para descobrir se dois nomes apontam para o mesmo objeto.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>copia = original.copy()</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Explique o que o programa mostra: <code>a = [1, 2]</code>, <code>b = a</code>, <code>b.append(3)</code>, <code>print(a)</code>. Depois corrija para que <code>a</code> não mude.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>a = [1, 2]
+b = a.copy()
+b.append(3)
+print(a)
+print(b)</code></pre>
+      <p class="saida">[1, 2]<br>
+[1, 2, 3]</p>
+      <p>No original, <code>b = a</code> não copia: as duas variáveis apontam para a mesma lista, então <code>print(a)</code> mostraria <code>[1, 2, 3]</code>. Com <code>a.copy()</code>, <code>b</code> é uma lista nova.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Você tem <code>cardapio = ["arroz", "feijão", "salada"]</code>. Crie <code>cardapio_domingo</code> como uma cópia com a fatia <code>[:]</code>, troque o último item da cópia por "lasanha" e mostre as duas listas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cardapio = ["arroz", "feijão", "salada"]
+cardapio_domingo = cardapio[:]
+cardapio_domingo[-1] = "lasanha"
+print(cardapio)
+print(cardapio_domingo)</code></pre>
+      <p class="saida">['arroz', 'feijão', 'salada']<br>
+['arroz', 'feijão', 'lasanha']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Para cada par abaixo, diga se o resultado é <code>True</code> ou <code>False</code> e confira: <code>x = [1]</code> e <code>y = [1]</code>, compare <code>x == y</code> e <code>x is y</code>; depois <code>z = x</code>, compare <code>z is x</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>x = [1]
+y = [1]
+print(x == y)
+print(x is y)
+z = x
+print(z is x)</code></pre>
+      <p class="saida">True<br>
+False<br>
+True</p>
+      <p><code>x</code> e <code>y</code> têm os mesmos itens, mas são duas listas diferentes. <code>z = x</code> só cria outro nome para a mesma lista.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Por que, no programa abaixo, a lista <code>pontos</code> termina com 4 itens se só mexemos em <code>backup</code>? <code>pontos = [10, 20]</code>, <code>backup = pontos</code>, <code>backup += [30, 40]</code>. Rode e corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>pontos = [10, 20]
+backup = list(pontos)
+backup += [30, 40]
+print(pontos)
+print(backup)</code></pre>
+      <p class="saida">[10, 20]<br>
+[10, 20, 30, 40]</p>
+      <p>Com listas, <code>+=</code> altera a lista no lugar (como o <code>extend</code>). Como <code>backup = pontos</code> era só um apelido, a mudança aparecia em <code>pontos</code>. Com <code>list(pontos)</code>, o backup é independente.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="25-listas.html" rel="prev">← Aula anterior</a>
+      <a href="27-tuplas-enumerate.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

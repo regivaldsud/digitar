@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 21 · None, is, is not e a identidade id — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça o valor None, que representa a ausência de valor, e entenda a diferença entre == e is usando a função id.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 21 · None, is, is not e a identidade id</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar <code>None</code> para representar "nenhum valor ainda"</li>
+        <li>Testar <code>None</code> com <code>is</code> e <code>is not</code></li>
+        <li>Entender a identidade de um objeto com <code>id()</code></li>
+        <li>Saber quando usar <code>==</code> e quando usar <code>is</code></li>
+      </ul>
+    </div>
+
+    <h2>None: o valor do "nada"</h2>
+    <p>Às vezes uma variável precisa existir, mas ainda não tem valor. Para isso o Python tem o <code>None</code> (nenhum). Ele é o único valor do tipo <code>NoneType</code>:</p>
+<pre class="codigo" data-executar="sim"><code>vencedor = None
+print(vencedor)
+print(type(vencedor))
+print(bool(None))</code></pre>
+    <p class="saida">None<br>
+&lt;class 'NoneType'&gt;<br>
+False</p>
+    <p>Pense num campeonato que ainda não acabou: o vencedor existe como informação, mas ainda é "ninguém". <code>None</code> também conta como falso em <code>bool()</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>None</code> é diferente de <code>0</code>, de <code>""</code> (texto vazio) e de <code>False</code>. Zero é um número, texto vazio é um texto. <code>None</code> significa "não tem valor nenhum".</div>
+
+    <h2>Funções que não devolvem nada</h2>
+    <p>Algumas funções fazem uma tarefa mas não devolvem resultado. Quando isso acontece, o resultado é <code>None</code>. O <code>print</code> é um exemplo:</p>
+<pre class="codigo" data-executar="sim"><code>resultado = print("Olá!")
+print(resultado)</code></pre>
+    <p class="saida">Olá!<br>
+None</p>
+    <p>O primeiro <code>print</code> mostra <code>Olá!</code>, mas o valor que ele devolve é <code>None</code>. Você vai entender melhor isso na aula 40, quando criar suas próprias funções.</p>
+
+    <h2>Testando None com is</h2>
+    <p>Para saber se algo é <code>None</code>, o jeito recomendado é usar <code>is</code> (é) e <code>is not</code> (não é):</p>
+<pre class="codigo" data-executar="sim"><code>apelido = None
+if apelido is None:
+    print("Você ainda não escolheu um apelido.")
+apelido = "Juju"
+if apelido is not None:
+    print(f"Seu apelido é {apelido}.")</code></pre>
+    <p class="saida">Você ainda não escolheu um apelido.<br>
+Seu apelido é Juju.</p>
+    <div class="dica"><strong>Dica:</strong> Leia <code>x is None</code> como "x é o None". Funciona com <code>==</code> também, mas os guias de estilo do Python pedem <code>is None</code> e <code>is not None</code>.</div>
+
+    <h2>Identidade: a função id</h2>
+    <p>Cada valor guardado na memória do computador tem uma <strong>identidade</strong>, um número único enquanto o programa roda. A função <code>id()</code> mostra esse número:</p>
+<pre class="codigo" data-executar="sim"><code>cidade = "Recife"
+print(id(cidade))
+outra = cidade
+print(id(outra))
+print(id(cidade) == id(outra))</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+2470096279408<br>
+2470096279408<br>
+True</p>
+    <p>O número muda a cada execução, mas repare que <code>cidade</code> e <code>outra</code> têm o <strong>mesmo</strong> <code>id</code>: as duas variáveis são etiquetas coladas na mesma caixinha.</p>
+
+    <h2>== compara valor, is compara identidade</h2>
+    <ul>
+      <li><code>a == b</code> pergunta: os <strong>valores</strong> são iguais?</li>
+      <li><code>a is b</code> pergunta: é <strong>o mesmo objeto</strong> na memória (mesmo <code>id</code>)?</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>a = [1, 2, 3]
+b = [1, 2, 3]
+c = a
+print(a == b)
+print(a is b)
+print(a is c)</code></pre>
+    <p class="saida">True<br>
+False<br>
+True</p>
+    <p><code>[1, 2, 3]</code> é uma <strong>lista</strong> (você vai estudar listas na aula 25). <code>a</code> e <code>b</code> têm o mesmo conteúdo, então <code>a == b</code> é <code>True</code>. Mas são duas listas diferentes, criadas separadamente, então <code>a is b</code> é <code>False</code>. Já <code>c</code> é outro nome para a mesma lista de <code>a</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Não use <code>is</code> para comparar números ou textos. <code>x is 1000</code> pode dar resultados inesperados (e o Python até avisa com <code>SyntaxWarning</code>). Para valores, use <code>==</code>. Guarde o <code>is</code> para <code>None</code>, <code>True</code> e <code>False</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if apelido is None: print("Sem apelido")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a variável <code>nota_final = None</code> e mostre <code>Nota ainda não lançada</code> se ela for <code>None</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nota_final = None
+if nota_final is None:
+    print("Nota ainda não lançada")</code></pre>
+      <p class="saida">Nota ainda não lançada</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Sem rodar, diga o resultado de <code>bool(None)</code>, <code>None == 0</code> e <code>None is None</code>. Depois confira.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(bool(None))
+print(None == 0)
+print(None is None)</code></pre>
+      <p class="saida">False<br>
+False<br>
+True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O que é mostrado por <code>x = print("oi")</code> seguido de <code>print(x)</code>? Explique.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>x = print("oi")
+print(x)</code></pre>
+      <p class="saida">oi<br>
+None</p>
+      <p>O primeiro <code>print</code> mostra <code>oi</code> e devolve <code>None</code>, que é guardado em <code>x</code>. O segundo mostra esse <code>None</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie duas listas <code>p = [10, 20]</code> e <code>q = [10, 20]</code> e uma variável <code>r = p</code>. Mostre <code>p == q</code>, <code>p is q</code> e <code>p is r</code>, e explique.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>p = [10, 20]
+q = [10, 20]
+r = p
+print(p == q)
+print(p is q)
+print(p is r)</code></pre>
+      <p class="saida">True<br>
+False<br>
+True</p>
+      <p><code>p</code> e <code>q</code> têm o mesmo valor, mas são objetos diferentes. <code>r</code> é só outro nome para o mesmo objeto de <code>p</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça um apelido; se a pessoa só apertar Enter ou digitar só espaços, guarde <code>None</code> na variável. Depois mostre <code>Sem apelido</code> ou o apelido.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>texto = input("Apelido (Enter para nenhum): ")
+if texto.strip() == "":
+    apelido = None
+else:
+    apelido = texto
+if apelido is None:
+    print("Sem apelido")
+else:
+    print(f"Apelido: {apelido}")</code></pre>
+      <p class="saida"><em>(exemplo digitando  )</em><br>
+Apelido (Enter para nenhum): &nbsp;<br>
+Sem apelido</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="20-fatiamento-len.html" rel="prev">← Aula anterior</a>
+      <a href="22-while.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

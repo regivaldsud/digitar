@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 191 · Layouts, QMainWindow e widget central — Curso de Python · DIGITAR</title>
+<meta name="description" content="Organize vários widgets na janela com layouts e monte uma janela principal com QMainWindow.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 10 · Interface gráfica com PySide6</p>
+    <h1>Aula 191 · Layouts, QMainWindow e widget central</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Organizar widgets com QVBoxLayout, QHBoxLayout e QGridLayout</li>
+        <li>Usar QMainWindow e definir o widget central</li>
+        <li>Criar a janela como uma classe</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Layouts: quem arruma a tela</h2>
+    <p>Colocar cada botão numa posição fixa em pixels dá trabalho e quebra quando a janela muda de tamanho. Os <strong>layouts</strong> fazem isso por você:</p>
+    <ul>
+      <li><code>QVBoxLayout</code> empilha os widgets de cima para baixo;</li>
+      <li><code>QHBoxLayout</code> coloca um ao lado do outro;</li>
+      <li><code>QGridLayout</code> organiza em linhas e colunas, como uma tabela.</li>
+    </ul>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
+                               QLabel, QLineEdit, QPushButton)
+
+app = QApplication(sys.argv)
+janela = QWidget()
+layout = QVBoxLayout(janela)
+layout.addWidget(QLabel("Qual é o seu nome?"))
+layout.addWidget(QLineEdit())
+layout.addWidget(QPushButton("Enviar"))
+janela.show()
+sys.exit(app.exec())</code></pre>
+    <p>O <code>QLabel</code> mostra um texto e o <code>QLineEdit</code> é uma caixa onde o usuário digita.</p>
+
+    <h2>QMainWindow e o widget central</h2>
+    <p>A <strong>QMainWindow</strong> é uma janela "completa": pode ter barra de menus, barra de ferramentas e barra de status. No meio dela fica o <strong>widget central</strong>. A forma organizada de fazer isso é criar uma classe:</p>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget,
+                               QGridLayout, QPushButton)
+
+
+class JanelaPrincipal(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Teclado numérico")
+        central = QWidget()
+        grade = QGridLayout(central)
+        for numero in range(9):
+            botao = QPushButton(str(numero + 1))
+            grade.addWidget(botao, numero // 3, numero % 3)
+        self.setCentralWidget(central)
+        self.statusBar().showMessage("Pronto!")
+
+
+app = QApplication(sys.argv)
+janela = JanelaPrincipal()
+janela.show()
+sys.exit(app.exec())</code></pre>
+    <p><code>grade.addWidget(botao, linha, coluna)</code> coloca o botão na posição certa. Com <code>numero // 3</code> e <code>numero % 3</code> você transforma 0 a 8 em linhas e colunas (aula 15).</p>
+    <div class="atencao"><strong>Atenção:</strong> Guarde a janela numa variável (<code>janela = ...</code>). Se você criar o objeto sem guardar, o Python pode apagá-lo e a janela some na hora.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>grade.addWidget(botao, numero // 3, numero % 3)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Monte uma janela com dois botões lado a lado, "Sim" e "Não", usando QHBoxLayout.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton
+
+app = QApplication(sys.argv)
+janela = QWidget()
+linha = QHBoxLayout(janela)
+linha.addWidget(QPushButton("Sim"))
+linha.addWidget(QPushButton("Não"))
+janela.show()
+sys.exit(app.exec())</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Na grade do exemplo, em que linha e coluna fica o botão "8"? Faça a conta.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numero = 7  # o botão "8" é criado quando numero vale 7
+print("linha", numero // 3, "coluna", numero % 3)</code></pre>
+      <p class="saida">linha 2 coluna 1</p>
+      <p>As linhas e colunas começam do zero: linha 2 é a terceira linha.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="190-pyside6-intro.html" rel="prev">← Aula anterior</a>
+      <a href="192-sinais-slots.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

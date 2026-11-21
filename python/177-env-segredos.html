@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 177 · Senhas fora do código com .env — Curso de Python · DIGITAR</title>
+<meta name="description" content="Guarde senhas e chaves num arquivo .env, leia com python-dotenv ou os.environ e não deixe segredos irem para o GitHub.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 177 · Senhas fora do código com .env</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Por que senha no código é um problema</li>
+        <li>O que são variáveis de ambiente e como lê-las com os.environ</li>
+        <li>Como usar um arquivo .env com python-dotenv e o .gitignore</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O problema</h2>
+    <p>Se a senha do banco está escrita no código e você envia o projeto para o GitHub, qualquer pessoa pode lê-la. Robôs procuram senhas em repositórios públicos o tempo todo. A regra é: <strong>segredos ficam fora do código</strong>.</p>
+
+    <h2>Variáveis de ambiente</h2>
+    <p>O sistema operacional guarda <strong>variáveis de ambiente</strong>: pares nome=valor que os programas podem ler. No Python, elas ficam em <code>os.environ</code>:</p>
+<pre class="codigo"><code>import os
+
+os.environ["MODO"] = "teste"
+print(os.environ.get("MODO"))
+print(os.environ.get("SENHA_DO_BANCO", "não definida"))</code></pre>
+    <p class="saida">teste<br>
+não definida</p>
+    <p><code>get</code> com um segundo argumento devolve um valor padrão quando a variável não existe, em vez de dar erro.</p>
+
+    <h2>O arquivo .env</h2>
+    <p>Escrever variáveis no terminal toda vez é chato. Por isso se usa um arquivo <code>.env</code> na pasta do projeto:</p>
+<pre class="codigo"><code>DB_HOST=localhost
+DB_USUARIO=root
+DB_SENHA=troque_esta_senha</code></pre>
+    <p>Instale a biblioteca e carregue o arquivo no começo do programa:</p>
+<pre class="codigo"><code>pip install python-dotenv</code></pre>
+<pre class="codigo"><code>import os
+from dotenv import load_dotenv
+
+load_dotenv()
+senha = os.environ["DB_SENHA"]
+print("Senha carregada com", len(senha), "caracteres")</code></pre>
+    <p>Se quiser entender o que a biblioteca faz, aqui está uma versão simplificada só com a biblioteca padrão:</p>
+<pre class="codigo"><code>import os
+from pathlib import Path
+
+Path(".env").write_text("DB_HOST=localhost\nDB_SENHA=troque_esta_senha\n", encoding="utf-8")
+
+
+def carregar_env(caminho=".env"):
+    for linha in Path(caminho).read_text(encoding="utf-8").splitlines():
+        linha = linha.strip()
+        if linha and not linha.startswith("#") and "=" in linha:
+            nome, valor = linha.split("=", 1)
+            os.environ.setdefault(nome.strip(), valor.strip())
+
+
+carregar_env()
+print(os.environ["DB_HOST"])</code></pre>
+    <p class="saida">localhost</p>
+
+    <h2>Não envie o .env</h2>
+    <p>Coloque o <code>.env</code> no <code>.gitignore</code> (aula 244) e crie um <code>.env.exemplo</code> com os nomes das variáveis, mas sem os valores verdadeiros, para quem baixar o projeto saber o que preencher:</p>
+<pre class="codigo"><code># .gitignore
+.env
+.venv/
+__pycache__/</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Se uma senha já foi enviada para o GitHub, apagar o arquivo depois não resolve: ela continua no histórico. Troque a senha imediatamente.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>senha = os.environ.get("DB_SENHA", "")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva o código que lê a variável <code>API_CHAVE</code> e, se ela não existir, mostra <code>Configure a variável API_CHAVE no arquivo .env</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import os
+
+chave = os.environ.get("API_CHAVE")
+if chave is None:
+    print("Configure a variável API_CHAVE no arquivo .env")</code></pre>
+      <p class="saida">Configure a variável API_CHAVE no arquivo .env</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Para que serve o arquivo <code>.env.exemplo</code>, e o que ele deve conter?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Ele mostra quais variáveis o projeto precisa, sem os valores secretos.<br>
+Exemplo:<br>
+DB_HOST=<br>
+DB_USUARIO=<br>
+DB_SENHA=<br>
+Ele PODE ir para o GitHub; o .env verdadeiro, não.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="176-mysql-pymysql.html" rel="prev">← Aula anterior</a>
+      <a href="190-pyside6-intro.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

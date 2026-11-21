@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 22 · Repetição com while, break, continue, while/else — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a repetir instruções enquanto uma condição for verdadeira, a sair antes da hora com break, a pular voltas com continue e a usar o else do laço.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 22 · Repetição com while, break, continue, while/else</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Repetir um bloco de código com <code>while</code></li>
+        <li>Controlar as voltas com um <strong>contador</strong> e somar valores com um <strong>acumulador</strong></li>
+        <li>Sair do laço com <code>break</code> e pular uma volta com <code>continue</code></li>
+        <li>Usar <code>while True</code> com segurança e entender o <code>else</code> do laço</li>
+        <li>Reconhecer e evitar o laço infinito</li>
+      </ul>
+    </div>
+
+    <h2>Repetir sem copiar e colar</h2>
+    <p>Imagine mostrar os números de 1 a 100. Escrever 100 vezes <code>print</code> seria cansativo — até para quem digita rápido! O <code>while</code> (enquanto) repete um bloco <strong>enquanto</strong> a condição for verdadeira.</p>
+<pre class="codigo" data-executar="sim"><code>contador = 1
+while contador &lt;= 5:
+    print(contador)
+    contador = contador + 1
+print("Acabou!")</code></pre>
+    <p class="saida">1<br>
+2<br>
+3<br>
+4<br>
+5<br>
+Acabou!</p>
+    <p>A cada volta (chamada de <strong>iteração</strong>), o Python testa <code>contador &lt;= 5</code>. Se for verdade, roda o bloco recuado e volta para testar de novo. Quando o contador chega a 6, a condição fica falsa e o programa segue para a linha de baixo.</p>
+    <div class="dica"><strong>Dica:</strong> Escrever <code>contador = contador + 1</code> é tão comum que existe um atalho: <code>contador += 1</code>. Você vai conhecer todos esses atalhos na aula 23; a partir dela, vamos usá-los o tempo todo.</div>
+
+    <h2>Acumulando valores</h2>
+    <p>Uma variável <strong>acumuladora</strong> começa em zero e vai somando algo a cada volta. Veja quanto você guarda juntando R$ 5 por semana durante 10 semanas:</p>
+<pre class="codigo" data-executar="sim"><code>semana = 1
+total = 0
+while semana &lt;= 10:
+    total = total + 5
+    semana = semana + 1
+print(f"Em 10 semanas você juntou R$ {total}")</code></pre>
+    <p class="saida">Em 10 semanas você juntou R$ 50</p>
+    <p>Às vezes você não sabe quantas vezes vai repetir. Um jeito comum é repetir até a pessoa digitar um valor especial, chamado <strong>sentinela</strong>. Aqui, o laço soma preços até a pessoa digitar <code>0</code>:</p>
+<pre class="codigo" data-executar="sim"><code>total = 0
+preco = float(input("Preço do item (0 para terminar): "))
+while preco != 0:
+    total = total + preco
+    preco = float(input("Preço do item (0 para terminar): "))
+print(f"Total da compra: R$ {total:.2f}")</code></pre>
+    <p class="saida"><em>(exemplo digitando 12.5, 8, 4.5, 0)</em><br>
+Preço do item (0 para terminar): 12.5<br>
+Preço do item (0 para terminar): 8<br>
+Preço do item (0 para terminar): 4.5<br>
+Preço do item (0 para terminar): 0<br>
+Total da compra: R$ 25.00</p>
+
+    <h2>break: parar agora</h2>
+    <p>O <code>break</code> interrompe o laço imediatamente, mesmo que a condição ainda seja verdadeira. O programa continua na primeira linha depois do laço.</p>
+<pre class="codigo" data-executar="sim"><code>numero = 1
+while numero &lt; 100:
+    if numero * numero &gt; 50:
+        print(f"{numero} é o primeiro número cujo quadrado passa de 50")
+        break
+    numero = numero + 1
+print("Busca encerrada.")</code></pre>
+    <p class="saida">8 é o primeiro número cujo quadrado passa de 50<br>
+Busca encerrada.</p>
+    <p>Um padrão muito usado é o laço "para sempre", <code>while True</code>, que só termina com <code>break</code>. Fica fácil de ler: "repita até a pessoa digitar sair".</p>
+<pre class="codigo" data-executar="sim"><code>itens = 0
+while True:
+    item = input("Item da lista (ou 'sair'): ")
+    if item == "sair":
+        break
+    itens = itens + 1
+    print(f"Anotado: {item}")
+print(f"Você anotou {itens} itens.")</code></pre>
+    <p class="saida"><em>(exemplo digitando arroz, feijão, farofa, sair)</em><br>
+Item da lista (ou 'sair'): arroz<br>
+Anotado: arroz<br>
+Item da lista (ou 'sair'): feijão<br>
+Anotado: feijão<br>
+Item da lista (ou 'sair'): farofa<br>
+Anotado: farofa<br>
+Item da lista (ou 'sair'): sair<br>
+Você anotou 3 itens.</p>
+    <div class="atencao"><strong>Atenção:</strong> Todo <code>while True</code> precisa de um <code>break</code> que realmente aconteça. Se a condição do <code>break</code> nunca for verdadeira, você criou um laço infinito.</div>
+
+    <h2>continue: pular esta volta</h2>
+    <p>O <code>continue</code> não sai do laço: ele pula o resto do bloco <strong>nesta</strong> volta e volta direto para o teste da condição. Aqui somamos números digitados: negativos são ignorados com <code>continue</code>, e o <code>0</code> encerra com <code>break</code>.</p>
+<pre class="codigo" data-executar="sim"><code>soma = 0
+while True:
+    n = int(input("Número (0 para parar): "))
+    if n == 0:
+        break
+    if n &lt; 0:
+        print("Negativo ignorado.")
+        continue
+    soma = soma + n
+print("Soma:", soma)</code></pre>
+    <p class="saida"><em>(exemplo digitando 10, -3, 5, 0)</em><br>
+Número (0 para parar): 10<br>
+Número (0 para parar): -3<br>
+Negativo ignorado.<br>
+Número (0 para parar): 5<br>
+Número (0 para parar): 0<br>
+Soma: 15</p>
+    <div class="atencao"><strong>Atenção:</strong> Com <code>continue</code> num <code>while</code>, cuidado para não pular a linha que atualiza o contador. Se o <code>continue</code> vier antes de <code>contador = contador + 1</code>, o contador nunca muda e o laço não termina.</div>
+
+    <h2>O else do while</h2>
+    <p>Um <code>while</code> pode ter um <code>else</code>, que roda <strong>só se o laço terminar normalmente</strong>, ou seja, quando a condição ficar falsa — e <strong>não</strong> roda se o laço foi interrompido por <code>break</code>. É útil em buscas e tentativas: "tentei tudo e não consegui".</p>
+<pre class="codigo" data-executar="sim"><code>tentativas = 3
+while tentativas &gt; 0:
+    senha = input("Senha do cofre: ")
+    if senha == "4321":
+        print("Cofre aberto!")
+        break
+    tentativas = tentativas - 1
+    print(f"Senha errada. Restam {tentativas} tentativas.")
+else:
+    print("Cofre bloqueado!")</code></pre>
+    <p class="saida"><em>(exemplo digitando 1234, 0000, 9999)</em><br>
+Senha do cofre: 1234<br>
+Senha errada. Restam 2 tentativas.<br>
+Senha do cofre: 0000<br>
+Senha errada. Restam 1 tentativas.<br>
+Senha do cofre: 9999<br>
+Senha errada. Restam 0 tentativas.<br>
+Cofre bloqueado!</p>
+    <p>O <code>for</code>, que você verá na aula 24, também aceita <code>else</code>, com a mesma regra.</p>
+
+    <h2>Cuidado com o laço infinito</h2>
+    <p>Se a condição nunca ficar falsa, o laço nunca termina. Isso é um <strong>laço infinito</strong>, e o programa fica "travado". Veja o erro clássico: esquecemos de aumentar o contador.</p>
+<pre class="codigo"><code>contador = 1
+while contador &lt;= 5:
+    print(contador)
+# contador nunca muda: mostra 1 para sempre!</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Se um programa travar num laço infinito no terminal, aperte <code>Ctrl+C</code> para interrompê-lo. No navegador, recarregue a página.</div>
+    <div class="dica"><strong>Dica:</strong> Antes de rodar um <code>while</code>, pergunte-se: "o que, dentro do bloco, faz a condição ficar falsa um dia (ou faz o <code>break</code> acontecer)?". Se a resposta for "nada", você tem um laço infinito.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>while contador &lt;= 10: contador = contador + 1</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use <code>while</code> para mostrar a tabuada do 7, de <code>7 x 1 = 7</code> até <code>7 x 10 = 70</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>i = 1
+while i &lt;= 10:
+    print(f"7 x {i} = {7 * i}")
+    i = i + 1</code></pre>
+      <p class="saida">7 x 1 = 7<br>
+7 x 2 = 14<br>
+7 x 3 = 21<br>
+7 x 4 = 28<br>
+7 x 5 = 35<br>
+7 x 6 = 42<br>
+7 x 7 = 49<br>
+7 x 8 = 56<br>
+7 x 9 = 63<br>
+7 x 10 = 70</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Some todos os números de 1 a 100 com <code>while</code> e mostre o resultado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>n = 1
+soma = 0
+while n &lt;= 100:
+    soma = soma + n
+    n = n + 1
+print(soma)</code></pre>
+      <p class="saida">5050</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma bactéria se divide em duas a cada hora. Começando com 1 bactéria, quantas horas leva para passar de 1000?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>bacterias = 1
+horas = 0
+while bacterias &lt;= 1000:
+    bacterias = bacterias * 2
+    horas = horas + 1
+print(f"Depois de {horas} horas há {bacterias} bactérias")</code></pre>
+      <p class="saida">Depois de 10 horas há 1024 bactérias</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça um "porteiro": com <code>while True</code>, peça a senha até a pessoa digitar <code>abacaxi</code>. A cada erro mostre "Senha errada"; no fim, mostre "Pode entrar!".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>while True:
+    senha = input("Senha: ")
+    if senha == "abacaxi":
+        break
+    print("Senha errada, tente de novo.")
+print("Pode entrar!")</code></pre>
+      <p class="saida"><em>(exemplo digitando banana, uva, abacaxi)</em><br>
+Senha: banana<br>
+Senha errada, tente de novo.<br>
+Senha: uva<br>
+Senha errada, tente de novo.<br>
+Senha: abacaxi<br>
+Pode entrar!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça notas até a pessoa digitar <code>-1</code>. Ignore com <code>continue</code> as notas maiores que 10 (avisando "Nota inválida") e, no fim, mostre a média das notas válidas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>soma = 0
+quantidade = 0
+while True:
+    nota = float(input("Nota (-1 para sair): "))
+    if nota == -1:
+        break
+    if nota &gt; 10:
+        print("Nota inválida")
+        continue
+    soma = soma + nota
+    quantidade = quantidade + 1
+if quantidade &gt; 0:
+    print(f"Média: {soma / quantidade:.2f}")
+else:
+    print("Nenhuma nota digitada")</code></pre>
+      <p class="saida"><em>(exemplo digitando 8, 12, 6.5, 9, -1)</em><br>
+Nota (-1 para sair): 8<br>
+Nota (-1 para sair): 12<br>
+Nota inválida<br>
+Nota (-1 para sair): 6.5<br>
+Nota (-1 para sair): 9<br>
+Nota (-1 para sair): -1<br>
+Média: 7.83</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="21-none-is-id.html" rel="prev">← Aula anterior</a>
+      <a href="23-atribuicao-composta.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 112 · Raspagem de páginas com BeautifulSoup — Curso de Python · DIGITAR</title>
+<meta name="description" content="Extraia informações de páginas HTML com a biblioteca BeautifulSoup e conheça os cuidados éticos e legais da raspagem.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 112 · Raspagem de páginas com BeautifulSoup</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é raspagem de dados (web scraping)</li>
+        <li>Encontrar elementos numa página com <code>BeautifulSoup</code></li>
+        <li>Os cuidados éticos antes de raspar um site</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que é raspagem</h2>
+    <p>Quando um site não tem API (aula 111), dá para ler a própria página HTML e extrair o que interessa: preços, manchetes, horários. Isso se chama <strong>raspagem</strong> (*scraping*).</p>
+    <p>Instale as bibliotecas no seu ambiente virtual:</p>
+<pre class="codigo"><code>pip install requests beautifulsoup4</code></pre>
+
+    <h2>Encontrando elementos</h2>
+    <p>O <code>BeautifulSoup</code> transforma o HTML numa árvore que você consulta. Para treinar sem internet, use um HTML guardado num texto:</p>
+<pre class="codigo"><code>from bs4 import BeautifulSoup
+
+html = """
+&lt;ul id="cardapio"&gt;
+  &lt;li class="prato"&gt;Baião de dois &lt;span class="preco"&gt;32,00&lt;/span&gt;&lt;/li&gt;
+  &lt;li class="prato"&gt;Moqueca &lt;span class="preco"&gt;58,00&lt;/span&gt;&lt;/li&gt;
+  &lt;li class="prato"&gt;Tapioca &lt;span class="preco"&gt;12,00&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+"""
+
+sopa = BeautifulSoup(html, "html.parser")
+for item in sopa.select("li.prato"):
+    nome = item.contents[0].strip()
+    preco = item.select_one(".preco").get_text()
+    print(f"{nome}: R$ {preco}")</code></pre>
+    <p class="saida">Baião de dois: R$ 32,00<br>
+Moqueca: R$ 58,00<br>
+Tapioca: R$ 12,00</p>
+    <ul>
+      <li><code>select("li.prato")</code> acha todos os <code>&lt;li&gt;</code> com a classe <code>prato</code> (o mesmo seletor do CSS, aula 242);</li>
+      <li><code>select_one</code> acha só o primeiro; <code>get_text()</code> pega o texto sem as tags.</li>
+    </ul>
+    <p>Numa página real, você baixa o HTML com <code>requests.get(url, timeout=10).text</code> e passa para o <code>BeautifulSoup</code>.</p>
+
+    <h2>Raspar com responsabilidade</h2>
+    <div class="atencao"><strong>Atenção:</strong> Antes de raspar um site, leia os termos de uso e o arquivo <code>/robots.txt</code> dele, que diz o que robôs podem acessar. Não colete dados pessoais de ninguém, faça poucas requisições (use <code>time.sleep</code> entre elas) e prefira uma API oficial quando existir.</div>
+    <div class="dica"><strong>Dica:</strong> Sites mudam o HTML sem avisar, e o seu programa quebra. Raspagem é ótima para projetos pessoais, mas frágil para coisas importantes.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>precos = sopa.select("span.preco")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Usando o mesmo HTML do cardápio, some os preços de todos os pratos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from bs4 import BeautifulSoup
+
+html = '&lt;span class="preco"&gt;32,00&lt;/span&gt;&lt;span class="preco"&gt;58,00&lt;/span&gt;&lt;span class="preco"&gt;12,00&lt;/span&gt;'
+sopa = BeautifulSoup(html, "html.parser")
+total = sum(float(s.get_text().replace(",", ".")) for s in sopa.select(".preco"))
+print(f"Total: R$ {total:.2f}")</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Cite três cuidados antes de raspar um site.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">1. Ler os termos de uso e o robots.txt do site.<br>
+2. Não coletar dados pessoais e fazer poucas requisições, com pausas.<br>
+3. Usar a API oficial, se o site tiver uma.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="111-requests.html" rel="prev">← Aula anterior</a>
+      <a href="113-selenium.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

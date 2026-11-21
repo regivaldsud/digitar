@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 82 · __new__ e __init__ — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda as duas etapas da criação de um objeto em Python: __new__ constrói o objeto e __init__ preenche os atributos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 82 · __new__ e __init__</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>As duas etapas da criação de um objeto: construir e inicializar</li>
+        <li>Quando o Python chama <code>__new__</code> e quando chama <code>__init__</code></li>
+        <li>Como usar <code>__new__</code> para personalizar tipos imutáveis, como <code>str</code> e <code>int</code></li>
+        <li>Como criar uma classe que só tem um objeto (o padrão singleton)</li>
+      </ul>
+    </div>
+
+    <h2>Duas etapas para nascer um objeto</h2>
+    <p>Quando você escreve <code>Aluno("Bia")</code>, parece que o Python faz uma coisa só. Na verdade são duas: primeiro o método especial <code>__new__</code> <strong>constrói</strong> um objeto vazio; depois o <code>__init__</code> <strong>inicializa</strong> esse objeto, guardando os atributos.</p>
+    <p>Pense numa casa: <code>__new__</code> levanta as paredes e <code>__init__</code> coloca os móveis. Quase sempre você só precisa mexer nos móveis — por isso, até agora, só escrevemos <code>__init__</code>.</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __new__(cls, *args, **kwargs):
+        print("1. __new__: construindo o objeto")
+        objeto = super().__new__(cls)
+        return objeto
+
+    def __init__(self, nome):
+        print("2. __init__: guardando os atributos")
+        self.nome = nome
+
+bia = Aluno("Bia")
+print("3. Pronto:", bia.nome)</code></pre>
+    <p class="saida">1. __new__: construindo o objeto<br>
+2. __init__: guardando os atributos<br>
+3. Pronto: Bia</p>
+    <p>Repare nas diferenças: <code>__new__</code> recebe <code>cls</code> (a classe), porque o objeto ainda não existe; <code>__init__</code> recebe <code>self</code> (o objeto já construído). E <code>__new__</code> precisa <strong>devolver</strong> o objeto com <code>return</code>; o <code>__init__</code> não devolve nada.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se o seu <code>__new__</code> esquecer o <code>return</code>, ele devolve <code>None</code>, o <code>__init__</code> nem é chamado e a variável recebe <code>None</code>. Sempre termine com <code>return super().__new__(cls)</code> ou com o objeto criado.</div>
+
+    <h2>Quando o __init__ não é chamado</h2>
+    <p>O Python só chama o <code>__init__</code> se o <code>__new__</code> devolver um objeto da própria classe. Veja o que acontece quando ele devolve outra coisa:</p>
+<pre class="codigo" data-executar="sim"><code>class Estranho:
+    def __new__(cls):
+        print("__new__ rodou")
+        return "eu sou um texto"
+
+    def __init__(self):
+        print("__init__ rodou")
+
+x = Estranho()
+print(x, type(x))</code></pre>
+    <p class="saida">__new__ rodou<br>
+eu sou um texto &lt;class 'str'&gt;</p>
+    <p>O <code>__init__</code> não apareceu, e <code>x</code> virou um texto. É um exemplo para entender a regra — não faça isso em programas de verdade.</p>
+
+    <h2>Personalizando tipos imutáveis</h2>
+    <p>Onde o <code>__new__</code> faz falta de verdade é ao criar uma classe filha de um tipo <strong>imutável</strong>, como <code>str</code>, <code>int</code> ou <code>tuple</code>. Esses objetos não podem mudar depois de criados, então quando o <code>__init__</code> roda já é tarde demais. Veja a tentativa errada:</p>
+<pre class="codigo" data-executar="sim"><code>class SiglaErrada(str):
+    def __init__(self, texto):
+        texto = texto.upper()
+
+print(SiglaErrada("pe"))</code></pre>
+    <p class="saida">pe</p>
+    <p>Continuou minúsculo! O certo é mudar o valor no <code>__new__</code>, antes do objeto existir:</p>
+<pre class="codigo" data-executar="sim"><code>class Sigla(str):
+    def __new__(cls, texto):
+        return super().__new__(cls, texto.strip().upper())
+
+uf = Sigla("  pe ")
+print(uf)
+print(len(uf), uf == "PE", type(uf).__name__)</code></pre>
+    <p class="saida">PE<br>
+2 True Sigla</p>
+    <p>O objeto <code>uf</code> continua sendo um texto: funciona com <code>len</code>, comparação e todos os métodos de <code>str</code>.</p>
+
+    <h2>Um objeto só: o singleton</h2>
+    <p>Às vezes um programa deve ter <strong>um único</strong> objeto de uma classe, como as configurações do jogo. Com <code>__new__</code> dá para guardar o objeto criado e devolvê-lo sempre que alguém pedir outro:</p>
+<pre class="codigo" data-executar="sim"><code>class Configuracao:
+    _unica = None
+
+    def __new__(cls):
+        if cls._unica is None:
+            print("Criando a configuração pela primeira vez")
+            cls._unica = super().__new__(cls)
+            cls._unica.volume = 50
+        return cls._unica
+
+a = Configuracao()
+b = Configuracao()
+b.volume = 80
+print(a is b)
+print(a.volume)</code></pre>
+    <p class="saida">Criando a configuração pela primeira vez<br>
+True<br>
+80</p>
+    <p><code>a</code> e <code>b</code> são o <strong>mesmo</strong> objeto (<code>is</code> dá <code>True</code>), então mudar o volume em <code>b</code> muda em <code>a</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Regra prática: use <code>__init__</code> em 99% das classes. Pense em <code>__new__</code> só quando herdar de um tipo imutável ou quando precisar controlar quantos objetos são criados.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def __new__(cls, *args, **kwargs):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Sem rodar, diga em que ordem as mensagens aparecem. Depois rode para conferir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Bolo:
+    def __new__(cls, sabor):
+        print("assando a massa")
+        return super().__new__(cls)
+
+    def __init__(self, sabor):
+        print("colocando a cobertura de", sabor)
+
+b = Bolo("chocolate")
+print("bolo pronto")</code></pre>
+      <p class="saida">assando a massa<br>
+colocando a cobertura de chocolate<br>
+bolo pronto</p>
+      <p>Primeiro <code>__new__</code> (constrói), depois <code>__init__</code> (inicializa), e só então a linha seguinte do programa.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Positivo</code>, filha de <code>int</code>, que transforma qualquer número em positivo. <code>Positivo(-7)</code> deve valer <code>7</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Positivo(int):
+    def __new__(cls, valor):
+        return super().__new__(cls, abs(valor))
+
+n = Positivo(-7)
+print(n, n + 3, isinstance(n, int))</code></pre>
+      <p class="saida">7 10 True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a classe <code>Senha</code>, filha de <code>str</code>, que dá <code>ValueError</code> se o texto tiver menos de 6 caracteres. Teste com uma senha curta dentro de <code>try</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Senha(str):
+    def __new__(cls, texto):
+        if len(texto) &lt; 6:
+            raise ValueError("a senha precisa ter pelo menos 6 caracteres")
+        return super().__new__(cls, texto)
+
+print(Senha("abacaxi123"))
+try:
+    Senha("abc")
+except ValueError as erro:
+    print("Erro:", erro)</code></pre>
+      <p class="saida">abacaxi123<br>
+Erro: a senha precisa ter pelo menos 6 caracteres</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça a classe <code>Placar</code> contar quantos objetos já foram criados, usando um atributo de classe <code>total</code> que aumenta dentro de <code>__new__</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Placar:
+    total = 0
+
+    def __new__(cls, *args):
+        cls.total += 1
+        return super().__new__(cls)
+
+    def __init__(self, time):
+        self.time = time
+
+Placar("Bahia")
+Placar("Vitória")
+Placar("Sport")
+print(Placar.total)</code></pre>
+      <p class="saida">3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva a classe <code>Juiz</code> como singleton: não importa quantas vezes ela seja chamada, deve existir um único objeto. Mostre que <code>Juiz() is Juiz()</code> dá <code>True</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Juiz:
+    _unico = None
+
+    def __new__(cls):
+        if cls._unico is None:
+            cls._unico = super().__new__(cls)
+        return cls._unico
+
+print(Juiz() is Juiz())</code></pre>
+      <p class="saida">True</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="81-metodos-especiais.html" rel="prev">← Aula anterior</a>
+      <a href="83-context-manager.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

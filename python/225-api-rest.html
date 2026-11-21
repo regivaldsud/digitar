@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 225 · Introdução a APIs REST com Django — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda o que é uma API REST e faça endpoints que devolvem JSON com o próprio Django.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 225 · Introdução a APIs REST com Django</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma API REST e os métodos GET, POST, PUT e DELETE</li>
+        <li>Devolver JSON com <code>JsonResponse</code></li>
+        <li>Receber JSON num POST e conhecer o Django REST Framework</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que é uma API</h2>
+    <p>Uma <strong>API</strong> é um site feito para programas, não para pessoas: em vez de HTML, ela devolve <strong>dados</strong>, quase sempre em JSON (aula 62). Um aplicativo de celular, por exemplo, busca os contatos numa API. No estilo <strong>REST</strong>, cada endereço representa um recurso e o método diz a ação:</p>
+    <ul>
+      <li><code>GET /api/contatos/</code> lista; <code>GET /api/contatos/5/</code> mostra um;</li>
+      <li><code>POST /api/contatos/</code> cria; <code>PUT</code> altera; <code>DELETE</code> apaga.</li>
+    </ul>
+
+    <h2>Uma API com JsonResponse</h2>
+<pre class="codigo"><code># contatos/api.py
+import json
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from .models import Contato
+
+
+def para_dict(contato):
+    return {"id": contato.pk, "nome": contato.nome, "telefone": contato.telefone}
+
+
+@csrf_exempt  # só para estudo: numa API real, use autenticação por token
+@require_http_methods(["GET", "POST"])
+def contatos(request):
+    if request.method == "GET":
+        dados = [para_dict(c) for c in Contato.objects.all()]
+        return JsonResponse(dados, safe=False)
+    corpo = json.loads(request.body)
+    novo = Contato.objects.create(nome=corpo["nome"], telefone=corpo["telefone"])
+    return JsonResponse(para_dict(novo), status=201)
+
+
+def contato(request, pk):
+    return JsonResponse(para_dict(get_object_or_404(Contato, pk=pk)))</code></pre>
+    <p class="saida">GET /api/contatos/<br>
+[{"id": 1, "nome": "Ana", "telefone": "81 99999-0000"}]</p>
+    <p><code>safe=False</code> é necessário para devolver uma <strong>lista</strong>; por padrão o <code>JsonResponse</code> só aceita dicionários. O status <code>201</code> significa "criado".</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>@csrf_exempt</code> desliga a proteção CSRF (aula 205). Use só para aprender; uma API de verdade precisa de autenticação.</div>
+
+    <h2>Testando a API</h2>
+    <p>Com o servidor rodando, teste num outro terminal com o <code>curl</code> (já vem no Windows 10 e 11):</p>
+<pre class="codigo"><code>curl http://127.0.0.1:8000/api/contatos/
+curl -X POST http://127.0.0.1:8000/api/contatos/ -H "Content-Type: application/json" -d "{\"nome\": \"Bia\", \"telefone\": \"11 95555-0000\"}"</code></pre>
+    <p>O formato dos dados é JSON comum, e dá para conferir aqui como o Python transforma o dicionário em texto:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+contato = {"id": 2, "nome": "Bia", "telefone": "11 95555-0000"}
+print(json.dumps(contato, ensure_ascii=False))</code></pre>
+    <p class="saida">{"id": 2, "nome": "Bia", "telefone": "11 95555-0000"}</p>
+    <div class="dica"><strong>Dica:</strong> Para APIs maiores, use o <strong>Django REST Framework</strong> (<code>pip install djangorestframework</code>): ele traz serializers, autenticação, paginação e uma página para testar a API no navegador.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>return JsonResponse(dados, safe=False)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a função <code>para_dict</code> que também inclua o campo <code>favorito</code>, e teste a ideia com uma classe simples no lugar do model.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class ContatoFalso:
+    def __init__(self, pk, nome, telefone, favorito):
+        self.pk = pk
+        self.nome = nome
+        self.telefone = telefone
+        self.favorito = favorito
+
+
+def para_dict(contato):
+    return {"id": contato.pk, "nome": contato.nome,
+            "telefone": contato.telefone, "favorito": contato.favorito}
+
+
+print(para_dict(ContatoFalso(3, "Caio", "21 94444-0000", True)))</code></pre>
+      <p class="saida">{'id': 3, 'nome': 'Caio', 'telefone': '21 94444-0000', 'favorito': True}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Qual método HTTP e qual endereço você usaria para apagar o contato de id 7 nessa API REST?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>curl -X DELETE http://127.0.0.1:8000/api/contatos/7/</code></pre>
+      <p>DELETE no endereço do recurso. Para funcionar, a view <code>contato</code> precisaria tratar <code>request.method == "DELETE"</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="220-deploy.html" rel="prev">← Aula anterior</a>
+      <a href="240-terminal.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

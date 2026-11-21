@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 92 · match/case: pattern matching estrutural (3.10+) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use match e case para escolher o que fazer comparando valores, listas, dicionários e objetos com padrões.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 92 · match/case: pattern matching estrutural (3.10+)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Trocar cadeias de <code>if/elif</code> por <code>match</code> e <code>case</code> com valores fixos</li>
+        <li>Juntar opções com <code>|</code> e usar o curinga <code>_</code></li>
+        <li>Capturar partes de listas e tuplas em variáveis</li>
+        <li>Comparar dicionários e objetos com padrões</li>
+        <li>Adicionar condições extras com <code>if</code> (guarda)</li>
+      </ul>
+    </div>
+
+    <h2>O básico: comparar com valores</h2>
+    <p>O <code>match</code> olha um valor e testa os <code>case</code> de cima para baixo. O primeiro que combinar é executado, e os outros são ignorados. O <code>case _</code> é o <strong>curinga</strong>: combina com qualquer coisa, como o <code>else</code> de um <code>if</code>.</p>
+<pre class="codigo" data-executar="sim"><code>def dia_util(dia):
+    match dia:
+        case "sábado" | "domingo":
+            return "fim de semana"
+        case "segunda" | "terça" | "quarta" | "quinta" | "sexta":
+            return "dia de aula"
+        case _:
+            return "dia desconhecido"
+
+
+print(dia_util("sábado"))
+print(dia_util("quarta"))
+print(dia_util("feriado"))</code></pre>
+    <p class="saida">fim de semana<br>
+dia de aula<br>
+dia desconhecido</p>
+    <p>A barra <code>|</code> junta várias opções num mesmo <code>case</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>match</code> e <code>case</code> só existem a partir do Python 3.10. Num Python mais antigo, o código dá <code>SyntaxError</code>. Confira sua versão com <code>python --version</code> (aula 02).</div>
+
+    <h2>Capturando partes de uma sequência</h2>
+    <p>O <code>match</code> brilha quando o valor tem <strong>forma</strong>: uma lista ou tupla com certo número de itens. Um nome dentro do padrão vira uma variável que recebe aquela parte:</p>
+<pre class="codigo" data-executar="sim"><code>def executar(comando):
+    match comando.split():
+        case ["sair"]:
+            return "Tchau!"
+        case ["ir", direcao]:
+            return f"Andando para o {direcao}."
+        case ["pegar", item, "e", outro]:
+            return f"Pegou {item} e {outro}."
+        case ["falar", *palavras]:
+            return "Disse: " + " ".join(palavras)
+        case _:
+            return "Não entendi."
+
+
+print(executar("ir norte"))
+print(executar("pegar chave e mapa"))
+print(executar("falar bom dia pessoal"))
+print(executar("sair"))
+print(executar("dançar"))</code></pre>
+    <p class="saida">Andando para o norte.<br>
+Pegou chave e mapa.<br>
+Disse: bom dia pessoal<br>
+Tchau!<br>
+Não entendi.</p>
+    <p><code>*palavras</code> captura "o resto" da lista, do mesmo jeito que no desempacotamento (aula 43).</p>
+
+    <h2>Padrões com dicionários</h2>
+    <p>Um padrão de dicionário confere se as chaves existem e captura os valores. Chaves a mais no dicionário não atrapalham:</p>
+<pre class="codigo" data-executar="sim"><code>def descrever(evento):
+    match evento:
+        case {"tipo": "gol", "time": time, "minuto": minuto}:
+            return f"Gol do {time} aos {minuto} minutos!"
+        case {"tipo": "cartao", "cor": "vermelho", "jogador": jogador}:
+            return f"{jogador} foi expulso."
+        case {"tipo": "cartao", "jogador": jogador}:
+            return f"{jogador} levou cartão amarelo."
+        case _:
+            return "Lance comum."
+
+
+print(descrever({"tipo": "gol", "time": "Bahia", "minuto": 37, "placar": "1x0"}))
+print(descrever({"tipo": "cartao", "cor": "vermelho", "jogador": "Zé"}))
+print(descrever({"tipo": "cartao", "cor": "amarelo", "jogador": "Bruno"}))
+print(descrever({"tipo": "escanteio"}))</code></pre>
+    <p class="saida">Gol do Bahia aos 37 minutos!<br>
+Zé foi expulso.<br>
+Bruno levou cartão amarelo.<br>
+Lance comum.</p>
+    <div class="dica"><strong>Dica:</strong> A ordem dos <code>case</code> importa: o caso mais específico (cartão vermelho) vem antes do mais geral (qualquer cartão).</div>
+
+    <h2>Padrões com classes e guardas</h2>
+    <p>Com objetos, o padrão parece uma chamada: <code>Ponto(x=0, y=0)</code> confere o tipo e os atributos. E um <code>if</code> depois do padrão, chamado <strong>guarda</strong>, acrescenta uma condição:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+
+@dataclass
+class Ponto:
+    x: int
+    y: int
+
+
+def onde_esta(p):
+    match p:
+        case Ponto(x=0, y=0):
+            return "na origem"
+        case Ponto(x=0, y=y):
+            return f"no eixo y, altura {y}"
+        case Ponto(x=x, y=0):
+            return f"no eixo x, posição {x}"
+        case Ponto(x=x, y=y) if x == y:
+            return "na diagonal"
+        case Ponto():
+            return "em algum lugar do plano"
+
+
+for p in [Ponto(0, 0), Ponto(0, 5), Ponto(3, 0), Ponto(2, 2), Ponto(4, 1)]:
+    print(p, "-&gt;", onde_esta(p))</code></pre>
+    <p class="saida">Ponto(x=0, y=0) -&gt; na origem<br>
+Ponto(x=0, y=5) -&gt; no eixo y, altura 5<br>
+Ponto(x=3, y=0) -&gt; no eixo x, posição 3<br>
+Ponto(x=2, y=2) -&gt; na diagonal<br>
+Ponto(x=4, y=1) -&gt; em algum lugar do plano</p>
+    <p>O <code>@dataclass</code> (aula 88) cria a classe com <code>__init__</code> e <code>__repr__</code> prontos, ótima para usar com <code>match</code>.</p>
+
+    <h2>Cuidado: nome solto captura tudo</h2>
+    <p>Um nome sozinho num <code>case</code> <strong>não</strong> compara com uma variável: ele captura o valor. Para comparar com constantes, use nomes com ponto, como os de um <code>Enum</code> (aula 87):</p>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+
+class Cor(Enum):
+    VERMELHO = "vermelho"
+    VERDE = "verde"
+
+
+def semaforo(cor):
+    match cor:
+        case Cor.VERMELHO:
+            return "Pare!"
+        case Cor.VERDE:
+            return "Siga."
+        case outra:
+            return f"Cor sem regra: {outra}"
+
+
+print(semaforo(Cor.VERMELHO))
+print(semaforo(Cor.VERDE))
+print(semaforo("amarelo"))</code></pre>
+    <p class="saida">Pare!<br>
+Siga.<br>
+Cor sem regra: amarelo</p>
+    <p>Se você escrevesse <code>case VERMELHO:</code> (sem <code>Cor.</code>), esse <code>case</code> combinaria com <strong>qualquer</strong> valor e o Python ainda reclamaria que os casos de baixo nunca seriam alcançados.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>match comando.split():</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva <code>nota_conceito(nota)</code> com <code>match</code> que devolva "A" para 10 e 9, "B" para 8 e 7, "C" para 6 e 5 e "D" para o resto (as notas são inteiras).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def nota_conceito(nota):
+    match nota:
+        case 10 | 9:
+            return "A"
+        case 8 | 7:
+            return "B"
+        case 6 | 5:
+            return "C"
+        case _:
+            return "D"
+
+
+for n in [10, 7, 5, 2]:
+    print(n, nota_conceito(n))</code></pre>
+      <p class="saida">10 A<br>
+7 B<br>
+5 C<br>
+2 D</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça uma calculadora que recebe uma tupla como <code>(3, "+", 4)</code> e usa <code>match</code> para fazer a conta com <code>+</code>, <code>-</code>, <code>*</code> e <code>/</code>, avisando divisão por zero.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def calcular(expressao):
+    match expressao:
+        case (a, "+", b):
+            return a + b
+        case (a, "-", b):
+            return a - b
+        case (a, "*", b):
+            return a * b
+        case (a, "/", 0):
+            return "não dá para dividir por zero"
+        case (a, "/", b):
+            return a / b
+        case _:
+            return "operação desconhecida"
+
+
+print(calcular((3, "+", 4)))
+print(calcular((10, "/", 4)))
+print(calcular((5, "/", 0)))
+print(calcular((2, "^", 3)))</code></pre>
+      <p class="saida">7<br>
+2.5<br>
+não dá para dividir por zero<br>
+operação desconhecida</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>match</code> com padrões de dicionário para responder pedidos de lanchonete: <code>{"item": "suco", "sabor": s}</code> vira "Suco de s", <code>{"item": "pastel", "recheio": r}</code> vira "Pastel de r", e qualquer outro pedido vira "Pedido inválido".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def preparar(pedido):
+    match pedido:
+        case {"item": "suco", "sabor": sabor}:
+            return f"Suco de {sabor}"
+        case {"item": "pastel", "recheio": recheio}:
+            return f"Pastel de {recheio}"
+        case _:
+            return "Pedido inválido"
+
+
+print(preparar({"item": "suco", "sabor": "cajá"}))
+print(preparar({"item": "pastel", "recheio": "queijo"}))
+print(preparar({"item": "bolo"}))</code></pre>
+      <p class="saida">Suco de cajá<br>
+Pastel de queijo<br>
+Pedido inválido</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use um <code>case</code> com guarda para classificar a idade recebida numa lista <code>["idade", n]</code>: menos de 12 é "criança", de 12 a 17 "adolescente" e 18 ou mais "adulto".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def classificar(dado):
+    match dado:
+        case ["idade", n] if n &lt; 12:
+            return "criança"
+        case ["idade", n] if n &lt; 18:
+            return "adolescente"
+        case ["idade", n]:
+            return "adulto"
+        case _:
+            return "dado inválido"
+
+
+print(classificar(["idade", 8]))
+print(classificar(["idade", 15]))
+print(classificar(["idade", 40]))
+print(classificar(["altura", 1.6]))</code></pre>
+      <p class="saida">criança<br>
+adolescente<br>
+adulto<br>
+dado inválido</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="91-type-hints.html" rel="prev">← Aula anterior</a>
+      <a href="93-projeto-agenda-de-contatos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

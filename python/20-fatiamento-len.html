@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 20 · Índices, fatiamento de textos e len — Curso de Python · DIGITAR</title>
+<meta name="description" content="Pegue letras e pedaços de um texto com índices e fatias, inverta palavras e descubra o tamanho com len.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 20 · Índices, fatiamento de textos e len</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Medir o tamanho de um texto com <code>len()</code></li>
+        <li>Pegar um caractere pelo índice, inclusive com índices negativos</li>
+        <li>Recortar pedaços com fatias <code>[início:fim:passo]</code></li>
+        <li>Entender que strings são imutáveis</li>
+      </ul>
+    </div>
+
+    <h2>Uma string é uma fila de caracteres</h2>
+    <p>Uma string é uma sequência de <strong>caracteres</strong> (letras, números, espaços, símbolos). Cada caractere tem uma posição, chamada <strong>índice</strong>, que começa em <strong>0</strong>:</p>
+    <p class="saida">&nbsp;P &nbsp;&nbsp;y &nbsp;&nbsp;t &nbsp;&nbsp;h &nbsp;&nbsp;o &nbsp;&nbsp;n<br>
+&nbsp;0 &nbsp;&nbsp;1 &nbsp;&nbsp;2 &nbsp;&nbsp;3 &nbsp;&nbsp;4 &nbsp;&nbsp;5<br>
+-6 &nbsp;-5 &nbsp;-4 &nbsp;-3 &nbsp;-2 &nbsp;-1</p>
+<pre class="codigo" data-executar="sim"><code>palavra = "Python"
+print(len(palavra))
+print(palavra[0])
+print(palavra[1])
+print(palavra[5])</code></pre>
+    <p class="saida">6<br>
+P<br>
+y<br>
+n</p>
+    <p><code>len()</code> dá o tamanho: quantos caracteres há. Como o índice começa em 0, o último caractere fica em <code>len - 1</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Pedir um índice que não existe dá <code>IndexError: string index out of range</code>. Em <code>"Python"</code>, os índices vão de 0 a 5; <code>palavra[6]</code> dá erro.</div>
+
+    <h2>Índices negativos</h2>
+    <p>Índices negativos contam a partir do fim: <code>-1</code> é o último, <code>-2</code> o penúltimo, e assim por diante.</p>
+<pre class="codigo" data-executar="sim"><code>cidade = "Florianópolis"
+print(cidade[-1])
+print(cidade[-2])
+print(cidade[0], cidade[-1])
+print(cidade[len(cidade) - 1])</code></pre>
+    <p class="saida">s<br>
+i<br>
+F s<br>
+s</p>
+    <p><code>cidade[-1]</code> e <code>cidade[len(cidade) - 1]</code> dão o mesmo resultado, mas o primeiro é bem mais curto.</p>
+
+    <h2>Fatiamento: pegando pedaços</h2>
+    <p>Uma <strong>fatia</strong> pega um pedaço do texto: <code>texto[início:fim]</code>. Ela começa no índice <code>início</code> e vai <strong>até antes</strong> do <code>fim</code>.</p>
+<pre class="codigo" data-executar="sim"><code>frase = "Bom dia, Brasil"
+print(frase[0:3])
+print(frase[4:7])
+print(frase[:3])
+print(frase[9:])
+print(frase[-6:])</code></pre>
+    <p class="saida">Bom<br>
+dia<br>
+Bom<br>
+Brasil<br>
+Brasil</p>
+    <p>Se você omite o início, começa do 0. Se omite o fim, vai até o final.</p>
+    <div class="dica"><strong>Dica:</strong> Um jeito de lembrar: em <code>texto[2:5]</code>, o tamanho da fatia é <code>5 - 2 = 3</code> caracteres. E fatias não dão <code>IndexError</code>: <code>"oi"[0:100]</code> simplesmente devolve <code>"oi"</code>.</div>
+
+    <h2>O passo</h2>
+    <p>Um terceiro número na fatia é o <strong>passo</strong>: de quantos em quantos caracteres andar.</p>
+<pre class="codigo" data-executar="sim"><code>numeros = "0123456789"
+print(numeros[::2])
+print(numeros[1::2])
+print(numeros[::-1])
+print("arara"[::-1])</code></pre>
+    <p class="saida">02468<br>
+13579<br>
+9876543210<br>
+arara</p>
+    <p>Passo <code>-1</code> anda de trás para frente: é o jeito clássico de inverter um texto. "arara" ao contrário continua "arara": é um palíndromo!</p>
+
+    <h2>Strings não mudam (imutáveis)</h2>
+    <p>Você não pode trocar uma letra de uma string diretamente. Strings são <strong>imutáveis</strong>:</p>
+<pre class="codigo" data-executar="sim"><code>nome = "Rafael"
+nome[0] = "G"</code></pre>
+    <p class="saida">TypeError: 'str' object does not support item assignment</p>
+    <p>Para "mudar", crie um texto novo juntando pedaços:</p>
+<pre class="codigo" data-executar="sim"><code>nome = "Rafael"
+novo = "G" + nome[1:]
+print(novo)
+print(nome)</code></pre>
+    <p class="saida">Gafael<br>
+Rafael</p>
+    <p>A variável <code>nome</code> continua <code>"Rafael"</code>; <code>novo</code> é outro texto.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(frase[0:3], frase[-6:], frase[::-1])</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Com <code>nome = "Guanabara"</code>, mostre a primeira letra, a última letra e o tamanho do nome.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nome = "Guanabara"
+print(nome[0])
+print(nome[-1])
+print(len(nome))</code></pre>
+      <p class="saida">G<br>
+a<br>
+9</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> A placa <code>"BRA2E19"</code> tem 3 letras e depois 4 caracteres. Use fatias para mostrar as duas partes separadas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>placa = "BRA2E19"
+print(placa[:3])
+print(placa[3:])</code></pre>
+      <p class="saida">BRA<br>
+2E19</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Verifique se <code>"ovo"</code> e <code>"Python"</code> são palíndromos (iguais ao contrário), mostrando <code>True</code> ou <code>False</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>p1 = "ovo"
+p2 = "Python"
+print(p1 == p1[::-1])
+print(p2 == p2[::-1])</code></pre>
+      <p class="saida">True<br>
+False</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> A data <code>"25/12/2025"</code> está como texto. Use fatias para mostrar o dia, o mês e o ano, cada um numa linha.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>data = "25/12/2025"
+print(data[0:2])
+print(data[3:5])
+print(data[6:])</code></pre>
+      <p class="saida">25<br>
+12<br>
+2025</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça uma palavra e mostre a palavra com a primeira letra trocada por <code>*</code>, por exemplo <code>cavalo</code> vira <code>*avalo</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>palavra = input("Palavra: ")
+print("*" + palavra[1:])</code></pre>
+      <p class="saida"><em>(exemplo digitando cavalo)</em><br>
+Palavra: cavalo<br>
+*avalo</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="19-operadores-relacionais-logicos.html" rel="prev">← Aula anterior</a>
+      <a href="21-none-is-id.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 220 · Publicando: servidor Linux, PostgreSQL, Gunicorn, Nginx e HTTPS — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça as peças para colocar um site Django no ar num servidor Linux, com segurança e HTTPS.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 220 · Publicando: servidor Linux, PostgreSQL, Gunicorn, Nginx e HTTPS</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>As peças de um site publicado: Gunicorn, Nginx, PostgreSQL e HTTPS</li>
+        <li>Ajustar o <code>settings.py</code> para produção</li>
+        <li>Preparar o servidor com os comandos principais</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O caminho de um pedido em produção</h2>
+    <p>O <code>runserver</code> é só para desenvolvimento: lento e sem segurança. Num servidor de verdade (uma máquina Linux alugada, como uma VPS), o caminho fica assim:</p>
+    <p class="saida">Navegador --HTTPS--&gt; Nginx --&gt; Gunicorn --&gt; Django --&gt; PostgreSQL<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+--&gt; arquivos estáticos e de mídia</p>
+    <ul>
+      <li><strong>Nginx</strong> recebe os pedidos da internet, cuida do HTTPS e entrega CSS e imagens direto;</li>
+      <li><strong>Gunicorn</strong> roda o Django com vários processos;</li>
+      <li><strong>PostgreSQL</strong> é o banco de dados, mais robusto que o SQLite para muitos usuários.</li>
+    </ul>
+
+    <h2>O settings.py de produção</h2>
+<pre class="codigo"><code>import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DEBUG = False
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+ALLOWED_HOSTS = ["meusite.com.br", "www.meusite.com.br"]
+CSRF_TRUSTED_ORIGINS = ["https://meusite.com.br", "https://www.meusite.com.br"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Nunca publique com <code>DEBUG = True</code>: as páginas de erro mostram partes do seu código e das configurações para qualquer pessoa. E a <code>SECRET_KEY</code> vem de uma variável de ambiente (aula 177), nunca escrita no código que vai para o GitHub.</div>
+    <p>Antes de publicar, rode <code>python manage.py check --deploy</code>: ele lista as configurações de segurança que faltam.</p>
+
+    <h2>No servidor (Ubuntu)</h2>
+<pre class="codigo"><code>sudo apt update
+sudo apt install python3-venv postgresql nginx certbot python3-certbot-nginx
+git clone https://github.com/seu-usuario/agenda.git
+cd agenda
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt gunicorn
+python manage.py migrate
+python manage.py collectstatic
+gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3</code></pre>
+    <p>Depois, configure o Nginx para repassar os pedidos ao Gunicorn, crie um serviço do <code>systemd</code> para o Gunicorn ligar sozinho e gere o certificado HTTPS gratuito com o <strong>Let's Encrypt</strong>:</p>
+<pre class="codigo"><code>sudo certbot --nginx -d meusite.com.br -d www.meusite.com.br</code></pre>
+    <div class="dica"><strong>Dica:</strong> Comece por uma plataforma que faz a maior parte disso por você (vários serviços de hospedagem aceitam Django direto do GitHub). Montar o servidor na mão é ótimo para aprender, mas tem mais passos.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>python manage.py check --deploy</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Você publicou com <code>DEBUG = False</code> e o site responde <strong>400 Bad Request</strong>. Qual configuração provavelmente está faltando?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>ALLOWED_HOSTS = ["meusite.com.br", "www.meusite.com.br"]</code></pre>
+      <p>Com <code>DEBUG = False</code>, o Django só atende os domínios listados em <code>ALLOWED_HOSTS</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Gere uma <code>SECRET_KEY</code> nova e forte com a biblioteca padrão do Python.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import secrets
+
+print(secrets.token_urlsafe(50))</code></pre>
+      <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+BNNmx1s5VjLpBo5T9tpK_sh1I3JTYZVcctag8_TLCqRZc8WaE4aff_hgc2RDbfTmCN4</p>
+      <p>Guarde o valor numa variável de ambiente do servidor, não no código.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="215-projeto-loja.html" rel="prev">← Aula anterior</a>
+      <a href="225-api-rest.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

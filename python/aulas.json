@@ -1,0 +1,719 @@
+{
+  "modulos": [
+    {
+      "titulo": "Módulo 1 · Primeiros passos",
+      "aulas": [
+        {
+          "arquivo": "01-o-que-e-python.html",
+          "titulo": "O que é Python e como este curso funciona"
+        },
+        {
+          "arquivo": "02-instalando-python.html",
+          "titulo": "Instalando Python e VS Code (Windows, Linux, macOS)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "03-primeiro-programa.html",
+          "titulo": "Primeiro arquivo .py, o interpretador e o terminal"
+        },
+        {
+          "arquivo": "04-comentarios-docstrings.html",
+          "titulo": "Comentários e docstrings"
+        },
+        {
+          "arquivo": "05-ambiente-moderno.html",
+          "titulo": "Gerenciadores de pacotes: pip, uv e pyproject.toml",
+          "noComputador": true
+        },
+        {
+          "arquivo": "06-lendo-mensagens-de-erro.html",
+          "titulo": "Lendo mensagens de erro"
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 2 · Lógica de programação",
+      "aulas": [
+        {
+          "arquivo": "10-print.html",
+          "titulo": "A função print: separador e fim de linha"
+        },
+        {
+          "arquivo": "11-tipos-str.html",
+          "titulo": "Textos: o tipo str"
+        },
+        {
+          "arquivo": "12-tipos-numeros-bool.html",
+          "titulo": "Números (int, float) e verdadeiro/falso (bool)"
+        },
+        {
+          "arquivo": "13-conversao-tipos.html",
+          "titulo": "Convertendo tipos (int(), float(), str(), bool())"
+        },
+        {
+          "arquivo": "14-variaveis.html",
+          "titulo": "Variáveis e nomes em snake_case"
+        },
+        {
+          "arquivo": "15-operadores-aritmeticos.html",
+          "titulo": "Operadores aritméticos, precedência, + e * com textos"
+        },
+        {
+          "arquivo": "16-formatacao-strings.html",
+          "titulo": "Formatando textos: f-strings, format e %"
+        },
+        {
+          "arquivo": "17-input.html",
+          "titulo": "Lendo dados do usuário com input"
+        },
+        {
+          "arquivo": "18-if-elif-else.html",
+          "titulo": "Decisões: if, elif, else"
+        },
+        {
+          "arquivo": "19-operadores-relacionais-logicos.html",
+          "titulo": "Comparações, and, or, not, in, not in"
+        },
+        {
+          "arquivo": "20-fatiamento-len.html",
+          "titulo": "Índices, fatiamento de textos e len"
+        },
+        {
+          "arquivo": "21-none-is-id.html",
+          "titulo": "None, is, is not e a identidade id"
+        },
+        {
+          "arquivo": "22-while.html",
+          "titulo": "Repetição com while, break, continue, while/else"
+        },
+        {
+          "arquivo": "23-atribuicao-composta.html",
+          "titulo": "Operadores de atribuição (+=, -= …)"
+        },
+        {
+          "arquivo": "24-for-range.html",
+          "titulo": "for e range; como o for usa iteráveis"
+        },
+        {
+          "arquivo": "25-listas.html",
+          "titulo": "Listas: índices, append, insert, pop, del, extend"
+        },
+        {
+          "arquivo": "26-mutaveis-copy.html",
+          "titulo": "Cuidado com tipos mutáveis: copy"
+        },
+        {
+          "arquivo": "27-tuplas-enumerate.html",
+          "titulo": "Tuplas, enumerate e desempacotamento"
+        },
+        {
+          "arquivo": "28-split-join-strip.html",
+          "titulo": "Métodos úteis de texto: split, join, strip"
+        },
+        {
+          "arquivo": "29-float-decimal.html",
+          "titulo": "Imprecisão do float, round e Decimal"
+        },
+        {
+          "arquivo": "30-ternario.html",
+          "titulo": "if de uma linha (operação ternária)"
+        },
+        {
+          "arquivo": "31-projeto-cpf.html",
+          "titulo": "Projeto: gerador e validador de CPF"
+        },
+        {
+          "arquivo": "32-projeto-jogo-de-adivinhacao.html",
+          "titulo": "Projeto: jogo de adivinhação"
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 3 · Python intermediário",
+      "aulas": [
+        {
+          "arquivo": "40-funcoes.html",
+          "titulo": "Funções: def, parâmetros e return"
+        },
+        {
+          "arquivo": "41-argumentos.html",
+          "titulo": "Argumentos posicionais, nomeados e valores padrão"
+        },
+        {
+          "arquivo": "42-escopo.html",
+          "titulo": "Escopo: local, global, nonlocal"
+        },
+        {
+          "arquivo": "43-args-kwargs.html",
+          "titulo": "*args, **kwargs, empacotar e desempacotar"
+        },
+        {
+          "arquivo": "44-parametros-especiais.html",
+          "titulo": "Parâmetros só posicionais (/) e só nomeados (*); o perigo do padrão mutável"
+        },
+        {
+          "arquivo": "45-funcoes-primeira-classe.html",
+          "titulo": "Funções como valores, funções de ordem superior e closures"
+        },
+        {
+          "arquivo": "46-dicionarios.html",
+          "titulo": "Dicionários: chaves, valores e métodos"
+        },
+        {
+          "arquivo": "47-copia-rasa-profunda.html",
+          "titulo": "Cópia rasa e cópia profunda"
+        },
+        {
+          "arquivo": "48-sets.html",
+          "titulo": "Conjuntos (set) e suas operações"
+        },
+        {
+          "arquivo": "49-lambda.html",
+          "titulo": "Funções lambda e ordenação com key"
+        },
+        {
+          "arquivo": "50-comprehensions.html",
+          "titulo": "List, dict e set comprehension (mapear e filtrar)"
+        },
+        {
+          "arquivo": "51-truthy-falsy.html",
+          "titulo": "Valores truthy e falsy; isinstance, dir, getattr, hasattr"
+        },
+        {
+          "arquivo": "52-geradores.html",
+          "titulo": "Iteráveis, iteradores, geradores, yield e yield from"
+        },
+        {
+          "arquivo": "53-excecoes.html",
+          "titulo": "Erros: try, except, else, finally e raise"
+        },
+        {
+          "arquivo": "54-modulos.html",
+          "titulo": "Módulos: import, from, as"
+        },
+        {
+          "arquivo": "55-pacotes.html",
+          "titulo": "Seus próprios módulos e pacotes, __init__.py, __main__",
+          "noComputador": true
+        },
+        {
+          "arquivo": "56-decoradores.html",
+          "titulo": "Decoradores, decoradores com parâmetros e ordem de aplicação"
+        },
+        {
+          "arquivo": "57-itertools.html",
+          "titulo": "itertools: count, combinations, permutations, product, groupby"
+        },
+        {
+          "arquivo": "58-map-filter-reduce.html",
+          "titulo": "map, filter, reduce e partial"
+        },
+        {
+          "arquivo": "59-recursao.html",
+          "titulo": "Funções recursivas e o limite de recursão"
+        },
+        {
+          "arquivo": "60-venv-pip.html",
+          "titulo": "Ambientes virtuais (venv), pip e requirements.txt",
+          "noComputador": true
+        },
+        {
+          "arquivo": "61-arquivos.html",
+          "titulo": "Lendo e gravando arquivos com with open; modos e encoding"
+        },
+        {
+          "arquivo": "62-json.html",
+          "titulo": "Salvando dados em JSON"
+        },
+        {
+          "arquivo": "63-guard-clause.html",
+          "titulo": "Código limpo: guard clause e menos if aninhado"
+        },
+        {
+          "arquivo": "64-pep8-e-bons-nomes.html",
+          "titulo": "PEP 8 e bons nomes"
+        },
+        {
+          "arquivo": "65-organizacao-de-projeto.html",
+          "titulo": "Organizando um projeto"
+        },
+        {
+          "arquivo": "66-depuracao.html",
+          "titulo": "Depuração: print, breakpoint e traceback"
+        },
+        {
+          "arquivo": "67-projeto-analisador-de-texto.html",
+          "titulo": "Projeto: analisador de texto"
+        },
+        {
+          "arquivo": "68-projeto-treino-de-digitacao.html",
+          "titulo": "Projeto: treino de digitação no terminal"
+        },
+        {
+          "arquivo": "69-projeto-intermediario.html",
+          "titulo": "Projeto: lista de tarefas que salva em arquivo"
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 4 · Programação orientada a objetos",
+      "aulas": [
+        {
+          "arquivo": "70-classes.html",
+          "titulo": "Classes e objetos: class, __init__, self"
+        },
+        {
+          "arquivo": "71-atributos-metodos.html",
+          "titulo": "Atributos de instância e de classe; __dict__ e vars"
+        },
+        {
+          "arquivo": "72-classmethod-staticmethod.html",
+          "titulo": "@classmethod (métodos fábrica) e @staticmethod"
+        },
+        {
+          "arquivo": "73-property.html",
+          "titulo": "@property e @setter: getters e setters pythônicos"
+        },
+        {
+          "arquivo": "74-encapsulamento.html",
+          "titulo": "Encapsulamento: público, _protegido, __privado"
+        },
+        {
+          "arquivo": "75-associacao-agregacao-composicao.html",
+          "titulo": "Associação, agregação e composição"
+        },
+        {
+          "arquivo": "76-heranca.html",
+          "titulo": "Herança simples, super()"
+        },
+        {
+          "arquivo": "77-heranca-multipla.html",
+          "titulo": "Herança múltipla e a ordem de resolução (MRO)"
+        },
+        {
+          "arquivo": "78-classes-abstratas.html",
+          "titulo": "Classes abstratas (abc, abstractmethod)"
+        },
+        {
+          "arquivo": "79-polimorfismo.html",
+          "titulo": "Polimorfismo e o princípio de Liskov"
+        },
+        {
+          "arquivo": "80-excecoes-proprias.html",
+          "titulo": "Criando suas exceções; add_note (3.11+)"
+        },
+        {
+          "arquivo": "81-metodos-especiais.html",
+          "titulo": "Métodos especiais (dunder): __repr__, __str__, __add__, __len__…"
+        },
+        {
+          "arquivo": "82-new-init.html",
+          "titulo": "__new__ e __init__"
+        },
+        {
+          "arquivo": "83-context-manager.html",
+          "titulo": "Gerenciadores de contexto com classes e com contextlib"
+        },
+        {
+          "arquivo": "84-decoradores-classes.html",
+          "titulo": "Decoradores com classes e __call__"
+        },
+        {
+          "arquivo": "85-metaclasses.html",
+          "titulo": "Metaclasses (avançado)"
+        },
+        {
+          "arquivo": "86-documentacao.html",
+          "titulo": "help, dir e docstrings em funções e classes"
+        },
+        {
+          "arquivo": "87-enum.html",
+          "titulo": "Enumerações com enum.Enum"
+        },
+        {
+          "arquivo": "88-dataclasses.html",
+          "titulo": "dataclasses: campos, __post_init__, asdict, field"
+        },
+        {
+          "arquivo": "89-namedtuple.html",
+          "titulo": "namedtuple"
+        },
+        {
+          "arquivo": "90-colecoes-proprias.html",
+          "titulo": "Sua própria coleção com Iterable, Iterator e Sequence"
+        },
+        {
+          "arquivo": "91-type-hints.html",
+          "titulo": "Tipagem moderna (type hints, Python 3.10+)"
+        },
+        {
+          "arquivo": "92-match-case.html",
+          "titulo": "match/case: pattern matching estrutural (3.10+)"
+        },
+        {
+          "arquivo": "93-projeto-agenda-de-contatos.html",
+          "titulo": "Projeto: agenda de contatos com classes"
+        },
+        {
+          "arquivo": "99-projeto-poo.html",
+          "titulo": "Projeto: banco simples com contas, clientes e exceções"
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 5 · Biblioteca padrão e módulos úteis",
+      "aulas": [
+        {
+          "arquivo": "100-name-main.html",
+          "titulo": "if __name__ == \"__main__\""
+        },
+        {
+          "arquivo": "101-datetime.html",
+          "titulo": "Datas e horas: datetime, fuso horário, timestamp"
+        },
+        {
+          "arquivo": "102-timedelta-strftime.html",
+          "titulo": "Calculando e formatando datas (timedelta, strftime), calendar, locale"
+        },
+        {
+          "arquivo": "103-os-pathlib.html",
+          "titulo": "Pastas e arquivos: os, os.path, pathlib, os.walk"
+        },
+        {
+          "arquivo": "104-shutil.html",
+          "titulo": "Copiar, mover e apagar com shutil",
+          "noComputador": true
+        },
+        {
+          "arquivo": "105-json-avancado.html",
+          "titulo": "json.dumps/loads e TypedDict"
+        },
+        {
+          "arquivo": "106-csv.html",
+          "titulo": "Planilhas CSV: reader, DictReader, writer, DictWriter"
+        },
+        {
+          "arquivo": "107-random-secrets.html",
+          "titulo": "Números aleatórios: random e secrets"
+        },
+        {
+          "arquivo": "108-string-template.html",
+          "titulo": "string.Template e variáveis de ambiente (.env)"
+        },
+        {
+          "arquivo": "109-email-smtp.html",
+          "titulo": "Enviando e-mail com smtplib",
+          "noComputador": true
+        },
+        {
+          "arquivo": "110-argumentos-linha-comando.html",
+          "titulo": "sys.argv e argparse",
+          "noComputador": true
+        },
+        {
+          "arquivo": "111-requests.html",
+          "titulo": "HTTP com requests e http.server",
+          "noComputador": true
+        },
+        {
+          "arquivo": "112-web-scraping.html",
+          "titulo": "Raspagem de páginas com BeautifulSoup",
+          "noComputador": true
+        },
+        {
+          "arquivo": "113-selenium.html",
+          "titulo": "Automatizando o navegador com Selenium",
+          "noComputador": true
+        },
+        {
+          "arquivo": "114-subprocess.html",
+          "titulo": "Rodando programas externos com subprocess",
+          "noComputador": true
+        },
+        {
+          "arquivo": "115-jupyter.html",
+          "titulo": "Jupyter Notebook",
+          "noComputador": true
+        },
+        {
+          "arquivo": "116-pdf.html",
+          "titulo": "Ler, juntar e dividir PDF (pypdf)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "117-deque.html",
+          "titulo": "Filas e pilhas com collections.deque"
+        },
+        {
+          "arquivo": "118-excel-openpyxl.html",
+          "titulo": "Planilhas do Excel com openpyxl",
+          "noComputador": true
+        },
+        {
+          "arquivo": "119-imagens-pillow.html",
+          "titulo": "Imagens com Pillow",
+          "noComputador": true
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 6 · Testes automatizados",
+      "aulas": [
+        {
+          "arquivo": "130-por-que-testar.html",
+          "titulo": "Por que testar e o ciclo do TDD (vermelho, verde, refatorar)"
+        },
+        {
+          "arquivo": "131-unittest.html",
+          "titulo": "unittest: casos de teste e asserções"
+        },
+        {
+          "arquivo": "132-tdd-na-pratica.html",
+          "titulo": "TDD na prática: uma função do zero guiada por testes"
+        },
+        {
+          "arquivo": "133-mocks.html",
+          "titulo": "Isolando dependências com unittest.mock"
+        },
+        {
+          "arquivo": "134-pytest.html",
+          "titulo": "Introdução ao pytest",
+          "noComputador": true
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 7 · Expressões regulares",
+      "aulas": [
+        {
+          "arquivo": "140-regex-intro.html",
+          "titulo": "O que é regex; re.search, findall, sub"
+        },
+        {
+          "arquivo": "141-regex-meta.html",
+          "titulo": "Metacaracteres, classes e quantificadores"
+        },
+        {
+          "arquivo": "142-regex-grupos.html",
+          "titulo": "Grupos, grupos nomeados e retrovisores"
+        },
+        {
+          "arquivo": "143-regex-ancoras-flags.html",
+          "titulo": "Âncoras, flags e modo verboso"
+        },
+        {
+          "arquivo": "144-regex-lookaround.html",
+          "titulo": "Lookahead e lookbehind"
+        },
+        {
+          "arquivo": "145-regex-projeto.html",
+          "titulo": "Projeto: validar CPF, e-mail e telefone com regex"
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 8 · Padrões de projeto",
+      "aulas": [
+        {
+          "arquivo": "150-solid.html",
+          "titulo": "Princípios SOLID em Python"
+        },
+        {
+          "arquivo": "151-criacionais.html",
+          "titulo": "Criacionais: Factory Method, Abstract Factory, Builder, Singleton, Prototype"
+        },
+        {
+          "arquivo": "152-estruturais.html",
+          "titulo": "Estruturais: Adapter, Composite, Decorator, Facade, Proxy, Flyweight, Bridge"
+        },
+        {
+          "arquivo": "153-comportamentais.html",
+          "titulo": "Comportamentais: Strategy, Observer, Command, State, Template Method, Iterator, Chain of Responsibility, Mediator, Memento, Visitor"
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 9 · Bancos de dados",
+      "aulas": [
+        {
+          "arquivo": "170-sql-intro.html",
+          "titulo": "O que é banco relacional e SQL"
+        },
+        {
+          "arquivo": "171-sql-crud.html",
+          "titulo": "CREATE, INSERT, SELECT, UPDATE, DELETE"
+        },
+        {
+          "arquivo": "172-sql-filtros.html",
+          "titulo": "WHERE, ORDER BY, LIMIT, LIKE, funções de agregação, GROUP BY"
+        },
+        {
+          "arquivo": "173-sql-relacoes.html",
+          "titulo": "Chaves estrangeiras e JOIN"
+        },
+        {
+          "arquivo": "174-sqlite3.html",
+          "titulo": "sqlite3: conectar, criar tabela, CRUD"
+        },
+        {
+          "arquivo": "175-placeholders.html",
+          "titulo": "Placeholders e como evitar SQL Injection"
+        },
+        {
+          "arquivo": "176-mysql-pymysql.html",
+          "titulo": "MySQL com pymysql e Docker",
+          "noComputador": true
+        },
+        {
+          "arquivo": "177-env-segredos.html",
+          "titulo": "Senhas fora do código com .env",
+          "noComputador": true
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 10 · Interface gráfica com PySide6",
+      "aulas": [
+        {
+          "arquivo": "190-pyside6-intro.html",
+          "titulo": "Instalação, QApplication, QWidget, QPushButton",
+          "noComputador": true
+        },
+        {
+          "arquivo": "191-layouts-janela.html",
+          "titulo": "Layouts, QMainWindow e widget central",
+          "noComputador": true
+        },
+        {
+          "arquivo": "192-sinais-slots.html",
+          "titulo": "Sinais e slots",
+          "noComputador": true
+        },
+        {
+          "arquivo": "193-calculadora.html",
+          "titulo": "Projeto: calculadora (display, grade de botões, teclado, QMessageBox)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "194-qt-designer.html",
+          "titulo": "Telas no Qt Designer (.ui)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "195-qthread.html",
+          "titulo": "Tarefas longas sem travar a tela: QThread",
+          "noComputador": true
+        },
+        {
+          "arquivo": "196-pyinstaller.html",
+          "titulo": "Empacotando o programa com PyInstaller",
+          "noComputador": true
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 11 · Django: sites e APIs",
+      "aulas": [
+        {
+          "arquivo": "200-django-intro.html",
+          "titulo": "O que é Django; startproject, manage.py, apps",
+          "noComputador": true
+        },
+        {
+          "arquivo": "201-urls-views.html",
+          "titulo": "URLs, views, request e response",
+          "noComputador": true
+        },
+        {
+          "arquivo": "202-templates.html",
+          "titulo": "Templates, herança (extends), include, arquivos estáticos",
+          "noComputador": true
+        },
+        {
+          "arquivo": "203-models-admin.html",
+          "titulo": "Models, migrações e área administrativa",
+          "noComputador": true
+        },
+        {
+          "arquivo": "204-querysets.html",
+          "titulo": "QuerySets: filter, order_by, Q, paginação",
+          "noComputador": true
+        },
+        {
+          "arquivo": "205-forms.html",
+          "titulo": "Formulários, ModelForm, validação e csrf_token",
+          "noComputador": true
+        },
+        {
+          "arquivo": "206-usuarios-login.html",
+          "titulo": "Usuários, login, logout e login_required",
+          "noComputador": true
+        },
+        {
+          "arquivo": "207-projeto-agenda.html",
+          "titulo": "Projeto: agenda de contatos (CRUD completo)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "210-docker.html",
+          "titulo": "Docker e Docker Compose para Django",
+          "noComputador": true
+        },
+        {
+          "arquivo": "211-projeto-blog.html",
+          "titulo": "Projeto: blog (categorias, tags, slugs, imagens, context processors)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "215-projeto-loja.html",
+          "titulo": "Projeto: loja virtual (produtos, variações, carrinho na sessão, pedidos)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "220-deploy.html",
+          "titulo": "Publicando: servidor Linux, PostgreSQL, Gunicorn, Nginx e HTTPS",
+          "noComputador": true
+        },
+        {
+          "arquivo": "225-api-rest.html",
+          "titulo": "Introdução a APIs REST com Django",
+          "noComputador": true
+        }
+      ]
+    },
+    {
+      "titulo": "Módulo 12 · Extras",
+      "aulas": [
+        {
+          "arquivo": "240-terminal.html",
+          "titulo": "Comandos de terminal mais usados (Linux, Mac, WSL2)",
+          "noComputador": true
+        },
+        {
+          "arquivo": "241-html.html",
+          "titulo": "HTML5 para quem programa em Python",
+          "noComputador": true
+        },
+        {
+          "arquivo": "242-css.html",
+          "titulo": "CSS3: seletores, caixa, flexbox e grid",
+          "noComputador": true
+        },
+        {
+          "arquivo": "243-landing-page.html",
+          "titulo": "Projeto: uma landing page com HTML e CSS",
+          "noComputador": true
+        },
+        {
+          "arquivo": "244-git-github.html",
+          "titulo": "Git e GitHub básico",
+          "noComputador": true
+        },
+        {
+          "arquivo": "249-proximos-passos.html",
+          "titulo": "Próximos passos e como continuar estudando"
+        }
+      ]
+    }
+  ]
+}

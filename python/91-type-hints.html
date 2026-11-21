@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 91 · Tipagem moderna (type hints, Python 3.10+) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Anote tipos em variáveis, funções e classes para deixar o código mais claro e pegar erros antes de rodar.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 91 · Tipagem moderna (type hints, Python 3.10+)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Anotar tipos em parâmetros, retornos e variáveis</li>
+        <li>Usar tipos de coleções como <code>list[int]</code> e <code>dict[str, float]</code></li>
+        <li>Indicar valores opcionais com <code>X | None</code> (Python 3.10+)</li>
+        <li>Anotar classes, funções recebidas como parâmetro e apelidos de tipo</li>
+        <li>Entender que o Python não verifica os tipos ao rodar e conhecer o mypy</li>
+      </ul>
+    </div>
+
+    <h2>Para que servem</h2>
+    <p><strong>Type hints</strong> (dicas de tipo) são anotações que dizem qual tipo de valor uma variável ou função espera. Elas não mudam o que o programa faz: servem para quem lê o código e para o editor, que passa a sugerir métodos e avisar erros enquanto você digita.</p>
+<pre class="codigo" data-executar="sim"><code>def calcular_imc(peso: float, altura: float) -&gt; float:
+    return peso / altura ** 2
+
+
+imc = calcular_imc(60.0, 1.65)
+print(f"IMC: {imc:.1f}")</code></pre>
+    <p class="saida">IMC: 22.0</p>
+    <p>Depois de cada parâmetro vem <code>: tipo</code>. Depois dos parênteses, <code>-&gt; tipo</code> diz o que a função devolve. Uma função que não devolve nada é anotada com <code>-&gt; None</code>.</p>
+
+    <h2>Listas, dicionários e tuplas</h2>
+    <p>Para coleções, o tipo dos itens vai entre colchetes: <code>list[int]</code> é uma lista de inteiros; <code>dict[str, float]</code> é um dicionário com chaves <code>str</code> e valores <code>float</code>; <code>tuple[int, int]</code> é uma tupla com dois inteiros.</p>
+<pre class="codigo" data-executar="sim"><code>def media(notas: list[float]) -&gt; float:
+    return sum(notas) / len(notas)
+
+
+precos: dict[str, float] = {"pão": 0.75, "leite": 5.49}
+ponto: tuple[int, int] = (3, 4)
+
+print(media([7.5, 8.0, 9.5]))
+print(precos["leite"])
+print(ponto)</code></pre>
+    <p class="saida">8.333333333333334<br>
+5.49<br>
+(3, 4)</p>
+
+    <h2>Valores opcionais e "isto ou aquilo"</h2>
+    <p>A barra <code>|</code> significa "ou". <code>str | None</code> quer dizer "um texto ou nada"; <code>int | float</code> aceita inteiro ou decimal. Essa forma funciona a partir do Python 3.10 — em códigos antigos você vai ver <code>Optional[str]</code> e <code>Union[int, float]</code>, do módulo <code>typing</code>, que significam a mesma coisa.</p>
+<pre class="codigo" data-executar="sim"><code>def buscar_telefone(agenda: dict[str, str], nome: str) -&gt; str | None:
+    return agenda.get(nome)
+
+
+def dobrar(valor: int | float) -&gt; int | float:
+    return valor * 2
+
+
+agenda = {"Vó Lúcia": "(81) 99999-0000"}
+print(buscar_telefone(agenda, "Vó Lúcia"))
+print(buscar_telefone(agenda, "Tio Zé"))
+print(dobrar(4), dobrar(2.5))</code></pre>
+    <p class="saida">(81) 99999-0000<br>
+None<br>
+8 5.0</p>
+
+    <h2>Classes, funções e apelidos de tipo</h2>
+    <p>Suas classes também são tipos: um parâmetro pode ser <code>Aluno</code> ou <code>list[Aluno]</code>. Para uma função recebida como parâmetro, use <code>Callable[[tipos dos parâmetros], tipo do retorno]</code>, de <code>collections.abc</code>. E, quando um tipo fica comprido, dê um <strong>apelido</strong> a ele:</p>
+<pre class="codigo" data-executar="sim"><code>from collections.abc import Callable
+
+Boletim = dict[str, list[float]]
+
+
+class Aluno:
+    def __init__(self, nome: str, notas: list[float]) -&gt; None:
+        self.nome = nome
+        self.notas = notas
+
+    def media(self) -&gt; float:
+        return sum(self.notas) / len(self.notas)
+
+
+def melhor_aluno(alunos: list[Aluno]) -&gt; Aluno:
+    return max(alunos, key=lambda a: a.media())
+
+
+def aplicar(funcao: Callable[[float], float], valores: list[float]) -&gt; list[float]:
+    return [funcao(v) for v in valores]
+
+
+turma = [Aluno("Rafa", [7.0, 8.0]), Aluno("Lia", [9.5, 9.0])]
+print(melhor_aluno(turma).nome)
+print(aplicar(lambda n: n + 1, [6.0, 8.5]))
+boletim: Boletim = {a.nome: a.notas for a in turma}
+print(boletim)</code></pre>
+    <p class="saida">Lia<br>
+[7.0, 9.5]<br>
+{'Rafa': [7.0, 8.0], 'Lia': [9.5, 9.0]}</p>
+    <div class="dica"><strong>Dica:</strong> No Python 3.12 existe também a palavra <code>type</code> para criar apelidos: <code>type Boletim = dict[str, list[float]]</code>. A forma com <code>=</code> mostrada acima funciona em qualquer versão moderna.</div>
+
+    <h2>O Python não confere os tipos</h2>
+    <p>As anotações são só dicas. O Python <strong>não</strong> impede que você passe o tipo errado:</p>
+<pre class="codigo" data-executar="sim"><code>def somar(a: int, b: int) -&gt; int:
+    return a + b
+
+
+print(somar(2, 3))
+print(somar("2", "3"))</code></pre>
+    <p class="saida">5<br>
+23</p>
+    <p><code>somar("2", "3")</code> juntou os textos e deu <code>23</code>, sem erro nenhum. Para pegar esse tipo de engano existe o <strong>mypy</strong>, um verificador que lê o código sem rodar. Instale no seu computador e use no terminal:</p>
+<pre class="codigo"><code>pip install mypy
+mypy meu_programa.py</code></pre>
+    <p class="saida">meu_programa.py:5: error: Argument 1 to "somar" has incompatible type "str"; expected "int" &nbsp;[arg-type]<br>
+Found 1 error in 1 file (checked 1 source file)</p>
+    <div class="atencao"><strong>Atenção:</strong> Type hints não convertem valores. Anotar <code>idade: int = input()</code> não transforma o texto em número — você ainda precisa do <code>int()</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def media(notas: list[float]) -&gt; float:</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Adicione type hints à função <code>def area(base, altura): return base * altura / 2</code>, que calcula a área de um triângulo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def area(base: float, altura: float) -&gt; float:
+    return base * altura / 2
+
+
+print(area(6.0, 4.0))</code></pre>
+      <p class="saida">12.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva <code>contar_letras(palavra: str) -&gt; dict[str, int]</code>, que devolve quantas vezes cada letra aparece.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def contar_letras(palavra: str) -&gt; dict[str, int]:
+    contagem: dict[str, int] = {}
+    for letra in palavra:
+        contagem[letra] = contagem.get(letra, 0) + 1
+    return contagem
+
+
+print(contar_letras("arara"))</code></pre>
+      <p class="saida">{'a': 3, 'r': 2}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva <code>primeiro_negativo(numeros: list[int]) -&gt; int | None</code> que devolve o primeiro número negativo da lista, ou <code>None</code> se não houver.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def primeiro_negativo(numeros: list[int]) -&gt; int | None:
+    for n in numeros:
+        if n &lt; 0:
+            return n
+    return None
+
+
+print(primeiro_negativo([3, 8, -2, -7]))
+print(primeiro_negativo([1, 2, 3]))</code></pre>
+      <p class="saida">-2<br>
+None</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Anote a função <code>def repetir(funcao, vezes): ...</code>, que chama <code>funcao()</code> várias vezes e devolve a lista de resultados. <code>funcao</code> não recebe parâmetros e devolve <code>str</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections.abc import Callable
+
+
+def repetir(funcao: Callable[[], str], vezes: int) -&gt; list[str]:
+    return [funcao() for _ in range(vezes)]
+
+
+print(repetir(lambda: "olé", 3))</code></pre>
+      <p class="saida">['olé', 'olé', 'olé']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> O código <code>def dobro(n: int) -&gt; int: return n * 2</code> seguido de <code>print(dobro("oi"))</code> roda sem erro? Por quê?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def dobro(n: int) -&gt; int:
+    return n * 2
+
+
+print(dobro("oi"))</code></pre>
+      <p class="saida">oioi</p>
+      <p>Roda, sim. Os type hints não são verificados durante a execução, e <code>"oi" * 2</code> repete o texto. Um verificador como o mypy apontaria o erro antes de rodar.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="90-colecoes-proprias.html" rel="prev">← Aula anterior</a>
+      <a href="92-match-case.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

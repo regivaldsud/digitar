@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 131 · unittest: casos de teste e asserções — Curso de Python · DIGITAR</title>
+<meta name="description" content="Escreva testes automáticos com o módulo unittest para ter certeza de que suas funções fazem o que devem.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 6 · Testes automatizados</p>
+    <h1>Aula 131 · unittest: casos de teste e asserções</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar uma classe de testes com <code>unittest.TestCase</code></li>
+        <li>Usar <code>assertEqual</code>, <code>assertTrue</code>, <code>assertFalse</code>, <code>assertIn</code> e <code>assertRaises</code></li>
+        <li>Preparar dados repetidos com <code>setUp</code></li>
+        <li>Ler o resultado dos testes e rodar <code>python -m unittest</code> no terminal</li>
+      </ul>
+    </div>
+
+    <h2>Sua primeira classe de testes</h2>
+    <p>O Python já vem com o módulo <code>unittest</code>. Um teste é um método, dentro de uma classe que herda de <code>unittest.TestCase</code> (você viu herança na aula 76), com nome começando por <code>test</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def dobro(n):
+    return n * 2
+
+
+class TestDobro(unittest.TestCase):
+    def test_numero_positivo(self):
+        self.assertEqual(dobro(4), 8)
+
+    def test_zero(self):
+        self.assertEqual(dobro(0), 0)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <p>Cada ponto <code>.</code> é um teste que passou. <code>OK</code> no fim quer dizer que deu tudo certo.</p>
+    <div class="dica"><strong>Dica:</strong> Aqui no site usamos <code>unittest.main(argv=[""], exit=False)</code> para os testes rodarem no navegador. No seu computador, basta <code>unittest.main()</code>.</div>
+
+    <h2>Os principais asserts</h2>
+    <p>Um <strong>assert</strong> é uma afirmação: "eu garanto que isto é verdade". Se não for, o teste falha.</p>
+    <ul>
+      <li><code>assertEqual(a, b)</code>: confere se <code>a == b</code>.</li>
+      <li><code>assertTrue(x)</code> e <code>assertFalse(x)</code>: confere se <code>x</code> é verdadeiro ou falso.</li>
+      <li><code>assertIn(item, colecao)</code>: confere se o item está na coleção.</li>
+      <li><code>assertAlmostEqual(a, b)</code>: para números com vírgula, que podem ter pequenos erros de arredondamento.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def e_par(n):
+    return n % 2 == 0
+
+
+def vogais(texto):
+    return [letra for letra in texto.lower() if letra in "aeiou"]
+
+
+class TestFuncoes(unittest.TestCase):
+    def test_par(self):
+        self.assertTrue(e_par(10))
+
+    def test_impar(self):
+        self.assertFalse(e_par(7))
+
+    def test_vogais(self):
+        self.assertIn("a", vogais("Bahia"))
+        self.assertEqual(len(vogais("Bahia")), 3)
+
+    def test_decimal(self):
+        self.assertAlmostEqual(0.1 + 0.2, 0.3)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">....<br>
+----------------------------------------------------------------------<br>
+Ran 4 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca compare números decimais com <code>assertEqual(0.1 + 0.2, 0.3)</code>: isso falha, porque <code>0.1 + 0.2</code> dá <code>0.30000000000000004</code> (veja a aula 29). Use <code>assertAlmostEqual</code>.</div>
+
+    <h2>Testando erros com assertRaises</h2>
+    <p>Às vezes o comportamento certo é <strong>dar erro</strong>. Por exemplo, sacar mais do que tem na conta. O <code>assertRaises</code> confere se o erro esperado acontece:</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def sacar(saldo, valor):
+    if valor &gt; saldo:
+        raise ValueError("Saldo insuficiente")
+    return saldo - valor
+
+
+class TestSaque(unittest.TestCase):
+    def test_saque_normal(self):
+        self.assertEqual(sacar(100, 30), 70)
+
+    def test_saque_maior_que_saldo(self):
+        with self.assertRaises(ValueError):
+            sacar(50, 80)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+
+    <h2>Preparando dados com setUp</h2>
+    <p>Quando vários testes usam os mesmos dados, escreva-os uma vez no método <code>setUp</code>. Ele roda <strong>antes de cada teste</strong>, então cada teste começa com uma cópia nova, sem a bagunça do teste anterior:</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+class TestCarrinho(unittest.TestCase):
+    def setUp(self):
+        self.carrinho = ["arroz", "feijão"]
+
+    def test_adicionar(self):
+        self.carrinho.append("farofa")
+        self.assertEqual(len(self.carrinho), 3)
+
+    def test_carrinho_comeca_com_dois(self):
+        self.assertEqual(len(self.carrinho), 2)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <p>Mesmo que <code>test_adicionar</code> rode primeiro e coloque a farofa, o outro teste recebe um carrinho novo com dois itens.</p>
+
+    <h2>Quando um teste falha</h2>
+    <p>Um teste que falha é uma boa notícia: ele achou um erro antes do usuário. Imagine uma função de desconto com um engano (ela soma em vez de subtrair):</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def com_desconto(preco, porcentagem):
+    return preco + preco * porcentagem / 100   # erro: deveria ser -
+
+
+class TestDesconto(unittest.TestCase):
+    def test_dez_por_cento(self):
+        self.assertEqual(com_desconto(200, 10), 180)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">F<br>
+======================================================================<br>
+FAIL: test_dez_por_cento (__main__.TestDesconto.test_dez_por_cento)<br>
+----------------------------------------------------------------------<br>
+Traceback (most recent call last):<br>
+&nbsp;&nbsp;File "exemplo.py", line 10, in test_dez_por_cento<br>
+&nbsp;&nbsp;&nbsp;&nbsp;self.assertEqual(com_desconto(200, 10), 180)<br>
+AssertionError: 220.0 != 180<br>
+&nbsp;<br>
+----------------------------------------------------------------------<br>
+Ran 1 test in 0.000s<br>
+&nbsp;<br>
+FAILED (failures=1)</p>
+    <p>O <code>F</code> marca a falha. A linha <code>File</code> mostra o arquivo e a linha do teste que falhou (no navegador, o nome do arquivo aparece diferente; o que importa é o número da linha). A linha do <code>AssertionError</code> mostra o que a função devolveu (<code>220.0</code>) e o que era esperado (<code>180</code>). Troque o <code>+</code> por <code>-</code> e rode de novo.</p>
+
+    <h2>Rodando no seu computador</h2>
+    <p>No projeto, deixe as funções num arquivo (por exemplo <code>banco.py</code>) e os testes em outro, com nome começando por <code>test_</code> (por exemplo <code>test_banco.py</code>), que faz <code>from banco import sacar</code>. No terminal, na pasta do projeto:</p>
+<pre class="codigo"><code>python -m unittest
+python -m unittest -v</code></pre>
+    <p>O primeiro comando procura e roda todos os arquivos <code>test_*.py</code>. Com <code>-v</code> (verbose), ele mostra o nome de cada teste.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>self.assertEqual(dobro(4), 8)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva testes para a função <code>maior(a, b)</code>, que devolve o maior de dois números: um caso com o primeiro maior, outro com o segundo maior e um com números iguais.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def maior(a, b):
+    return a if a &gt;= b else b
+
+
+class TestMaior(unittest.TestCase):
+    def test_primeiro_maior(self):
+        self.assertEqual(maior(9, 2), 9)
+
+    def test_segundo_maior(self):
+        self.assertEqual(maior(3, 7), 7)
+
+    def test_iguais(self):
+        self.assertEqual(maior(5, 5), 5)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">...<br>
+----------------------------------------------------------------------<br>
+Ran 3 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva a função <code>e_palindromo(texto)</code> (lê igual de trás para frente, ignorando espaços e maiúsculas) e teste com <code>"Ame a ema"</code> (verdadeiro) e <code>"Python"</code> (falso).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def e_palindromo(texto):
+    limpo = texto.replace(" ", "").lower()
+    return limpo == limpo[::-1]
+
+
+class TestPalindromo(unittest.TestCase):
+    def test_e_palindromo(self):
+        self.assertTrue(e_palindromo("Ame a ema"))
+
+    def test_nao_e_palindromo(self):
+        self.assertFalse(e_palindromo("Python"))
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> A função <code>idade_valida(idade)</code> deve lançar <code>ValueError</code> para idades negativas e devolver <code>True</code> nas outras. Escreva a função e um teste para cada caso.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def idade_valida(idade):
+    if idade &lt; 0:
+        raise ValueError("idade negativa")
+    return True
+
+
+class TestIdade(unittest.TestCase):
+    def test_idade_normal(self):
+        self.assertTrue(idade_valida(12))
+
+    def test_idade_negativa(self):
+        with self.assertRaises(ValueError):
+            idade_valida(-3)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use <code>setUp</code> para criar uma lista de notas <code>[8, 6, 10]</code> e escreva dois testes: um confere a soma (24) e outro confere a maior nota (10).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+class TestNotas(unittest.TestCase):
+    def setUp(self):
+        self.notas = [8, 6, 10]
+
+    def test_soma(self):
+        self.assertEqual(sum(self.notas), 24)
+
+    def test_maior(self):
+        self.assertEqual(max(self.notas), 10)
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Um teste mostrou <code>AssertionError: 4 != 5</code>. Qual valor a função devolveu e qual era o esperado, sabendo que o teste é <code>self.assertEqual(contar("banana"), 5)</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">A função contar("banana") devolveu 4.<br>
+O teste esperava 5.<br>
+No assertEqual(a, b), a mensagem mostra "a != b": primeiro o valor obtido, depois o esperado.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="130-por-que-testar.html" rel="prev">← Aula anterior</a>
+      <a href="132-tdd-na-pratica.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

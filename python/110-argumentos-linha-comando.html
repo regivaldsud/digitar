@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 110 · sys.argv e argparse — Curso de Python · DIGITAR</title>
+<meta name="description" content="Receba informações pelo terminal com sys.argv e crie programas de linha de comando com opções e ajuda automática usando argparse.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 110 · sys.argv e argparse</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Ler os argumentos do terminal com <code>sys.argv</code></li>
+        <li>Criar opções e ajuda automática com <code>argparse</code></li>
+        <li>Converter e validar argumentos com <code>type</code> e <code>choices</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>sys.argv</h2>
+    <p>Quando você roda <code>python saudar.py Ana Bia</code>, as palavras depois do nome do arquivo chegam ao programa na lista <code>sys.argv</code>. A posição 0 é o nome do próprio arquivo:</p>
+<pre class="codigo"><code># saudar.py
+import sys
+
+print("Argumentos:", sys.argv)
+for nome in sys.argv[1:]:
+    print(f"Olá, {nome}!")</code></pre>
+<pre class="codigo"><code>python saudar.py Ana Bia</code></pre>
+    <p class="saida">Argumentos: ['saudar.py', 'Ana', 'Bia']<br>
+Olá, Ana!<br>
+Olá, Bia!</p>
+    <div class="atencao"><strong>Atenção:</strong> Tudo em <code>sys.argv</code> é texto. Para somar números recebidos assim, converta com <code>int()</code> ou <code>float()</code>. E se o usuário não passar nada, <code>sys.argv[1]</code> dá <code>IndexError</code>.</div>
+
+    <h2>argparse: um programa de verdade</h2>
+    <p>O <code>argparse</code> faz o trabalho chato: lê os argumentos, converte tipos, mostra erros claros e cria a ajuda <code>--help</code> sozinho. Para testar sem terminal, dá para passar a lista de argumentos direto para <code>parse_args</code>:</p>
+<pre class="codigo"><code>import argparse
+
+parser = argparse.ArgumentParser(description="Mostra a tabuada de um número.")
+parser.add_argument("numero", type=int, help="o número da tabuada")
+parser.add_argument("--ate", type=int, default=10, help="até onde ir (padrão: 10)")
+
+args = parser.parse_args(["7", "--ate", "3"])   # no terminal: parser.parse_args()
+
+for i in range(1, args.ate + 1):
+    print(f"{args.numero} x {i} = {args.numero * i}")</code></pre>
+    <p class="saida">7 x 1 = 7<br>
+7 x 2 = 14<br>
+7 x 3 = 21</p>
+    <p>No programa de verdade, use <code>parser.parse_args()</code> sem lista e rode:</p>
+<pre class="codigo"><code>python tabuada.py 7 --ate 3
+python tabuada.py --help</code></pre>
+    <ul>
+      <li>argumentos <strong>posicionais</strong> (<code>numero</code>) são obrigatórios;</li>
+      <li>argumentos com <code>--</code> (<code>--ate</code>) são <strong>opcionais</strong> e podem ter <code>default</code>;</li>
+      <li><code>type=int</code> converte o texto para número e dá uma mensagem de erro se não der.</li>
+    </ul>
+
+    <h2>Escolhas e chaves liga/desliga</h2>
+<pre class="codigo"><code>import argparse
+
+parser = argparse.ArgumentParser(description="Pedido de pizza")
+parser.add_argument("sabor", choices=["calabresa", "mussarela", "portuguesa"])
+parser.add_argument("--borda", action="store_true", help="com borda recheada")
+
+args = parser.parse_args(["calabresa", "--borda"])
+print("Sabor:", args.sabor)
+print("Borda recheada:", args.borda)</code></pre>
+    <p class="saida">Sabor: calabresa<br>
+Borda recheada: True</p>
+    <p><code>choices</code> só aceita os valores da lista, e <code>action="store_true"</code> cria uma opção que vale <code>True</code> quando aparece e <code>False</code> quando não aparece.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>parser.add_argument("--ate", type=int, default=10)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um programa com <code>sys.argv</code> que soma todos os números passados no terminal (<code>python somar.py 4 5 10</code> mostra <code>19</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import sys
+
+numeros = [float(x) for x in sys.argv[1:]]
+print(sum(numeros))</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Com <code>argparse</code>, crie um programa <code>conversor.py</code> que recebe uma temperatura em Celsius e a opção <code>--kelvin</code>. Sem a opção, mostra em Fahrenheit; com ela, em Kelvin. Teste com a lista <code>["30", "--kelvin"]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import argparse
+
+parser = argparse.ArgumentParser(description="Converte temperaturas")
+parser.add_argument("celsius", type=float)
+parser.add_argument("--kelvin", action="store_true")
+args = parser.parse_args(["30", "--kelvin"])
+
+if args.kelvin:
+    print(args.celsius + 273.15, "K")
+else:
+    print(args.celsius * 9 / 5 + 32, "°F")</code></pre>
+      <p class="saida">303.15 K</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="109-email-smtp.html" rel="prev">← Aula anterior</a>
+      <a href="111-requests.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

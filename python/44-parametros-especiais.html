@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 44 · Parâmetros só posicionais (/) e só nomeados (*); o perigo do padrão mutável — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a obrigar argumentos a serem passados pela posição ou pelo nome e a fugir da armadilha da lista como valor padrão.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 44 · Parâmetros só posicionais (/) e só nomeados (*); o perigo do padrão mutável</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que significa a barra <code>/</code> na lista de parâmetros</li>
+        <li>O que significa o asterisco <code>*</code> sozinho na lista de parâmetros</li>
+        <li>Como ler assinaturas como <code>len(obj, /)</code> na documentação</li>
+        <li>Por que nunca usar uma lista ou dicionário como valor padrão</li>
+      </ul>
+    </div>
+
+    <h2>Por que limitar o jeito de chamar?</h2>
+    <p>Na aula 41 você viu que todo parâmetro pode ser passado pela posição ou pelo nome. Às vezes, quem escreve a função quer <strong>escolher</strong>: "este aqui só pela posição" ou "este só pelo nome". O Python tem dois símbolos para isso: a barra <code>/</code> e o asterisco <code>*</code>.</p>
+
+    <h2>Só nomeados: o asterisco sozinho</h2>
+    <p>Tudo o que vem <strong>depois</strong> de um <code>*</code> sozinho só pode ser passado pelo nome. Isso evita trocas perigosas, como confundir quem recebe uma transferência:</p>
+<pre class="codigo" data-executar="sim"><code>def transferir(valor, *, para, agendar=False):
+    quando = "agendada" if agendar else "agora"
+    print(f"Transferindo R$ {valor:.2f} para {para} ({quando})")
+
+transferir(100, para="Ana")
+transferir(50, para="Caio", agendar=True)</code></pre>
+    <p class="saida">Transferindo R$ 100.00 para Ana (agora)<br>
+Transferindo R$ 50.00 para Caio (agendada)</p>
+<pre class="codigo" data-executar="sim"><code>def transferir(valor, *, para, agendar=False):
+    print(valor, para, agendar)
+
+transferir(100, "Ana")</code></pre>
+    <p class="saida">TypeError: transferir() takes 1 positional argument but 2 were given</p>
+    <p>O erro diz que a função aceita só 1 argumento posicional. Com o <code>*</code>, quem lê <code>transferir(100, para="Ana")</code> não tem dúvida do que é cada valor.</p>
+    <div class="dica"><strong>Dica:</strong> Você já usou parâmetros só nomeados: em <code>sorted(lista, key=len, reverse=True)</code>, o <code>key</code> e o <code>reverse</code> só funcionam com nome.</div>
+
+    <h2>Só posicionais: a barra</h2>
+    <p>Tudo o que vem <strong>antes</strong> de uma <code>/</code> só pode ser passado pela posição. É útil quando o nome do parâmetro não importa para quem chama, e assim você pode trocá-lo no futuro sem quebrar o código de ninguém:</p>
+<pre class="codigo" data-executar="sim"><code>def area(base, altura, /):
+    return base * altura
+
+print(area(3, 4))</code></pre>
+    <p class="saida">12</p>
+<pre class="codigo" data-executar="sim"><code>def area(base, altura, /):
+    return base * altura
+
+print(area(base=3, altura=4))</code></pre>
+    <p class="saida">TypeError: area() got some positional-only arguments passed as keyword arguments: 'base, altura'</p>
+    <p>Muitas funções prontas do Python são assim. A documentação de <code>len</code> mostra <code>len(obj, /)</code>, ou seja, você não pode escrever <code>len(obj="casa")</code>:</p>
+<pre class="codigo" data-executar="sim"><code>print(len("casa"))
+print(len(obj="casa"))</code></pre>
+    <p class="saida">4<br>
+TypeError: len() takes no keyword arguments</p>
+
+    <h2>Juntando tudo</h2>
+    <p>Os dois símbolos podem aparecer na mesma função. A ordem é: só posicionais, <code>/</code>, normais, <code>*</code>, só nomeados:</p>
+<pre class="codigo" data-executar="sim"><code>def matricular(nome, /, turma, *, bolsista=False):
+    print(nome, "-", turma, "- bolsista:", bolsista)
+
+matricular("Ana", "8B")
+matricular("Caio", turma="9A", bolsista=True)</code></pre>
+    <p class="saida">Ana - 8B - bolsista: False<br>
+Caio - 9A - bolsista: True</p>
+    <p>Aqui <code>nome</code> só vai pela posição, <code>turma</code> vai de qualquer jeito e <code>bolsista</code> só pelo nome.</p>
+
+    <h2>O perigo do padrão mutável</h2>
+    <p>Agora uma armadilha famosa. Esta função deveria criar uma lista de compras nova a cada chamada:</p>
+<pre class="codigo" data-executar="sim"><code>def adicionar(item, lista=[]):
+    lista.append(item)
+    return lista
+
+print(adicionar("arroz"))
+print(adicionar("feijão"))</code></pre>
+    <p class="saida">['arroz']<br>
+['arroz', 'feijão']</p>
+    <p>Surpresa: o <code>"arroz"</code> apareceu na segunda lista! O valor padrão é criado <strong>uma vez só</strong>, quando o <code>def</code> roda, e a mesma lista é reaproveitada em todas as chamadas. A solução é usar <code>None</code> como padrão e criar a lista dentro da função:</p>
+<pre class="codigo" data-executar="sim"><code>def adicionar(item, lista=None):
+    if lista is None:
+        lista = []
+    lista.append(item)
+    return lista
+
+print(adicionar("arroz"))
+print(adicionar("feijão"))</code></pre>
+    <p class="saida">['arroz']<br>
+['feijão']</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca use lista <code>[]</code>, dicionário <code>{}</code> ou conjunto como valor padrão. Use <code>None</code> e crie o objeto dentro da função. Números, textos, tuplas, <code>True</code>/<code>False</code> e <code>None</code> podem ser padrão sem medo, porque não mudam.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def transferir(valor, *, para, agendar=False):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a função <code>enviar_mensagem(texto, *, para)</code> que mostre <code>Para Bia: Oi!</code>. Mostre uma chamada que funciona e explique por que <code>enviar_mensagem("Oi!", "Bia")</code> não funciona.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def enviar_mensagem(texto, *, para):
+    print(f"Para {para}: {texto}")
+
+enviar_mensagem("Oi!", para="Bia")</code></pre>
+      <p class="saida">Para Bia: Oi!</p>
+      <p>Com o <code>*</code>, o <code>para</code> só pode ser passado pelo nome. A chamada <code>enviar_mensagem("Oi!", "Bia")</code> dá <code>TypeError</code> porque tenta passar dois argumentos pela posição.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a função <code>potencia(base, expoente, /)</code> que só aceite argumentos posicionais e devolva a base elevada ao expoente. Mostre <code>potencia(2, 8)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def potencia(base, expoente, /):
+    return base ** expoente
+
+print(potencia(2, 8))</code></pre>
+      <p class="saida">256</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Na função <code>def f(a, /, b, *, c)</code>, quais destas chamadas funcionam: <code>f(1, 2, c=3)</code>, <code>f(1, b=2, c=3)</code>, <code>f(a=1, b=2, c=3)</code> e <code>f(1, 2, 3)</code>? Teste.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def f(a, /, b, *, c):
+    return a + b + c
+
+print(f(1, 2, c=3))
+print(f(1, b=2, c=3))
+for chamada in ["f(a=1, b=2, c=3)", "f(1, 2, 3)"]:
+    try:
+        eval(chamada)
+    except TypeError:
+        print(chamada, "-&gt; TypeError")</code></pre>
+      <p class="saida">6<br>
+6<br>
+f(a=1, b=2, c=3) -&gt; TypeError<br>
+f(1, 2, 3) -&gt; TypeError</p>
+      <p>As duas primeiras funcionam. <code>f(a=1, ...)</code> falha porque <code>a</code> só aceita posição, e <code>f(1, 2, 3)</code> falha porque <code>c</code> só aceita nome. (O <code>eval</code> roda um texto como código; usamos aqui só para testar as chamadas que dão erro.)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Esta função tem a armadilha do padrão mutável. Corrija: <code>def registrar(nota, notas=[]): notas.append(nota); return notas</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def registrar(nota, notas=None):
+    if notas is None:
+        notas = []
+    notas.append(nota)
+    return notas
+
+print(registrar(8))
+print(registrar(10))</code></pre>
+      <p class="saida">[8]<br>
+[10]</p>
+      <p>Com <code>None</code> como padrão, cada chamada sem a lista começa com uma lista vazia nova.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="43-args-kwargs.html" rel="prev">← Aula anterior</a>
+      <a href="45-funcoes-primeira-classe.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

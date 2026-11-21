@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 41 · Argumentos posicionais, nomeados e valores padrão — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a passar argumentos pela posição ou pelo nome e a dar valores padrão aos parâmetros das suas funções.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 41 · Argumentos posicionais, nomeados e valores padrão</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Como funcionam os argumentos posicionais e por que a ordem importa</li>
+        <li>Como dar um valor padrão a um parâmetro</li>
+        <li>Como chamar uma função usando o nome dos argumentos</li>
+        <li>As regras de ordem entre argumentos posicionais e nomeados</li>
+      </ul>
+    </div>
+
+    <h2>Argumentos posicionais: a ordem importa</h2>
+    <p>Quando você chama <code>funcao(a, b)</code>, o primeiro argumento vai para o primeiro parâmetro, o segundo para o segundo, e assim por diante. Esses são os argumentos <strong>posicionais</strong>. Trocar a ordem não dá erro — mas pode dar resultado errado:</p>
+<pre class="codigo" data-executar="sim"><code>def dividir_conta(total, pessoas):
+    return total / pessoas
+
+print(dividir_conta(120, 4))
+print(dividir_conta(4, 120))</code></pre>
+    <p class="saida">30.0<br>
+0.03333333333333333</p>
+    <p>A segunda chamada calculou 4 dividido por 120. O Python não tem como saber que você trocou os valores.</p>
+
+    <h2>Valores padrão</h2>
+    <p>Às vezes um parâmetro quase sempre recebe o mesmo valor. Você pode deixá-lo como <strong>padrão</strong> usando <code>=</code> no <code>def</code>. Se quem chama não informar, o padrão é usado:</p>
+<pre class="codigo" data-executar="sim"><code>def pedir_pizza(sabor, tamanho="média"):
+    print(f"Uma pizza {tamanho} de {sabor}, por favor!")
+
+pedir_pizza("calabresa")
+pedir_pizza("portuguesa", "grande")</code></pre>
+    <p class="saida">Uma pizza média de calabresa, por favor!<br>
+Uma pizza grande de portuguesa, por favor!</p>
+    <p>Você já conhece uma função com valores padrão: o <code>print</code> (aula 10)! Ele tem <code>sep=" "</code> e <code>end="\n"</code> escondidos:</p>
+<pre class="codigo" data-executar="sim"><code>print("A", "B", "C")
+print("A", "B", "C", sep="-")
+print("Carregando", end="...")
+print(" pronto!")</code></pre>
+    <p class="saida">A B C<br>
+A-B-C<br>
+Carregando... pronto!</p>
+
+    <h2>Argumentos nomeados</h2>
+    <p>Na chamada, você pode dizer o nome do parâmetro: <code>nome=valor</code>. Assim a ordem não importa e o código se explica sozinho:</p>
+<pre class="codigo" data-executar="sim"><code>def cadastrar(nome, idade, cidade):
+    print(f"{nome}, {idade} anos, mora em {cidade}")
+
+cadastrar("Rafael", 14, "Manaus")
+cadastrar(cidade="Curitiba", nome="Bia", idade=12)
+cadastrar("Leo", cidade="Natal", idade=13)</code></pre>
+    <p class="saida">Rafael, 14 anos, mora em Manaus<br>
+Bia, 12 anos, mora em Curitiba<br>
+Leo, 13 anos, mora em Natal</p>
+    <div class="dica"><strong>Dica:</strong> Argumentos nomeados ajudam muito quando a função recebe vários números ou <code>True</code>/<code>False</code>. Compare <code>parcelar(1200, 10, True)</code> com <code>parcelar(1200, parcelas=10, com_juros=True)</code>: o segundo dá para entender sem abrir a função.</div>
+
+    <h2>Regras de ordem</h2>
+    <p>Duas regras evitam erros:</p>
+    <ul>
+      <li>No <code>def</code>, os parâmetros <strong>com</strong> padrão vêm depois dos parâmetros <strong>sem</strong> padrão.</li>
+      <li>Na chamada, os argumentos posicionais vêm antes dos nomeados.</li>
+    </ul>
+<pre class="codigo"><code>def errado(tamanho="média", sabor):   # SyntaxError: parâmetro sem padrão depois de um com padrão
+    pass</code></pre>
+<pre class="codigo" data-executar="sim"><code>def cadastrar(nome, idade):
+    print(nome, idade)
+
+cadastrar(nome="Leo", 13)</code></pre>
+    <p class="saida">SyntaxError: positional argument follows keyword argument</p>
+    <p>Também não dá para passar o mesmo parâmetro duas vezes:</p>
+<pre class="codigo" data-executar="sim"><code>def cadastrar(nome, idade):
+    print(nome, idade)
+
+cadastrar("Leo", nome="Léo")</code></pre>
+    <p class="saida">TypeError: cadastrar() got multiple values for argument 'nome'</p>
+    <div class="atencao"><strong>Atenção:</strong> A mensagem <code>got multiple values for argument 'nome'</code> quer dizer que o parâmetro recebeu um valor pela posição e outro pelo nome. Confira a ordem dos seus argumentos.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def pedir(sabor, tamanho="média"):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a função <code>saudacao(nome, periodo="dia")</code> que mostre <code>Bom dia, Ana!</code> por padrão, ou <code>Boa noite, Ana!</code> se <code>periodo</code> for <code>"noite"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def saudacao(nome, periodo="dia"):
+    if periodo == "noite":
+        print(f"Boa noite, {nome}!")
+    else:
+        print(f"Bom {periodo}, {nome}!")
+
+saudacao("Ana")
+saudacao("Ana", periodo="noite")</code></pre>
+      <p class="saida">Bom dia, Ana!<br>
+Boa noite, Ana!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a função <code>preco_final(preco, desconto=0)</code> que devolve o preço com o desconto (em porcentagem). Teste um tênis de R$ 200 sem desconto e com 15% de desconto, usando argumento nomeado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def preco_final(preco, desconto=0):
+    return preco - preco * desconto / 100
+
+print(preco_final(200))
+print(preco_final(200, desconto=15))</code></pre>
+      <p class="saida">200.0<br>
+170.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use o <code>print</code> com <code>sep</code> para mostrar a data <code>25/12/2025</code> a partir dos números 25, 12 e 2025.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(25, 12, 2025, sep="/")</code></pre>
+      <p class="saida">25/12/2025</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a função <code>parcelar(valor, parcelas=1, juros=0)</code> que devolve o valor de cada parcela, onde <code>juros</code> é a porcentagem somada ao total. Mostre uma bicicleta de R$ 1200 à vista, em 10 vezes sem juros e em 10 vezes com 5% de juros, usando argumentos nomeados.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def parcelar(valor, parcelas=1, juros=0):
+    total = valor + valor * juros / 100
+    return total / parcelas
+
+print(parcelar(1200))
+print(parcelar(1200, parcelas=10))
+print(parcelar(1200, parcelas=10, juros=5))</code></pre>
+      <p class="saida">1200.0<br>
+120.0<br>
+126.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que <code>cadastrar(idade=13, "Leo")</code> dá erro, se a função é <code>def cadastrar(nome, idade)</code>? Corrija a chamada de duas formas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def cadastrar(nome, idade):
+    print(nome, idade)
+
+cadastrar("Leo", idade=13)
+cadastrar(idade=13, nome="Leo")</code></pre>
+      <p class="saida">Leo 13<br>
+Leo 13</p>
+      <p>Um argumento posicional não pode vir depois de um nomeado. Ou o <code>"Leo"</code> vem primeiro, ou ele também recebe nome.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="40-funcoes.html" rel="prev">← Aula anterior</a>
+      <a href="42-escopo.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

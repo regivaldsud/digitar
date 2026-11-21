@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 80 · Criando suas exceções; add_note (3.11+) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie exceções com nomes do seu programa, organize-as em família, guarde informações nelas e acrescente notas com add_note.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 80 · Criando suas exceções; add_note (3.11+)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar exceções próprias herdando de <code>Exception</code></li>
+        <li>Organizar exceções numa hierarquia com uma classe base</li>
+        <li>Guardar informações extras dentro da exceção</li>
+        <li>Encadear erros com <code>raise ... from</code> e acrescentar notas com <code>add_note</code></li>
+      </ul>
+    </div>
+
+    <h2>Por que criar suas exceções</h2>
+    <p>Na aula 53 você viu <code>raise ValueError("...")</code>. Isso funciona, mas <code>ValueError</code> é genérico demais: pode ser qualquer coisa. Num sistema de banco, é muito mais claro receber um <code>SaldoInsuficiente</code>. Exceção própria deixa o código mais legível e permite tratar cada problema do jeito certo.</p>
+    <p>Uma exceção é só uma classe que herda de <code>Exception</code>:</p>
+<pre class="codigo" data-executar="sim"><code>class SaldoInsuficiente(Exception):
+    pass
+
+def sacar(saldo, valor):
+    if valor &gt; saldo:
+        raise SaldoInsuficiente(f"saldo de R$ {saldo:.2f}, saque de R$ {valor:.2f}")
+    return saldo - valor
+
+print(sacar(100, 30))
+try:
+    sacar(100, 250)
+except SaldoInsuficiente as e:
+    print("Não deu:", e)</code></pre>
+    <p class="saida">70<br>
+Não deu: saldo de R$ 100.00, saque de R$ 250.00</p>
+    <div class="dica"><strong>Dica:</strong> Por convenção, o nome de uma exceção descreve o problema e muitas vezes termina em <code>Error</code>, como <code>SaldoInsuficienteError</code>. Em português, nomes como <code>SaldoInsuficiente</code> ou <code>CpfInvalido</code> também ficam claros. O importante é ser consistente.</div>
+
+    <h2>Uma família de exceções</h2>
+    <p>Crie uma exceção <strong>base</strong> para o seu programa e faça as outras herdarem dela. Assim dá para tratar um erro específico ou todos de uma vez.</p>
+<pre class="codigo" data-executar="sim"><code>class ErroDaLoja(Exception):
+    """Base de todos os erros da loja."""
+
+class ProdutoEsgotado(ErroDaLoja):
+    pass
+
+class CupomInvalido(ErroDaLoja):
+    pass
+
+def comprar(produto, cupom=None):
+    if produto == "videogame":
+        raise ProdutoEsgotado(produto)
+    if cupom is not None and cupom != "DIGITAR10":
+        raise CupomInvalido(cupom)
+    return f"{produto} comprado!"
+
+for produto, cupom in [("livro", None), ("videogame", None), ("fone", "GRATIS")]:
+    try:
+        print(comprar(produto, cupom))
+    except ProdutoEsgotado as e:
+        print("Esgotado:", e)
+    except ErroDaLoja as e:
+        print(f"Outro problema ({type(e).__name__}):", e)</code></pre>
+    <p class="saida">livro comprado!<br>
+Esgotado: videogame<br>
+Outro problema (CupomInvalido): GRATIS</p>
+    <p>Como <code>CupomInvalido</code> é filha de <code>ErroDaLoja</code>, ela cai no <code>except ErroDaLoja</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Herde de <code>Exception</code>, não de <code>BaseException</code>. A <code>BaseException</code> é a mãe de coisas especiais, como o Ctrl+C (<code>KeyboardInterrupt</code>), que não devem ser pegas por engano.</div>
+
+    <h2>Exceção com informações extras</h2>
+    <p>Como a exceção é uma classe, ela pode ter <code>__init__</code> e atributos. Chame <code>super().__init__(mensagem)</code> para a mensagem continuar funcionando.</p>
+<pre class="codigo" data-executar="sim"><code>class NotaInvalida(Exception):
+    def __init__(self, aluno, nota):
+        super().__init__(f"nota {nota} de {aluno} está fora de 0 a 10")
+        self.aluno = aluno
+        self.nota = nota
+
+def lancar(aluno, nota):
+    if not 0 &lt;= nota &lt;= 10:
+        raise NotaInvalida(aluno, nota)
+    print(f"{aluno}: {nota} lançada")
+
+for aluno, nota in [("Ana", 9), ("Beto", 12), ("Cris", -1)]:
+    try:
+        lancar(aluno, nota)
+    except NotaInvalida as e:
+        print("Erro:", e, "| corrija a nota de", e.aluno)</code></pre>
+    <p class="saida">Ana: 9 lançada<br>
+Erro: nota 12 de Beto está fora de 0 a 10 | corrija a nota de Beto<br>
+Erro: nota -1 de Cris está fora de 0 a 10 | corrija a nota de Cris</p>
+
+    <h2>raise ... from: contando a causa</h2>
+    <p>Quando um erro acontece por causa de outro, use <code>raise NovoErro(...) from erro_original</code>. O Python guarda a causa em <code>__cause__</code> e mostra as duas no traceback.</p>
+<pre class="codigo" data-executar="sim"><code>class IdadeInvalida(Exception):
+    pass
+
+def ler_idade(texto):
+    try:
+        return int(texto)
+    except ValueError as e:
+        raise IdadeInvalida(f"idade inválida: {texto!r}") from e
+
+try:
+    ler_idade("treze")
+except IdadeInvalida as e:
+    print("Erro:", e)
+    print("Causa:", repr(e.__cause__))</code></pre>
+    <p class="saida">Erro: idade inválida: 'treze'<br>
+Causa: ValueError("invalid literal for int() with base 10: 'treze'")</p>
+
+    <h2>add_note: uma dica a mais (Python 3.11+)</h2>
+    <p>A partir do Python 3.11, toda exceção tem o método <code>add_note(texto)</code>, que acrescenta uma nota. As notas ficam na lista <code>__notes__</code> e aparecem no final do traceback, ajudando quem for ler o erro.</p>
+<pre class="codigo" data-executar="sim"><code>def converter(texto):
+    try:
+        return float(texto)
+    except ValueError as e:
+        e.add_note("Dica: use ponto, e não vírgula, nas casas decimais (3.5).")
+        raise
+
+try:
+    converter("3,5")
+except ValueError as e:
+    print("Erro:", e)
+    for nota in e.__notes__:
+        print("Nota:", nota)</code></pre>
+    <p class="saida">Erro: could not convert string to float: '3,5'<br>
+Nota: Dica: use ponto, e não vírgula, nas casas decimais (3.5).</p>
+    <p>O <code>raise</code> sozinho, dentro do <code>except</code>, relança a mesma exceção depois de acrescentar a nota. Se ninguém pegar o erro, o traceback termina assim:</p>
+    <p class="saida">Traceback (most recent call last):<br>
+&nbsp;&nbsp;...<br>
+ValueError: could not convert string to float: '3,5'<br>
+Dica: use ponto, e não vírgula, nas casas decimais (3.5).</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>class SaldoInsuficiente(Exception):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a exceção <code>SenhaFraca</code> e a função <code>cadastrar(senha)</code> que gera essa exceção se a senha tiver menos de 8 caracteres. Teste com <code>"123"</code> e <code>"pao-de-queijo"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class SenhaFraca(Exception):
+    pass
+
+def cadastrar(senha):
+    if len(senha) &lt; 8:
+        raise SenhaFraca(f"a senha tem só {len(senha)} caracteres")
+    return "Senha cadastrada!"
+
+for s in ["123", "pao-de-queijo"]:
+    try:
+        print(cadastrar(s))
+    except SenhaFraca as e:
+        print("Senha fraca:", e)</code></pre>
+      <p class="saida">Senha fraca: a senha tem só 3 caracteres<br>
+Senha cadastrada!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a base <code>ErroDeViagem</code> e as filhas <code>SemPassagem</code> e <code>MalaPesada</code>. Faça a função <code>embarcar(passagem, kg)</code> e trate as duas com um único <code>except ErroDeViagem</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class ErroDeViagem(Exception):
+    pass
+
+class SemPassagem(ErroDeViagem):
+    pass
+
+class MalaPesada(ErroDeViagem):
+    pass
+
+def embarcar(passagem, kg):
+    if not passagem:
+        raise SemPassagem("compre a passagem primeiro")
+    if kg &gt; 23:
+        raise MalaPesada(f"mala com {kg} kg passa do limite de 23 kg")
+    print("Boa viagem!")
+
+for passagem, kg in [(True, 20), (False, 10), (True, 30)]:
+    try:
+        embarcar(passagem, kg)
+    except ErroDeViagem as e:
+        print(type(e).__name__ + ":", e)</code></pre>
+      <p class="saida">Boa viagem!<br>
+SemPassagem: compre a passagem primeiro<br>
+MalaPesada: mala com 30 kg passa do limite de 23 kg</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a exceção <code>EstoqueInsuficiente</code> com os atributos <code>produto</code>, <code>pedido</code> e <code>disponivel</code>, e mostre uma mensagem usando esses atributos ao tratar o erro.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class EstoqueInsuficiente(Exception):
+    def __init__(self, produto, pedido, disponivel):
+        super().__init__(f"{produto}: pediu {pedido}, tem {disponivel}")
+        self.produto = produto
+        self.pedido = pedido
+        self.disponivel = disponivel
+
+estoque = {"coxinha": 4}
+
+def vender(produto, qtd):
+    tem = estoque.get(produto, 0)
+    if qtd &gt; tem:
+        raise EstoqueInsuficiente(produto, qtd, tem)
+    estoque[produto] = tem - qtd
+
+try:
+    vender("coxinha", 10)
+except EstoqueInsuficiente as e:
+    print(f"Só temos {e.disponivel} {e.produto}(s). Faltam {e.pedido - e.disponivel}.")</code></pre>
+      <p class="saida">Só temos 4 coxinha(s). Faltam 6.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça a função <code>dividir_conta(total, pessoas)</code> que, se <code>pessoas</code> for 0, pega o <code>ZeroDivisionError</code>, acrescenta a nota <code>"Informe pelo menos 1 pessoa."</code> e relança. Mostre a mensagem e a nota.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def dividir_conta(total, pessoas):
+    try:
+        return total / pessoas
+    except ZeroDivisionError as e:
+        e.add_note("Informe pelo menos 1 pessoa.")
+        raise
+
+print(dividir_conta(120, 4))
+try:
+    dividir_conta(120, 0)
+except ZeroDivisionError as e:
+    print("Erro:", e)
+    print("Nota:", e.__notes__[0])</code></pre>
+      <p class="saida">30.0<br>
+Erro: division by zero<br>
+Nota: Informe pelo menos 1 pessoa.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça a função <code>ler_cep(texto)</code> que gera a exceção própria <code>CepInvalido</code> se o texto, sem o traço, não tiver 8 dígitos. Teste com <code>"01310-100"</code> e <code>"123"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class CepInvalido(Exception):
+    pass
+
+def ler_cep(texto):
+    numeros = texto.replace("-", "")
+    if len(numeros) != 8 or not numeros.isdigit():
+        raise CepInvalido(f"CEP {texto!r} precisa ter 8 dígitos")
+    return numeros
+
+for cep in ["01310-100", "123"]:
+    try:
+        print("CEP ok:", ler_cep(cep))
+    except CepInvalido as e:
+        print("Erro:", e)</code></pre>
+      <p class="saida">CEP ok: 01310100<br>
+Erro: CEP '123' precisa ter 8 dígitos</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="79-polimorfismo.html" rel="prev">← Aula anterior</a>
+      <a href="81-metodos-especiais.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

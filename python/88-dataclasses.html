@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 88 · dataclasses: campos, __post_init__, asdict, field — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie classes de dados em poucas linhas com @dataclass, com valores padrão, validação em __post_init__, conversão para dicionário e objetos imutáveis.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 88 · dataclasses: campos, __post_init__, asdict, field</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar classes de dados com <code>@dataclass</code>, sem escrever <code>__init__</code></li>
+        <li>Definir valores padrão e usar <code>field(default_factory=list)</code></li>
+        <li>Validar e calcular campos em <code>__post_init__</code></li>
+        <li>Converter para dicionário com <code>asdict</code>, comparar, ordenar e congelar objetos</li>
+      </ul>
+    </div>
+
+    <h2>Menos código repetido</h2>
+    <p>Lembra das classes com <code>__init__</code> que só copiam os parâmetros para <code>self</code> (aula 70)? É muito código repetido. O decorador <code>@dataclass</code> escreve o <code>__init__</code>, o <code>__repr__</code> (o jeito de mostrar o objeto) e o <code>__eq__</code> (a comparação) por você. Basta listar os campos com seus tipos:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+@dataclass
+class Aluno:
+    nome: str
+    turma: str
+    nota: float
+
+aluno = Aluno("Ana", "7º B", 8.5)
+print(aluno)
+print(aluno.nome, aluno.nota)
+print(aluno == Aluno("Ana", "7º B", 8.5))</code></pre>
+    <p class="saida">Aluno(nome='Ana', turma='7º B', nota=8.5)<br>
+Ana 8.5<br>
+True</p>
+    <div class="atencao"><strong>Atenção:</strong> Os type hints são obrigatórios na dataclass. Uma linha como <code>nome = "x"</code>, sem o tipo, não vira campo.</div>
+
+    <h2>Valores padrão e field</h2>
+    <p>Campos podem ter valor padrão. Eles precisam vir <strong>depois</strong> dos campos sem padrão. Para listas e dicionários, não use <code>= []</code>: use <code>field(default_factory=list)</code>, que cria uma lista nova para cada objeto.</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, field
+
+@dataclass
+class Mochila:
+    dono: str
+    cor: str = "azul"
+    itens: list[str] = field(default_factory=list)
+
+a = Mochila("Caio")
+b = Mochila("Bia", "rosa")
+a.itens.append("caderno")
+print(a)
+print(b)</code></pre>
+    <p class="saida">Mochila(dono='Caio', cor='azul', itens=['caderno'])<br>
+Mochila(dono='Bia', cor='rosa', itens=[])</p>
+    <div class="dica"><strong>Dica:</strong> Escrever <code>itens: list[str] = []</code> numa dataclass dá erro de propósito (<code>ValueError: mutable default</code>). O Python protege você de todos os objetos dividirem a mesma lista.</div>
+    <p>O <code>field</code> tem outras opções úteis. Com <code>repr=False</code>, o campo não aparece quando o objeto é mostrado — bom para senhas:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, field
+
+@dataclass
+class Usuario:
+    login: str
+    senha: str = field(repr=False)
+
+print(Usuario("joana", "segredo123"))</code></pre>
+    <p class="saida">Usuario(login='joana')</p>
+
+    <h2>__post_init__: validar e calcular</h2>
+    <p>Como a dataclass escreve o <code>__init__</code> por você, onde colocar validações? No método <code>__post_init__</code>, que roda logo depois do <code>__init__</code> automático:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, field
+
+@dataclass
+class Produto:
+    nome: str
+    preco: float
+    quantidade: int = 1
+    total: float = field(init=False)
+
+    def __post_init__(self):
+        if self.preco &lt; 0:
+            raise ValueError("o preço não pode ser negativo")
+        self.total = self.preco * self.quantidade
+
+p = Produto("pão de queijo", 1.5, 6)
+print(p)
+try:
+    Produto("erro", -2)
+except ValueError as erro:
+    print("Erro:", erro)</code></pre>
+    <p class="saida">Produto(nome='pão de queijo', preco=1.5, quantidade=6, total=9.0)<br>
+Erro: o preço não pode ser negativo</p>
+    <p>Com <code>field(init=False)</code>, o campo <code>total</code> não é pedido na criação: ele é calculado no <code>__post_init__</code>.</p>
+
+    <h2>asdict: de objeto para dicionário</h2>
+    <p>A função <code>asdict</code> transforma a dataclass num dicionário. Isso combina muito com JSON (aula 62):</p>
+<pre class="codigo" data-executar="sim"><code>import json
+from dataclasses import dataclass, asdict
+
+@dataclass
+class Contato:
+    nome: str
+    telefone: str
+
+c = Contato("Marcos", "(11) 98888-7777")
+dados = asdict(c)
+print(dados)
+print(json.dumps(dados, ensure_ascii=False))</code></pre>
+    <p class="saida">{'nome': 'Marcos', 'telefone': '(11) 98888-7777'}<br>
+{"nome": "Marcos", "telefone": "(11) 98888-7777"}</p>
+
+    <h2>Ordenar e congelar</h2>
+    <p>Com <code>order=True</code>, os objetos podem ser comparados com <code>&lt;</code> e <code>&gt;</code>, campo por campo, na ordem em que foram declarados. Com <code>frozen=True</code>, o objeto não pode mais ser alterado depois de criado:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+@dataclass(order=True)
+class Placar:
+    pontos: int
+    jogador: str
+
+ranking = [Placar(120, "Rafa"), Placar(300, "Duda"), Placar(210, "Leo")]
+for p in sorted(ranking, reverse=True):
+    print(p.jogador, p.pontos)</code></pre>
+    <p class="saida">Duda 300<br>
+Leo 210<br>
+Rafa 120</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Cidade:
+    nome: str
+    estado: str
+
+capital = Cidade("Salvador", "BA")
+print(capital)
+capital.estado = "SP"</code></pre>
+    <p class="saida">Cidade(nome='Salvador', estado='BA')<br>
+dataclasses.FrozenInstanceError: cannot assign to field 'estado'</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>itens: list[str] = field(default_factory=list)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a dataclass <code>Livro</code> com <code>titulo</code>, <code>autor</code> e <code>paginas</code>. Crie um livro e mostre-o.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+@dataclass
+class Livro:
+    titulo: str
+    autor: str
+    paginas: int
+
+livro = Livro("O Menino Maluquinho", "Ziraldo", 112)
+print(livro)</code></pre>
+      <p class="saida">Livro(titulo='O Menino Maluquinho', autor='Ziraldo', paginas=112)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a dataclass <code>Turma</code> com <code>nome</code> e uma lista <code>alunos</code> (padrão vazio). Adicione um método <code>matricular(nome)</code> e matricule dois alunos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, field
+
+@dataclass
+class Turma:
+    nome: str
+    alunos: list[str] = field(default_factory=list)
+
+    def matricular(self, nome: str) -&gt; None:
+        self.alunos.append(nome)
+
+turma = Turma("8º A")
+turma.matricular("Iara")
+turma.matricular("Davi")
+print(turma)</code></pre>
+      <p class="saida">Turma(nome='8º A', alunos=['Iara', 'Davi'])</p>
+      <p>Dataclasses aceitam métodos normalmente, como qualquer classe.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a dataclass <code>Retangulo</code> com <code>largura</code> e <code>altura</code> e um campo <code>area</code> calculado no <code>__post_init__</code> (use <code>field(init=False)</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, field
+
+@dataclass
+class Retangulo:
+    largura: float
+    altura: float
+    area: float = field(init=False)
+
+    def __post_init__(self):
+        self.area = self.largura * self.altura
+
+print(Retangulo(3, 4))</code></pre>
+      <p class="saida">Retangulo(largura=3, altura=4, area=12)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a dataclass <code>Nota</code> com <code>aluno</code> e <code>valor</code>, e faça o <code>__post_init__</code> dar <code>ValueError</code> se o valor estiver fora de 0 a 10. Teste com 11.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+@dataclass
+class Nota:
+    aluno: str
+    valor: float
+
+    def __post_init__(self):
+        if not 0 &lt;= self.valor &lt;= 10:
+            raise ValueError("a nota deve estar entre 0 e 10")
+
+print(Nota("Lia", 9.5))
+try:
+    Nota("Téo", 11)
+except ValueError as erro:
+    print("Erro:", erro)</code></pre>
+      <p class="saida">Nota(aluno='Lia', valor=9.5)<br>
+Erro: a nota deve estar entre 0 e 10</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Crie a dataclass <code>Produto</code> (<code>nome</code>, <code>preco</code>), monte uma lista de três produtos e converta todos para dicionários com <code>asdict</code>, numa list comprehension.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, asdict
+
+@dataclass
+class Produto:
+    nome: str
+    preco: float
+
+produtos = [Produto("arroz", 25.9), Produto("feijão", 8.5), Produto("café", 17.0)]
+print([asdict(p) for p in produtos])</code></pre>
+      <p class="saida">[{'nome': 'arroz', 'preco': 25.9}, {'nome': 'feijão', 'preco': 8.5}, {'nome': 'café', 'preco': 17.0}]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="87-enum.html" rel="prev">← Aula anterior</a>
+      <a href="89-namedtuple.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

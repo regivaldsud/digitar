@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 87 · Enumerações com enum.Enum — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use enum.Enum para criar conjuntos de opções com nome, como dias da semana, cores do semáforo e situações de um pedido.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 87 · Enumerações com enum.Enum</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Para que servem as enumerações e quais problemas elas evitam</li>
+        <li>Como criar um <code>Enum</code> e acessar <code>name</code> e <code>value</code></li>
+        <li>Como buscar um membro pelo valor ou pelo nome e percorrer todos os membros</li>
+        <li>Como usar <code>auto()</code>, métodos dentro do enum e <code>StrEnum</code></li>
+      </ul>
+    </div>
+
+    <h2>Opções com nome</h2>
+    <p>Imagine um sistema de lanchonete em que o pedido pode estar "recebido", "preparando", "saiu" ou "entregue". Se você usar textos soltos, basta um erro de digitação ("prepanrando") para o programa se perder, sem nenhum aviso.</p>
+    <p>Uma <strong>enumeração</strong> (<code>Enum</code>) é uma lista fechada de opções com nome. Cada opção é um <strong>membro</strong>, com um nome e um valor:</p>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Status(Enum):
+    RECEBIDO = 1
+    PREPARANDO = 2
+    SAIU = 3
+    ENTREGUE = 4
+
+pedido = Status.PREPARANDO
+print(pedido)
+print(pedido.name, pedido.value)
+print(pedido == Status.PREPARANDO)</code></pre>
+    <p class="saida">Status.PREPARANDO<br>
+PREPARANDO 2<br>
+True</p>
+    <p>Errou o nome? O Python avisa na hora:</p>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Status(Enum):
+    RECEBIDO = 1
+    PREPARANDO = 2
+
+print(Status.PREPARANDDO)</code></pre>
+    <p class="saida">AttributeError: type object 'Status' has no attribute 'PREPARANDDO'. Did you mean: 'PREPARANDO'?</p>
+    <div class="dica"><strong>Dica:</strong> Os nomes dos membros ficam em MAIÚSCULAS, como as constantes, porque eles não mudam.</div>
+
+    <h2>Buscando e percorrendo</h2>
+    <p>Dá para pegar um membro pelo <strong>valor</strong> (com parênteses) ou pelo <strong>nome</strong> (com colchetes). E um <code>for</code> percorre todos os membros, na ordem em que foram escritos:</p>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Semaforo(Enum):
+    VERDE = "siga"
+    AMARELO = "atenção"
+    VERMELHO = "pare"
+
+print(Semaforo("pare"))
+print(Semaforo["VERDE"].value)
+
+for cor in Semaforo:
+    print(f"{cor.name:&lt;9} -&gt; {cor.value}")
+print(len(Semaforo))</code></pre>
+    <p class="saida">Semaforo.VERMELHO<br>
+siga<br>
+VERDE &nbsp;&nbsp;&nbsp;&nbsp;-&gt; siga<br>
+AMARELO &nbsp;&nbsp;-&gt; atenção<br>
+VERMELHO &nbsp;-&gt; pare<br>
+3</p>
+    <div class="atencao"><strong>Atenção:</strong> Um membro de enum não é igual ao seu valor: <code>Semaforo.VERDE == "siga"</code> dá <code>False</code>. Compare membro com membro, ou use <code>.value</code> quando precisar do valor.</div>
+
+    <h2>auto() e métodos no enum</h2>
+    <p>Quando o valor não importa, use <code>auto()</code> e o Python numera sozinho a partir de 1. E um enum é uma classe: pode ter métodos!</p>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum, auto
+
+class Dia(Enum):
+    SEGUNDA = auto()
+    TERCA = auto()
+    QUARTA = auto()
+    QUINTA = auto()
+    SEXTA = auto()
+    SABADO = auto()
+    DOMINGO = auto()
+
+    def fim_de_semana(self):
+        return self in (Dia.SABADO, Dia.DOMINGO)
+
+print(Dia.QUARTA.value)
+print(Dia.SABADO.fim_de_semana(), Dia.TERCA.fim_de_semana())</code></pre>
+    <p class="saida">3<br>
+True False</p>
+
+    <h2>Enum em decisões</h2>
+    <p>Enums deixam os <code>if</code> mais claros e seguros. Veja uma função que diz o que fazer em cada cor do semáforo:</p>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Semaforo(Enum):
+    VERDE = 1
+    AMARELO = 2
+    VERMELHO = 3
+
+def acao(cor):
+    if cor is Semaforo.VERDE:
+        return "Pode atravessar"
+    elif cor is Semaforo.AMARELO:
+        return "Atenção, vai fechar"
+    return "Espere"
+
+for cor in Semaforo:
+    print(cor.name, "-&gt;", acao(cor))</code></pre>
+    <p class="saida">VERDE -&gt; Pode atravessar<br>
+AMARELO -&gt; Atenção, vai fechar<br>
+VERMELHO -&gt; Espere</p>
+    <p>Como cada membro existe uma única vez, dá para comparar com <code>is</code>. Na aula 92 você verá como o <code>match</code>/<code>case</code> combina muito bem com enums.</p>
+
+    <h2>StrEnum: membros que são textos</h2>
+    <p>A partir do Python 3.11, o <code>StrEnum</code> cria membros que também são textos. Eles se comparam com strings e funcionam direto em f-strings:</p>
+<pre class="codigo" data-executar="sim"><code>from enum import StrEnum
+
+class Tamanho(StrEnum):
+    P = "pequeno"
+    M = "médio"
+    G = "grande"
+
+print(Tamanho.M == "médio")
+print(f"Açaí {Tamanho.G}")</code></pre>
+    <p class="saida">True<br>
+Açaí grande</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>class Cor(Enum): VERDE = 1</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie o enum <code>Estacao</code> com as quatro estações do ano (valores com <code>auto()</code>) e mostre o nome e o valor de cada uma.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum, auto
+
+class Estacao(Enum):
+    VERAO = auto()
+    OUTONO = auto()
+    INVERNO = auto()
+    PRIMAVERA = auto()
+
+for e in Estacao:
+    print(e.name, e.value)</code></pre>
+      <p class="saida">VERAO 1<br>
+OUTONO 2<br>
+INVERNO 3<br>
+PRIMAVERA 4</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie o enum <code>Moeda</code> com <code>REAL = "BRL"</code>, <code>DOLAR = "USD"</code> e <code>EURO = "EUR"</code>. Busque o membro a partir do texto <code>"USD"</code> e mostre o nome dele.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Moeda(Enum):
+    REAL = "BRL"
+    DOLAR = "USD"
+    EURO = "EUR"
+
+print(Moeda("USD").name)</code></pre>
+      <p class="saida">DOLAR</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Acrescente ao enum <code>Status</code> (RECEBIDO, PREPARANDO, SAIU, ENTREGUE, valores 1 a 4) um método <code>proximo()</code> que devolve o próximo status, e o próprio <code>ENTREGUE</code> quando já for o último.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Status(Enum):
+    RECEBIDO = 1
+    PREPARANDO = 2
+    SAIU = 3
+    ENTREGUE = 4
+
+    def proximo(self):
+        if self is Status.ENTREGUE:
+            return self
+        return Status(self.value + 1)
+
+s = Status.RECEBIDO
+for _ in range(4):
+    print(s.name)
+    s = s.proximo()</code></pre>
+      <p class="saida">RECEBIDO<br>
+PREPARANDO<br>
+SAIU<br>
+ENTREGUE</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que acontece em <code>Semaforo("azul")</code>, se não existe membro com esse valor? Trate o erro com <code>try</code> e mostre uma mensagem amigável.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum
+
+class Semaforo(Enum):
+    VERDE = "verde"
+    AMARELO = "amarelo"
+    VERMELHO = "vermelho"
+
+try:
+    cor = Semaforo("azul")
+except ValueError as erro:
+    print("Cor inválida:", erro)</code></pre>
+      <p class="saida">Cor inválida: 'azul' is not a valid Semaforo</p>
+      <p>O Python lança <code>ValueError</code> quando não existe membro com aquele valor.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Usando o enum <code>Dia</code> com <code>auto()</code>, conte quantos dias da semana são dias úteis (não são sábado nem domingo).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from enum import Enum, auto
+
+class Dia(Enum):
+    SEGUNDA = auto()
+    TERCA = auto()
+    QUARTA = auto()
+    QUINTA = auto()
+    SEXTA = auto()
+    SABADO = auto()
+    DOMINGO = auto()
+
+uteis = [d for d in Dia if d not in (Dia.SABADO, Dia.DOMINGO)]
+print(len(uteis))</code></pre>
+      <p class="saida">5</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="86-documentacao.html" rel="prev">← Aula anterior</a>
+      <a href="88-dataclasses.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

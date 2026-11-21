@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 28 · Métodos úteis de texto: split, join, strip — Curso de Python · DIGITAR</title>
+<meta name="description" content="Limpe, quebre e junte textos com strip, split e join, e conheça outros métodos úteis do dia a dia.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 28 · Métodos úteis de texto: split, join, strip</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Limpar espaços com <code>strip</code>, <code>lstrip</code> e <code>rstrip</code></li>
+        <li>Quebrar textos em listas com <code>split</code></li>
+        <li>Juntar listas de textos com <code>join</code></li>
+        <li>Combinar esses métodos com <code>replace</code>, <code>lower</code>, <code>find</code> e <code>isdigit</code></li>
+      </ul>
+    </div>
+
+    <h2>Métodos devolvem textos novos</h2>
+    <p>Um <strong>método</strong> é uma função que pertence a um valor e é chamada com ponto: <code>texto.strip()</code>. Como textos são imutáveis (aula 26), os métodos de texto <strong>não mudam</strong> o original: eles devolvem um texto novo. Para guardar o resultado, use uma variável.</p>
+<pre class="codigo" data-executar="sim"><code>nome = "  Ana Clara  "
+limpo = nome.strip()
+print("[" + nome + "]")
+print("[" + limpo + "]")</code></pre>
+    <p class="saida">[ &nbsp;Ana Clara &nbsp;]<br>
+[Ana Clara]</p>
+
+    <h2>strip: limpando as pontas</h2>
+    <p><code>strip()</code> tira espaços (e quebras de linha) do começo e do fim. <code>lstrip()</code> limpa só a esquerda e <code>rstrip()</code>, só a direita. Também dá para dizer quais caracteres tirar:</p>
+<pre class="codigo" data-executar="sim"><code>frase = "   eu adoro pão de queijo   "
+print("[" + frase.strip() + "]")
+print("[" + frase.lstrip() + "]")
+print("[" + frase.rstrip() + "]")
+print("...Gol!!!".strip(".!"))</code></pre>
+    <p class="saida">[eu adoro pão de queijo]<br>
+[eu adoro pão de queijo &nbsp;&nbsp;]<br>
+[ &nbsp;&nbsp;eu adoro pão de queijo]<br>
+Gol</p>
+    <div class="dica"><strong>Dica:</strong> Ao comparar respostas digitadas, use <code>.strip().lower()</code>. Assim <code>" SIM "</code>, <code>"Sim"</code> e <code>"sim"</code> viram todos <code>"sim"</code>. Repare que dá para <strong>encadear</strong> métodos, um depois do outro.</div>
+<pre class="codigo" data-executar="sim"><code>resposta = input("Quer continuar? ")
+if resposta.strip().lower() == "sim":
+    print("Continuando!")
+else:
+    print("Parando.")</code></pre>
+    <p class="saida"><em>(exemplo digitando   SIM )</em><br>
+Quer continuar? &nbsp;&nbsp;SIM <br>
+Continuando!</p>
+
+    <h2>split: quebrando em pedaços</h2>
+    <p><code>split()</code> quebra um texto e devolve uma <strong>lista</strong> de pedaços (aula 25). Sem argumento, quebra em qualquer espaço — e ignora espaços repetidos. Com um argumento, quebra naquele separador:</p>
+<pre class="codigo" data-executar="sim"><code>frase = "o rato   roeu a roupa do rei"
+palavras = frase.split()
+print(palavras)
+print(len(palavras), "palavras")
+dia, mes, ano = "21/04/2025".split("/")
+print(dia, mes, ano)
+print("arroz;feijão;;ovo".split(";"))</code></pre>
+    <p class="saida">['o', 'rato', 'roeu', 'a', 'roupa', 'do', 'rei']<br>
+7 palavras<br>
+21 04 2025<br>
+['arroz', 'feijão', '', 'ovo']</p>
+    <p>Repare no último exemplo: com separador explícito, dois <code>;</code> seguidos geram um texto vazio <code>''</code> no meio. E como <code>split</code> devolve uma lista, dá para desempacotar direto em variáveis (aula 27).</p>
+
+    <h2>join: juntando pedaços</h2>
+    <p><code>join()</code> faz o contrário do <code>split</code>: junta uma lista de textos usando um separador.</p>
+<pre class="codigo" data-executar="sim"><code>ingredientes = ["farinha", "ovos", "leite"]
+print(", ".join(ingredientes))
+print("-".join(["21", "04", "2025"]))
+print("".join(["D", "I", "G", "I", "T", "A", "R"]))
+titulo = " ".join("bom dia turma".split()).title()
+print(titulo)</code></pre>
+    <p class="saida">farinha, ovos, leite<br>
+21-04-2025<br>
+DIGITAR<br>
+Bom Dia Turma</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>join</code> se escreve "ao contrário" do que muita gente espera: o <strong>separador</strong> vem antes do ponto. Escreva <code>"-".join(lista)</code>, e não <code>lista.join("-")</code>. E todos os itens precisam ser textos: <code>", ".join([1, 2])</code> dá <code>TypeError</code>.</div>
+
+    <h2>Outros métodos úteis</h2>
+    <p>Alguns métodos que combinam muito bem com os três de hoje:</p>
+    <ul>
+      <li><code>lower()</code> e <code>upper()</code>: tudo minúsculo ou maiúsculo; <code>title()</code>: cada palavra com inicial maiúscula;</li>
+      <li><code>replace(velho, novo)</code>: troca trechos; <code>count(trecho)</code>: conta ocorrências;</li>
+      <li><code>find(trecho)</code>: posição onde o trecho começa (ou <code>-1</code>); <code>startswith</code> e <code>endswith</code>: testam começo e fim;</li>
+      <li><code>isdigit()</code>: o texto tem só dígitos?</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>telefone = "(81) 99999-1234"
+so_numeros = telefone.replace("(", "").replace(")", "").replace(" ", "").replace("-", "")
+print(so_numeros, so_numeros.isdigit())
+email = "joao.silva@escola.edu.br"
+arroba = email.find("@")
+print(email[:arroba], email.endswith(".br"))
+print("banana".count("a"), "banana".upper())</code></pre>
+    <p class="saida">81999991234 True<br>
+joao.silva True<br>
+3 BANANA</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>dia, mes, ano = data.strip().split("/")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Peça o nome de uma pessoa (que pode vir com espaços sobrando e letras bagunçadas, como <code>"  mARIA dA sILVA "</code>) e mostre-o arrumado: sem espaços nas pontas e com cada palavra começando com maiúscula.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nome = input("Nome: ")
+print(nome.strip().title())</code></pre>
+      <p class="saida"><em>(exemplo digitando   mARIA dA sILVA )</em><br>
+Nome: &nbsp;&nbsp;mARIA dA sILVA <br>
+Maria Da Silva</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Transforme <code>"arroz feijão farofa salada"</code> em <code>"arroz, feijão, farofa, salada"</code> usando <code>split</code> e <code>join</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>pratos = "arroz feijão farofa salada"
+print(", ".join(pratos.split()))</code></pre>
+      <p class="saida">arroz, feijão, farofa, salada</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> A data <code>"2025-12-25"</code> está no formato ano-mês-dia. Use <code>split</code> e <code>join</code> para mostrá-la como <code>25/12/2025</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>ano, mes, dia = "2025-12-25".split("-")
+print("/".join([dia, mes, ano]))</code></pre>
+      <p class="saida">25/12/2025</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Conte quantas palavras tem a frase <code>"  Python   é   muito   legal  "</code> e mostre a frase com só um espaço entre as palavras.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>frase = "  Python   é   muito   legal  "
+palavras = frase.split()
+print(len(palavras))
+print(" ".join(palavras))</code></pre>
+      <p class="saida">4<br>
+Python é muito legal</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> A lista <code>["  ana ", "BRUNO", " cArLa"]</code> veio de uma planilha bagunçada. Monte com um <code>for</code> uma nova lista com os nomes limpos (sem espaços e com inicial maiúscula) e mostre-os separados por " | ".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nomes = ["  ana ", "BRUNO", " cArLa"]
+limpos = []
+for nome in nomes:
+    limpos.append(nome.strip().title())
+print(" | ".join(limpos))</code></pre>
+      <p class="saida">Ana | Bruno | Carla</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="27-tuplas-enumerate.html" rel="prev">← Aula anterior</a>
+      <a href="29-float-decimal.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

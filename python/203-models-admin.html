@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 203 · Models, migrações e área administrativa — Curso de Python · DIGITAR</title>
+<meta name="description" content="Descreva suas tabelas com models, crie o banco com migrações e gerencie os dados pela área administrativa.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 203 · Models, migrações e área administrativa</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar um model com campos de tipos diferentes</li>
+        <li>Gerar e aplicar migrações com <code>makemigrations</code> e <code>migrate</code></li>
+        <li>Criar um superusuário e registrar o model no admin</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Models: tabelas escritas em Python</h2>
+    <p>Um <strong>model</strong> é uma classe que vira uma tabela no banco de dados. Cada atributo é uma coluna. Você não precisa escrever SQL: o Django faz isso.</p>
+<pre class="codigo"><code># contatos/models.py
+from django.db import models
+
+
+class Contato(models.Model):
+    nome = models.CharField(max_length=100)
+    telefone = models.CharField(max_length=20)
+    email = models.EmailField(blank=True)
+    nascimento = models.DateField(null=True, blank=True)
+    favorito = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["nome"]
+
+    def __str__(self):
+        return self.nome</code></pre>
+    <ul>
+      <li><code>blank=True</code> deixa o campo opcional nos formulários; <code>null=True</code> permite vazio no banco.</li>
+      <li><code>auto_now_add=True</code> grava a data e hora da criação sozinho.</li>
+      <li><code>__str__</code> (aula 81) define como o contato aparece nas listas do admin.</li>
+    </ul>
+
+    <h2>Migrações</h2>
+    <p>Uma <strong>migração</strong> é um arquivo com as mudanças a fazer no banco. Sempre que mudar um model, rode os dois comandos:</p>
+<pre class="codigo"><code>python manage.py makemigrations
+python manage.py migrate</code></pre>
+    <p class="saida">Migrations for 'contatos':<br>
+&nbsp;&nbsp;contatos\migrations\0001_initial.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;+ Create model Contato<br>
+Operations to perform:<br>
+&nbsp;&nbsp;Apply all migrations: admin, auth, contatos, contenttypes, sessions<br>
+Running migrations:<br>
+&nbsp;&nbsp;Applying contatos.0001_initial... OK</p>
+    <p>Por padrão o banco é um arquivo SQLite, <code>db.sqlite3</code>, na pasta do projeto (aula 174).</p>
+
+    <h2>A área administrativa</h2>
+    <p>O Django já vem com um painel para cadastrar e editar dados. Registre o model e crie um usuário administrador:</p>
+<pre class="codigo"><code># contatos/admin.py
+from django.contrib import admin
+from .models import Contato
+
+
+@admin.register(Contato)
+class ContatoAdmin(admin.ModelAdmin):
+    list_display = ["nome", "telefone", "favorito"]
+    search_fields = ["nome", "email"]
+    list_filter = ["favorito"]</code></pre>
+<pre class="codigo"><code>python manage.py createsuperuser
+python manage.py runserver</code></pre>
+    <p>Entre em <code>http://127.0.0.1:8000/admin/</code> com o usuário criado.</p>
+    <div class="atencao"><strong>Atenção:</strong> Mudou o model e apareceu <code>no such column</code> ou <code>no such table</code>? Você esqueceu do <code>makemigrations</code> e do <code>migrate</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>nome = models.CharField(max_length=100)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um model <code>Receita</code> com <code>titulo</code> (texto até 120), <code>minutos</code> (número inteiro) e <code>vegetariana</code> (verdadeiro/falso, padrão falso), com <code>__str__</code> devolvendo o título.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django.db import models
+
+
+class Receita(models.Model):
+    titulo = models.CharField(max_length=120)
+    minutos = models.PositiveIntegerField()
+    vegetariana = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.titulo</code></pre>
+      <p>Depois rode <code>makemigrations</code> e <code>migrate</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Você acrescentou o campo <code>apelido = models.CharField(max_length=50)</code> num model que já tem dados. O <code>makemigrations</code> pergunta o que fazer com as linhas antigas. Qual é a saída mais simples?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django.db import models
+
+apelido = models.CharField(max_length=50, blank=True, default="")</code></pre>
+      <p>Dê um valor padrão (<code>default=""</code>) ou permita vazio; assim os contatos antigos recebem um apelido vazio.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="202-templates.html" rel="prev">← Aula anterior</a>
+      <a href="204-querysets.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

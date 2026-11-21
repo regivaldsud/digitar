@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 210 · Docker e Docker Compose para Django — Curso de Python · DIGITAR</title>
+<meta name="description" content="Rode o Django e o banco PostgreSQL em containers com Docker e Docker Compose.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 210 · Docker e Docker Compose para Django</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que são imagens e containers</li>
+        <li>Escrever um Dockerfile para o projeto Django</li>
+        <li>Subir Django e PostgreSQL juntos com Docker Compose</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Para que serve o Docker</h2>
+    <p>"Na minha máquina funciona!" — o Docker resolve essa frase. Ele empacota o programa com tudo de que precisa (Python, bibliotecas, configurações) numa <strong>imagem</strong>. Um <strong>container</strong> é uma imagem rodando. Quem tiver Docker roda igualzinho, em qualquer computador.</p>
+    <p>No Windows, instale o <strong>Docker Desktop</strong> (docker.com), que usa o WSL2. Confira:</p>
+<pre class="codigo"><code>docker --version
+docker compose version</code></pre>
+
+    <h2>O Dockerfile</h2>
+<pre class="codigo"><code># Dockerfile (na pasta do projeto, sem extensão)
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]</code></pre>
+    <p>O <code>requirements.txt</code> (aula 60) lista <code>django</code> e <code>psycopg[binary]</code>, o driver do PostgreSQL.</p>
+    <div class="atencao"><strong>Atenção:</strong> Dentro do container use <code>0.0.0.0:8000</code>, não <code>127.0.0.1</code>. Com <code>127.0.0.1</code>, o servidor só aceita conexões de dentro do próprio container e o navegador do seu computador não consegue abrir.</div>
+
+    <h2>Docker Compose: vários containers</h2>
+<pre class="codigo"><code># compose.yaml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: agenda
+      POSTGRES_USER: agenda
+      POSTGRES_PASSWORD: troque-esta-senha
+    volumes:
+      - dados_db:/var/lib/postgresql/data
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - db
+volumes:
+  dados_db:</code></pre>
+    <p>No <code>settings.py</code>, o banco aponta para o serviço <code>db</code>:</p>
+<pre class="codigo"><code>import os
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "agenda"),
+        "USER": os.environ.get("POSTGRES_USER", "agenda"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+        "HOST": "db",
+        "PORT": "5432",
+    }
+}</code></pre>
+<pre class="codigo"><code>docker compose up --build
+docker compose exec web python manage.py migrate
+docker compose down</code></pre>
+    <div class="dica"><strong>Dica:</strong> O volume <code>dados_db</code> guarda os dados do banco: você pode parar e subir os containers de novo sem perder nada. Senhas de verdade ficam no <code>.env</code> (aula 177), fora do Git.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>docker compose exec web python manage.py migrate</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Qual comando cria um superusuário do Django rodando dentro do container <code>web</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>docker compose exec web python manage.py createsuperuser</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Você mudou o <code>requirements.txt</code> e acrescentou uma biblioteca. O que precisa fazer para ela entrar no container?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>docker compose up --build</code></pre>
+      <p>A imagem precisa ser reconstruída, porque o <code>pip install</code> acontece no <code>build</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="207-projeto-agenda.html" rel="prev">← Aula anterior</a>
+      <a href="211-projeto-blog.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

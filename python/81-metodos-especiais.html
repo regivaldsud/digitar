@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 81 · Métodos especiais (dunder): __repr__, __str__, __add__, __len__… — Curso de Python · DIGITAR</title>
+<meta name="description" content="Ensine suas classes a funcionar com print, +, ==, &lt;, len e colchetes usando os métodos especiais.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 81 · Métodos especiais (dunder): __repr__, __str__, __add__, __len__…</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que são os métodos especiais (dunder) e quem chama cada um</li>
+        <li>Mostrar objetos com <code>__str__</code> e <code>__repr__</code></li>
+        <li>Fazer objetos somarem e se compararem com <code>__add__</code>, <code>__eq__</code> e <code>__lt__</code></li>
+        <li>Usar <code>len()</code>, colchetes e <code>in</code> nos seus objetos com <code>__len__</code>, <code>__getitem__</code> e <code>__contains__</code></li>
+      </ul>
+    </div>
+
+    <h2>Métodos com dois sublinhados</h2>
+    <p>Você já conhece um método especial: o <code>__init__</code>. Existem muitos outros, todos com dois sublinhados antes e depois do nome — por isso são chamados de <strong>dunder</strong> (de *double underscore*). Você quase nunca os chama diretamente: o Python chama sozinho quando você usa <code>print</code>, <code>+</code>, <code>==</code>, <code>len()</code>...</p>
+<pre class="codigo" data-executar="sim"><code>print(len("Brasil"), "Brasil".__len__())
+print(2 + 3, (2).__add__(3))</code></pre>
+    <p class="saida">6 6<br>
+5 5</p>
+    <p>Quando você escreve <code>len(x)</code>, o Python chama <code>x.__len__()</code>. Ao criar esses métodos na sua classe, ela passa a funcionar com essas operações.</p>
+
+    <h2>__str__ e __repr__: como o objeto aparece</h2>
+    <p>Sem eles, o <code>print</code> mostra algo como <code>&lt;__main__.Produto object at 0x...&gt;</code>, que não ajuda ninguém.</p>
+    <ul>
+      <li><code>__str__</code> devolve o texto <strong>para o usuário</strong>, usado no <code>print</code> e no <code>str()</code>;</li>
+      <li><code>__repr__</code> devolve a versão <strong>para programadores</strong>, usada dentro de listas e no modo interativo. O costume é parecer o código que cria o objeto.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>class Produto:
+    def __init__(self, nome, preco):
+        self.nome = nome
+        self.preco = preco
+
+    def __str__(self):
+        return f"{self.nome} - R$ {self.preco:.2f}"
+
+    def __repr__(self):
+        return f"Produto({self.nome!r}, {self.preco})"
+
+coxinha = Produto("Coxinha", 6.5)
+print(coxinha)
+print([coxinha, Produto("Suco", 7)])
+print(f"No cardápio: {coxinha}")</code></pre>
+    <p class="saida">Coxinha - R$ 6.50<br>
+[Produto('Coxinha', 6.5), Produto('Suco', 7)]<br>
+No cardápio: Coxinha - R$ 6.50</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>__str__</code> e <code>__repr__</code> precisam <strong>devolver</strong> um texto com <code>return</code>, não dar <code>print</code>. Sem <code>return</code>, aparece <code>TypeError: __str__ returned non-string (type NoneType)</code>.</div>
+    <div class="dica"><strong>Dica:</strong> Se a classe tiver só <code>__repr__</code>, o <code>print</code> usa ele também. Por isso, se for escrever um só, escreva o <code>__repr__</code>.</div>
+
+    <h2>__add__: somando objetos</h2>
+    <p>O <code>__add__(self, outro)</code> define o que <code>a + b</code> faz. Ele deve devolver um objeto <strong>novo</strong>, sem mudar os dois originais.</p>
+<pre class="codigo" data-executar="sim"><code>class Dinheiro:
+    def __init__(self, centavos):
+        self.centavos = centavos
+
+    def __add__(self, outro):
+        return Dinheiro(self.centavos + outro.centavos)
+
+    def __repr__(self):
+        reais = self.centavos / 100
+        return "R$ " + f"{reais:.2f}".replace(".", ",")
+
+lanche = Dinheiro(1250)
+suco = Dinheiro(600)
+total = lanche + suco
+print(lanche, "+", suco, "=", total)
+print(sum([lanche, suco, Dinheiro(150)], Dinheiro(0)))</code></pre>
+    <p class="saida">R$ 12,50 + R$ 6,00 = R$ 18,50<br>
+R$ 20,00</p>
+    <p>Existem também <code>__sub__</code> (<code>-</code>), <code>__mul__</code> (<code>*</code>) e <code>__truediv__</code> (<code>/</code>).</p>
+
+    <h2>__eq__ e __lt__: comparando</h2>
+    <p>Sem <code>__eq__</code>, dois objetos só são iguais se forem <strong>o mesmo objeto</strong>. Com ele, você decide o que é "igual". O <code>__lt__</code> (*less than*, menor que) define o <code>&lt;</code> — e com ele o <code>sorted</code> já consegue ordenar.</p>
+<pre class="codigo" data-executar="sim"><code>class Ponto:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+print(Ponto(1, 2) == Ponto(1, 2))
+
+class Ponto2:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, outro):
+        return (self.x, self.y) == (outro.x, outro.y)
+
+print(Ponto2(1, 2) == Ponto2(1, 2))</code></pre>
+    <p class="saida">False<br>
+True</p>
+<pre class="codigo" data-executar="sim"><code>class Atleta:
+    def __init__(self, nome, tempo):
+        self.nome = nome
+        self.tempo = tempo
+
+    def __lt__(self, outro):
+        return self.tempo &lt; outro.tempo
+
+    def __repr__(self):
+        return f"{self.nome} ({self.tempo}s)"
+
+corrida = [Atleta("Vitor", 10.4), Atleta("Rosa", 9.9), Atleta("Leo", 10.1)]
+print(sorted(corrida))
+print("Vencedora:", min(corrida))</code></pre>
+    <p class="saida">[Rosa (9.9s), Leo (10.1s), Vitor (10.4s)]<br>
+Vencedora: Rosa (9.9s)</p>
+
+    <h2>__len__, __getitem__ e __contains__: objetos que parecem listas</h2>
+    <p>Com <code>__len__</code> o objeto funciona com <code>len()</code>. Com <code>__getitem__</code>, ele aceita colchetes (<code>playlist[0]</code>) e ainda pode ser percorrido com <code>for</code>. Com <code>__contains__</code>, funciona com <code>in</code>.</p>
+<pre class="codigo" data-executar="sim"><code>class Playlist:
+    def __init__(self, nome, musicas):
+        self.nome = nome
+        self._musicas = list(musicas)
+
+    def __len__(self):
+        return len(self._musicas)
+
+    def __getitem__(self, i):
+        return self._musicas[i]
+
+    def __contains__(self, musica):
+        return musica in self._musicas
+
+p = Playlist("Estudar", ["Garota de Ipanema", "Aquarela", "Trem das Onze"])
+print(len(p), "músicas")
+print(p[0], "|", p[-1])
+print("Aquarela" in p)
+for musica in p:
+    print("-", musica)</code></pre>
+    <p class="saida">3 músicas<br>
+Garota de Ipanema | Trem das Onze<br>
+True<br>
+- Garota de Ipanema<br>
+- Aquarela<br>
+- Trem das Onze</p>
+    <div class="dica"><strong>Dica:</strong> Não precisa decorar todos os métodos especiais. Quando quiser que sua classe funcione com algum operador, procure "Python data model" na documentação oficial: lá está a lista completa.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def __add__(self, outro):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Livro(titulo, autor)</code> com <code>__str__</code> que mostra <code>"Titulo", de Autor</code> e <code>__repr__</code> que mostra <code>Livro('Titulo', 'Autor')</code>. Mostre um livro com <code>print</code> e uma lista com dois livros.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Livro:
+    def __init__(self, titulo, autor):
+        self.titulo = titulo
+        self.autor = autor
+
+    def __str__(self):
+        return f'"{self.titulo}", de {self.autor}'
+
+    def __repr__(self):
+        return f"Livro({self.titulo!r}, {self.autor!r})"
+
+dc = Livro("Dom Casmurro", "Machado de Assis")
+print(dc)
+print([dc, Livro("Vidas Secas", "Graciliano Ramos")])</code></pre>
+      <p class="saida">"Dom Casmurro", de Machado de Assis<br>
+[Livro('Dom Casmurro', 'Machado de Assis'), Livro('Vidas Secas', 'Graciliano Ramos')]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Vetor(x, y)</code> com <code>__add__</code>, <code>__mul__</code> (multiplica por um número) e <code>__repr__</code>. Mostre <code>Vetor(1, 2) + Vetor(3, 4)</code> e <code>Vetor(1, 2) * 3</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Vetor:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __add__(self, outro):
+        return Vetor(self.x + outro.x, self.y + outro.y)
+
+    def __mul__(self, numero):
+        return Vetor(self.x * numero, self.y * numero)
+
+    def __repr__(self):
+        return f"Vetor({self.x}, {self.y})"
+
+print(Vetor(1, 2) + Vetor(3, 4))
+print(Vetor(1, 2) * 3)</code></pre>
+      <p class="saida">Vetor(4, 6)<br>
+Vetor(3, 6)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a classe <code>Carta(valor, naipe)</code> com <code>__eq__</code> (iguais se valor e naipe forem iguais) e <code>__lt__</code> (compara só o valor). Ordene a mão <code>[Carta(7, "copas"), Carta(2, "ouros"), Carta(11, "espadas")]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Carta:
+    def __init__(self, valor, naipe):
+        self.valor = valor
+        self.naipe = naipe
+
+    def __eq__(self, outra):
+        return (self.valor, self.naipe) == (outra.valor, outra.naipe)
+
+    def __lt__(self, outra):
+        return self.valor &lt; outra.valor
+
+    def __repr__(self):
+        return f"{self.valor} de {self.naipe}"
+
+mao = [Carta(7, "copas"), Carta(2, "ouros"), Carta(11, "espadas")]
+print(sorted(mao))
+print(Carta(7, "copas") == Carta(7, "copas"))</code></pre>
+      <p class="saida">[2 de ouros, 7 de copas, 11 de espadas]<br>
+True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe <code>Fila</code> com os métodos <code>entrar(nome)</code> e <code>atender()</code> (tira o primeiro), e com <code>__len__</code> e <code>__contains__</code>. Mostre o tamanho da fila e se alguém está nela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Fila:
+    def __init__(self):
+        self._pessoas = []
+
+    def entrar(self, nome):
+        self._pessoas.append(nome)
+
+    def atender(self):
+        return self._pessoas.pop(0)
+
+    def __len__(self):
+        return len(self._pessoas)
+
+    def __contains__(self, nome):
+        return nome in self._pessoas
+
+f = Fila()
+for nome in ["Dona Rosa", "Seu Jorge", "Bia"]:
+    f.entrar(nome)
+print("Atendido:", f.atender())
+print("Na fila:", len(f))
+print("Dona Rosa está na fila?", "Dona Rosa" in f)
+print("Bia está na fila?", "Bia" in f)</code></pre>
+      <p class="saida">Atendido: Dona Rosa<br>
+Na fila: 2<br>
+Dona Rosa está na fila? False<br>
+Bia está na fila? True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que este <code>__str__</code> dá erro? <code>def __str__(self): print(self.nome)</code>. Corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def __str__(self):
+        return self.nome
+
+print(Aluno("Júlia"))</code></pre>
+      <p class="saida">Júlia</p>
+      <p>O <code>__str__</code> precisa devolver o texto com <code>return</code>. Com <code>print</code>, ele devolve <code>None</code> e o Python reclama com <code>TypeError: __str__ returned non-string</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="80-excecoes-proprias.html" rel="prev">← Aula anterior</a>
+      <a href="82-new-init.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

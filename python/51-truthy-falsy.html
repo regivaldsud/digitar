@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 51 · Valores truthy e falsy; isinstance, dir, getattr, hasattr — Curso de Python · DIGITAR</title>
+<meta name="description" content="Descubra quais valores o Python considera verdadeiros ou falsos e como perguntar a um objeto o seu tipo e o que ele sabe fazer.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 51 · Valores truthy e falsy; isinstance, dir, getattr, hasattr</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Quais valores são falsy (contam como falso) e quais são truthy</li>
+        <li>Usar <code>if lista:</code> e <code>or</code> para escrever testes mais curtos</li>
+        <li>Conferir tipos com <code>isinstance</code></li>
+        <li>Explorar objetos com <code>dir</code>, <code>getattr</code> e <code>hasattr</code></li>
+      </ul>
+    </div>
+
+    <h2>Todo valor tem um "lado" verdadeiro ou falso</h2>
+    <p>No <code>if</code> e no <code>while</code>, o Python aceita qualquer valor, não só <code>True</code> e <code>False</code>. Ele converte o valor com <code>bool()</code>. Os valores que contam como falso são chamados de <strong>falsy</strong>; todo o resto é <strong>truthy</strong>. A lista dos falsy é curta:</p>
+    <ul>
+      <li><code>False</code> e <code>None</code>;</li>
+      <li>o zero: <code>0</code>, <code>0.0</code>;</li>
+      <li>coleções e textos vazios: <code>""</code>, <code>[]</code>, <code>()</code>, <code>{}</code>, <code>set()</code>.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>for valor in [0, 7, -1, 0.0, "", " ", "oi", [], [0], {}, None]:
+    print(repr(valor), "-&gt;", bool(valor))</code></pre>
+    <p class="saida">0 -&gt; False<br>
+7 -&gt; True<br>
+-1 -&gt; True<br>
+0.0 -&gt; False<br>
+'' -&gt; False<br>
+' ' -&gt; True<br>
+'oi' -&gt; True<br>
+[] -&gt; False<br>
+[0] -&gt; True<br>
+{} -&gt; False<br>
+None -&gt; False</p>
+    <p>Repare: <code>" "</code> (um espaço) e <code>[0]</code> (uma lista com um item) são truthy, porque não estão vazios.</p>
+
+    <h2>Testes mais curtos</h2>
+    <p>Graças a isso, em vez de <code>if len(lista) &gt; 0:</code> você pode escrever só <code>if lista:</code>. E <code>if not nome:</code> pergunta "o nome está vazio?":</p>
+<pre class="codigo" data-executar="sim"><code>tarefas = []
+if not tarefas:
+    print("Nenhuma tarefa por hoje!")
+
+tarefas.append("estudar Python")
+if tarefas:
+    print("Você tem", len(tarefas), "tarefa(s)")</code></pre>
+    <p class="saida">Nenhuma tarefa por hoje!<br>
+Você tem 1 tarefa(s)</p>
+    <p>O <code>or</code> devolve o primeiro valor truthy que encontrar. Isso dá um jeito curto de usar um valor padrão quando algo está vazio:</p>
+<pre class="codigo" data-executar="sim"><code>digitado = "   "
+nome = digitado.strip() or "Visitante"
+print(f"Olá, {nome}!")
+
+digitado = "Marina"
+nome = digitado.strip() or "Visitante"
+print(f"Olá, {nome}!")</code></pre>
+    <p class="saida">Olá, Visitante!<br>
+Olá, Marina!</p>
+    <div class="atencao"><strong>Atenção:</strong> Cuidado quando o zero é um valor válido: <code>pontos = pontos_digitados or 10</code> troca um <code>0</code> legítimo por 10! Nesses casos, compare de forma explícita: <code>if pontos is None:</code>.</div>
+
+    <h2>isinstance: de que tipo é?</h2>
+    <p><code>isinstance(valor, tipo)</code> responde se o valor é daquele tipo. Ele aceita uma tupla de tipos, para testar vários de uma vez:</p>
+<pre class="codigo" data-executar="sim"><code>def descrever(valor):
+    if isinstance(valor, bool):
+        return "verdadeiro/falso"
+    if isinstance(valor, (int, float)):
+        return "número"
+    if isinstance(valor, str):
+        return "texto"
+    return "outra coisa"
+
+for v in [42, 3.5, "pão", True, [1, 2]]:
+    print(repr(v), "é", descrever(v))
+print(isinstance(True, int))</code></pre>
+    <p class="saida">42 é número<br>
+3.5 é número<br>
+'pão' é texto<br>
+True é verdadeiro/falso<br>
+[1, 2] é outra coisa<br>
+True</p>
+    <p>O <code>bool</code> foi testado primeiro porque, em Python, <code>True</code> e <code>False</code> também são <code>int</code> (valem 1 e 0) — veja a última linha.</p>
+    <div class="dica"><strong>Dica:</strong> Prefira <code>isinstance(x, int)</code> a <code>type(x) == int</code>: o <code>isinstance</code> também aceita os "filhos" de um tipo, o que vai fazer sentido quando você estudar herança na aula 76.</div>
+
+    <h2>dir, getattr e hasattr</h2>
+    <p><code>dir(objeto)</code> lista tudo o que o objeto tem: atributos e métodos. Os nomes com <code>__</code> são especiais; filtrando, sobram os métodos do dia a dia:</p>
+<pre class="codigo" data-executar="sim"><code>metodos = [m for m in dir("texto") if not m.startswith("_")]
+print("upper" in metodos, "split" in metodos)
+print(metodos[:8])</code></pre>
+    <p class="saida">True True<br>
+['capitalize', 'casefold', 'center', 'count', 'encode', 'endswith', 'expandtabs', 'find']</p>
+    <p><code>hasattr(objeto, "nome")</code> pergunta se o objeto tem aquele atributo, e <code>getattr(objeto, "nome")</code> pega o atributo a partir de um <strong>texto</strong> — útil quando o nome só é conhecido enquanto o programa roda:</p>
+<pre class="codigo" data-executar="sim"><code>frase = "bom dia, brasil"
+for nome in ["upper", "title", "voar"]:
+    if hasattr(frase, nome):
+        metodo = getattr(frase, nome)
+        print(nome, "-&gt;", metodo())
+    else:
+        print(nome, "-&gt; str não tem esse método")
+
+print(getattr(frase, "cor", "sem cor"))</code></pre>
+    <p class="saida">upper -&gt; BOM DIA, BRASIL<br>
+title -&gt; Bom Dia, Brasil<br>
+voar -&gt; str não tem esse método<br>
+sem cor</p>
+    <p>O terceiro argumento de <code>getattr</code> é o valor padrão, usado quando o atributo não existe (sem ele, daria <code>AttributeError</code>).</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>nome = digitado.strip() or "Visitante"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Sem rodar, diga quais destes valores são truthy: <code>0</code>, <code>"0"</code>, <code>[]</code>, <code>[[]]</code>, <code>None</code>, <code>-0.5</code>. Depois confira com <code>bool</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for v in [0, "0", [], [[]], None, -0.5]:
+    print(repr(v), bool(v))</code></pre>
+      <p class="saida">0 False<br>
+'0' True<br>
+[] False<br>
+[[]] True<br>
+None False<br>
+-0.5 True</p>
+      <p><code>"0"</code> é um texto não vazio, <code>[[]]</code> é uma lista com um item (mesmo que o item seja uma lista vazia) e <code>-0.5</code> não é zero: os três são truthy.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva a função <code>primeiro_ou_aviso(lista)</code> que devolve o primeiro item da lista ou o texto <code>"lista vazia"</code>, usando <code>if not lista:</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def primeiro_ou_aviso(lista):
+    if not lista:
+        return "lista vazia"
+    return lista[0]
+
+print(primeiro_ou_aviso(["arroz", "feijão"]))
+print(primeiro_ou_aviso([]))</code></pre>
+      <p class="saida">arroz<br>
+lista vazia</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva <code>somar_numeros(itens)</code> que soma só os itens que são <code>int</code> ou <code>float</code> (ignorando textos e o resto). Teste com <code>[10, "dez", 2.5, None, 7]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def somar_numeros(itens):
+    total = 0
+    for item in itens:
+        if isinstance(item, (int, float)) and not isinstance(item, bool):
+            total += item
+    return total
+
+print(somar_numeros([10, "dez", 2.5, None, 7]))</code></pre>
+      <p class="saida">19.5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use <code>hasattr</code> para descobrir quais destes objetos têm o método <code>append</code>: uma lista, uma tupla, um texto e um conjunto.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for objeto in [[1], (1,), "1", {1}]:
+    print(type(objeto).__name__, hasattr(objeto, "append"))</code></pre>
+      <p class="saida">list True<br>
+tuple False<br>
+str False<br>
+set False</p>
+      <p>Só a lista tem <code>append</code>. O conjunto usa <code>add</code>, e a tupla e o texto não podem ser alterados.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça a operação como texto (<code>"upper"</code>, <code>"lower"</code> ou <code>"title"</code>) e use <code>getattr</code> para aplicá-la à frase <code>"olá, recife"</code>. Se a operação não existir, mostre <code>"operação inválida"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>frase = "olá, recife"
+operacao = input("Operação: ")
+metodo = getattr(frase, operacao, None)
+if metodo is None:
+    print("operação inválida")
+else:
+    print(metodo())</code></pre>
+      <p class="saida"><em>(exemplo digitando title)</em><br>
+Operação: title<br>
+Olá, Recife</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="50-comprehensions.html" rel="prev">← Aula anterior</a>
+      <a href="52-geradores.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

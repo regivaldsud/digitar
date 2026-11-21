@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 117 · Filas e pilhas com collections.deque — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use collections.deque para criar filas e pilhas rápidas, limitar históricos com maxlen e girar itens com rotate.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 117 · Filas e pilhas com collections.deque</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>A diferença entre fila (primeiro a chegar, primeiro a sair) e pilha (último a chegar, primeiro a sair)</li>
+        <li>Usar <code>deque</code> com <code>append</code>, <code>appendleft</code>, <code>pop</code> e <code>popleft</code></li>
+        <li>Guardar só os últimos itens com <code>maxlen</code></li>
+        <li>Girar os itens com <code>rotate</code></li>
+      </ul>
+    </div>
+
+    <h2>Filas e pilhas</h2>
+    <p>Pense na fila da cantina: quem chega primeiro é atendido primeiro. Isso é uma <strong>fila</strong> (em inglês, FIFO: *first in, first out*). Agora pense numa pilha de pratos: o último prato colocado é o primeiro a sair. Isso é uma <strong>pilha</strong> (LIFO: *last in, first out*).</p>
+    <p>Uma lista comum serve bem como pilha. Mas como fila ela é lenta: tirar o primeiro item com <code>lista.pop(0)</code> obriga o Python a empurrar todos os outros uma posição. O <code>deque</code> (fala-se "deque", de *double-ended queue*, fila de duas pontas) foi feito para mexer nas duas pontas rapidamente.</p>
+
+    <h2>A fila da cantina</h2>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+fila = deque()
+fila.append("Ana")
+fila.append("Bruno")
+fila.append("Carla")
+print("Fila:", list(fila))
+
+atendido = fila.popleft()
+print("Atendido:", atendido)
+print("Próximo:", fila[0])
+print("Ainda esperando:", len(fila))</code></pre>
+    <p class="saida">Fila: ['Ana', 'Bruno', 'Carla']<br>
+Atendido: Ana<br>
+Próximo: Bruno<br>
+Ainda esperando: 2</p>
+    <ul>
+      <li><code>append</code> coloca no fim (a direita);</li>
+      <li><code>popleft</code> tira do começo (a esquerda) — é o atendimento;</li>
+      <li><code>fila[0]</code> espia o primeiro sem tirar.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Chamar <code>popleft()</code> ou <code>pop()</code> num <code>deque</code> vazio dá <code>IndexError: pop from an empty deque</code>. Antes, confira com <code>if fila:</code>.</div>
+
+    <h2>Pilha: desfazer</h2>
+    <p>O botão <strong>desfazer</strong> de um editor é uma pilha: a última ação feita é a primeira a ser desfeita.</p>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+acoes = deque()
+for acao in ["digitou 'Olá'", "apagou uma letra", "colou um texto"]:
+    acoes.append(acao)
+
+while acoes:
+    print("Desfazendo:", acoes.pop())</code></pre>
+    <p class="saida">Desfazendo: colou um texto<br>
+Desfazendo: apagou uma letra<br>
+Desfazendo: digitou 'Olá'</p>
+    <p><code>pop()</code> tira do <strong>fim</strong>, então sai na ordem contrária à que entrou.</p>
+
+    <h2>As duas pontas e o maxlen</h2>
+    <p>O <code>deque</code> também tem <code>appendleft</code> e <code>pop</code>. E com <code>maxlen</code> ele guarda só os últimos itens: quando enche, o mais antigo sai sozinho do outro lado. Perfeito para um histórico das últimas tentativas:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+ultimas_ppm = deque(maxlen=3)
+for ppm in [18, 22, 25, 27, 31]:
+    ultimas_ppm.append(ppm)
+    print(list(ultimas_ppm))
+
+print("Média das últimas 3:", round(sum(ultimas_ppm) / len(ultimas_ppm), 1))
+
+prioridade = deque(["Caio", "Duda"])
+prioridade.appendleft("Vó Lurdes")
+print(list(prioridade))</code></pre>
+    <p class="saida">[18]<br>
+[18, 22]<br>
+[18, 22, 25]<br>
+[22, 25, 27]<br>
+[25, 27, 31]<br>
+Média das últimas 3: 27.7<br>
+['Vó Lurdes', 'Caio', 'Duda']</p>
+
+    <h2>Girando com rotate</h2>
+    <p><code>rotate(n)</code> gira os itens <code>n</code> posições para a direita (com <code>n</code> negativo, para a esquerda). Ótimo para rodízios:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+goleiro = deque(["Léo", "Mia", "Nina", "Otto"])
+for rodada in range(1, 4):
+    print(f"Rodada {rodada}: {goleiro[0]} no gol")
+    goleiro.rotate(-1)</code></pre>
+    <p class="saida">Rodada 1: Léo no gol<br>
+Rodada 2: Mia no gol<br>
+Rodada 3: Nina no gol</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>proximo = fila.popleft()</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Simule a fila de um banco: entram <code>Rui</code>, <code>Sol</code> e <code>Téo</code>; depois são atendidas duas pessoas e entra <code>Uri</code>. Mostre quem foi atendido e a fila final.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+fila = deque(["Rui", "Sol", "Téo"])
+for _ in range(2):
+    print("Atendido:", fila.popleft())
+fila.append("Uri")
+print("Fila final:", list(fila))</code></pre>
+      <p class="saida">Atendido: Rui<br>
+Atendido: Sol<br>
+Fila final: ['Téo', 'Uri']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Use uma pilha para inverter a palavra <code>"arara"</code> e a palavra <code>"python"</code>. Elas são palíndromos?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+for palavra in ["arara", "python"]:
+    pilha = deque(palavra)
+    invertida = ""
+    while pilha:
+        invertida += pilha.pop()
+    print(palavra, invertida, palavra == invertida)</code></pre>
+      <p class="saida">arara arara True<br>
+python nohtyp False</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Guarde as 4 últimas buscas de um site: <code>"praia"</code>, <code>"bolo"</code>, <code>"tênis"</code>, <code>"livro"</code>, <code>"praia"</code>, <code>"jogo"</code>. Mostre o histórico no fim, da mais recente para a mais antiga.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+buscas = deque(maxlen=4)
+for termo in ["praia", "bolo", "tênis", "livro", "praia", "jogo"]:
+    buscas.append(termo)
+print(list(reversed(buscas)))</code></pre>
+      <p class="saida">['jogo', 'praia', 'livro', 'tênis']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça um rodízio de quem lava a louça entre <code>["Pai", "Mãe", "Lia"]</code> para os 5 dias úteis da semana.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+dias = ["segunda", "terça", "quarta", "quinta", "sexta"]
+vez = deque(["Pai", "Mãe", "Lia"])
+for dia in dias:
+    print(dia, "-&gt;", vez[0])
+    vez.rotate(-1)</code></pre>
+      <p class="saida">segunda -&gt; Pai<br>
+terça -&gt; Mãe<br>
+quarta -&gt; Lia<br>
+quinta -&gt; Pai<br>
+sexta -&gt; Mãe</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="116-pdf.html" rel="prev">← Aula anterior</a>
+      <a href="118-excel-openpyxl.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

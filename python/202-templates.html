@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 202 · Templates, herança (extends), include, arquivos estáticos — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte páginas HTML com templates do Django, reaproveite o layout com extends e include e sirva CSS e imagens.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 202 · Templates, herança (extends), include, arquivos estáticos</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Renderizar um template com <code>render</code> e um contexto</li>
+        <li>Usar variáveis, <code>for</code>, <code>if</code> e filtros na linguagem de templates</li>
+        <li>Reaproveitar o layout com <code>extends</code>, <code>block</code> e <code>include</code></li>
+        <li>Carregar CSS e imagens com <code>{% static %}</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>render e o contexto</h2>
+    <p>Escrever HTML dentro de strings fica bagunçado. O Django usa <strong>templates</strong>: arquivos HTML com espaços para dados. A função <code>render</code> junta o template com um dicionário chamado <strong>contexto</strong>.</p>
+<pre class="codigo"><code># contatos/views.py
+from django.shortcuts import render
+
+
+def lista(request):
+    contexto = {
+        "titulo": "Meus contatos",
+        "contatos": ["Ana", "Bruno", "Carla"],
+    }
+    return render(request, "contatos/lista.html", contexto)</code></pre>
+    <p>O template fica em <code>contatos/templates/contatos/lista.html</code>. A pasta repetida (<code>contatos/templates/contatos/</code>) evita confusão quando dois apps têm templates com o mesmo nome.</p>
+
+    <h2>Herança: um layout para todas as páginas</h2>
+    <p>O arquivo base define o esqueleto e os <strong>blocos</strong> que cada página preenche:</p>
+<pre class="codigo"><code>&lt;!-- contatos/templates/base.html --&gt;
+{% load static %}
+&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;{% block titulo %}Meu site{% endblock %}&lt;/title&gt;
+  &lt;link rel="stylesheet" href="{% static 'css/estilo.css' %}"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  {% include "menu.html" %}
+  {% block conteudo %}{% endblock %}
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<pre class="codigo"><code>&lt;!-- contatos/templates/contatos/lista.html --&gt;
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+  &lt;h1&gt;{{ titulo }}&lt;/h1&gt;
+  &lt;ul&gt;
+    {% for nome in contatos %}
+      &lt;li&gt;{{ nome|upper }}&lt;/li&gt;
+    {% empty %}
+      &lt;li&gt;Nenhum contato ainda.&lt;/li&gt;
+    {% endfor %}
+  &lt;/ul&gt;
+  {% if contatos|length &gt; 2 %}&lt;p&gt;Que turma grande!&lt;/p&gt;{% endif %}
+{% endblock %}</code></pre>
+    <ul>
+      <li><code>{{ variavel }}</code> mostra um valor; <code>|upper</code> e <code>|length</code> são <strong>filtros</strong>.</li>
+      <li><code>{% for %}</code>, <code>{% if %}</code> e <code>{% block %}</code> são <strong>tags</strong>; toda tag de bloco tem um <code>{% end... %}</code>.</li>
+      <li><code>{% include "menu.html" %}</code> coloca outro template ali dentro.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> O Django escapa o HTML das variáveis automaticamente: se um nome for <code>&lt;b&gt;Ana&lt;/b&gt;</code>, aparece o texto, não o negrito. Isso protege o site contra código malicioso.</div>
+
+    <h2>Arquivos estáticos</h2>
+    <p>CSS, JavaScript e imagens são <strong>arquivos estáticos</strong>. Coloque-os em <code>contatos/static/css/estilo.css</code>, use <code>{% load static %}</code> no template e <code>{% static 'css/estilo.css' %}</code> no endereço. Com <code>DEBUG = True</code>, o <code>runserver</code> já serve esses arquivos.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>Invalid block tag ... 'static'</code>, faltou o <code>{% load static %}</code> no topo daquele template — ele vale só para o arquivo onde foi escrito.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>{% for nome in contatos %}&lt;li&gt;{{ nome }}&lt;/li&gt;{% endfor %}</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um template <code>sobre.html</code> que herda de <code>base.html</code>, troca o título para "Sobre" e mostra um parágrafo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>{% extends "base.html" %}
+{% block titulo %}Sobre{% endblock %}
+{% block conteudo %}
+  &lt;p&gt;Este site foi feito por mim, com Django!&lt;/p&gt;
+{% endblock %}</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Uma view manda <code>{"notas": [7, 9.5, 6]}</code>. Escreva o trecho de template que lista as notas e mostra quantas são.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>&lt;ul&gt;
+  {% for nota in notas %}
+    &lt;li&gt;{{ nota }}&lt;/li&gt;
+  {% endfor %}
+&lt;/ul&gt;
+&lt;p&gt;Total de notas: {{ notas|length }}&lt;/p&gt;</code></pre>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="201-urls-views.html" rel="prev">← Aula anterior</a>
+      <a href="203-models-admin.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

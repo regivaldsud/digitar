@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 84 · Decoradores com classes e __call__ — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a fazer objetos que podem ser chamados como funções com __call__ e a usar classes como decoradores.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 84 · Decoradores com classes e __call__</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Como o método <code>__call__</code> deixa um objeto ser chamado com parênteses</li>
+        <li>Como escrever um decorador usando uma classe, que guarda estado entre as chamadas</li>
+        <li>Como fazer um decorador de classe que recebe parâmetros</li>
+        <li>Como decorar uma classe inteira, e não só uma função</li>
+      </ul>
+    </div>
+
+    <h2>Objetos que viram funções: __call__</h2>
+    <p>Você já sabe que funções são chamadas com parênteses: <code>print("oi")</code>. Com o método especial <code>__call__</code>, um <strong>objeto</strong> também pode ser chamado assim. A vantagem é que o objeto guarda atributos, então ele lembra coisas entre uma chamada e outra.</p>
+<pre class="codigo" data-executar="sim"><code>class Multiplicador:
+    def __init__(self, fator):
+        self.fator = fator
+
+    def __call__(self, numero):
+        return numero * self.fator
+
+dobro = Multiplicador(2)
+triplo = Multiplicador(3)
+print(dobro(10))
+print(triplo(10))
+print(callable(dobro), callable(42))</code></pre>
+    <p class="saida">20<br>
+30<br>
+True False</p>
+    <p>A função <code>callable()</code> diz se algo pode ser chamado com parênteses.</p>
+
+    <h2>Um decorador feito com classe</h2>
+    <p>Na aula 56 você criou decoradores com funções. Uma classe também serve: o <code>__init__</code> recebe a função decorada, e o <code>__call__</code> roda no lugar dela. Como é um objeto, fica fácil guardar estado, como o número de chamadas:</p>
+<pre class="codigo" data-executar="sim"><code>class ContarChamadas:
+    def __init__(self, funcao):
+        self.funcao = funcao
+        self.chamadas = 0
+
+    def __call__(self, *args, **kwargs):
+        self.chamadas += 1
+        print(f"Chamada nº {self.chamadas} de {self.funcao.__name__}")
+        return self.funcao(*args, **kwargs)
+
+@ContarChamadas
+def saudar(nome):
+    return f"Oi, {nome}!"
+
+print(saudar("Ana"))
+print(saudar("Léo"))
+print("Total:", saudar.chamadas)</code></pre>
+    <p class="saida">Chamada nº 1 de saudar<br>
+Oi, Ana!<br>
+Chamada nº 2 de saudar<br>
+Oi, Léo!<br>
+Total: 2</p>
+    <p>Lembre: <code>@ContarChamadas</code> em cima de <code>def saudar</code> é o mesmo que escrever <code>saudar = ContarChamadas(saudar)</code>. Agora <code>saudar</code> é um objeto da classe, não mais a função original.</p>
+    <div class="dica"><strong>Dica:</strong> Para o objeto decorador "herdar" o nome e a docstring da função original, chame <code>functools.update_wrapper(self, funcao)</code> dentro do <code>__init__</code>. É a versão para classes do <code>@wraps</code>.</div>
+
+    <h2>Decorador de classe com parâmetros</h2>
+    <p>Quando o decorador recebe parâmetros, como <code>@Repetir(3)</code>, o <code>__init__</code> recebe os parâmetros e o <code>__call__</code> recebe a função, devolvendo a função "embrulhada":</p>
+<pre class="codigo" data-executar="sim"><code>class Repetir:
+    def __init__(self, vezes):
+        self.vezes = vezes
+
+    def __call__(self, funcao):
+        def embrulho(*args, **kwargs):
+            for _ in range(self.vezes):
+                funcao(*args, **kwargs)
+        return embrulho
+
+@Repetir(3)
+def gritar(texto):
+    print(texto.upper() + "!")
+
+gritar("gol")</code></pre>
+    <p class="saida">GOL!<br>
+GOL!<br>
+GOL!</p>
+
+    <h2>Decorando uma classe inteira</h2>
+    <p>Um decorador também pode receber uma <strong>classe</strong> em vez de uma função. É útil para registrar classes ou acrescentar algo a todas elas. Aqui, cada classe decorada entra num cardápio:</p>
+<pre class="codigo" data-executar="sim"><code>cardapio = {}
+
+def no_cardapio(classe):
+    cardapio[classe.__name__.lower()] = classe
+    return classe
+
+@no_cardapio
+class Coxinha:
+    preco = 6.50
+
+@no_cardapio
+class Pastel:
+    preco = 8.00
+
+for nome, classe in cardapio.items():
+    print(f"{nome}: R$ {classe.preco:.2f}")</code></pre>
+    <p class="saida">coxinha: R$ 6.50<br>
+pastel: R$ 8.00</p>
+    <div class="atencao"><strong>Atenção:</strong> O decorador de classe precisa <strong>devolver</strong> a classe com <code>return classe</code>. Se esquecer, o nome <code>Coxinha</code> passa a valer <code>None</code>.</div>
+    <p>Outro exemplo: um decorador que acrescenta um método <code>__str__</code> pronto à classe.</p>
+<pre class="codigo" data-executar="sim"><code>def com_descricao(classe):
+    def __str__(self):
+        campos = ", ".join(f"{k}={v}" for k, v in vars(self).items())
+        return f"{classe.__name__}({campos})"
+    classe.__str__ = __str__
+    return classe
+
+@com_descricao
+class Time:
+    def __init__(self, nome, estado):
+        self.nome = nome
+        self.estado = estado
+
+print(Time("Fortaleza", "CE"))</code></pre>
+    <p class="saida">Time(nome=Fortaleza, estado=CE)</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def __call__(self, *args, **kwargs):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Saudacao</code> com um atributo <code>cumprimento</code> e um <code>__call__(nome)</code> que devolve o cumprimento seguido do nome. Teste com <code>"Bom dia"</code> e <code>"Boa noite"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Saudacao:
+    def __init__(self, cumprimento):
+        self.cumprimento = cumprimento
+
+    def __call__(self, nome):
+        return f"{self.cumprimento}, {nome}!"
+
+bom_dia = Saudacao("Bom dia")
+boa_noite = Saudacao("Boa noite")
+print(bom_dia("Carla"))
+print(boa_noite("Pedro"))</code></pre>
+      <p class="saida">Bom dia, Carla!<br>
+Boa noite, Pedro!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Cofrinho</code> que pode ser chamada com um valor para depositar e devolve o total guardado até agora.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Cofrinho:
+    def __init__(self):
+        self.total = 0
+
+    def __call__(self, valor):
+        self.total += valor
+        return self.total
+
+cofre = Cofrinho()
+cofre(5)
+cofre(2.5)
+print(cofre(10))</code></pre>
+      <p class="saida">17.5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva o decorador de classe <code>Memoria</code>, que guarda num dicionário os resultados já calculados de uma função de um argumento e mostra "(da memória)" quando reaproveita um resultado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Memoria:
+    def __init__(self, funcao):
+        self.funcao = funcao
+        self.guardados = {}
+
+    def __call__(self, n):
+        if n in self.guardados:
+            print("(da memória)")
+            return self.guardados[n]
+        resultado = self.funcao(n)
+        self.guardados[n] = resultado
+        return resultado
+
+@Memoria
+def quadrado(n):
+    return n * n
+
+print(quadrado(9))
+print(quadrado(9))</code></pre>
+      <p class="saida">81<br>
+(da memória)<br>
+81</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie o decorador de classe com parâmetro <code>Prefixo(texto)</code>, que coloca o texto antes do resultado de qualquer função que devolva uma string.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Prefixo:
+    def __init__(self, texto):
+        self.texto = texto
+
+    def __call__(self, funcao):
+        def embrulho(*args, **kwargs):
+            return self.texto + funcao(*args, **kwargs)
+        return embrulho
+
+@Prefixo("[AVISO] ")
+def mensagem(conteudo):
+    return conteudo
+
+print(mensagem("A aula começa às 14h"))</code></pre>
+      <p class="saida">[AVISO] A aula começa às 14h</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva o decorador <code>contar_instancias</code>, que recebe uma classe e acrescenta a ela um atributo <code>criados = 0</code>. Depois, no <code>__init__</code> da classe, aumente esse atributo e mostre quantos objetos foram criados.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def contar_instancias(classe):
+    classe.criados = 0
+    return classe
+
+@contar_instancias
+class Bilhete:
+    def __init__(self, destino):
+        self.destino = destino
+        Bilhete.criados += 1
+
+Bilhete("Recife")
+Bilhete("Natal")
+print(Bilhete.criados)</code></pre>
+      <p class="saida">2</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="83-context-manager.html" rel="prev">← Aula anterior</a>
+      <a href="85-metaclasses.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

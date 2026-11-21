@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 116 · Ler, juntar e dividir PDF (pypdf) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Extraia texto, junte vários PDFs em um e separe páginas usando a biblioteca pypdf.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 116 · Ler, juntar e dividir PDF (pypdf)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Instalar e abrir PDFs com <code>pypdf</code></li>
+        <li>Extrair o texto das páginas</li>
+        <li>Juntar e dividir arquivos PDF</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Instalando</h2>
+<pre class="codigo"><code>pip install pypdf</code></pre>
+    <p>Para treinar, coloque dois PDFs quaisquer na pasta do projeto, por exemplo <code>boletim.pdf</code> e <code>atestado.pdf</code>.</p>
+
+    <h2>Lendo páginas e texto</h2>
+<pre class="codigo"><code>from pypdf import PdfReader
+
+leitor = PdfReader("boletim.pdf")
+print("Páginas:", len(leitor.pages))
+
+primeira = leitor.pages[0]
+print(primeira.extract_text()[:200])   # os 200 primeiros caracteres</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> <code>extract_text</code> só funciona em PDFs que têm texto de verdade. Um documento escaneado é uma foto: o texto vem vazio. Para isso seria preciso OCR, que é outro assunto.</div>
+
+    <h2>Juntando e dividindo</h2>
+<pre class="codigo"><code>from pypdf import PdfReader, PdfWriter
+
+# juntar: todas as páginas dos dois arquivos em um só
+juntos = PdfWriter()
+for nome in ["boletim.pdf", "atestado.pdf"]:
+    for pagina in PdfReader(nome).pages:
+        juntos.add_page(pagina)
+with open("documentos.pdf", "wb") as f:
+    juntos.write(f)
+
+# dividir: cada página vira um arquivo
+leitor = PdfReader("documentos.pdf")
+for i, pagina in enumerate(leitor.pages, start=1):
+    sozinha = PdfWriter()
+    sozinha.add_page(pagina)
+    with open(f"pagina_{i}.pdf", "wb") as f:
+        sozinha.write(f)
+print("Pronto!")</code></pre>
+    <p>Repare no modo <code>"wb"</code>: PDF não é texto, é um arquivo <strong>binário</strong>, então abrimos com <code>b</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Junte com <code>pathlib</code> (aula 103): <code>sorted(Path("notas").glob("*.pdf"))</code> pega todos os PDFs de uma pasta em ordem de nome.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>leitor = PdfReader("boletim.pdf")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um programa que mostre quantas páginas tem cada PDF da pasta <code>apostilas</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from pathlib import Path
+from pypdf import PdfReader
+
+for arquivo in sorted(Path("apostilas").glob("*.pdf")):
+    print(arquivo.name, len(PdfReader(arquivo).pages), "páginas")</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Por que abrimos o arquivo de saída com <code>"wb"</code> e não com <code>"w"</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque PDF é um arquivo binário, não um texto. O modo "wb" grava bytes;<br>
+o modo "w" espera textos e daria erro (ou estragaria o arquivo).</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="115-jupyter.html" rel="prev">← Aula anterior</a>
+      <a href="117-deque.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

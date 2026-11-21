@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 193 · Projeto: calculadora (display, grade de botões, teclado, QMessageBox) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte uma calculadora com PySide6: display, grade de botões, atalhos de teclado e mensagens de erro.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 10 · Interface gráfica com PySide6</p>
+    <h1>Aula 193 · Projeto: calculadora (display, grade de botões, teclado, QMessageBox)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Separar a lógica da calculadora da parte visual</li>
+        <li>Criar uma grade de botões a partir de uma lista</li>
+        <li>Tratar o teclado e mostrar erros com QMessageBox</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Passo 1: a lógica, sem janela</h2>
+    <p>Um bom hábito: escreva a parte que calcula separada da tela. Assim você testa sem abrir janela nenhuma. A função abaixo recebe a conta como texto e devolve o resultado.</p>
+<pre class="codigo" data-executar="sim"><code>def calcular(expressao):
+    permitido = "0123456789+-*/.() "
+    if not expressao or any(c not in permitido for c in expressao):
+        raise ValueError("Conta inválida")
+    resultado = eval(expressao, {"__builtins__": {}})
+    if resultado == int(resultado):
+        resultado = int(resultado)
+    return resultado
+
+
+print(calcular("12+30"))
+print(calcular("7/2"))
+print(calcular("(2+3)*4"))</code></pre>
+    <p class="saida">42<br>
+3.5<br>
+20</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>eval</code> roda qualquer código Python, por isso é perigoso com texto vindo do usuário. Aqui só deixamos passar dígitos e operadores, e tiramos as funções embutidas. Num programa sério, use um analisador de expressões.</div>
+
+    <h2>Passo 2: a janela da calculadora</h2>
+<pre class="codigo"><code>import sys
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QWidget, QGridLayout,
+                               QLineEdit, QPushButton, QMessageBox)
+
+BOTOES = [
+    ["7", "8", "9", "/"],
+    ["4", "5", "6", "*"],
+    ["1", "2", "3", "-"],
+    ["C", "0", "=", "+"],
+]
+
+
+def calcular(expressao):
+    permitido = "0123456789+-*/.() "
+    if not expressao or any(c not in permitido for c in expressao):
+        raise ValueError("Conta inválida")
+    resultado = eval(expressao, {"__builtins__": {}})
+    if resultado == int(resultado):
+        resultado = int(resultado)
+    return resultado
+
+
+class Calculadora(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Calculadora")
+        self.display = QLineEdit()
+        self.display.setReadOnly(True)
+        self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
+        grade = QGridLayout(self)
+        grade.addWidget(self.display, 0, 0, 1, 4)
+        for linha, textos in enumerate(BOTOES, start=1):
+            for coluna, texto in enumerate(textos):
+                botao = QPushButton(texto)
+                botao.clicked.connect(lambda _=False, t=texto: self.apertar(t))
+                grade.addWidget(botao, linha, coluna)
+
+    def apertar(self, texto):
+        if texto == "C":
+            self.display.clear()
+        elif texto == "=":
+            try:
+                self.display.setText(str(calcular(self.display.text())))
+            except (ValueError, SyntaxError, ZeroDivisionError):
+                QMessageBox.warning(self, "Ops", "Essa conta não dá para fazer.")
+                self.display.clear()
+        else:
+            self.display.setText(self.display.text() + texto)
+
+    def keyPressEvent(self, evento):
+        tecla = evento.text()
+        if tecla in "0123456789+-*/":
+            self.apertar(tecla)
+        elif evento.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.apertar("=")
+        elif evento.key() == Qt.Key.Key_Escape:
+            self.apertar("C")
+        else:
+            super().keyPressEvent(evento)
+
+
+app = QApplication(sys.argv)
+janela = Calculadora()
+janela.show()
+sys.exit(app.exec())</code></pre>
+    <p>Pontos importantes:</p>
+    <ul>
+      <li><code>grade.addWidget(self.display, 0, 0, 1, 4)</code> faz o display ocupar 1 linha e 4 colunas.</li>
+      <li>Na <code>lambda</code>, <code>t=texto</code> guarda o texto de <strong>cada</strong> botão. Sem isso, todos os botões usariam o último texto do laço.</li>
+      <li><code>keyPressEvent</code> é chamado a cada tecla: assim dá para usar a calculadora pelo teclado — ótimo para quem treina digitação!</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Teste com <code>5/0</code>: o <code>ZeroDivisionError</code> é capturado e aparece a caixa de aviso do QMessageBox.</div>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Acrescente um botão "⌫" que apaga só o último caractere.</li>
+      <li>Mostre o histórico das contas num <code>QLabel</code> acima do display.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>botao.clicked.connect(lambda _=False, t=texto: self.apertar(t))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Teste a função <code>calcular</code> com "10-4*2" e com "2**10". O que acontece com a segunda? Por quê?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def calcular(expressao):
+    permitido = "0123456789+-*/.() "
+    if not expressao or any(c not in permitido for c in expressao):
+        raise ValueError("Conta inválida")
+    resultado = eval(expressao, {"__builtins__": {}})
+    if resultado == int(resultado):
+        resultado = int(resultado)
+    return resultado
+
+
+print(calcular("10-4*2"))
+print(calcular("2**10"))</code></pre>
+      <p class="saida">2<br>
+1024</p>
+      <p>A segunda também funciona: <code>**</code> é formado por dois <code>*</code>, que estão na lista de permitidos. Se quiser proibir potência, teste <code>if "**" in expressao</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva a função <code>apagar_ultimo(texto)</code> que será usada pelo botão "⌫" e teste com "123+4".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def apagar_ultimo(texto):
+    return texto[:-1]
+
+
+print(apagar_ultimo("123+4"))
+print(repr(apagar_ultimo("")))</code></pre>
+      <p class="saida">123+<br>
+''</p>
+      <p>Fatiar <code>[:-1]</code> um texto vazio devolve outro texto vazio, então não há erro.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="192-sinais-slots.html" rel="prev">← Aula anterior</a>
+      <a href="194-qt-designer.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

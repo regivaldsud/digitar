@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 10 · A função print: separador e fim de linha — Curso de Python · DIGITAR</title>
+<meta name="description" content="Domine o print: vários valores numa linha, separadores com sep, final de linha com end, linhas em branco e quebras com \n.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 10 · A função print: separador e fim de linha</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Mostrar vários valores num único <code>print</code></li>
+        <li>Trocar o separador entre os valores com <code>sep</code></li>
+        <li>Controlar o final da linha com <code>end</code></li>
+        <li>Quebrar linhas com <code>\n</code> e mostrar linhas em branco</li>
+      </ul>
+    </div>
+
+    <h2>Vários valores de uma vez</h2>
+    <p>Você já usou o <code>print</code> para mostrar um texto. Ele aceita <strong>vários valores</strong>, separados por vírgula, e mostra todos na mesma linha, com um espaço entre eles:</p>
+<pre class="codigo" data-executar="sim"><code>print("Arroz", "feijão", "farofa")
+print("Eu tenho", 13, "anos")
+print("Placar:", 2, "x", 1)</code></pre>
+    <p class="saida">Arroz feijão farofa<br>
+Eu tenho 13 anos<br>
+Placar: 2 x 1</p>
+    <p>Repare que dá para misturar textos e números. O Python coloca os espaços para você.</p>
+    <div class="atencao"><strong>Atenção:</strong> Cada valor precisa ser separado por vírgula. <code>print("Eu tenho" 13 "anos")</code> (sem vírgulas) dá <code>SyntaxError</code>.</div>
+
+    <h2>Trocando o separador com sep</h2>
+    <p>O espaço entre os valores é o <strong>separador</strong> padrão. Para usar outro, escreva <code>sep=</code> no fim, dentro dos parênteses:</p>
+<pre class="codigo" data-executar="sim"><code>print("21", "04", "2025", sep="/")
+print("Rio", "São Paulo", "Belo Horizonte", sep=" - ")
+print("a", "b", "c", sep="")
+print("www", "digitar", "com", sep=".")</code></pre>
+    <p class="saida">21/04/2025<br>
+Rio - São Paulo - Belo Horizonte<br>
+abc<br>
+www.digitar.com</p>
+    <p><code>sep=""</code> (aspas vazias) junta tudo sem nada no meio.</p>
+
+    <h2>Mudando o final com end</h2>
+    <p>Normalmente cada <code>print</code> termina pulando para a próxima linha. Com <code>end=</code> você escolhe o que vai no final, no lugar do pulo de linha:</p>
+<pre class="codigo" data-executar="sim"><code>print("Carregando", end="")
+print("...", end="")
+print(" pronto!")
+print("Um", end=" | ")
+print("Dois", end=" | ")
+print("Três")</code></pre>
+    <p class="saida">Carregando... pronto!<br>
+Um | Dois | Três</p>
+    <p>Os três primeiros <code>print</code> ficaram na mesma linha porque os dois primeiros terminaram com <code>end=""</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Dá para usar <code>sep</code> e <code>end</code> juntos, em qualquer ordem: <code>print("a", "b", sep="-", end="!\n")</code>.</div>
+
+    <h2>Quebra de linha com \n</h2>
+    <p>Dentro de um texto, <code>\n</code> significa "pule uma linha aqui". Assim um único <code>print</code> mostra várias linhas:</p>
+<pre class="codigo" data-executar="sim"><code>print("Lista de compras:\n- pão\n- leite\n- banana")
+print()
+print("O print vazio acima mostrou uma linha em branco.")</code></pre>
+    <p class="saida">Lista de compras:<br>
+- pão<br>
+- leite<br>
+- banana<br>
+&nbsp;<br>
+O print vazio acima mostrou uma linha em branco.</p>
+    <p><code>print()</code> sem nada dentro mostra uma linha em branco. Ótimo para separar partes da saída.</p>
+
+    <h2>Desenhando com print</h2>
+    <p>Com o que você já sabe, dá para fazer pequenos desenhos e cartazes na tela:</p>
+<pre class="codigo" data-executar="sim"><code>print("+---------------+")
+print("|  BOM DIA, BR! |")
+print("+---------------+")
+print("*", "*", "*", sep="   ")</code></pre>
+    <p class="saida">+---------------+<br>
+| &nbsp;BOM DIA, BR! |<br>
++---------------+<br>
+* &nbsp;&nbsp;* &nbsp;&nbsp;*</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print("Dia", "mês", "ano", sep="/")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use um único <code>print</code> com <code>sep</code> para mostrar o horário <code>14:30:00</code> a partir dos valores <code>"14"</code>, <code>"30"</code> e <code>"00"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("14", "30", "00", sep=":")</code></pre>
+      <p class="saida">14:30:00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Com um único <code>print</code> e <code>\n</code>, mostre os três primeiros dias da semana, um por linha.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Segunda\nTerça\nQuarta")</code></pre>
+      <p class="saida">Segunda<br>
+Terça<br>
+Quarta</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use dois <code>print</code> e o parâmetro <code>end</code> para que a saída fique <code>Gol do Brasil!</code> numa linha só.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Gol do ", end="")
+print("Brasil!")</code></pre>
+      <p class="saida">Gol do Brasil!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre o CEP <code>01310-100</code> usando um só <code>print</code> com os valores <code>"01310"</code> e <code>"100"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("01310", "100", sep="-")</code></pre>
+      <p class="saida">01310-100</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça uma contagem regressiva <code>3... 2... 1... Já!</code> numa linha só, usando quatro <code>print</code> e <code>end</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("3", end="... ")
+print("2", end="... ")
+print("1", end="... ")
+print("Já!")</code></pre>
+      <p class="saida">3... 2... 1... Já!</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="06-lendo-mensagens-de-erro.html" rel="prev">← Aula anterior</a>
+      <a href="11-tipos-str.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

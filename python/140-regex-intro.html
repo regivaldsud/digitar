@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 140 · O que é regex; re.search, findall, sub — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça as expressões regulares e use re.search, re.findall e re.sub para procurar e trocar padrões em textos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 7 · Expressões regulares</p>
+    <h1>Aula 140 · O que é regex; re.search, findall, sub</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma expressão regular (regex) e para que serve</li>
+        <li>Procurar um padrão com <code>re.search</code> e ler o resultado com <code>group()</code></li>
+        <li>Achar todas as ocorrências com <code>re.findall</code></li>
+        <li>Trocar trechos com <code>re.sub</code></li>
+        <li>Por que usar strings cruas <code>r"..."</code></li>
+      </ul>
+    </div>
+
+    <h2>Procurar padrões, não palavras</h2>
+    <p>Com <code>in</code> e <code>find</code> (aula 28) você procura um texto exato, como <code>"Recife"</code>. Mas e se quiser achar <strong>qualquer</strong> CEP numa mensagem? Ou todos os números de telefone de um texto? Você não sabe o texto exato, só o <strong>formato</strong>: cinco dígitos, um tracinho, três dígitos.</p>
+    <p>Uma <strong>expressão regular</strong> (em inglês *regular expression*, ou <strong>regex</strong>) é um mini-idioma para descrever formatos de texto. Em Python ela mora no módulo <code>re</code>. Por exemplo, <code>\d</code> quer dizer "um dígito qualquer", e <code>\d{5}</code> quer dizer "cinco dígitos seguidos".</p>
+
+    <h2>re.search: achar a primeira ocorrência</h2>
+    <p><code>re.search(padrao, texto)</code> procura o padrão em qualquer lugar do texto. Se achar, devolve um objeto <strong>match</strong>; o método <code>group()</code> mostra o trecho encontrado. Se não achar, devolve <code>None</code>.</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+mensagem = "Pode mandar a encomenda para o CEP 01310-100, em São Paulo."
+achado = re.search(r"\d{5}-\d{3}", mensagem)
+print(achado.group())
+print(achado.start(), achado.end())
+
+nada = re.search(r"\d{5}-\d{3}", "Esqueci o CEP.")
+print(nada)</code></pre>
+    <p class="saida">01310-100<br>
+35 44<br>
+None</p>
+    <p><code>start()</code> e <code>end()</code> mostram onde o trecho começa e termina, como nos índices de texto da aula 20.</p>
+    <div class="atencao"><strong>Atenção:</strong> Antes de chamar <code>group()</code>, confira se achou algo: <code>if achado:</code>. Chamar <code>.group()</code> em <code>None</code> dá <code>AttributeError: 'NoneType' object has no attribute 'group'</code>.</div>
+
+    <h2>Strings cruas: o r antes das aspas</h2>
+    <p>Repare no <code>r</code> em <code>r"\d{5}"</code>. Ele cria uma <strong>string crua</strong>: a barra invertida fica do jeito que você digitou. Sem o <code>r</code>, o Python tenta interpretar combinações como <code>\n</code> (nova linha) ou <code>\b</code> antes de a regex ver o texto.</p>
+<pre class="codigo" data-executar="sim"><code>print(len("\b"), len(r"\b"))
+print(r"\d+ e \n ficam como estão")</code></pre>
+    <p class="saida">1 2<br>
+\d+ e \n ficam como estão</p>
+    <div class="dica"><strong>Dica:</strong> Crie o hábito: toda regex começa com <code>r"</code>. Assim você nunca cai na pegadinha das barras.</div>
+
+    <h2>re.findall: todas as ocorrências</h2>
+    <p><code>re.findall</code> devolve uma <strong>lista</strong> com todos os trechos que combinam com o padrão. <code>\d+</code> quer dizer "um ou mais dígitos seguidos":</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+lista = "Comprei 3 pães, 12 ovos e 2 litros de leite por 25 reais."
+numeros = re.findall(r"\d+", lista)
+print(numeros)
+print(sum(int(n) for n in numeros))</code></pre>
+    <p class="saida">['3', '12', '2', '25']<br>
+42</p>
+    <p>Os itens vêm como texto; use <code>int()</code> para fazer contas.</p>
+
+    <h2>re.sub: procurar e trocar</h2>
+    <p><code>re.sub(padrao, troca, texto)</code> troca <strong>todos</strong> os trechos encontrados. Que tal esconder números de telefone de uma mensagem antes de publicar?</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Me liga no 98765-4321 ou no 91234-5678!"
+seguro = re.sub(r"\d{5}-\d{4}", "*****-****", texto)
+print(seguro)
+
+espacos = "Muito     espaço    entre   as palavras"
+print(re.sub(r" +", " ", espacos))</code></pre>
+    <p class="saida">Me liga no *****-**** ou no *****-****!<br>
+Muito espaço entre as palavras</p>
+    <p>O segundo exemplo usa <code>" +"</code> (um ou mais espaços) para deixar só um espaço entre as palavras.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>cep = re.search(r"\d{5}-\d{3}", texto)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use <code>re.findall</code> para pegar todos os números do texto <code>"Tenho 2 gatos, 1 cachorro e 15 peixes"</code> e mostre a lista.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Tenho 2 gatos, 1 cachorro e 15 peixes"
+print(re.findall(r"\d+", texto))</code></pre>
+      <p class="saida">['2', '1', '15']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Procure um horário no formato <code>HH:MM</code> (dois dígitos, dois-pontos, dois dígitos) na frase <code>"O ônibus sai às 07:45 da rodoviária"</code> e mostre só o horário.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+frase = "O ônibus sai às 07:45 da rodoviária"
+achado = re.search(r"\d{2}:\d{2}", frase)
+if achado:
+    print(achado.group())</code></pre>
+      <p class="saida">07:45</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Troque todas as sequências de dígitos do texto <code>"Senha 1234 e PIN 987"</code> por <code>"###"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.sub(r"\d+", "###", "Senha 1234 e PIN 987"))</code></pre>
+      <p class="saida">Senha ### e PIN ###</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que <code>re.search(r"\d{3}", "abc")</code> devolve? Por que é perigoso chamar <code>.group()</code> direto nesse caso?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+resultado = re.search(r"\d{3}", "abc")
+print(resultado)
+if resultado is None:
+    print("Nada encontrado: chamar .group() aqui daria AttributeError")</code></pre>
+      <p class="saida">None<br>
+Nada encontrado: chamar .group() aqui daria AttributeError</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="134-pytest.html" rel="prev">← Aula anterior</a>
+      <a href="141-regex-meta.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

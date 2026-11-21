@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 89 · namedtuple — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use namedtuple e typing.NamedTuple para criar tuplas com nomes nos campos, mais legíveis que índices e mais leves que uma classe.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 89 · namedtuple</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O problema de acessar dados de tupla só por índice</li>
+        <li>Como criar tuplas com nomes usando <code>collections.namedtuple</code></li>
+        <li>Como usar <code>_asdict</code>, <code>_replace</code>, <code>_fields</code> e valores padrão</li>
+        <li>Como escrever a versão com tipos, <code>typing.NamedTuple</code>, e quando preferir uma dataclass</li>
+      </ul>
+    </div>
+
+    <h2>O problema dos índices</h2>
+    <p>Uma tupla guarda vários valores juntos, como <code>("Fortaleza", "CE", 2428678)</code>. Mas, para pegar a população, você precisa lembrar que ela está na posição <code>2</code>. Daqui a uma semana, o que significa <code>cidade[2]</code>?</p>
+<pre class="codigo" data-executar="sim"><code>cidade = ("Fortaleza", "CE", 2428678)
+print(cidade[0], "tem", cidade[2], "habitantes")</code></pre>
+    <p class="saida">Fortaleza tem 2428678 habitantes</p>
+    <p>A <strong>namedtuple</strong> resolve isso: é uma tupla em que cada posição também tem um <strong>nome</strong>.</p>
+
+    <h2>Criando uma namedtuple</h2>
+    <p>A função <code>namedtuple</code>, do módulo <code>collections</code>, cria um novo tipo. Você passa o nome do tipo e a lista dos campos:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Cidade = namedtuple("Cidade", ["nome", "estado", "populacao"])
+
+fortaleza = Cidade("Fortaleza", "CE", 2428678)
+print(fortaleza)
+print(fortaleza.nome, "tem", fortaleza.populacao, "habitantes")
+print(fortaleza[1])</code></pre>
+    <p class="saida">Cidade(nome='Fortaleza', estado='CE', populacao=2428678)<br>
+Fortaleza tem 2428678 habitantes<br>
+CE</p>
+    <p>Ela continua sendo uma tupla: funciona com índices, desempacotamento e <code>len</code>. E, como toda tupla, é <strong>imutável</strong>:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Ponto = namedtuple("Ponto", ["x", "y"])
+p = Ponto(3, 4)
+x, y = p
+print(x + y, len(p))
+p.x = 10</code></pre>
+    <p class="saida">7 2<br>
+AttributeError: can't set attribute</p>
+    <div class="atencao"><strong>Atenção:</strong> Para "mudar" uma namedtuple, crie outra com <code>_replace</code>, como mostrado a seguir. Tentar alterar um campo dá <code>AttributeError</code>.</div>
+
+    <h2>Métodos úteis</h2>
+    <p>As namedtuples trazem alguns métodos que começam com sublinhado (para não confundir com os nomes dos campos):</p>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Aluno = namedtuple("Aluno", ["nome", "turma", "nota"])
+a = Aluno("Bruna", "9º A", 7.5)
+
+print(Aluno._fields)
+print(a._asdict())
+b = a._replace(nota=9.0)
+print(b)
+print(a)</code></pre>
+    <p class="saida">('nome', 'turma', 'nota')<br>
+{'nome': 'Bruna', 'turma': '9º A', 'nota': 7.5}<br>
+Aluno(nome='Bruna', turma='9º A', nota=9.0)<br>
+Aluno(nome='Bruna', turma='9º A', nota=7.5)</p>
+    <ul>
+      <li><code>_fields</code>: os nomes dos campos.</li>
+      <li><code>_asdict()</code>: transforma em dicionário.</li>
+      <li><code>_replace(...)</code>: devolve uma <strong>cópia</strong> com alguns campos trocados; a original não muda.</li>
+    </ul>
+    <p>Também dá para definir valores padrão com <code>defaults</code>. Eles valem para os <strong>últimos</strong> campos:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Pedido = namedtuple("Pedido", ["lanche", "quantidade", "bebida"], defaults=[1, "água"])
+print(Pedido("tapioca"))
+print(Pedido("cuscuz", 2, "suco de caju"))</code></pre>
+    <p class="saida">Pedido(lanche='tapioca', quantidade=1, bebida='água')<br>
+Pedido(lanche='cuscuz', quantidade=2, bebida='suco de caju')</p>
+
+    <h2>A versão com tipos: typing.NamedTuple</h2>
+    <p>Com <code>typing.NamedTuple</code>, você escreve a namedtuple no formato de classe, com type hints. O resultado é o mesmo tipo de tupla, mas mais fácil de ler — e dá até para colocar métodos:</p>
+<pre class="codigo" data-executar="sim"><code>from typing import NamedTuple
+
+class Produto(NamedTuple):
+    nome: str
+    preco: float
+    quantidade: int = 1
+
+    def total(self):
+        return self.preco * self.quantidade
+
+itens = [Produto("arroz", 25.90), Produto("ovos", 0.80, 12)]
+for item in itens:
+    print(f"{item.nome:&lt;6} R$ {item.total():6.2f}")</code></pre>
+    <p class="saida">arroz &nbsp;R$ &nbsp;25.90<br>
+ovos &nbsp;&nbsp;R$ &nbsp;&nbsp;9.60</p>
+
+    <h2>namedtuple ou dataclass?</h2>
+    <ul>
+      <li>Use <strong>namedtuple</strong> para registros pequenos que não mudam: coordenadas, cores RGB, uma linha de planilha. É leve e funciona em qualquer lugar onde uma tupla funciona.</li>
+      <li>Use <strong>dataclass</strong> (aula 88) quando o objeto precisa mudar, ter validação no <code>__post_init__</code> ou muitos métodos.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Funções que devolvem vários valores ficam muito mais claras devolvendo uma namedtuple: quem chamar pode usar <code>resultado.media</code> em vez de <code>resultado[1]</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>Ponto = namedtuple("Ponto", ["x", "y"])</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a namedtuple <code>Cor</code> com os campos <code>r</code>, <code>g</code> e <code>b</code> e mostre a cor <code>Cor(0, 156, 59)</code> (o verde da bandeira) e o valor do campo <code>g</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Cor = namedtuple("Cor", ["r", "g", "b"])
+verde = Cor(0, 156, 59)
+print(verde)
+print(verde.g)</code></pre>
+      <p class="saida">Cor(r=0, g=156, b=59)<br>
+156</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a função <code>estatisticas(notas)</code> que devolve uma namedtuple <code>Resumo</code> com <code>menor</code>, <code>maior</code> e <code>media</code>. Teste com <code>[7, 9.5, 6, 8]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Resumo = namedtuple("Resumo", ["menor", "maior", "media"])
+
+def estatisticas(notas):
+    return Resumo(min(notas), max(notas), sum(notas) / len(notas))
+
+r = estatisticas([7, 9.5, 6, 8])
+print(r)
+print(f"Média: {r.media:.2f}")</code></pre>
+      <p class="saida">Resumo(menor=6, maior=9.5, media=7.625)<br>
+Média: 7.62</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma namedtuple <code>Jogador</code> tem <code>nome</code> e <code>pontos</code>. Use <code>_replace</code> para criar uma versão com 10 pontos a mais e mostre a antiga e a nova.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Jogador = namedtuple("Jogador", ["nome", "pontos"])
+antes = Jogador("Duda", 40)
+depois = antes._replace(pontos=antes.pontos + 10)
+print(antes)
+print(depois)</code></pre>
+      <p class="saida">Jogador(nome='Duda', pontos=40)<br>
+Jogador(nome='Duda', pontos=50)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Com <code>typing.NamedTuple</code>, crie <code>Viagem</code> com <code>origem</code>, <code>destino</code> e <code>km</code>, e um método <code>horas(velocidade)</code> que calcula o tempo de viagem. Ordene uma lista de viagens pela distância.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from typing import NamedTuple
+
+class Viagem(NamedTuple):
+    origem: str
+    destino: str
+    km: float
+
+    def horas(self, velocidade):
+        return self.km / velocidade
+
+viagens = [Viagem("São Paulo", "Rio", 430), Viagem("Recife", "João Pessoa", 120),
+           Viagem("Curitiba", "Florianópolis", 300)]
+for v in sorted(viagens, key=lambda v: v.km):
+    print(f"{v.origem} -&gt; {v.destino}: {v.horas(80):.1f} h")</code></pre>
+      <p class="saida">Recife -&gt; João Pessoa: 1.5 h<br>
+Curitiba -&gt; Florianópolis: 3.8 h<br>
+São Paulo -&gt; Rio: 5.4 h</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Transforme cada linha da lista abaixo numa namedtuple <code>Linha</code> (<code>produto</code>, <code>preco</code>) e mostre a soma dos preços.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import namedtuple
+
+Linha = namedtuple("Linha", ["produto", "preco"])
+dados = [("leite", 5.49), ("pão", 0.75), ("manteiga", 12.90)]
+linhas = [Linha(*d) for d in dados]
+print(f"Total: R$ {sum(l.preco for l in linhas):.2f}")</code></pre>
+      <p class="saida">Total: R$ 19.14</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="88-dataclasses.html" rel="prev">← Aula anterior</a>
+      <a href="90-colecoes-proprias.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

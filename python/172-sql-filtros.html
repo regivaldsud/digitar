@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 172 · WHERE, ORDER BY, LIMIT, LIKE, funções de agregação, GROUP BY — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a filtrar, ordenar, limitar e resumir dados com SQL.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 172 · WHERE, ORDER BY, LIMIT, LIKE, funções de agregação, GROUP BY</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Filtrar linhas com WHERE e LIKE</li>
+        <li>Ordenar e limitar resultados com ORDER BY e LIMIT</li>
+        <li>Resumir dados com COUNT, SUM, AVG, MIN, MAX e GROUP BY</li>
+      </ul>
+    </div>
+
+    <h2>Os dados da turma</h2>
+    <p>Todos os exemplos usam esta tabela de notas. Copie a parte de criação quando quiser testar suas consultas:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+])
+
+print(con.execute("SELECT aluno, nota FROM notas WHERE materia = 'Matemática' AND nota &gt;= 7").fetchall())
+print(con.execute("SELECT DISTINCT aluno FROM notas WHERE aluno LIKE 'C%'").fetchall())
+con.close()</code></pre>
+    <p class="saida">[('Ana', 9.0), ('Carla', 10.0)]<br>
+[('Carla',)]</p>
+    <p><code>executemany</code> insere várias linhas de uma vez (os <code>?</code> são explicados na aula 175). No <code>LIKE</code>, <code>%</code> significa "qualquer coisa" e <code>_</code> significa "exatamente um caractere". <code>DISTINCT</code> tira repetições.</p>
+
+    <h2>Ordenar e limitar</h2>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+])
+for linha in con.execute("SELECT aluno, materia, nota FROM notas ORDER BY nota DESC LIMIT 3"):
+    print(linha)
+con.close()</code></pre>
+    <p class="saida">('Carla', 'Matemática', 10.0)<br>
+('Carla', 'História', 9.5)<br>
+('Ana', 'Matemática', 9.0)</p>
+    <p><code>ORDER BY nota DESC</code> ordena da maior para a menor (<code>ASC</code>, o padrão, é da menor para a maior). <code>LIMIT 3</code> pega só as três primeiras: o "pódio".</p>
+
+    <h2>Resumindo com agregação</h2>
+    <p>As <strong>funções de agregação</strong> transformam muitas linhas em um número. Com <code>GROUP BY</code>, o resumo é feito por grupo:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+])
+print(con.execute("SELECT COUNT(*), MIN(nota), MAX(nota) FROM notas").fetchone())
+for aluno, media in con.execute(
+        "SELECT aluno, AVG(nota) FROM notas GROUP BY aluno ORDER BY aluno"):
+    print(f"{aluno}: {media:.2f}")
+con.close()</code></pre>
+    <p class="saida">(6, 6.0, 10.0)<br>
+Ana: 8.25<br>
+Bruno: 6.50<br>
+Carla: 9.75</p>
+    <div class="dica"><strong>Dica:</strong> Para filtrar <strong>depois</strong> de agrupar, use <code>HAVING</code> em vez de <code>WHERE</code>: <code>GROUP BY aluno HAVING AVG(nota) &gt;= 8</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Sem <code>ORDER BY</code>, o banco pode devolver as linhas em qualquer ordem. Se a ordem importa, peça explicitamente.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>SELECT aluno, AVG(nota) FROM notas GROUP BY aluno</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Usando a tabela <code>notas</code>, mostre a média de cada matéria, da maior para a menor.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+])
+sql = "SELECT materia, AVG(nota) AS media FROM notas GROUP BY materia ORDER BY media DESC"
+for materia, media in con.execute(sql):
+    print(f"{materia}: {media:.2f}")
+con.close()</code></pre>
+      <p class="saida">Matemática: 8.33<br>
+História: 8.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Mostre só os alunos com média maior ou igual a 8, usando <code>HAVING</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+])
+sql = "SELECT aluno, AVG(nota) FROM notas GROUP BY aluno HAVING AVG(nota) &gt;= 8 ORDER BY aluno"
+print(con.execute(sql).fetchall())
+con.close()</code></pre>
+      <p class="saida">[('Ana', 8.25), ('Carla', 9.75)]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Encontre os alunos cujo nome tem exatamente 3 letras, usando <code>LIKE</code> com <code>_</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Bruno", "Matemática", 6.0), ("Rui", "História", 7.0),
+])
+print(con.execute("SELECT aluno FROM notas WHERE aluno LIKE '___' ORDER BY aluno").fetchall())
+con.close()</code></pre>
+      <p class="saida">[('Ana',), ('Rui',)]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="171-sql-crud.html" rel="prev">← Aula anterior</a>
+      <a href="173-sql-relacoes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

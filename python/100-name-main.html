@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 100 · if __name__ == &quot;__main__&quot; — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda a variável especial __name__ e use if __name__ == &quot;__main__&quot; para que um arquivo funcione tanto como programa quanto como módulo.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 100 · if __name__ == &quot;__main__&quot;</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que guarda a variável especial <code>__name__</code></li>
+        <li>Por que código "solto" num módulo roda quando ele é importado</li>
+        <li>Como proteger o programa principal com <code>if __name__ == "__main__":</code></li>
+        <li>Como organizar o arquivo com uma função <code>main()</code></li>
+      </ul>
+    </div>
+
+    <h2>Todo módulo sabe o próprio nome</h2>
+    <p>Na aula 54 você aprendeu a importar módulos e, na aula 55, a criar os seus. Agora vamos ver um detalhe que aparece em quase todo programa Python profissional.</p>
+    <p>Cada módulo carregado pelo Python tem uma variável chamada <code>__name__</code> (dois sublinhados de cada lado) com o nome dele:</p>
+<pre class="codigo" data-executar="sim"><code>import math
+import json
+import random
+
+print(math.__name__)
+print(json.__name__)
+print(random.__name__)</code></pre>
+    <p class="saida">math<br>
+json<br>
+random</p>
+    <p>Até aqui, nada de mais: o módulo <code>math</code> se chama <code>"math"</code>. A parte interessante é o que acontece com o arquivo que <strong>você</strong> manda rodar.</p>
+
+    <h2>O arquivo que você roda se chama "__main__"</h2>
+    <p>Quando você roda um arquivo diretamente (por exemplo, <code>python frete.py</code>), o Python não usa o nome do arquivo. Ele dá a esse arquivo o nome especial <code>"__main__"</code>, que quer dizer "o programa principal".</p>
+<pre class="codigo"><code>print("Meu nome é:", __name__)</code></pre>
+    <p class="saida">Meu nome é: __main__</p>
+    <p>Se outro arquivo fizer <code>import quem_sou</code>, a mesma linha mostraria <code>Meu nome é: quem_sou</code>. Ou seja: <code>__name__</code> diz se o arquivo está sendo <strong>rodado</strong> ou <strong>importado</strong>.</p>
+
+    <h2>O problema: código solto roda no import</h2>
+    <p>Imagine um módulo de frete que também tem um teste rápido no final, solto no arquivo:</p>
+<pre class="codigo"><code>def frete(peso_kg):
+    """Frete de uma loja: R$ 15 fixos mais R$ 2 por quilo."""
+    return 15 + 2 * peso_kg
+
+print("Teste: frete de 3 kg =", frete(3))</code></pre>
+    <p>Agora outro programa só quer usar a função <code>frete</code>:</p>
+<pre class="codigo"><code>from frete import frete
+
+print("Seu pedido de 5 kg paga R$", frete(5))</code></pre>
+    <p class="saida">Teste: frete de 3 kg = 21<br>
+Seu pedido de 5 kg paga R$ 25</p>
+    <p>Repare que o "Teste" apareceu também! Ao importar, o Python executa o arquivo <code>frete.py</code> inteiro, de cima a baixo — inclusive o <code>print</code> solto.</p>
+
+    <h2>A solução: if __name__ == "__main__"</h2>
+    <p>Basta colocar o código de teste dentro de um <code>if</code> que só é verdadeiro quando o arquivo é o programa principal:</p>
+<pre class="codigo"><code>def frete(peso_kg):
+    """Frete de uma loja: R$ 15 fixos mais R$ 2 por quilo."""
+    return 15 + 2 * peso_kg
+
+if __name__ == "__main__":
+    print("Teste: frete de 3 kg =", frete(3))</code></pre>
+<pre class="codigo"><code>from frete import frete
+
+print("Seu pedido de 5 kg paga R$", frete(5))</code></pre>
+    <p class="saida">Seu pedido de 5 kg paga R$ 25</p>
+    <p>Agora o import fica silencioso. E quem rodar <code>python frete.py</code> diretamente continua vendo o teste.</p>
+    <div class="atencao"><strong>Atenção:</strong> São <strong>dois</strong> sublinhados de cada lado em <code>__name__</code> e em <code>"__main__"</code>, e <code>"__main__"</code> vai entre aspas porque é um texto. Escrever <code>_name_</code> dá <code>NameError</code>; escrever <code>"_main_"</code> não dá erro nenhum — o <code>if</code> simplesmente nunca é verdadeiro e o programa "não faz nada".</div>
+
+    <h2>O padrão com main()</h2>
+    <p>O costume é juntar todo o programa principal numa função <code>main()</code> e chamá-la dentro do <code>if</code>. Assim o arquivo fica organizado: primeiro as ferramentas, no fim o "botão de ligar".</p>
+<pre class="codigo" data-executar="sim"><code>def converter_para_dolar(reais, cotacao):
+    return reais / cotacao
+
+def main():
+    mesada = 80
+    cotacao = 5.0
+    print(f"R$ {mesada} valem US$ {converter_para_dolar(mesada, cotacao):.2f}")
+
+main()</code></pre>
+    <p class="saida">R$ 80 valem US$ 16.00</p>
+    <p>Aqui no navegador chamamos <code>main()</code> direto. No seu computador, a última linha fica assim:</p>
+<pre class="codigo"><code>if __name__ == "__main__":
+    main()</code></pre>
+    <div class="dica"><strong>Dica:</strong> No VS Code, digite <code>main</code> e escolha a sugestão "if __name__ == '__main__'" (com a extensão Python instalada) para o editor escrever o bloco para você.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if __name__ == "__main__":</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Mostre o valor de <code>__name__</code> dos módulos <code>datetime</code> e <code>string</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import datetime
+import string
+
+print(datetime.__name__)
+print(string.__name__)</code></pre>
+      <p class="saida">datetime<br>
+string</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O arquivo <code>piadas.py</code> tem uma função <code>piada()</code> e, no fim, a linha solta <code>print(piada())</code>. Quando outro programa faz <code>import piadas</code>, a piada aparece sozinha. Como consertar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def piada():
+    return "Por que o livro de matemática ficou triste? Porque tinha muitos problemas."
+
+if __name__ == "__main__":
+    print(piada())</code></pre>
+      <p>Coloque a linha <code>print(piada())</code> dentro do <code>if __name__ == "__main__":</code>. Assim ela só roda com <code>python piadas.py</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva um programa com uma função <code>area_retangulo(base, altura)</code> e uma função <code>main()</code> que mostra a área de um quarto de 3 por 4 metros. Termine com o bloco <code>if __name__ == "__main__":</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def area_retangulo(base, altura):
+    return base * altura
+
+def main():
+    print("Área do quarto:", area_retangulo(3, 4), "m²")
+
+if __name__ == "__main__":
+    main()</code></pre>
+      <p class="saida">Área do quarto: 12 m²</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Um colega escreveu <code>if __name__ == "_main_":</code> e reclamou que o programa roda sem erro, mas não mostra nada. Explique o motivo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Com um sublinhado só, "_main_" é um texto diferente de "__main__".<br>
+A comparação dá False, o bloco do if nunca roda e, como não há erro<br>
+de sintaxe, o Python termina em silêncio. O certo é "__main__".</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="99-projeto-poo.html" rel="prev">← Aula anterior</a>
+      <a href="101-datetime.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

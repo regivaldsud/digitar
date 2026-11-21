@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 68 · Projeto: treino de digitação no terminal — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie o seu próprio treino de digitação que mede velocidade em PPM e precisão, igualzinho à ideia do DIGITAR.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 68 · Projeto: treino de digitação no terminal</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Medir o tempo com <code>time.perf_counter</code></li>
+        <li>Calcular a velocidade em palavras por minuto (PPM)</li>
+        <li>Calcular a precisão comparando caractere por caractere</li>
+        <li>Mostrar onde estão os erros</li>
+        <li>Juntar tudo num treino de 3 rodadas com resultado final</li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>Você aprendeu a digitar com o DIGITAR. Agora vai construir o seu próprio treino de digitação! O programa mostra uma frase, você digita, e ele responde quanto tempo levou, sua velocidade e sua precisão.</p>
+    <p>É o encontro perfeito das duas coisas que você aprendeu: digitar bem e programar.</p>
+
+    <h2>Passo 1: as frases e o sorteio</h2>
+<pre class="codigo" data-executar="sim"><code>import random
+
+FRASES = [
+    "O sapo não lava o pé.",
+    "Quem digita bem programa mais rápido.",
+    "A prática leva à perfeição.",
+    "Python é uma linguagem fácil de ler.",
+    "Hoje tem pão de queijo no café da manhã.",
+]
+
+print(random.choice(FRASES))
+print(random.sample(FRASES, 3))</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+A prática leva à perfeição.<br>
+['Quem digita bem programa mais rápido.', 'Hoje tem pão de queijo no café da manhã.', 'Python é uma linguagem fácil de ler.']</p>
+    <ul>
+      <li><code>random.choice</code> sorteia <strong>um</strong> item da lista.</li>
+      <li><code>random.sample(lista, 3)</code> sorteia <strong>três itens diferentes</strong>, sem repetir. Perfeito para um treino de 3 rodadas.</li>
+    </ul>
+
+    <h2>Passo 2: medir o tempo</h2>
+    <p>O módulo <code>time</code> tem a função <code>perf_counter()</code>, um cronômetro de alta precisão. O valor dela sozinho não significa nada; o que importa é a <strong>diferença</strong> entre duas leituras:</p>
+<pre class="codigo" data-executar="sim"><code>import time
+
+inicio = time.perf_counter()
+total = sum(range(1_000_000))
+fim = time.perf_counter()
+print(f"Somar um milhão de números levou {fim - inicio:.4f} segundos")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+Somar um milhão de números levou 0.0182 segundos</p>
+    <p>No treino, vamos ler o cronômetro logo antes do <code>input</code> e logo depois que a pessoa aperta Enter.</p>
+    <div class="dica"><strong>Dica:</strong> Prefira <code>time.perf_counter()</code> a <code>time.time()</code> para medir duração. O <code>time.time()</code> segue o relógio do computador, que pode ser ajustado no meio da medição; o <code>perf_counter</code> só anda para a frente.</div>
+
+    <h2>Passo 3: calcular a velocidade (PPM)</h2>
+    <p>Palavras têm tamanhos diferentes: "pé" é rapidinho, "paralelepípedo" não. Para comparar de forma justa, os cursos de digitação usam uma <strong>palavra padrão de 5 caracteres</strong> (contando espaços e pontuação). A fórmula fica:</p>
+    <p class="saida">PPM = (caracteres digitados ÷ 5) ÷ minutos</p>
+<pre class="codigo" data-executar="sim"><code>def calcular_ppm(caracteres, segundos):
+    if segundos &lt;= 0:
+        return 0.0
+    minutos = segundos / 60
+    return (caracteres / 5) / minutos
+
+
+print(round(calcular_ppm(250, 60)))
+print(round(calcular_ppm(120, 30)))
+print(round(calcular_ppm(21, 6.3)))</code></pre>
+    <p class="saida">50<br>
+48<br>
+40</p>
+    <p>Digitar 250 caracteres em 1 minuto dá 50 PPM. Também dá para contar as palavras de verdade, com <code>split()</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def palavras_reais_por_minuto(texto, segundos):
+    return len(texto.split()) / (segundos / 60)
+
+
+print(round(palavras_reais_por_minuto("O sapo não lava o pé.", 6.3)))</code></pre>
+    <p class="saida">57</p>
+    <p>As duas medidas são diferentes: "O sapo não lava o pé." tem 6 palavras curtinhas, então a contagem real dá mais que a palavra padrão.</p>
+
+    <h2>Passo 4: calcular a precisão</h2>
+    <p>Comparamos a frase certa com o que foi digitado, posição por posição. A função <code>zip</code> anda pelas duas ao mesmo tempo:</p>
+<pre class="codigo" data-executar="sim"><code>def calcular_precisao(alvo, digitado):
+    total = max(len(alvo), len(digitado))
+    if total == 0:
+        return 100.0
+    acertos = 0
+    for certo, feito in zip(alvo, digitado):
+        if certo == feito:
+            acertos += 1
+    return acertos / total * 100
+
+
+print(calcular_precisao("o gato mia", "o gato mia"))
+print(calcular_precisao("o gato mia", "o gatp mia"))
+print(calcular_precisao("o gato mia", "o gato"))
+print(calcular_precisao("o gato mia", "o gato miaaaaa"))</code></pre>
+    <p class="saida">100.0<br>
+90.0<br>
+60.0<br>
+71.42857142857143</p>
+    <ul>
+      <li>Usamos o <strong>maior</strong> tamanho como total: assim, digitar letras a menos ou a mais também diminui a precisão.</li>
+      <li>O <code>zip</code> para no fim da sequência mais curta, então os caracteres que sobram contam como erro.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Esta comparação posição por posição é simples, mas tem um ponto fraco: se você <strong>pular</strong> uma letra no começo, todas as seguintes ficam "fora do lugar" e contam como erro. Um desafio extra no fim da aula mostra uma forma mais esperta de comparar.</div>
+
+    <h2>Passo 5: mostrar onde estão os erros</h2>
+    <p>Vamos desenhar um <code>^</code> embaixo de cada caractere errado:</p>
+<pre class="codigo" data-executar="sim"><code>def marcar_erros(alvo, digitado):
+    marcas = ""
+    for i in range(max(len(alvo), len(digitado))):
+        certo = alvo[i] if i &lt; len(alvo) else ""
+        feito = digitado[i] if i &lt; len(digitado) else ""
+        marcas += " " if certo == feito else "^"
+    return marcas.rstrip()
+
+
+alvo = "A prática leva à perfeição."
+digitado = "A pratica leva a perfeiçao."
+print(alvo)
+print(digitado)
+print(marcar_erros(alvo, digitado))</code></pre>
+    <p class="saida">A prática leva à perfeição.<br>
+A pratica leva a perfeiçao.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;^ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^</p>
+    <p>Num terminal, que usa letras de largura fixa, cada <code>^</code> fica bem embaixo do erro. Repare que esquecer os acentos também conta como erro — digitar bem em português inclui os acentos!</p>
+
+    <h2>Passo 6: o programa completo</h2>
+    <p>Agora juntamos tudo: 3 rodadas com frases sorteadas e, no fim, a média de velocidade e de precisão.</p>
+<pre class="codigo"><code>import random
+import time
+
+FRASES = [
+    "O sapo não lava o pé.",
+    "Quem digita bem programa mais rápido.",
+    "A prática leva à perfeição.",
+    "Python é uma linguagem fácil de ler.",
+    "Hoje tem pão de queijo no café da manhã.",
+    "O Brasil tem vinte e seis estados e o Distrito Federal.",
+]
+RODADAS = 3
+
+
+def calcular_ppm(caracteres, segundos):
+    if segundos &lt;= 0:
+        return 0.0
+    return (caracteres / 5) / (segundos / 60)
+
+
+def calcular_precisao(alvo, digitado):
+    total = max(len(alvo), len(digitado))
+    if total == 0:
+        return 100.0
+    acertos = sum(1 for certo, feito in zip(alvo, digitado) if certo == feito)
+    return acertos / total * 100
+
+
+def marcar_erros(alvo, digitado):
+    marcas = ""
+    for i in range(max(len(alvo), len(digitado))):
+        certo = alvo[i] if i &lt; len(alvo) else ""
+        feito = digitado[i] if i &lt; len(digitado) else ""
+        marcas += " " if certo == feito else "^"
+    return marcas.rstrip()
+
+
+def rodada(numero, frase):
+    print()
+    print(f"--- Rodada {numero} de {RODADAS} ---")
+    input("Aperte Enter quando estiver pronto...")
+    print(frase)
+    inicio = time.perf_counter()
+    digitado = input()
+    segundos = time.perf_counter() - inicio
+    ppm = calcular_ppm(len(digitado), segundos)
+    precisao = calcular_precisao(frase, digitado)
+    print(f"Tempo: {segundos:.1f} s | Velocidade: {ppm:.0f} PPM | Precisão: {precisao:.0f}%")
+    if digitado != frase:
+        print(marcar_erros(frase, digitado))
+    return ppm, precisao
+
+
+def mensagem(precisao):
+    if precisao == 100:
+        return "Perfeito! Nenhum erro."
+    if precisao &gt;= 95:
+        return "Excelente! Quase sem erros."
+    if precisao &gt;= 85:
+        return "Bom trabalho! Capriche um pouco mais na precisão."
+    return "Vá com calma: primeiro acerte, depois acelere."
+
+
+def main():
+    print("=== TREINO DE DIGITAÇÃO ===")
+    print("Digite cada frase exatamente como aparece e aperte Enter.")
+    resultados = []
+    for numero, frase in enumerate(random.sample(FRASES, RODADAS), start=1):
+        resultados.append(rodada(numero, frase))
+    media_ppm = sum(r[0] for r in resultados) / len(resultados)
+    media_precisao = sum(r[1] for r in resultados) / len(resultados)
+    melhor = max(r[0] for r in resultados)
+    print()
+    print("=== RESULTADO FINAL ===")
+    print(f"Velocidade média: {media_ppm:.0f} PPM (melhor rodada: {melhor:.0f} PPM)")
+    print(f"Precisão média: {media_precisao:.0f}%")
+    print(mensagem(media_precisao))
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+=== TREINO DE DIGITAÇÃO ===<br>
+Digite cada frase exatamente como aparece e aperte Enter.<br>
+&nbsp;<br>
+--- Rodada 1 de 3 ---<br>
+Aperte Enter quando estiver pronto...<br>
+O sapo não lava o pé.<br>
+O sapo não lava o pé.<br>
+Tempo: 6.3 s | Velocidade: 40 PPM | Precisão: 100%<br>
+&nbsp;<br>
+--- Rodada 2 de 3 ---<br>
+Aperte Enter quando estiver pronto...<br>
+A prática leva à perfeição.<br>
+A pratica leva à perfeição.<br>
+Tempo: 8.1 s | Velocidade: 40 PPM | Precisão: 96%<br>
+&nbsp;&nbsp;&nbsp;&nbsp;^<br>
+&nbsp;<br>
+--- Rodada 3 de 3 ---<br>
+Aperte Enter quando estiver pronto...<br>
+Python é uma linguagem fácil de ler.<br>
+Python é uma linguagem facil de ler.<br>
+Tempo: 10.8 s | Velocidade: 40 PPM | Precisão: 97%<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^<br>
+&nbsp;<br>
+=== RESULTADO FINAL ===<br>
+Velocidade média: 40 PPM (melhor rodada: 40 PPM)<br>
+Precisão média: 98%<br>
+Excelente! Quase sem erros.</p>
+
+    <h2>Como rodar no seu computador</h2>
+    <p>Este programa <strong>precisa</strong> do terminal: o cronômetro mede o tempo entre a frase aparecer e você apertar Enter.</p>
+    <ul>
+      <li>Salve o código como <code>treino.py</code>.</li>
+      <li>No terminal do VS Code, rode o comando abaixo.</li>
+      <li>Depois do "Aperte Enter quando estiver pronto...", a frase aparece e o cronômetro começa. Digite e aperte Enter.</li>
+    </ul>
+<pre class="codigo"><code>python treino.py</code></pre>
+    <div class="dica"><strong>Dica:</strong> Compare o resultado do seu treino com o do DIGITAR. Os números podem ser um pouco diferentes, porque cada programa mede de um jeito (aqui, o tempo de reação até começar a digitar também conta). O importante é ver a sua evolução de um dia para o outro.</div>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Salve o histórico de treinos num arquivo JSON e mostre o seu recorde.</li>
+      <li>Crie níveis com frases curtas, médias e longas.</li>
+      <li>Mostre quais letras você mais erra, usando um <code>Counter</code>.</li>
+      <li>Troque a comparação por <code>difflib.SequenceMatcher</code>, que não se perde quando você pula uma letra.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>ppm = (len(digitado) / 5) / (segundos / 60)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva <code>classificar(ppm)</code>: menos de 20 é <code>"iniciante"</code>, menos de 40 é <code>"bom"</code>, menos de 60 é <code>"ótimo"</code> e 60 ou mais é <code>"profissional"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def classificar(ppm):
+    if ppm &lt; 20:
+        return "iniciante"
+    elif ppm &lt; 40:
+        return "bom"
+    elif ppm &lt; 60:
+        return "ótimo"
+    return "profissional"
+
+
+for ppm in [12, 35, 48, 75]:
+    print(ppm, "PPM:", classificar(ppm))</code></pre>
+      <p class="saida">12 PPM: iniciante<br>
+35 PPM: bom<br>
+48 PPM: ótimo<br>
+75 PPM: profissional</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Muitos cursos usam o <strong>PPM líquido</strong>: cada erro desconta uma palavra. A fórmula é <code>(caracteres / 5 - erros) / minutos</code>, e o resultado nunca fica negativo. Escreva <code>ppm_liquido(caracteres, erros, segundos)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def ppm_liquido(caracteres, erros, segundos):
+    minutos = segundos / 60
+    resultado = (caracteres / 5 - erros) / minutos
+    return max(resultado, 0)
+
+
+print(round(ppm_liquido(250, 0, 60)))
+print(round(ppm_liquido(250, 5, 60)))
+print(round(ppm_liquido(30, 10, 60)))</code></pre>
+      <p class="saida">50<br>
+45<br>
+0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Descubra quais letras foram mais erradas comparando a frase certa com a digitada. Guarde cada letra <strong>certa</strong> que foi trocada num <code>Counter</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import Counter
+
+pares = [
+    ("a prática leva à perfeição", "a pratica leva a perfeiçao"),
+    ("não desista", "nao desista"),
+]
+erros = Counter()
+for alvo, digitado in pares:
+    for certo, feito in zip(alvo, digitado):
+        if certo != feito:
+            erros[certo] += 1
+print(erros.most_common())</code></pre>
+      <p class="saida">[('ã', 2), ('á', 1), ('à', 1)]</p>
+      <p>Parece que quem digitou precisa treinar os acentos!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Guarde um histórico de resultados num arquivo JSON (aula 62) e mostre o melhor PPM. Comece com o histórico vazio se o arquivo não existir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+
+def carregar_historico(caminho):
+    try:
+        with open(caminho, encoding="utf-8") as arquivo:
+            return json.load(arquivo)
+    except FileNotFoundError:
+        return []
+
+
+def salvar_historico(historico, caminho):
+    with open(caminho, "w", encoding="utf-8") as arquivo:
+        json.dump(historico, arquivo, indent=2)
+
+
+historico = carregar_historico("historico.json")
+for ppm, precisao in [(32, 95), (38, 97), (35, 99)]:
+    historico.append({"ppm": ppm, "precisao": precisao})
+salvar_historico(historico, "historico.json")
+
+melhor = max(historico, key=lambda r: r["ppm"])
+print("Treinos salvos:", len(carregar_historico("historico.json")))
+print("Recorde:", melhor["ppm"], "PPM com", melhor["precisao"], "% de precisão")</code></pre>
+      <p class="saida">Treinos salvos: 3<br>
+Recorde: 38 PPM com 97 % de precisão</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Calcule a precisão com <code>difflib.SequenceMatcher</code>, que encontra as partes iguais mesmo quando uma letra foi pulada. Compare com a precisão posição por posição.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from difflib import SequenceMatcher
+
+
+def precisao_simples(alvo, digitado):
+    total = max(len(alvo), len(digitado))
+    acertos = sum(1 for a, d in zip(alvo, digitado) if a == d)
+    return acertos / total * 100
+
+
+def precisao_esperta(alvo, digitado):
+    return SequenceMatcher(None, alvo, digitado).ratio() * 100
+
+
+alvo = "programar é divertido"
+digitado = "rogramar é divertido"
+print(f"Simples: {precisao_simples(alvo, digitado):.0f}%")
+print(f"Esperta: {precisao_esperta(alvo, digitado):.0f}%")</code></pre>
+      <p class="saida">Simples: 0%<br>
+Esperta: 98%</p>
+      <p>Só a primeira letra foi pulada, mas a comparação simples conta quase tudo como erro, porque cada letra ficou uma posição "fora do lugar". O <code>SequenceMatcher</code> encontra os trechos iguais e dá uma nota muito mais justa.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="67-projeto-analisador-de-texto.html" rel="prev">← Aula anterior</a>
+      <a href="69-projeto-intermediario.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 207 · Projeto: agenda de contatos (CRUD completo) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Junte models, views, templates e formulários numa agenda de contatos com criar, listar, editar e apagar.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 207 · Projeto: agenda de contatos (CRUD completo)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Planejar as URLs de um CRUD</li>
+        <li>Escrever as quatro views: listar, criar, editar e apagar</li>
+        <li>Usar <code>get_object_or_404</code> e confirmar antes de apagar</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O plano</h2>
+    <p>CRUD quer dizer <strong>C</strong>reate (criar), <strong>R</strong>ead (ler), <strong>U</strong>pdate (atualizar) e <strong>D</strong>elete (apagar). Partimos do model <code>Contato</code> (aula 203) e do <code>ContatoForm</code> (aula 205).</p>
+<pre class="codigo"><code># contatos/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.lista, name="lista"),
+    path("novo/", views.criar, name="criar"),
+    path("&lt;int:pk&gt;/editar/", views.editar, name="editar"),
+    path("&lt;int:pk&gt;/apagar/", views.apagar, name="apagar"),
+]</code></pre>
+
+    <h2>As views</h2>
+<pre class="codigo"><code># contatos/views.py
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from .forms import ContatoForm
+from .models import Contato
+
+
+@login_required
+def lista(request):
+    busca = request.GET.get("q", "")
+    contatos = Contato.objects.filter(dono=request.user)
+    if busca:
+        contatos = contatos.filter(Q(nome__icontains=busca) | Q(telefone__icontains=busca))
+    return render(request, "contatos/lista.html", {"contatos": contatos, "busca": busca})
+
+
+@login_required
+def criar(request):
+    form = ContatoForm(request.POST or None)
+    if form.is_valid():
+        contato = form.save(commit=False)
+        contato.dono = request.user
+        contato.save()
+        return redirect("lista")
+    return render(request, "contatos/form.html", {"form": form, "titulo": "Novo contato"})
+
+
+@login_required
+def editar(request, pk):
+    contato = get_object_or_404(Contato, pk=pk, dono=request.user)
+    form = ContatoForm(request.POST or None, instance=contato)
+    if form.is_valid():
+        form.save()
+        return redirect("lista")
+    return render(request, "contatos/form.html", {"form": form, "titulo": "Editar contato"})
+
+
+@login_required
+def apagar(request, pk):
+    contato = get_object_or_404(Contato, pk=pk, dono=request.user)
+    if request.method == "POST":
+        contato.delete()
+        return redirect("lista")
+    return render(request, "contatos/apagar.html", {"contato": contato})</code></pre>
+    <ul>
+      <li><code>instance=contato</code> faz o formulário vir preenchido e atualizar o mesmo registro.</li>
+      <li><code>get_object_or_404</code> mostra a página "não encontrado" se o contato não existir <strong>ou for de outro usuário</strong>.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Apague só com POST, depois de uma página de confirmação. Um link GET que apaga pode ser disparado sem querer (por exemplo, por um programa que pré-carrega links).</div>
+
+    <h2>A lista</h2>
+<pre class="codigo"><code>{% extends "base.html" %}
+{% block conteudo %}
+&lt;form method="get"&gt;&lt;input name="q" value="{{ busca }}" placeholder="Buscar"&gt;&lt;/form&gt;
+&lt;a href="{% url 'criar' %}"&gt;+ Novo contato&lt;/a&gt;
+&lt;ul&gt;
+  {% for c in contatos %}
+    &lt;li&gt;{{ c.nome }} — {{ c.telefone }}
+      &lt;a href="{% url 'editar' c.pk %}"&gt;editar&lt;/a&gt;
+      &lt;a href="{% url 'apagar' c.pk %}"&gt;apagar&lt;/a&gt;&lt;/li&gt;
+  {% empty %}
+    &lt;li&gt;Nenhum contato encontrado.&lt;/li&gt;
+  {% endfor %}
+&lt;/ul&gt;
+{% endblock %}</code></pre>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Mostre os favoritos primeiro com <code>order_by("-favorito", "nome")</code>.</li>
+      <li>Pagine a lista (aula 204) de 10 em 10.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>contato = get_object_or_404(Contato, pk=pk)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva o template <code>apagar.html</code> com a pergunta de confirmação e os botões "Sim, apagar" e "Cancelar".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>{% extends "base.html" %}
+{% block conteudo %}
+&lt;p&gt;Apagar o contato &lt;strong&gt;{{ contato.nome }}&lt;/strong&gt;?&lt;/p&gt;
+&lt;form method="post"&gt;
+  {% csrf_token %}
+  &lt;button type="submit"&gt;Sim, apagar&lt;/button&gt;
+  &lt;a href="{% url 'lista' %}"&gt;Cancelar&lt;/a&gt;
+&lt;/form&gt;
+{% endblock %}</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie uma view <code>detalhe</code> e a URL <code>&lt;int:pk&gt;/</code> que mostra um contato só.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
+from .models import Contato
+
+
+@login_required
+def detalhe(request, pk):
+    contato = get_object_or_404(Contato, pk=pk, dono=request.user)
+    return render(request, "contatos/detalhe.html", {"contato": contato})
+
+# urls.py: path("&lt;int:pk&gt;/", views.detalhe, name="detalhe"),</code></pre>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="206-usuarios-login.html" rel="prev">← Aula anterior</a>
+      <a href="210-docker.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

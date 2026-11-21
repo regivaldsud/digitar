@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 40 · Funções: def, parâmetros e return — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie suas próprias funções com def, envie dados por parâmetros e receba o resultado de volta com return.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 40 · Funções: def, parâmetros e return</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma função e por que ela evita repetir código</li>
+        <li>Como criar uma função com <code>def</code> e chamá-la pelo nome</li>
+        <li>Como enviar valores para a função usando parâmetros</li>
+        <li>Como devolver um resultado com <code>return</code> — e por que <code>return</code> não é <code>print</code></li>
+        <li>Como devolver mais de um valor de uma vez</li>
+      </ul>
+    </div>
+
+    <h2>Você já usa funções</h2>
+    <p>Desde as primeiras aulas você usa funções que vêm prontas no Python: <code>print</code>, <code>input</code>, <code>len</code>, <code>int</code>. Cada uma tem um nome e faz uma tarefa. Agora você vai criar as suas.</p>
+    <p>Uma <strong>função</strong> é um bloco de código com nome. Você escreve as instruções uma vez e depois "chama" a função sempre que precisar, usando o nome dela seguido de parênteses.</p>
+
+    <h2>Criando a primeira função</h2>
+    <p>Use a palavra <code>def</code> (de "definir"), o nome da função, parênteses e dois-pontos. As linhas de dentro ficam <strong>indentadas</strong> com 4 espaços, como no <code>if</code> e no <code>for</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def linha():
+    print("-" * 24)
+
+linha()
+print("Flamengo 2 x 1 Palmeiras")
+linha()
+print("Grêmio 0 x 0 Inter")
+linha()</code></pre>
+    <p class="saida">------------------------<br>
+Flamengo 2 x 1 Palmeiras<br>
+------------------------<br>
+Grêmio 0 x 0 Inter<br>
+------------------------</p>
+    <p>A linha <code>def</code> só <strong>ensina</strong> ao Python o que a função faz — nada aparece na tela nesse momento. São as linhas <code>linha()</code>, sem indentação, que <strong>chamam</strong> a função e executam o que está dentro dela. Se um dia você quiser trocar o <code>-</code> por <code>=</code>, basta mudar em <strong>um</strong> lugar.</p>
+    <div class="atencao"><strong>Atenção:</strong> Não esqueça os parênteses ao chamar. Escrever só <code>linha</code> (sem parênteses) não executa nada: o Python apenas "olha" para a função sem rodá-la.</div>
+
+    <h2>Primeiro definir, depois chamar</h2>
+    <p>O Python lê o arquivo de cima para baixo. Se você chamar uma função antes da linha <code>def</code> dela, ele ainda não a conhece:</p>
+<pre class="codigo" data-executar="sim"><code>cantar()
+
+def cantar():
+    print("Parabéns pra você!")</code></pre>
+    <p class="saida">NameError: name 'cantar' is not defined</p>
+    <p>A correção é simples: coloque as definições (<code>def</code>) no começo do arquivo e as chamadas depois.</p>
+
+    <h2>Parâmetros: a função recebe dados</h2>
+    <p>Com <strong>parâmetros</strong>, a função deixa de fazer sempre a mesma coisa. O parâmetro é uma variável que fica entre os parênteses do <code>def</code>; os valores usados na chamada são os <strong>argumentos</strong>:</p>
+<pre class="codigo" data-executar="sim"><code>def saudar(nome):
+    print(f"Olá, {nome}! Bem-vindo ao DIGITAR.")
+
+saudar("Pedro")
+saudar("Maria")</code></pre>
+    <p class="saida">Olá, Pedro! Bem-vindo ao DIGITAR.<br>
+Olá, Maria! Bem-vindo ao DIGITAR.</p>
+    <p>Para vários parâmetros, separe com vírgula. Os argumentos são entregues na mesma ordem:</p>
+<pre class="codigo" data-executar="sim"><code>def mostrar_preco(produto, preco):
+    print(f"{produto}: R$ {preco:.2f}")
+
+mostrar_preco("Pastel", 7.5)
+mostrar_preco("Caldo de cana", 6)</code></pre>
+    <p class="saida">Pastel: R$ 7.50<br>
+Caldo de cana: R$ 6.00</p>
+    <div class="atencao"><strong>Atenção:</strong> Chamar com argumentos de menos dá erro: <code>mostrar_preco("Pastel")</code> gera <code>TypeError: mostrar_preco() missing 1 required positional argument: 'preco'</code>. Leia a mensagem: ela diz exatamente qual argumento faltou.</div>
+
+    <h2>return: a função devolve um resultado</h2>
+    <p>Muitas vezes a função deve <strong>calcular</strong> algo e entregar o resultado para o programa usar depois. Para isso serve o <code>return</code>. Quando o Python encontra <code>return</code>, a função termina na hora e o valor "volta" para o lugar da chamada:</p>
+<pre class="codigo" data-executar="sim"><code>def dobro(numero):
+    return numero * 2
+
+resultado = dobro(21)
+print(resultado)
+print(dobro(5) + dobro(10))</code></pre>
+    <p class="saida">42<br>
+30</p>
+
+    <h2>return não é print</h2>
+    <p>Essa é a confusão mais comum de quem está começando. <code>print</code> só <strong>mostra</strong> na tela; <code>return</code> <strong>entrega</strong> o valor. Veja:</p>
+<pre class="codigo" data-executar="sim"><code>def soma_com_print(a, b):
+    print(a + b)
+
+def soma_com_return(a, b):
+    return a + b
+
+x = soma_com_print(2, 3)
+y = soma_com_return(2, 3)
+print("x vale", x)
+print("y vale", y)</code></pre>
+    <p class="saida">5<br>
+x vale None<br>
+y vale 5</p>
+    <p>A primeira função mostrou <code>5</code>, mas não devolveu nada. Uma função sem <code>return</code> devolve o valor especial <code>None</code>, que significa "nada".</p>
+    <div class="dica"><strong>Dica:</strong> Regra prática: se você vai <strong>usar</strong> o resultado depois (numa conta, num <code>if</code>, numa variável), use <code>return</code>. Deixe o <code>print</code> para a parte do programa que conversa com o usuário.</div>
+
+    <h2>Devolvendo mais de um valor</h2>
+    <p>Uma função pode devolver vários valores separados por vírgula. Eles chegam juntos numa <strong>tupla</strong> (aula 27) e podem ser separados em variáveis. O <code>return</code> também pode aparecer mais de uma vez: o primeiro que rodar encerra a função.</p>
+<pre class="codigo" data-executar="sim"><code>def min_e_max(notas):
+    return min(notas), max(notas)
+
+def situacao(media):
+    if media &gt;= 7:
+        return "Aprovado"
+    return "Recuperação"
+
+menor, maior = min_e_max([7.5, 9.0, 6.0, 8.5])
+print("Menor nota:", menor, "| Maior nota:", maior)
+print(situacao(8.2))
+print(situacao(5.9))</code></pre>
+    <p class="saida">Menor nota: 6.0 | Maior nota: 9.0<br>
+Aprovado<br>
+Recuperação</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def area(base, altura): return base * altura</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma função <code>moldura()</code> que mostre uma linha de 15 asteriscos e use-a para emoldurar a frase <code>Feliz aniversário!</code> (uma moldura em cima e outra embaixo).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def moldura():
+    print("*" * 15)
+
+moldura()
+print("Feliz aniversário!")
+moldura()</code></pre>
+      <p class="saida">***************<br>
+Feliz aniversário!<br>
+***************</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a função <code>area_retangulo(base, altura)</code> que devolve a área. Use-a para calcular a área de um quarto de 3 por 4 metros.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def area_retangulo(base, altura):
+    return base * altura
+
+print(area_retangulo(3, 4), "metros quadrados")</code></pre>
+      <p class="saida">12 metros quadrados</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a função <code>eh_par(n)</code> que devolve <code>True</code> se o número for par e <code>False</code> se for ímpar. Teste com 10 e 7.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def eh_par(n):
+    return n % 2 == 0
+
+print(eh_par(10))
+print(eh_par(7))</code></pre>
+      <p class="saida">True<br>
+False</p>
+      <p>O resultado de <code>n % 2 == 0</code> já é <code>True</code> ou <code>False</code>, então dá para devolvê-lo direto, sem <code>if</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que este programa mostra? Uma função <code>f()</code> que faz <code>print("oi")</code> e depois <code>print(f())</code>. Rode e explique.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def f():
+    print("oi")
+
+print(f())</code></pre>
+      <p class="saida">oi<br>
+None</p>
+      <p>Primeiro a função roda e mostra <code>oi</code>. Como ela não tem <code>return</code>, devolve <code>None</code>, e o <code>print</code> de fora mostra <code>None</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Crie a função <code>troco(valor_pago, preco)</code> que devolva duas coisas: o troco e uma mensagem (<code>"Troco ok"</code> ou <code>"Falta dinheiro"</code>). Teste com um lanche de R$ 18 pago com R$ 20 e com R$ 15.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def troco(valor_pago, preco):
+    diferenca = valor_pago - preco
+    if diferenca &gt;= 0:
+        return diferenca, "Troco ok"
+    return 0, "Falta dinheiro"
+
+valor, mensagem = troco(20, 18)
+print(valor, mensagem)
+valor, mensagem = troco(15, 18)
+print(valor, mensagem)</code></pre>
+      <p class="saida">2 Troco ok<br>
+0 Falta dinheiro</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="32-projeto-jogo-de-adivinhacao.html" rel="prev">← Aula anterior</a>
+      <a href="41-argumentos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 85 · Metaclasses (avançado) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Descubra que classes também são objetos, conheça type, a classe das classes, e veja quando uma metaclasse ou __init_subclass__ resolve um problema.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 85 · Metaclasses (avançado)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Que em Python as classes também são objetos</li>
+        <li>Que <code>type</code> é a classe que cria as classes (a metaclasse padrão)</li>
+        <li>Como criar uma classe com <code>type()</code> e escrever uma metaclasse simples</li>
+        <li>Como <code>__init_subclass__</code> resolve a maioria dos casos de forma mais simples</li>
+      </ul>
+    </div>
+
+    <h2>Classes também são objetos</h2>
+    <p>Em Python, tudo é objeto: números, textos, funções... e as próprias classes. Uma classe pode ser guardada numa variável, colocada numa lista ou passada para uma função:</p>
+<pre class="codigo" data-executar="sim"><code>class Gato:
+    pass
+
+class Cachorro:
+    pass
+
+bichos = [Gato, Cachorro]
+for classe in bichos:
+    print(classe.__name__, type(classe))</code></pre>
+    <p class="saida">Gato &lt;class 'type'&gt;<br>
+Cachorro &lt;class 'type'&gt;</p>
+    <p>Se <code>Gato</code> é um objeto, ele precisa ser de alguma classe. A resposta aparece acima: a classe de uma classe é <code>type</code>. Uma classe que cria classes se chama <strong>metaclasse</strong>, e <code>type</code> é a metaclasse padrão.</p>
+
+    <h2>Criando uma classe com type()</h2>
+    <p>Já que <code>type</code> cria classes, dá para criar uma sem usar a palavra <code>class</code>. Passamos o nome, uma tupla de classes mães e um dicionário com os atributos e métodos:</p>
+<pre class="codigo" data-executar="sim"><code>def apresentar(self):
+    return f"Sou {self.nome}"
+
+Pessoa = type("Pessoa", (), {"especie": "humana", "apresentar": apresentar})
+
+p = Pessoa()
+p.nome = "Rita"
+print(p.apresentar())
+print(Pessoa.especie, type(p).__name__)</code></pre>
+    <p class="saida">Sou Rita<br>
+humana Pessoa</p>
+    <p>É exatamente isso que o Python faz por baixo dos panos quando lê um bloco <code>class</code>.</p>
+
+    <h2>Sua primeira metaclasse</h2>
+    <p>Uma metaclasse é uma classe filha de <code>type</code>. O método <code>__new__</code> dela roda <strong>quando a classe é criada</strong> (não quando um objeto é criado). Aqui, a metaclasse registra todas as classes de jogo que forem criadas:</p>
+<pre class="codigo" data-executar="sim"><code>class Registro(type):
+    classes = []
+
+    def __new__(mcs, nome, bases, atributos):
+        nova = super().__new__(mcs, nome, bases, atributos)
+        Registro.classes.append(nome)
+        print(f"Classe {nome} criada")
+        return nova
+
+class Jogo(metaclass=Registro):
+    pass
+
+class Xadrez(Jogo):
+    pass
+
+class Damas(Jogo):
+    pass
+
+print(Registro.classes)</code></pre>
+    <p class="saida">Classe Jogo criada<br>
+Classe Xadrez criada<br>
+Classe Damas criada<br>
+['Jogo', 'Xadrez', 'Damas']</p>
+    <p>As mensagens aparecem só por definir as classes — nenhum objeto foi criado. E as classes filhas (<code>Xadrez</code>, <code>Damas</code>) herdam a metaclasse da mãe.</p>
+    <p>Uma metaclasse também pode <strong>exigir</strong> regras, como obrigar toda classe a ter certo método:</p>
+<pre class="codigo" data-executar="sim"><code>class ExigeDescricao(type):
+    def __new__(mcs, nome, bases, atributos):
+        if bases and "descricao" not in atributos:
+            raise TypeError(f"{nome} precisa ter o método descricao")
+        return super().__new__(mcs, nome, bases, atributos)
+
+class Produto(metaclass=ExigeDescricao):
+    pass
+
+class Caderno(Produto):
+    def descricao(self):
+        return "Caderno de 10 matérias"
+
+print(Caderno().descricao())
+
+try:
+    class Borracha(Produto):
+        pass
+except TypeError as erro:
+    print("Erro:", erro)</code></pre>
+    <p class="saida">Caderno de 10 matérias<br>
+Erro: Borracha precisa ter o método descricao</p>
+    <div class="atencao"><strong>Atenção:</strong> Metaclasses são um assunto avançado e raramente necessário. Um programador experiente disse uma vez que, se você está em dúvida se precisa de uma, não precisa. Conheça para entender bibliotecas como o Django, que usam metaclasses nos models.</div>
+
+    <h2>O jeito simples: __init_subclass__</h2>
+    <p>Na maioria dos casos, o método especial <code>__init_subclass__</code> resolve o mesmo problema sem metaclasse. Ele roda na classe mãe toda vez que alguém cria uma classe filha:</p>
+<pre class="codigo" data-executar="sim"><code>class Plugin:
+    registrados = []
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        Plugin.registrados.append(cls.__name__)
+
+class Corretor(Plugin):
+    pass
+
+class Tradutor(Plugin):
+    pass
+
+print(Plugin.registrados)</code></pre>
+    <p class="saida">['Corretor', 'Tradutor']</p>
+    <div class="dica"><strong>Dica:</strong> Prefira, nesta ordem: uma função comum, um decorador de classe (aula 84), <code>__init_subclass__</code> e, só se nada disso servir, uma metaclasse.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>class Registro(type):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use <code>type()</code> para criar a classe <code>Fruta</code> com o atributo <code>cor = "amarela"</code> e mostre a cor de um objeto dessa classe.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>Fruta = type("Fruta", (), {"cor": "amarela"})
+banana = Fruta()
+print(banana.cor)</code></pre>
+      <p class="saida">amarela</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Mostre o que <code>type()</code> devolve para: o número <code>5</code>, a classe <code>int</code> e a classe <code>type</code>. O que o último resultado revela?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(type(5))
+print(type(int))
+print(type(type))</code></pre>
+      <p class="saida">&lt;class 'int'&gt;<br>
+&lt;class 'type'&gt;<br>
+&lt;class 'type'&gt;</p>
+      <p>A classe de <code>type</code> é o próprio <code>type</code>: ele é a metaclasse de todas as classes, inclusive de si mesmo.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva a metaclasse <code>NomeMaiusculo</code> que dá <code>TypeError</code> se o nome da classe não começar com letra maiúscula. Teste com uma classe <code>carro</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class NomeMaiusculo(type):
+    def __new__(mcs, nome, bases, atributos):
+        if not nome[0].isupper():
+            raise TypeError(f"o nome {nome!r} deve começar com maiúscula")
+        return super().__new__(mcs, nome, bases, atributos)
+
+class Moto(metaclass=NomeMaiusculo):
+    pass
+
+try:
+    class carro(metaclass=NomeMaiusculo):
+        pass
+except TypeError as erro:
+    print("Erro:", erro)</code></pre>
+      <p class="saida">Erro: o nome 'carro' deve começar com maiúscula</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Com <code>__init_subclass__</code>, faça a classe <code>Animal</code> exigir que toda classe filha tenha o atributo <code>som</code>. Crie <code>Vaca</code> com som e tente criar <code>Peixe</code> sem som.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Animal:
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, "som"):
+            raise TypeError(f"{cls.__name__} precisa de um som")
+
+class Vaca(Animal):
+    som = "muuu"
+
+print(Vaca.som)
+try:
+    class Peixe(Animal):
+        pass
+except TypeError as erro:
+    print("Erro:", erro)</code></pre>
+      <p class="saida">muuu<br>
+Erro: Peixe precisa de um som</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="84-decoradores-classes.html" rel="prev">← Aula anterior</a>
+      <a href="86-documentacao.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 119 · Imagens com Pillow — Curso de Python · DIGITAR</title>
+<meta name="description" content="Abra, redimensione, recorte, gire e converta imagens com a biblioteca Pillow, e crie miniaturas de uma pasta inteira de fotos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 119 · Imagens com Pillow</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Abrir uma imagem e ver tamanho e formato</li>
+        <li>Redimensionar, recortar, girar e converter</li>
+        <li>Processar uma pasta inteira de fotos</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Instalando</h2>
+    <p>A biblioteca se chama Pillow, mas no código o nome é <code>PIL</code>:</p>
+<pre class="codigo"><code>pip install pillow</code></pre>
+    <p>Coloque uma foto qualquer na pasta do projeto, por exemplo <code>praia.jpg</code>.</p>
+
+    <h2>Primeiros passos</h2>
+<pre class="codigo"><code>from PIL import Image
+
+foto = Image.open("praia.jpg")
+print(foto.size, foto.format, foto.mode)    # ex.: (4000, 3000) JPEG RGB
+
+pequena = foto.resize((800, 600))
+pequena.save("praia_800.jpg")
+
+recorte = foto.crop((0, 0, 1000, 1000))     # (esquerda, topo, direita, base)
+recorte.save("praia_recorte.png")
+
+foto.rotate(90, expand=True).save("praia_girada.jpg")
+foto.convert("L").save("praia_cinza.jpg")   # "L" = tons de cinza</code></pre>
+    <ul>
+      <li><code>size</code> é (largura, altura) em pixels;</li>
+      <li><code>resize</code> muda o tamanho; <code>crop</code> recorta um retângulo; <code>rotate</code> gira em graus;</li>
+      <li><code>save</code> escolhe o formato pela extensão do nome (<code>.jpg</code>, <code>.png</code>...).</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> <code>resize((800, 600))</code> pode deixar a foto achatada se a proporção for diferente. Para manter a proporção, use <code>foto.thumbnail((800, 800))</code>, que encolhe a imagem até caber nesse tamanho.</div>
+
+    <h2>Miniaturas de uma pasta inteira</h2>
+<pre class="codigo"><code>from pathlib import Path
+from PIL import Image
+
+origem = Path("fotos")
+destino = Path("miniaturas")
+destino.mkdir(exist_ok=True)
+
+for arquivo in sorted(origem.glob("*.jpg")):
+    with Image.open(arquivo) as img:
+        img.thumbnail((300, 300))
+        img.save(destino / arquivo.name)
+        print(arquivo.name, "-&gt;", img.size)</code></pre>
+    <div class="dica"><strong>Dica:</strong> Abrir com <code>with</code> (como em arquivos, aula 61) garante que a imagem seja fechada logo, o que importa quando são centenas de fotos.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>foto.thumbnail((300, 300))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um programa que converta <code>logo.png</code> em <code>logo.jpg</code>. Dica: JPEG não tem transparência, então converta para <code>"RGB"</code> antes de salvar.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from PIL import Image
+
+with Image.open("logo.png") as img:
+    img.convert("RGB").save("logo.jpg")</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Qual é a diferença entre <code>resize((300, 300))</code> e <code>thumbnail((300, 300))</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">resize força exatamente 300x300 pixels, mesmo que a imagem fique achatada,<br>
+e devolve uma imagem nova. thumbnail encolhe a própria imagem mantendo a<br>
+proporção até ela caber dentro de 300x300.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="118-excel-openpyxl.html" rel="prev">← Aula anterior</a>
+      <a href="130-por-que-testar.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

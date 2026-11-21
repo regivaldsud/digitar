@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 201 · URLs, views, request e response — Curso de Python · DIGITAR</title>
+<meta name="description" content="Ligue endereços do site a funções Python (views) que recebem o pedido e devolvem uma resposta.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 201 · URLs, views, request e response</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O caminho de um pedido: URL, view e resposta</li>
+        <li>Escrever views que recebem <code>request</code> e devolvem <code>HttpResponse</code></li>
+        <li>Criar URLs com partes variáveis, como <code>&lt;int:id&gt;</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Do endereço até a função</h2>
+    <p>Quando você abre <code>http://127.0.0.1:8000/ola/</code>, o Django procura em <code>urls.py</code> qual <strong>view</strong> cuida do caminho <code>ola/</code>. A view é uma função Python que recebe o pedido (<code>request</code>) e devolve uma resposta (<code>HttpResponse</code>).</p>
+<pre class="codigo"><code># contatos/views.py
+from django.http import HttpResponse
+
+
+def ola(request):
+    return HttpResponse("&lt;h1&gt;Olá do Django!&lt;/h1&gt;")
+
+
+def dobro(request, numero):
+    return HttpResponse(f"O dobro de {numero} é {numero * 2}")</code></pre>
+
+    <h2>Ligando as URLs</h2>
+<pre class="codigo"><code># contatos/urls.py (crie este arquivo)
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("ola/", views.ola, name="ola"),
+    path("dobro/&lt;int:numero&gt;/", views.dobro, name="dobro"),
+]</code></pre>
+<pre class="codigo"><code># config/urls.py
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("contatos.urls")),
+]</code></pre>
+    <p>Abrindo <code>http://127.0.0.1:8000/dobro/21/</code>:</p>
+    <p class="saida">O dobro de 21 é 42</p>
+    <p>O conversor <code>&lt;int:numero&gt;</code> pega o pedaço da URL, transforma em <code>int</code> e entrega para a view com o nome <code>numero</code>.</p>
+
+    <h2>O que vem no request</h2>
+    <p>O objeto <code>request</code> traz tudo sobre o pedido: o método (<code>GET</code> ou <code>POST</code>), os dados enviados e o usuário logado. Os dados da URL depois do <code>?</code> ficam em <code>request.GET</code>:</p>
+<pre class="codigo"><code>from django.http import HttpResponse
+
+
+def busca(request):
+    termo = request.GET.get("q", "")
+    return HttpResponse(f"Você buscou: {termo}")</code></pre>
+    <p>Para <code>/busca/?q=pastel</code>, a resposta é <code>Você buscou: pastel</code> (registre a rota <code>path("busca/", views.busca)</code>).</p>
+    <div class="atencao"><strong>Atenção:</strong> Toda view precisa <strong>devolver</strong> uma resposta com <code>return</code>. Se esquecer, o Django mostra o erro "didn't return an HttpResponse object. It returned None instead."</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>path("dobro/&lt;int:numero&gt;/", views.dobro, name="dobro")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma view <code>saudacao</code> e a URL <code>oi/&lt;str:nome&gt;/</code> que responde "Oi, NOME!". Ex.: <code>/oi/Bia/</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># views.py
+from django.http import HttpResponse
+
+
+def saudacao(request, nome):
+    return HttpResponse(f"Oi, {nome}!")
+
+
+# urls.py, dentro de urlpatterns:
+# path("oi/&lt;str:nome&gt;/", views.saudacao, name="saudacao"),</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> A lógica de uma view pode ser testada como função comum. Escreva <code>tabuada_texto(n)</code> que devolve a tabuada de <code>n</code> (de 1 a 3) separada por vírgulas, para usar numa view <code>/tabuada/&lt;int:n&gt;/</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def tabuada_texto(n):
+    return ", ".join(f"{n}x{i}={n * i}" for i in range(1, 4))
+
+
+print(tabuada_texto(7))</code></pre>
+      <p class="saida">7x1=7, 7x2=14, 7x3=21</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="200-django-intro.html" rel="prev">← Aula anterior</a>
+      <a href="202-templates.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

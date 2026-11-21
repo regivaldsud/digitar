@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 244 · Git e GitHub básico — Curso de Python · DIGITAR</title>
+<meta name="description" content="Guarde o histórico dos seus programas com Git e publique seus projetos no GitHub.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 12 · Extras</p>
+    <h1>Aula 244 · Git e GitHub básico</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é controle de versão e para que serve o Git</li>
+        <li>Instalar e configurar o Git no Windows</li>
+        <li>Usar <code>git init</code>, <code>status</code>, <code>add</code>, <code>commit</code> e <code>log</code></li>
+        <li>Ignorar arquivos com <code>.gitignore</code></li>
+        <li>Enviar um projeto para o GitHub com <code>push</code> e baixar com <code>clone</code> e <code>pull</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que é o Git</h2>
+    <p>Sabe quando você salva <code>trabalho.docx</code>, depois <code>trabalho_final.docx</code>, depois <code>trabalho_final_AGORA_VAI.docx</code>? O <strong>Git</strong> resolve isso. Ele é um <strong>controle de versão</strong>: guarda fotos (chamadas <strong>commits</strong>) do seu projeto ao longo do tempo. Dá para ver o que mudou, quando e por quê — e voltar atrás se algo quebrar.</p>
+    <p>O <strong>GitHub</strong> é um site que guarda seus projetos Git na internet. Serve de backup, para mostrar seus trabalhos (um portfólio!) e para programar junto com outras pessoas.</p>
+    <div class="dica"><strong>Dica:</strong> O Git funciona todo no terminal, então esta aula é cheia de comandos para digitar. Ótimo treino de digitação!</div>
+
+    <h2>Instalando e configurando</h2>
+    <p>Baixe o Git em <a href="https://git-scm.com/downloads">git-scm.com</a>, instale com as opções padrão e abra um terminal novo. Confira:</p>
+<pre class="codigo"><code>git --version</code></pre>
+    <p class="saida">git version 2.47.1.windows.1</p>
+    <p>Antes do primeiro commit, diga ao Git seu nome e e-mail (use o mesmo e-mail da conta do GitHub). Isso é feito uma vez só por computador:</p>
+<pre class="codigo"><code>git config --global user.name "Ana Souza"
+git config --global user.email "ana@exemplo.com"
+git config --global init.defaultBranch main</code></pre>
+
+    <h2>O ciclo básico: status, add, commit</h2>
+    <p>Entre na pasta do projeto (a <code>curso-python</code> que você criou na aula 03) e transforme-a num repositório Git:</p>
+<pre class="codigo"><code>cd curso-python
+git init
+git status</code></pre>
+    <p class="saida">Initialized empty Git repository in C:/Users/Ana/Documents/curso-python/.git/<br>
+On branch main<br>
+&nbsp;<br>
+No commits yet<br>
+&nbsp;<br>
+Untracked files:<br>
+&nbsp;&nbsp;(use "git add &lt;file&gt;..." to include in what will be committed)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ola.py<br>
+&nbsp;<br>
+nothing added to commit but untracked files present (use "git add" to track)</p>
+    <p>Salvar uma versão tem dois passos. Primeiro, <code>git add</code> escolhe os arquivos que entram na foto. Depois, <code>git commit</code> tira a foto com uma mensagem explicando o que mudou:</p>
+<pre class="codigo"><code>git add ola.py
+git commit -m "Primeiro programa: olá mundo"</code></pre>
+    <p class="saida">[main (root-commit) 3f2a9c1] Primeiro programa: olá mundo<br>
+&nbsp;1 file changed, 2 insertions(+)<br>
+&nbsp;create mode 100644 ola.py</p>
+    <p>Para adicionar todos os arquivos alterados de uma vez, use <code>git add .</code> (o ponto é "tudo desta pasta").</p>
+    <div class="dica"><strong>Dica:</strong> Escreva mensagens de commit que expliquem a mudança: "Adiciona placar ao jogo" é ótimo; "mudanças" ou "asdf" não ajudam ninguém (nem você daqui a um mês).</div>
+
+    <h2>Vendo o histórico</h2>
+<pre class="codigo"><code>git log --oneline</code></pre>
+    <p class="saida">a81c0d4 Adiciona placar ao jogo<br>
+3f2a9c1 Primeiro programa: olá mundo</p>
+    <p>Cada commit tem um código (o "hash", como <code>a81c0d4</code>). O mais novo aparece em cima.</p>
+
+    <h2>Arquivos que o Git deve ignorar</h2>
+    <p>Algumas coisas não devem ir para o repositório: o ambiente virtual <code>.venv</code> (aula 60), as pastas <code>__pycache__</code> que o Python cria sozinho e arquivos com senhas. Crie um arquivo chamado <code>.gitignore</code> na pasta do projeto, com um padrão por linha:</p>
+<pre class="codigo"><code>.venv/
+__pycache__/
+*.pyc
+.env</code></pre>
+    <p>Você também pode criar esse arquivo com um pequeno script Python, rodado na pasta do projeto:</p>
+<pre class="codigo"><code>from pathlib import Path
+
+padroes = [".venv/", "__pycache__/", "*.pyc", ".env"]
+Path(".gitignore").write_text("\n".join(padroes) + "\n", encoding="utf-8")
+print(Path(".gitignore").read_text(encoding="utf-8"))</code></pre>
+    <p class="saida">.venv/<br>
+__pycache__/<br>
+*.pyc<br>
+.env</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca faça commit de senhas ou chaves de acesso. Mesmo que você apague depois, elas continuam no histórico do Git. Guarde-as num arquivo <code>.env</code> listado no <code>.gitignore</code>.</div>
+
+    <h2>Enviando para o GitHub</h2>
+    <ul>
+      <li>Crie uma conta grátis em <a href="https://github.com/">github.com</a>.</li>
+      <li>Clique em <strong>New repository</strong>, dê um nome (por exemplo <code>curso-python</code>) e clique em <strong>Create repository</strong>, sem marcar a opção de criar README.</li>
+      <li>O GitHub mostra o endereço do repositório. No terminal, ligue seu projeto a ele e envie:</li>
+    </ul>
+<pre class="codigo"><code>git remote add origin https://github.com/ana-souza/curso-python.git
+git push -u origin main</code></pre>
+    <p>Na primeira vez, o Windows abre uma janela para você entrar na sua conta do GitHub. Depois, para enviar novos commits, basta <code>git push</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Para publicar uma página HTML de graça (como a landing page da aula 243), envie o projeto para o GitHub e ative <strong>Settings › Pages</strong> no repositório, escolhendo a branch <code>main</code>.</div>
+
+    <h2>Baixando: clone e pull</h2>
+    <p>Para baixar um projeto do GitHub para outro computador (o da escola, por exemplo), use <code>clone</code>. Para trazer as novidades de um projeto que você já baixou, use <code>pull</code>:</p>
+<pre class="codigo"><code>git clone https://github.com/ana-souza/curso-python.git
+cd curso-python
+git pull</code></pre>
+    <p>Uma rotina saudável: <code>git pull</code> ao começar, <code>git add</code> e <code>git commit</code> a cada passo que funcionou, <code>git push</code> ao terminar.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>git commit -m "Adiciona placar ao jogo"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva os comandos para transformar a pasta <code>jogo-da-velha</code> num repositório Git e fazer o primeiro commit com todos os arquivos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>cd jogo-da-velha
+git init
+git add .
+git commit -m "Primeira versão do jogo da velha"</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Você mudou o arquivo <code>jogo.py</code>. Quais comandos mostram o que mudou, salvam a nova versão e enviam para o GitHub?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>git status
+git add jogo.py
+git commit -m "Corrige a contagem de pontos"
+git push</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva um <code>.gitignore</code> para um projeto Python que tem um ambiente virtual na pasta <code>.venv</code>, arquivos <code>__pycache__</code> e um arquivo <code>senhas.txt</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>.venv/
+__pycache__/
+senhas.txt</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Qual é a diferença entre <code>git clone</code> e <code>git pull</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">git clone baixa um repositório inteiro pela primeira vez, criando a pasta do projeto.<br>
+git pull traz para um projeto que você já tem as mudanças novas que estão no GitHub.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Coloque na ordem certa o ciclo de salvar uma versão: <code>git commit -m "..."</code>, <code>git status</code>, <code>git push</code>, <code>git add .</code></p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>git status
+git add .
+git commit -m "Descreve a mudança"
+git push</code></pre>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="243-landing-page.html" rel="prev">← Aula anterior</a>
+      <a href="249-proximos-passos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

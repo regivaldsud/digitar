@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 04 · Comentários e docstrings — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a explicar o seu código com comentários de linha e docstrings, e a ler a documentação das funções do Python.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 1 · Primeiros passos</p>
+    <h1>Aula 04 · Comentários e docstrings</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Escrever comentários com <code>#</code> para explicar o código</li>
+        <li>Usar comentários para "desligar" linhas durante os testes</li>
+        <li>O que é uma docstring e onde ela fica</li>
+        <li>Ler a documentação de funções com <code>__doc__</code> e <code>help()</code></li>
+      </ul>
+    </div>
+
+    <h2>Comentários com #</h2>
+    <p>Tudo que vem depois de <code>#</code> numa linha é um <strong>comentário</strong>: o Python ignora. Comentários servem para explicar o código para pessoas — inclusive para você mesmo daqui a um mês.</p>
+<pre class="codigo" data-executar="sim"><code># Programa que mostra o cardápio do dia
+print("Prato do dia: strogonoff")  # comentário no fim da linha
+print("Sobremesa: pudim")</code></pre>
+    <p class="saida">Prato do dia: strogonoff<br>
+Sobremesa: pudim</p>
+    <p>O comentário pode ocupar uma linha inteira ou ficar no fim de uma linha de código. Para um comentário de várias linhas, comece cada linha com <code>#</code>:</p>
+<pre class="codigo" data-executar="sim"><code># Cálculo do lanche da turma
+# São 30 alunos e cada coxinha custa 5 reais.
+# O resultado é o total em reais.
+print(30 * 5)</code></pre>
+    <p class="saida">150</p>
+
+    <h2>"Desligando" linhas</h2>
+    <p>Um uso muito comum dos comentários é desligar uma linha sem apagá-la, para testar o programa sem ela:</p>
+<pre class="codigo" data-executar="sim"><code>print("Bom dia")
+# print("Esta linha não roda, porque virou comentário")
+print("Boa noite")</code></pre>
+    <p class="saida">Bom dia<br>
+Boa noite</p>
+    <div class="dica"><strong>Dica:</strong> No VS Code, selecione linhas e aperte <code>Ctrl+;</code> (ou <code>Ctrl+/</code>) para comentar ou descomentar tudo de uma vez.</div>
+    <div class="atencao"><strong>Atenção:</strong> Comentário bom explica o <strong>porquê</strong>, não repete o óbvio. <code>print("Oi")  # mostra Oi</code> não ajuda ninguém. Já <code># 1,60 m é a altura mínima do brinquedo</code> ajuda muito.</div>
+
+    <h2>Docstrings: textos entre três aspas</h2>
+    <p>Uma <strong>docstring</strong> é um texto entre três aspas (<code>"""</code>) colocado no começo de um arquivo, de uma função ou de uma classe para explicar o que ele faz. Diferente do comentário, a docstring é guardada pelo Python e pode ser consultada depois.</p>
+    <p>No começo de um arquivo, ela descreve o programa inteiro e pode ocupar várias linhas:</p>
+<pre class="codigo" data-executar="sim"><code>"""Calculadora de mesada.
+
+Mostra quanto dinheiro sobra no fim do mês.
+Autora: Júlia, 7º ano.
+"""
+print("Mesada:", 50)
+print("Gastos:", 35)
+print("Sobra:", 50 - 35)</code></pre>
+    <p class="saida">Mesada: 50<br>
+Gastos: 35<br>
+Sobra: 15</p>
+    <p>O texto entre <code>"""</code> não aparece na tela: ele é documentação, não uma ordem para mostrar algo.</p>
+
+    <h2>Lendo a documentação do Python</h2>
+    <p>As funções do Python também têm docstrings. Você pode ler a de qualquer uma com <code>__doc__</code> (dois sublinhados antes e dois depois):</p>
+<pre class="codigo" data-executar="sim"><code>print(len.__doc__)
+print(abs.__doc__)</code></pre>
+    <p class="saida">Return the number of items in a container.<br>
+Return the absolute value of the argument.</p>
+    <p>A documentação vem em inglês: <code>len</code> devolve o número de itens de algo (por exemplo, quantas letras tem um texto) e <code>abs</code> devolve o valor absoluto (o número sem sinal). A função <code>help()</code> mostra a mesma informação de um jeito mais completo:</p>
+<pre class="codigo" data-executar="sim"><code>help(abs)</code></pre>
+    <p class="saida">Help on built-in function abs in module builtins:<br>
+&nbsp;<br>
+abs(x, /)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Return the absolute value of the argument.</p>
+    <p>Na aula 40 você vai criar suas próprias funções com <code>def</code>. Só para você já reconhecer: a docstring fica na primeira linha dentro da função.</p>
+<pre class="codigo" data-executar="sim"><code>def boas_vindas():
+    """Mostra uma mensagem de boas-vindas ao curso."""
+    print("Bem-vindo ao curso de Python do DIGITAR!")
+
+boas_vindas()
+print(boas_vindas.__doc__)</code></pre>
+    <p class="saida">Bem-vindo ao curso de Python do DIGITAR!<br>
+Mostra uma mensagem de boas-vindas ao curso.</p>
+    <div class="atencao"><strong>Atenção:</strong> As três aspas precisam ser iguais na abertura e no fechamento. Se você abrir com <code>"""</code> e esquecer de fechar, o Python acha que todo o resto do arquivo é texto e mostra um <code>SyntaxError</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code># Este programa calcula a média da turma</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um programa que mostre o horário da sua escola em duas linhas (entrada e saída) e tenha um comentário no topo explicando o que ele faz.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code># Mostra o horário de entrada e de saída da escola
+print("Entrada: 7h")
+print("Saída: 12h20")</code></pre>
+      <p class="saida">Entrada: 7h<br>
+Saída: 12h20</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O programa abaixo deveria mostrar só "Bom dia" e "Boa noite". Coloque um comentário para "desligar" a linha do meio, sem apagá-la: <code>print("Bom dia")</code>, <code>print("Boa tarde")</code>, <code>print("Boa noite")</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Bom dia")
+# print("Boa tarde")
+print("Boa noite")</code></pre>
+      <p class="saida">Bom dia<br>
+Boa noite</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Coloque uma docstring de várias linhas no topo de um programa que calcula quantos dias tem um ano de 52 semanas (52 vezes 7).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>"""Dias em 52 semanas.
+
+Multiplica 52 semanas por 7 dias.
+"""
+print(52 * 7)</code></pre>
+      <p class="saida">364</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use <code>__doc__</code> para ler a documentação da função <code>print</code>. Qual parâmetro ela cita para trocar o separador entre os valores?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(print.__doc__)</code></pre>
+      <p class="saida">(trecho do começo da saída; o texto exato muda um pouco entre versões do Python)<br>
+Prints the values to a stream, or to sys.stdout by default.<br>
+&nbsp;<br>
+&nbsp;&nbsp;sep<br>
+&nbsp;&nbsp;&nbsp;&nbsp;string inserted between values, default a space.<br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;&nbsp;&nbsp;string appended after the last value, default a newline.</p>
+      <p>A documentação cita o parâmetro <code>sep</code> (o separador, que por padrão é um espaço). Você vai usá-lo na aula 10.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Qual a diferença entre um comentário com <code>#</code> e uma docstring?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O comentário (#) é ignorado pelo Python: serve só para quem lê o código.<br>
+A docstring ("""...""") fica no começo de um arquivo, função ou classe e é<br>
+guardada pelo Python: dá para consultá-la com __doc__ ou help().</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="03-primeiro-programa.html" rel="prev">← Aula anterior</a>
+      <a href="05-ambiente-moderno.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

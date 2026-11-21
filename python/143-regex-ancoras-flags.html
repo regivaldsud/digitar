@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 143 · Âncoras, flags e modo verboso — Curso de Python · DIGITAR</title>
+<meta name="description" content="Prenda o padrão ao começo, ao fim ou às bordas das palavras e mude o jeito de procurar com flags como IGNORECASE e VERBOSE.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 7 · Expressões regulares</p>
+    <h1>Aula 143 · Âncoras, flags e modo verboso</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar as âncoras <code>^</code>, <code>$</code> e <code>\b</code></li>
+        <li>Validar um texto inteiro com <code>re.fullmatch</code></li>
+        <li>Mudar a busca com as flags <code>re.IGNORECASE</code> e <code>re.MULTILINE</code></li>
+        <li>Escrever regex longas e comentadas com <code>re.VERBOSE</code></li>
+        <li>Reaproveitar padrões com <code>re.compile</code></li>
+      </ul>
+    </div>
+
+    <h2>Âncoras: onde o padrão está</h2>
+    <p><strong>Âncoras</strong> não pegam nenhum caractere; elas marcam uma <strong>posição</strong>:</p>
+    <ul>
+      <li><code>^</code>: o começo do texto.</li>
+      <li><code>$</code>: o fim do texto.</li>
+      <li><code>\b</code>: uma borda de palavra (entre uma letra e um espaço, pontuação, começo ou fim).</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.search(r"^Bom", "Bom dia!"))
+print(re.search(r"^dia", "Bom dia!"))
+print(re.findall(r"\bsol\b", "sol, solidão, girassol, o sol"))</code></pre>
+    <p class="saida">&lt;re.Match object; span=(0, 3), match='Bom'&gt;<br>
+None<br>
+['sol', 'sol']</p>
+    <p>Sem o <code>\b</code>, o padrão <code>sol</code> também acharia o pedaço dentro de "solidão" e "girassol".</p>
+
+    <h2>Validando o texto inteiro: fullmatch</h2>
+    <p>Para <strong>validar</strong> (o texto todo tem que seguir o formato), use <code>re.fullmatch</code>. Ele só aceita se o padrão cobrir o texto do começo ao fim, como se tivesse <code>^</code> e <code>$</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+for cep in ["01310-100", "1310-100", "01310-1000", "CEP 01310-100"]:
+    valido = re.fullmatch(r"\d{5}-\d{3}", cep) is not None
+    print(f"{cep:&gt;15}: {valido}")</code></pre>
+    <p class="saida">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01310-100: True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1310-100: False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01310-1000: False<br>
+&nbsp;&nbsp;CEP 01310-100: False</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>re.search(r"\d{5}-\d{3}", "01310-1000")</code> acha um pedaço válido dentro do texto errado! Para validar, use <code>fullmatch</code> (ou <code>^...$</code>), nunca só <code>search</code>.</div>
+
+    <h2>Flags: mudando o jeito de procurar</h2>
+    <p>Flags são opções passadas no fim da chamada:</p>
+    <ul>
+      <li><code>re.IGNORECASE</code> (ou <code>re.I</code>): ignora maiúsculas e minúsculas.</li>
+      <li><code>re.MULTILINE</code> (ou <code>re.M</code>): <code>^</code> e <code>$</code> passam a valer em cada linha, não só no texto inteiro.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"python", "Python, PYTHON e python", re.IGNORECASE))
+
+lista = """Arroz
+- feijão (acabou)
+Farinha
+- óleo (acabou)"""
+print(re.findall(r"^- (\w+)", lista, re.MULTILINE))</code></pre>
+    <p class="saida">['Python', 'PYTHON', 'python']<br>
+['feijão', 'óleo']</p>
+    <p>Para usar duas flags, junte com <code>|</code>: <code>re.I | re.M</code>.</p>
+
+    <h2>Modo verboso e re.compile</h2>
+    <p>Regex longas viram uma sopa de símbolos. Com <code>re.VERBOSE</code> (ou <code>re.X</code>), você pode quebrar o padrão em linhas, com espaços e comentários <code>#</code>, que são ignorados. E <code>re.compile</code> guarda o padrão pronto para usar várias vezes:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+HORARIO = re.compile(r"""
+    ([01]\d|2[0-3])   # horas: 00 a 23
+    :                 # dois-pontos
+    ([0-5]\d)         # minutos: 00 a 59
+""", re.VERBOSE)
+
+for texto in ["08:30", "23:59", "24:00", "7:5"]:
+    print(texto, "válido" if HORARIO.fullmatch(texto) else "inválido")</code></pre>
+    <p class="saida">08:30 válido<br>
+23:59 válido<br>
+24:00 inválido<br>
+7:5 inválido</p>
+    <div class="dica"><strong>Dica:</strong> No modo verboso os espaços são ignorados. Para procurar um espaço de verdade, use <code>\s</code> ou <code>[ ]</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>padrao = re.compile(r"^\d{5}-\d{3}$")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva uma função <code>cep_valido(texto)</code> que devolva <code>True</code> só para textos inteiros no formato <code>00000-000</code>. Teste com três exemplos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+
+def cep_valido(texto):
+    return re.fullmatch(r"\d{5}-\d{3}", texto) is not None
+
+
+print(cep_valido("40020-000"))
+print(cep_valido("40020000"))
+print(cep_valido("40020-000 Salvador"))</code></pre>
+      <p class="saida">True<br>
+False<br>
+False</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Conte quantas vezes a palavra <code>"mar"</code> aparece sozinha (não dentro de "mares" ou "amar") em <code>"O mar, os mares, amar o mar"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(len(re.findall(r"\bmar\b", "O mar, os mares, amar o mar")))</code></pre>
+      <p class="saida">2</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Ache todas as linhas que começam com um número no texto abaixo, usando <code>re.MULTILINE</code>. O texto é <code>"1 ovo\nfarinha\n2 xícaras de leite\nsal"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+receita = "1 ovo\nfarinha\n2 xícaras de leite\nsal"
+print(re.findall(r"^\d+ .*$", receita, re.MULTILINE))</code></pre>
+      <p class="saida">['1 ovo', '2 xícaras de leite']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Ache <code>"digitar"</code> em qualquer combinação de maiúsculas no texto <code>"Eu amo DIGITAR e digitar!"</code> com uma flag.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"digitar", "Eu amo DIGITAR e digitar!", re.I))</code></pre>
+      <p class="saida">['DIGITAR', 'digitar']</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="142-regex-grupos.html" rel="prev">← Aula anterior</a>
+      <a href="144-regex-lookaround.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 64 · PEP 8 e bons nomes — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça o guia de estilo oficial do Python e aprenda a escolher nomes que deixam o código fácil de ler.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 64 · PEP 8 e bons nomes</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é a PEP 8 e por que seguir um estilo</li>
+        <li>Nomear com <code>snake_case</code>, <code>PascalCase</code> e <code>CONSTANTES</code></li>
+        <li>Usar indentação de 4 espaços, espaços em volta de operadores e linhas curtas</li>
+        <li>Formatar e revisar o código automaticamente com black e ruff</li>
+      </ul>
+    </div>
+
+    <h2>Código é lido mais vezes do que é escrito</h2>
+    <p>Você escreve um programa uma vez, mas lê (e outras pessoas leem) dezenas de vezes. A <strong>PEP 8</strong> é o guia de estilo oficial do Python: um combinado de como formatar o código para que todo programador Python se sinta em casa lendo o código de qualquer outro.</p>
+    <p>Compare. Os dois programas abaixo fazem exatamente a mesma coisa:</p>
+<pre class="codigo" data-executar="sim"><code>def F(a,b):
+  X=a*b/2
+  return X
+print(F(10,5))</code></pre>
+    <p class="saida">25.0</p>
+<pre class="codigo" data-executar="sim"><code>def area_do_triangulo(base, altura):
+    area = base * altura / 2
+    return area
+
+
+print(area_do_triangulo(10, 5))</code></pre>
+    <p class="saida">25.0</p>
+    <p>O segundo explica a si mesmo. Esse é o objetivo.</p>
+
+    <h2>Como escrever cada tipo de nome</h2>
+    <ul>
+      <li>Variáveis e funções: <code>snake_case</code>, tudo minúsculo com <code>_</code> entre as palavras: <code>nota_final</code>, <code>calcular_media()</code>.</li>
+      <li>Classes: <code>PascalCase</code>, cada palavra começando com maiúscula: <code>ContaBancaria</code>, <code>JogoDaVelha</code>.</li>
+      <li>Constantes (valores que não mudam): <code>MAIUSCULAS_COM_UNDERLINE</code>: <code>VELOCIDADE_MAXIMA</code>, <code>PI</code>.</li>
+      <li>Módulos (arquivos): curtos e minúsculos: <code>utilidades.py</code>, <code>jogo.py</code>.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>LIMITE_DE_FALTAS = 25
+
+
+class Estudante:
+    def __init__(self, nome, faltas):
+        self.nome = nome
+        self.faltas = faltas
+
+    def esta_reprovado_por_falta(self):
+        return self.faltas &gt; LIMITE_DE_FALTAS
+
+
+aluno = Estudante("Vitória", 30)
+print(aluno.esta_reprovado_por_falta())</code></pre>
+    <p class="saida">True</p>
+
+    <h2>Bons nomes contam a história</h2>
+    <p>Um bom nome diz <strong>o que</strong> a coisa é. Fuja de nomes de uma letra (exceto contadores curtos como <code>i</code>) e de abreviações que só você entende.</p>
+<pre class="codigo" data-executar="sim"><code># Ruim: o que são x, y e z?
+x = 3.5
+y = 4
+z = x * y
+print(z)
+
+# Bom: dá para entender sem explicação
+preco_do_picole = 3.5
+quantidade = 4
+total_a_pagar = preco_do_picole * quantidade
+print(total_a_pagar)</code></pre>
+    <p class="saida">14.0<br>
+14.0</p>
+    <div class="dica"><strong>Dica:</strong> Funções fazem algo, então comece o nome com um verbo: <code>calcular_frete</code>, <code>enviar_mensagem</code>, <code>mostrar_menu</code>. Para funções que respondem sim ou não, use <code>e_</code>, <code>esta_</code> ou <code>tem_</code>: <code>esta_vazio</code>, <code>tem_desconto</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Nunca use como nome de variável algo que já existe no Python, como <code>list</code>, <code>str</code>, <code>input</code>, <code>sum</code> ou <code>max</code>. Você "apaga" a função original e ganha erros estranhos depois.</div>
+
+    <h2>Números mágicos viram constantes</h2>
+    <p>Um "número mágico" é um valor solto no meio do código, sem explicação. Quem lê <code>if idade &gt;= 16</code> não sabe se 16 é a idade para votar, para trabalhar ou outra coisa. Dê um nome a ele:</p>
+<pre class="codigo" data-executar="sim"><code>IDADE_MINIMA_PARA_VOTAR = 16
+ANO_ATUAL = 2026
+
+
+def pode_votar(ano_de_nascimento):
+    idade = ANO_ATUAL - ano_de_nascimento
+    return idade &gt;= IDADE_MINIMA_PARA_VOTAR
+
+
+print(pode_votar(2008))
+print(pode_votar(2013))</code></pre>
+    <p class="saida">True<br>
+False</p>
+    <p>Se a regra mudar, você troca o valor num lugar só, no topo do arquivo.</p>
+
+    <h2>Espaços, linhas e indentação</h2>
+    <ul>
+      <li>Indente com <strong>4 espaços</strong> (o VS Code faz isso quando você aperta Tab).</li>
+      <li>Um espaço de cada lado de <code>=</code>, <code>+</code>, <code>-</code>, <code>==</code>, <code>&lt;</code> e outros operadores: <code>total = preco * 2</code>.</li>
+      <li>Depois da vírgula vai espaço; antes, não: <code>print(a, b)</code>.</li>
+      <li>Sem espaço dentro dos parênteses: <code>print(x)</code>, não <code>print( x )</code>.</li>
+      <li>Em argumentos nomeados, <strong>sem</strong> espaço no <code>=</code>: <code>print("a", end="")</code>.</li>
+      <li>Linhas com até 79 caracteres; duas linhas em branco antes de cada <code>def</code> ou <code>class</code> do topo do arquivo.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>def frete(peso_kg, distancia_km, expresso=False):
+    valor = 5 + peso_kg * 0.5 + distancia_km * 0.1
+    if expresso:
+        valor = valor * 1.5
+    return round(valor, 2)
+
+
+print(frete(2, 100))
+print(frete(2, 100, expresso=True))</code></pre>
+    <p class="saida">16.0<br>
+24.0</p>
+
+    <h2>Ferramentas que arrumam por você</h2>
+    <p>Ninguém decora todas as regras. Ferramentas fazem o trabalho (elas são instaladas com o <code>pip</code>, que você conheceu na aula 60): o <strong>black</strong> reformata o código automaticamente e o <strong>ruff</strong> aponta problemas de estilo e erros comuns. Instale e rode no terminal, na pasta do projeto:</p>
+<pre class="codigo"><code>pip install black ruff
+black meu_programa.py
+ruff check meu_programa.py</code></pre>
+    <p class="saida">reformatted meu_programa.py<br>
+All done! ✨ 🍰 ✨<br>
+1 file reformatted.</p>
+    <div class="dica"><strong>Dica:</strong> No VS Code, instale a extensão <strong>Ruff</strong> ou <strong>Black Formatter</strong> e ative "Format on Save" nas configurações: o código fica arrumado sempre que você salva.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>VELOCIDADE_MAXIMA = 110  # km/h na rodovia</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Reescreva seguindo a PEP 8: <code>def Soma (A,B) :</code> seguido de <code>return A+B</code> indentado com 2 espaços.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def soma(a, b):
+    return a + b
+
+
+print(soma(2, 3))</code></pre>
+      <p class="saida">5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Dê nomes melhores às variáveis: <code>a = 1200</code>, <code>b = 0.3</code>, <code>c = a * b</code> (salário, porcentagem gasta com aluguel e valor do aluguel).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>salario = 1200
+porcentagem_aluguel = 0.3
+valor_do_aluguel = salario * porcentagem_aluguel
+print(valor_do_aluguel)</code></pre>
+      <p class="saida">360.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Classifique cada nome como bom para variável, função, classe ou constante: <code>ContaPoupanca</code>, <code>TAXA_DE_JUROS</code>, <code>saldo_atual</code>, <code>calcular_rendimento</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">ContaPoupanca &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; classe (PascalCase)<br>
+TAXA_DE_JUROS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; constante (MAIÚSCULAS)<br>
+saldo_atual &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; variável (snake_case)<br>
+calcular_rendimento -&gt; função (snake_case, começa com verbo)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Este código dá erro na última linha. Por quê? <code>list = [3, 1, 2]</code> e depois <code>numeros = list("abc")</code>. Corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numeros = [3, 1, 2]
+letras = list("abc")
+print(numeros, letras)</code></pre>
+      <p class="saida">[3, 1, 2] ['a', 'b', 'c']</p>
+      <p>Ao usar <code>list</code> como nome de variável, o nome passa a apontar para a lista <code>[3, 1, 2]</code> e a função <code>list()</code> some. Escolha outro nome.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Troque o número mágico por uma constante: <code>if velocidade &gt; 60: print("Multa!")</code> (60 é o limite da avenida, em km/h). Teste com velocidade 72.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>LIMITE_DA_AVENIDA = 60
+
+velocidade = 72
+if velocidade &gt; LIMITE_DA_AVENIDA:
+    print("Multa!")</code></pre>
+      <p class="saida">Multa!</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="63-guard-clause.html" rel="prev">← Aula anterior</a>
+      <a href="65-organizacao-de-projeto.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

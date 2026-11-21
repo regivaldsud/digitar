@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 132 · TDD na prática: uma função do zero guiada por testes — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa passo a passo, com o ciclo vermelho-verde-refatorar, uma função que escreve valores em reais.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 6 · Testes automatizados</p>
+    <h1>Aula 132 · TDD na prática: uma função do zero guiada por testes</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Aplicar o ciclo vermelho, verde e refatorar numa função de verdade</li>
+        <li>Crescer o código um teste de cada vez</li>
+        <li>Refatorar com segurança, sabendo que os testes avisam se algo quebrar</li>
+        <li>Transformar casos especiais em novos testes</li>
+      </ul>
+    </div>
+
+    <h2>O desafio</h2>
+    <p>Vamos criar a função <code>reais(valor)</code>, que transforma um número no jeito brasileiro de escrever dinheiro: <code>reais(1234.5)</code> deve dar <code>"R$ 1.234,50"</code>. Parece simples, mas tem pegadinhas: a vírgula dos centavos, o ponto dos milhares e os números negativos.</p>
+    <p>Em vez de escrever tudo de uma vez, vamos seguir o TDD da aula 130: um teste, o código mínimo, melhorar, e de novo.</p>
+
+    <h2>Passo 1 — vermelho</h2>
+    <p>O primeiro teste é o caso mais simples: um valor redondo. A função ainda não existe de verdade, então o teste tem que falhar.</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def reais(valor):
+    return ""
+
+
+class TestReais(unittest.TestCase):
+    def test_valor_redondo(self):
+        self.assertEqual(reais(5), "R$ 5,00")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">F<br>
+======================================================================<br>
+FAIL: test_valor_redondo (__main__.TestReais.test_valor_redondo)<br>
+----------------------------------------------------------------------<br>
+Traceback (most recent call last):<br>
+&nbsp;&nbsp;File "exemplo.py", line 10, in test_valor_redondo<br>
+&nbsp;&nbsp;&nbsp;&nbsp;self.assertEqual(reais(5), "R$ 5,00")<br>
+AssertionError: '' != 'R$ 5,00'<br>
++ R$ 5,00<br>
+&nbsp;<br>
+&nbsp;<br>
+----------------------------------------------------------------------<br>
+Ran 1 test in 0.000s<br>
+&nbsp;<br>
+FAILED (failures=1)</p>
+    <p>Vermelho, como esperado. Agora sabemos que o teste funciona.</p>
+
+    <h2>Passo 2 — verde</h2>
+    <p>O código mais simples que passa: formatar com duas casas e trocar o ponto pela vírgula.</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def reais(valor):
+    texto = f"{valor:.2f}"
+    return "R$ " + texto.replace(".", ",")
+
+
+class TestReais(unittest.TestCase):
+    def test_valor_redondo(self):
+        self.assertEqual(reais(5), "R$ 5,00")
+
+    def test_centavos(self):
+        self.assertEqual(reais(3.5), "R$ 3,50")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <p>Aproveitamos e acrescentamos um teste com centavos, que também passou.</p>
+
+    <h2>Passo 3 — vermelho de novo: os milhares</h2>
+    <p>Próximo caso: <code>reais(1234.5)</code> deve dar <code>"R$ 1.234,50"</code>. Com o código atual, sai <code>"R$ 1234,50"</code>, sem o ponto. O novo teste falha (vermelho) e nos obriga a melhorar o código. O formato <code>{valor:,.2f}</code> coloca vírgula nos milhares e ponto nos centavos, o jeito americano: <code>1,234.50</code>. Basta trocar um pelo outro, usando um caractere temporário:</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def reais(valor):
+    americano = f"{valor:,.2f}"            # 1,234.50
+    trocado = americano.replace(",", "#")  # 1#234.50
+    trocado = trocado.replace(".", ",")    # 1#234,50
+    trocado = trocado.replace("#", ".")    # 1.234,50
+    return "R$ " + trocado
+
+
+class TestReais(unittest.TestCase):
+    def test_valor_redondo(self):
+        self.assertEqual(reais(5), "R$ 5,00")
+
+    def test_centavos(self):
+        self.assertEqual(reais(3.5), "R$ 3,50")
+
+    def test_milhar(self):
+        self.assertEqual(reais(1234.5), "R$ 1.234,50")
+
+    def test_milhao(self):
+        self.assertEqual(reais(2500000), "R$ 2.500.000,00")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">....<br>
+----------------------------------------------------------------------<br>
+Ran 4 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <div class="atencao"><strong>Atenção:</strong> Trocar <code>","</code> por <code>"."</code> e depois <code>"."</code> por <code>","</code> diretamente estraga tudo: no fim, todos viram vírgula. Por isso o <code>#</code> temporário. É exatamente o tipo de erro que um teste pega na hora.</div>
+
+    <h2>Passo 4 — refatorar</h2>
+    <p>Os testes estão verdes, então podemos deixar o código mais elegante sem medo. O método <code>translate</code> troca vários caracteres de uma vez, sem precisar do <code>#</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+TROCA = str.maketrans(",.", ".,")
+
+
+def reais(valor):
+    return "R$ " + f"{valor:,.2f}".translate(TROCA)
+
+
+class TestReais(unittest.TestCase):
+    def test_valor_redondo(self):
+        self.assertEqual(reais(5), "R$ 5,00")
+
+    def test_centavos(self):
+        self.assertEqual(reais(3.5), "R$ 3,50")
+
+    def test_milhar(self):
+        self.assertEqual(reais(1234.5), "R$ 1.234,50")
+
+    def test_milhao(self):
+        self.assertEqual(reais(2500000), "R$ 2.500.000,00")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">....<br>
+----------------------------------------------------------------------<br>
+Ran 4 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <p>Quatro testes, todos verdes: a refatoração não quebrou nada.</p>
+
+    <h2>Passo 5 — um caso especial vira teste</h2>
+    <p>E os valores negativos, como um saldo devedor? Decidimos que <code>reais(-80)</code> deve dar <code>"-R$ 80,00"</code>. Primeiro o teste (vermelho), depois o código (verde):</p>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+TROCA = str.maketrans(",.", ".,")
+
+
+def reais(valor):
+    sinal = "-" if valor &lt; 0 else ""
+    return sinal + "R$ " + f"{abs(valor):,.2f}".translate(TROCA)
+
+
+class TestReais(unittest.TestCase):
+    def test_valor_redondo(self):
+        self.assertEqual(reais(5), "R$ 5,00")
+
+    def test_milhar(self):
+        self.assertEqual(reais(1234.5), "R$ 1.234,50")
+
+    def test_negativo(self):
+        self.assertEqual(reais(-80), "-R$ 80,00")
+
+    def test_zero(self):
+        self.assertEqual(reais(0), "R$ 0,00")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">....<br>
+----------------------------------------------------------------------<br>
+Ran 4 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+    <div class="dica"><strong>Dica:</strong> Achou um bug no seu programa? Antes de corrigir, escreva um teste que mostra o bug (vermelho). Depois corrija (verde). Assim aquele bug nunca mais volta escondido.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>TROCA = str.maketrans(",.", ".,")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use TDD para criar <code>iniciais(nome)</code>, que devolve as iniciais em maiúsculas: <code>iniciais("ana maria braga")</code> dá <code>"AMB"</code>. Escreva os testes e a função.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def iniciais(nome):
+    return "".join(parte[0].upper() for parte in nome.split())
+
+
+class TestIniciais(unittest.TestCase):
+    def test_tres_nomes(self):
+        self.assertEqual(iniciais("ana maria braga"), "AMB")
+
+    def test_um_nome(self):
+        self.assertEqual(iniciais("pelé"), "P")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Continue o exercício anterior: um novo teste exige que <code>iniciais("  joão   silva ")</code> (com espaços sobrando) dê <code>"JS"</code>. A função da resposta anterior passa? Teste.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+
+def iniciais(nome):
+    return "".join(parte[0].upper() for parte in nome.split())
+
+
+class TestIniciais(unittest.TestCase):
+    def test_espacos_sobrando(self):
+        self.assertEqual(iniciais("  joão   silva "), "JS")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">.<br>
+----------------------------------------------------------------------<br>
+Ran 1 test in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      <p>Passa! O <code>split()</code> sem argumentos já ignora espaços repetidos e nas pontas. O teste novo serve de garantia: se alguém trocar por <code>split(" ")</code>, ele vai falhar.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Faça a função <code>reais</code> aceitar arredondamento: <code>reais(9.999)</code> deve dar <code>"R$ 10,00"</code>. Escreva o teste e confira se a versão final da aula já passa.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unittest
+
+TROCA = str.maketrans(",.", ".,")
+
+
+def reais(valor):
+    sinal = "-" if valor &lt; 0 else ""
+    return sinal + "R$ " + f"{abs(valor):,.2f}".translate(TROCA)
+
+
+class TestReais(unittest.TestCase):
+    def test_arredonda(self):
+        self.assertEqual(reais(9.999), "R$ 10,00")
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+      <p class="saida">.<br>
+----------------------------------------------------------------------<br>
+Ran 1 test in 0.000s<br>
+&nbsp;<br>
+OK</p>
+      <p>Passa, porque o formato <code>.2f</code> já arredonda para duas casas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Por que é importante ver o teste falhar (vermelho) antes de escrever o código?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque prova que o teste é capaz de pegar um erro.<br>
+Se o teste passasse mesmo sem o código pronto, ele estaria testando errado<br>
+(por exemplo, comparando a coisa errada) e nunca avisaria de um bug.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="131-unittest.html" rel="prev">← Aula anterior</a>
+      <a href="133-mocks.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

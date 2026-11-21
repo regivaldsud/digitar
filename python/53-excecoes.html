@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 53 · Erros: try, except, else, finally e raise — Curso de Python · DIGITAR</title>
+<meta name="description" content="Trate erros com try e except para o programa não parar de repente, complete o tratamento com else e finally e gere seus próprios erros com raise.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 53 · Erros: try, except, else, finally e raise</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma exceção e quais são as mais comuns</li>
+        <li>Tratar erros com <code>try</code> e <code>except</code>, inclusive vários tipos e a mensagem com <code>as e</code></li>
+        <li>Usar <code>else</code> (quando deu certo) e <code>finally</code> (sempre)</li>
+        <li>Gerar erros com <code>raise</code> e uma mensagem clara</li>
+        <li>Fazer um <code>input</code> de números que não quebra quando a pessoa digita errado</li>
+      </ul>
+    </div>
+
+    <h2>O que é uma exceção</h2>
+    <p>Quando algo dá errado enquanto o programa roda — dividir por zero, converter <code>"abc"</code> em número, pedir uma chave que não existe —, o Python cria uma <strong>exceção</strong>. Se ninguém cuidar dela, o programa para e mostra a mensagem de erro (você aprendeu a ler essas mensagens na aula 06).</p>
+<pre class="codigo" data-executar="sim"><code>print("Começando a conta...")
+print(10 / 0)
+print("Esta linha nunca aparece.")</code></pre>
+    <p class="saida">Começando a conta...<br>
+ZeroDivisionError: division by zero</p>
+    <p>As exceções que você mais vai encontrar:</p>
+    <ul>
+      <li><code>ValueError</code>: o tipo está certo, mas o valor não serve, como <code>int("doze")</code>;</li>
+      <li><code>ZeroDivisionError</code>: divisão por zero;</li>
+      <li><code>KeyError</code>: chave que não existe num dicionário;</li>
+      <li><code>IndexError</code>: posição que não existe numa lista;</li>
+      <li><code>TypeError</code>: operação com tipos que não combinam, como <code>"a" + 1</code>;</li>
+      <li><code>FileNotFoundError</code>: arquivo que não existe.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>estoque = {"coxinha": 12, "pastel": 8}
+print(estoque["coxinha"])
+print(estoque["empada"])</code></pre>
+    <p class="saida">12<br>
+KeyError: 'empada'</p>
+
+    <h2>try e except</h2>
+    <p>O <code>try</code> ("tente") roda um bloco de código. Se acontecer uma exceção lá dentro, o Python pula para o <code>except</code> em vez de parar o programa.</p>
+<pre class="codigo" data-executar="sim"><code>texto = "doze"
+
+try:
+    numero = int(texto)
+    print("O dobro é", numero * 2)
+except ValueError:
+    print(f"'{texto}' não é um número inteiro.")
+
+print("O programa continua normalmente.")</code></pre>
+    <p class="saida">'doze' não é um número inteiro.<br>
+O programa continua normalmente.</p>
+    <p>Um mesmo <code>try</code> pode ter vários <code>except</code>, um para cada tipo de erro. Com <code>as e</code>, você guarda a exceção numa variável e pode mostrar a mensagem dela.</p>
+<pre class="codigo" data-executar="sim"><code>def dividir(a, b):
+    try:
+        resultado = int(a) / int(b)
+        print(f"{a} / {b} = {resultado}")
+    except ValueError:
+        print("Digite apenas números.")
+    except ZeroDivisionError as e:
+        print("Não dá para dividir por zero:", e)
+
+dividir("10", "4")
+dividir("10", "0")
+dividir("dez", "2")</code></pre>
+    <p class="saida">10 / 4 = 2.5<br>
+Não dá para dividir por zero: division by zero<br>
+Digite apenas números.</p>
+    <div class="atencao"><strong>Atenção:</strong> Evite <code>except:</code> sozinho ou <code>except Exception:</code> para tudo. Ele esconde erros que você precisava ver, como um nome de variável digitado errado. Pegue só os tipos de erro que você espera.</div>
+    <div class="atencao"><strong>Atenção:</strong> Só o código <strong>dentro</strong> do <code>try</code> é protegido. Se o erro acontecer antes ou depois dele, o programa para do mesmo jeito.</div>
+
+    <h2>else e finally</h2>
+    <p>O <code>try</code> completo tem quatro partes, sempre nesta ordem:</p>
+    <ul>
+      <li><code>try</code>: o código que pode dar erro;</li>
+      <li><code>except</code>: o que fazer se der erro;</li>
+      <li><code>else</code>: o que fazer se <strong>não</strong> der erro;</li>
+      <li><code>finally</code>: o que fazer <strong>sempre</strong>, no fim, com ou sem erro.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>def sacar(saldo, valor):
+    print(f"Tentando sacar R$ {valor}...")
+    try:
+        if valor &gt; saldo:
+            raise ValueError("saldo insuficiente")
+        saldo -= valor
+    except ValueError as e:
+        print("Erro:", e)
+    else:
+        print("Saque feito! Novo saldo:", saldo)
+    finally:
+        print("Obrigado por usar o Banco do Bairro.")
+    return saldo
+
+sacar(100, 30)
+sacar(100, 500)</code></pre>
+    <p class="saida">Tentando sacar R$ 30...<br>
+Saque feito! Novo saldo: 70<br>
+Obrigado por usar o Banco do Bairro.<br>
+Tentando sacar R$ 500...<br>
+Erro: saldo insuficiente<br>
+Obrigado por usar o Banco do Bairro.</p>
+    <p>O <code>else</code> ajuda a deixar dentro do <code>try</code> só a linha arriscada. O <code>finally</code> serve para "arrumar a casa": mostrar uma mensagem final, fechar algo que foi aberto.</p>
+
+    <h2>raise: gerando seus próprios erros</h2>
+    <p>Às vezes é o <strong>seu</strong> código que precisa avisar que algo está errado. O <code>raise</code> cria uma exceção. Escolha o tipo que combina com o problema e escreva uma mensagem que ajude quem for corrigir.</p>
+<pre class="codigo" data-executar="sim"><code>def nota_valida(nota):
+    if not 0 &lt;= nota &lt;= 10:
+        raise ValueError(f"a nota deve estar entre 0 e 10, recebi {nota}")
+    return nota
+
+print(nota_valida(8.5))
+try:
+    nota_valida(12)
+except ValueError as e:
+    print("Problema:", e)</code></pre>
+    <p class="saida">8.5<br>
+Problema: a nota deve estar entre 0 e 10, recebi 12</p>
+    <p>Sem o <code>try</code>, o programa pararia mostrando a sua mensagem:</p>
+<pre class="codigo" data-executar="sim"><code>def idade_valida(idade):
+    if idade &lt; 0:
+        raise ValueError("a idade não pode ser negativa")
+    return idade
+
+idade_valida(-5)</code></pre>
+    <p class="saida">ValueError: a idade não pode ser negativa</p>
+    <div class="atencao"><strong>Atenção:</strong> Não use <code>raise</code> com um texto solto, como <code>raise "erro"</code>. Isso causa <code>TypeError</code>. O certo é <code>raise ValueError("erro")</code>. Na aula 80 você aprende a criar tipos de exceção só seus.</div>
+
+    <h2>Um input de números que não quebra</h2>
+    <p>O uso mais comum de <code>try</code> é pedir um número até a pessoa digitar certo:</p>
+<pre class="codigo" data-executar="sim"><code>while True:
+    try:
+        idade = int(input("Qual é a sua idade? "))
+    except ValueError:
+        print("Ops! Digite a idade com algarismos, por exemplo 13.")
+        continue
+    if idade &lt; 0:
+        print("A idade não pode ser negativa.")
+        continue
+    break
+
+print(f"Daqui a 5 anos você terá {idade + 5} anos.")</code></pre>
+    <p class="saida"><em>(exemplo digitando quinze, -3, 15)</em><br>
+Qual é a sua idade? quinze<br>
+Ops! Digite a idade com algarismos, por exemplo 13.<br>
+Qual é a sua idade? -3<br>
+A idade não pode ser negativa.<br>
+Qual é a sua idade? 15<br>
+Daqui a 5 anos você terá 20 anos.</p>
+    <div class="dica"><strong>Dica:</strong> O <code>continue</code> volta para o começo do <code>while</code> e pergunta de novo. O <code>break</code> só acontece quando a idade é válida.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>except ValueError as e:</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Peça um número inteiro com <code>input</code> e mostre o quadrado dele. Se a pessoa digitar algo que não é número, mostre <code>Isso não é um número!</code> em vez de parar.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>try:
+    n = int(input("Número: "))
+    print("Quadrado:", n * n)
+except ValueError:
+    print("Isso não é um número!")</code></pre>
+      <p class="saida"><em>(exemplo digitando 7)</em><br>
+Número: 7<br>
+Quadrado: 49</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva uma função <code>preco(produto)</code> que procura o produto no dicionário <code>{"açaí": 15.0, "tapioca": 9.5}</code> e devolve o preço, ou <code>None</code> se o produto não existir (use <code>try</code> com <code>KeyError</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cardapio = {"açaí": 15.0, "tapioca": 9.5}
+
+def preco(produto):
+    try:
+        return cardapio[produto]
+    except KeyError:
+        return None
+
+print(preco("açaí"))
+print(preco("acarajé"))</code></pre>
+      <p class="saida">15.0<br>
+None</p>
+      <p>Para dicionários, <code>cardapio.get(produto)</code> faz a mesma coisa sem <code>try</code>. Mas o <code>try</code> funciona para qualquer tipo de erro.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Sem rodar, diga o que aparece: um <code>try</code> mostra <code>A</code>, calcula <code>1 / 0</code> e mostra <code>B</code>; o <code>except ZeroDivisionError</code> mostra <code>C</code>, o <code>else</code> mostra <code>D</code> e o <code>finally</code> mostra <code>E</code>. Depois rode a resposta para conferir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>try:
+    print("A")
+    x = 1 / 0
+    print("B")
+except ZeroDivisionError:
+    print("C")
+else:
+    print("D")
+finally:
+    print("E")</code></pre>
+      <p class="saida">A<br>
+C<br>
+E</p>
+      <p>Mostra <code>A</code>, <code>C</code> e <code>E</code>. O <code>B</code> não aparece porque o erro acontece antes dele, e o <code>else</code> não roda porque houve erro.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça a função <code>cadastrar_senha(senha)</code> que gera <code>ValueError</code> com a mensagem <code>a senha precisa ter pelo menos 8 caracteres</code> se a senha for curta, e devolve <code>"Senha cadastrada"</code> caso contrário. Teste com <code>"abc"</code> e <code>"digitar2026"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def cadastrar_senha(senha):
+    if len(senha) &lt; 8:
+        raise ValueError("a senha precisa ter pelo menos 8 caracteres")
+    return "Senha cadastrada"
+
+for s in ["abc", "digitar2026"]:
+    try:
+        print(cadastrar_senha(s))
+    except ValueError as e:
+        print("Erro:", e)</code></pre>
+      <p class="saida">Erro: a senha precisa ter pelo menos 8 caracteres<br>
+Senha cadastrada</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça números até a pessoa digitar um número válido entre 1 e 10. Teste digitando <code>abc</code>, <code>15</code> e depois <code>7</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>while True:
+    try:
+        n = int(input("Escolha de 1 a 10: "))
+    except ValueError:
+        print("Digite um número.")
+        continue
+    if 1 &lt;= n &lt;= 10:
+        break
+    print("Fora do intervalo.")
+
+print("Você escolheu", n)</code></pre>
+      <p class="saida"><em>(exemplo digitando abc, 15, 7)</em><br>
+Escolha de 1 a 10: abc<br>
+Digite um número.<br>
+Escolha de 1 a 10: 15<br>
+Fora do intervalo.<br>
+Escolha de 1 a 10: 7<br>
+Você escolheu 7</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="52-geradores.html" rel="prev">← Aula anterior</a>
+      <a href="54-modulos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

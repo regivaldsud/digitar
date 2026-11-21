@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 145 · Projeto: validar CPF, e-mail e telefone com regex — Curso de Python · DIGITAR</title>
+<meta name="description" content="Junte tudo do módulo para construir um validador de CPF, e-mail e telefone brasileiro, com testes automáticos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 7 · Expressões regulares</p>
+    <h1>Aula 145 · Projeto: validar CPF, e-mail e telefone com regex</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Validar o formato de CPF, e-mail e telefone com <code>re.fullmatch</code></li>
+        <li>Extrair os dígitos com grupos e <code>re.sub</code></li>
+        <li>Combinar regex com o cálculo dos dígitos verificadores do CPF</li>
+        <li>Garantir que tudo funciona com testes do <code>unittest</code></li>
+      </ul>
+    </div>
+
+    <h2>O plano</h2>
+    <p>Num cadastro, o usuário digita do jeito que quer: <code>123.456.789-09</code>, <code>12345678909</code>, <code>(81) 99876-5432</code>, <code>81998765432</code>... Vamos escrever três funções que aceitam essas variações e recusam o que está errado:</p>
+    <ul>
+      <li><code>cpf_valido(texto)</code>: confere o formato <strong>e</strong> os dígitos verificadores.</li>
+      <li><code>email_valido(texto)</code>: confere o formato básico de um e-mail.</li>
+      <li><code>telefone_formatado(texto)</code>: valida um celular ou fixo e devolve no formato <code>(81) 99876-5432</code>, ou <code>None</code> se for inválido.</li>
+    </ul>
+    <p>Os CPFs dos exemplos são números de teste que passam no cálculo; nunca use o CPF de uma pessoa real em exemplos.</p>
+
+    <h2>Passo 1 — o formato do CPF</h2>
+    <p>O CPF tem 11 dígitos, que podem vir com pontos e tracinho: <code>ddd.ddd.ddd-dd</code>. Os separadores são opcionais, por isso o <code>?</code> depois de cada um:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+FORMATO_CPF = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
+
+for texto in ["123.456.789-09", "12345678909", "123.456.78909", "123.456.789-0", "abc.def.ghi-jk"]:
+    print(f"{texto:&gt;15}", bool(FORMATO_CPF.fullmatch(texto)))</code></pre>
+    <p class="saida">&nbsp;123.456.789-09 True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;12345678909 True<br>
+&nbsp;&nbsp;123.456.78909 True<br>
+&nbsp;&nbsp;123.456.789-0 False<br>
+&nbsp;abc.def.ghi-jk False</p>
+
+    <h2>Passo 2 — os dígitos verificadores</h2>
+    <p>Os dois últimos dígitos do CPF são calculados a partir dos nove primeiros (você viu a conta na aula 31). Primeiro tiramos tudo o que não é dígito com <code>re.sub(r"\D", "", texto)</code>, depois conferimos:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+
+def digito(numeros):
+    peso = len(numeros) + 1
+    soma = sum(int(n) * (peso - i) for i, n in enumerate(numeros))
+    resto = soma * 10 % 11
+    return "0" if resto == 10 else str(resto)
+
+
+def cpf_valido(texto):
+    if not re.fullmatch(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", texto):
+        return False
+    numeros = re.sub(r"\D", "", texto)
+    if numeros == numeros[0] * 11:
+        return False
+    d1 = digito(numeros[:9])
+    d2 = digito(numeros[:9] + d1)
+    return numeros[9:] == d1 + d2
+
+
+print(cpf_valido("123.456.789-09"))
+print(cpf_valido("123.456.789-10"))
+print(cpf_valido("111.111.111-11"))
+print(cpf_valido("12345678909"))</code></pre>
+    <p class="saida">True<br>
+False<br>
+False<br>
+True</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>111.111.111-11</code> passa no cálculo, mas não é um CPF válido. Por isso a função recusa números com todos os dígitos iguais.</div>
+
+    <h2>Passo 3 — e-mail</h2>
+    <p>Validar e-mail com perfeição é complicadíssimo. Para um cadastro simples, basta conferir: algo antes do <code>@</code>, um domínio e pelo menos um ponto com algo depois:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
+
+
+def email_valido(texto):
+    return EMAIL.fullmatch(texto) is not None
+
+
+for email in ["bia@escola.com.br", "joao.p+jogos@mail.com", "sem-arroba.com", "ana@", "ana@site"]:
+    print(f"{email:&gt;22}", email_valido(email))</code></pre>
+    <p class="saida">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bia@escola.com.br True<br>
+&nbsp;joao.p+jogos@mail.com True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sem-arroba.com False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ana@ False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ana@site False</p>
+    <div class="dica"><strong>Dica:</strong> O jeito mais garantido de saber se um e-mail existe é mandar uma mensagem de confirmação. A regex só pega erros de digitação óbvios.</div>
+
+    <h2>Passo 4 — telefone</h2>
+    <p>O telefone brasileiro tem DDD de dois dígitos e o número com 8 dígitos (fixo) ou 9 (celular, começando com 9). Parênteses, espaço e tracinho são opcionais. Com grupos com nome, já devolvemos o número arrumado:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+TELEFONE = re.compile(r"""
+    \(?(?P&lt;ddd&gt;\d{2})\)?   # DDD, com ou sem parênteses
+    \s?                    # espaço opcional
+    (?P&lt;parte1&gt;9?\d{4})    # 4 dígitos, ou 5 se começar com 9
+    -?                     # tracinho opcional
+    (?P&lt;parte2&gt;\d{4})      # últimos 4 dígitos
+""", re.VERBOSE)
+
+
+def telefone_formatado(texto):
+    achado = TELEFONE.fullmatch(texto.strip())
+    if not achado:
+        return None
+    return "({ddd}) {parte1}-{parte2}".format(**achado.groupdict())
+
+
+for tel in ["(81) 99876-5432", "81998765432", "11 3456-7890", "998765432", "(81) 8876-54321"]:
+    print(f"{tel:&gt;16} -&gt; {telefone_formatado(tel)}")</code></pre>
+    <p class="saida">&nbsp;(81) 99876-5432 -&gt; (81) 99876-5432<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;81998765432 -&gt; (81) 99876-5432<br>
+&nbsp;&nbsp;&nbsp;&nbsp;11 3456-7890 -&gt; (11) 3456-7890<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;998765432 -&gt; None<br>
+&nbsp;(81) 8876-54321 -&gt; None</p>
+
+    <h2>Passo 5 — testes para tudo</h2>
+    <p>Agora juntamos as três funções e escrevemos testes com o <code>unittest</code> (aula 131). Se um dia alguém mexer numa regex, os testes avisam na hora:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+import unittest
+
+FORMATO_CPF = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
+EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
+TELEFONE = re.compile(r"\(?(?P&lt;ddd&gt;\d{2})\)?\s?(?P&lt;parte1&gt;9?\d{4})-?(?P&lt;parte2&gt;\d{4})")
+
+
+def digito(numeros):
+    peso = len(numeros) + 1
+    soma = sum(int(n) * (peso - i) for i, n in enumerate(numeros))
+    resto = soma * 10 % 11
+    return "0" if resto == 10 else str(resto)
+
+
+def cpf_valido(texto):
+    if not FORMATO_CPF.fullmatch(texto):
+        return False
+    numeros = re.sub(r"\D", "", texto)
+    if numeros == numeros[0] * 11:
+        return False
+    d1 = digito(numeros[:9])
+    return numeros[9:] == d1 + digito(numeros[:9] + d1)
+
+
+def email_valido(texto):
+    return EMAIL.fullmatch(texto) is not None
+
+
+def telefone_formatado(texto):
+    achado = TELEFONE.fullmatch(texto.strip())
+    if not achado:
+        return None
+    return "({ddd}) {parte1}-{parte2}".format(**achado.groupdict())
+
+
+class TestValidadores(unittest.TestCase):
+    def test_cpf(self):
+        self.assertTrue(cpf_valido("123.456.789-09"))
+        self.assertFalse(cpf_valido("123.456.789-00"))
+        self.assertFalse(cpf_valido("000.000.000-00"))
+
+    def test_email(self):
+        self.assertTrue(email_valido("bia@escola.com.br"))
+        self.assertFalse(email_valido("bia@escola"))
+
+    def test_telefone(self):
+        self.assertEqual(telefone_formatado("81998765432"), "(81) 99876-5432")
+        self.assertIsNone(telefone_formatado("12345"))
+
+
+unittest.main(argv=[""], exit=False)</code></pre>
+    <p class="saida">...<br>
+----------------------------------------------------------------------<br>
+Ran 3 tests in 0.000s<br>
+&nbsp;<br>
+OK</p>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Aceite CNPJ (<code>00.000.000/0000-00</code>) com o mesmo estilo de validação.</li>
+      <li>Faça um programa que leia um texto e liste todos os e-mails e telefones encontrados nele, usando <code>findall</code> em vez de <code>fullmatch</code>.</li>
+      <li>Junte este validador com o gerador de CPF da aula 31: gere 10 CPFs e confira que todos passam.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva <code>cep_formatado(texto)</code>, que aceita <code>"01310100"</code> ou <code>"01310-100"</code> e devolve sempre <code>"01310-100"</code>, ou <code>None</code> se não for um CEP.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+
+def cep_formatado(texto):
+    achado = re.fullmatch(r"(\d{5})-?(\d{3})", texto.strip())
+    if not achado:
+        return None
+    return f"{achado.group(1)}-{achado.group(2)}"
+
+
+print(cep_formatado("01310100"))
+print(cep_formatado("01310-100"))
+print(cep_formatado("0131-0100"))</code></pre>
+      <p class="saida">01310-100<br>
+01310-100<br>
+None</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Use <code>findall</code> para listar todos os e-mails que aparecem no texto <code>"Fale com ana@site.com ou com o suporte: ajuda@loja.com.br."</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Fale com ana@site.com ou com o suporte: ajuda@loja.com.br."
+print(re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", texto))</code></pre>
+      <p class="saida">['ana@site.com', 'ajuda@loja.com.br']</p>
+      <p>Repare no <code>(?:...)</code> da aula 142: com um grupo de captura comum, o <code>findall</code> devolveria só o final do domínio, e não o e-mail inteiro.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva <code>cpf_formatado(texto)</code> que recebe 11 dígitos sem pontuação e devolve no formato <code>123.456.789-09</code>, usando <code>re.sub</code> com grupos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+
+def cpf_formatado(texto):
+    return re.sub(r"(\d{3})(\d{3})(\d{3})(\d{2})", r"\1.\2.\3-\4", texto)
+
+
+print(cpf_formatado("12345678909"))</code></pre>
+      <p class="saida">123.456.789-09</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> A função <code>telefone_formatado</code> aceita <code>"(81) 99876-5432"</code>. Ela aceita também um número com espaço no lugar do tracinho, como <code>"81 99876 5432"</code>? Teste e, se não aceitar, ajuste a regex.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+TELEFONE = re.compile(r"\(?(?P&lt;ddd&gt;\d{2})\)?\s?(?P&lt;parte1&gt;9?\d{4})[-\s]?(?P&lt;parte2&gt;\d{4})")
+
+
+def telefone_formatado(texto):
+    achado = TELEFONE.fullmatch(texto.strip())
+    if not achado:
+        return None
+    return "({ddd}) {parte1}-{parte2}".format(**achado.groupdict())
+
+
+print(telefone_formatado("81 99876 5432"))
+print(telefone_formatado("(81) 99876-5432"))</code></pre>
+      <p class="saida">(81) 99876-5432<br>
+(81) 99876-5432</p>
+      <p>A versão original não aceitava, porque entre as partes só podia haver <code>-</code>. Trocando <code>-?</code> por <code>[-\s]?</code>, o separador pode ser tracinho, espaço ou nada.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="144-regex-lookaround.html" rel="prev">← Aula anterior</a>
+      <a href="150-solid.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 18 · Decisões: if, elif, else — Curso de Python · DIGITAR</title>
+<meta name="description" content="Faça o programa tomar decisões com if, elif e else, usando dois-pontos, indentação e blocos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 18 · Decisões: if, elif, else</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar <code>if</code> para executar código só quando uma condição é verdadeira</li>
+        <li>Escolher entre dois caminhos com <code>else</code></li>
+        <li>Escolher entre vários caminhos com <code>elif</code></li>
+        <li>Entender a <strong>indentação</strong> (o recuo) que marca os blocos em Python</li>
+        <li>Colocar um <code>if</code> dentro de outro</li>
+      </ul>
+    </div>
+
+    <h2>O programa que decide</h2>
+    <p>Até agora, todo programa rodava todas as linhas, sempre. Mas a vida real é cheia de escolhas: <strong>se</strong> estiver chovendo, levo guarda-chuva; <strong>senão</strong>, vou de boné. Em Python, essas escolhas são feitas com <code>if</code> (se), <code>elif</code> (senão, se) e <code>else</code> (senão).</p>
+<pre class="codigo" data-executar="sim"><code>temperatura = 32
+if temperatura &gt; 30:
+    print("Está calor! Bora tomar um açaí.")
+print("Fim do programa.")</code></pre>
+    <p class="saida">Está calor! Bora tomar um açaí.<br>
+Fim do programa.</p>
+    <p>A linha com <code>print</code> recuada só roda se a condição <code>temperatura &gt; 30</code> for <code>True</code>. A última linha, sem recuo, roda sempre. Mude a temperatura para 25 e rode de novo.</p>
+    <p>Para escrever condições, use as comparações: <code>&gt;</code> (maior), <code>&lt;</code> (menor), <code>&gt;=</code> (maior ou igual), <code>&lt;=</code> (menor ou igual), <code>==</code> (igual) e <code>!=</code> (diferente). Você vai estudá-las a fundo na aula 19.</p>
+
+    <h2>Indentação: o recuo que manda</h2>
+    <p>Depois do <code>if</code> vem sempre um <strong>dois-pontos</strong> <code>:</code>. As linhas de baixo que pertencem ao <code>if</code> são recuadas com <strong>4 espaços</strong> (o VS Code coloca sozinho quando você aperta Tab). Esse conjunto de linhas recuadas é um <strong>bloco</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>nota = 8.5
+if nota &gt;= 7:
+    print("Aprovado!")
+    print("Parabéns, pode comemorar.")
+print("Boletim conferido.")</code></pre>
+    <p class="saida">Aprovado!<br>
+Parabéns, pode comemorar.<br>
+Boletim conferido.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer os dois-pontos dá <code>SyntaxError: expected ':'</code>. Misturar recuos diferentes (2 espaços numa linha, 4 na outra) dá <code>IndentationError</code>. Use sempre 4 espaços.</div>
+
+    <h2>if e else: dois caminhos</h2>
+    <p>Com <code>else</code>, você diz o que fazer quando a condição é falsa. O <code>else</code> não tem condição — ele pega "todo o resto".</p>
+<pre class="codigo" data-executar="sim"><code>idade = 15
+if idade &gt;= 18:
+    print("Você já pode tirar a carteira de motorista.")
+else:
+    faltam = 18 - idade
+    print(f"Faltam {faltam} anos para tirar a carteira.")</code></pre>
+    <p class="saida">Faltam 3 anos para tirar a carteira.</p>
+<pre class="codigo" data-executar="sim"><code>resposta = input("Qual país ganhou 5 Copas do Mundo? ")
+if resposta.strip().lower() == "brasil":
+    print("Acertou!")
+else:
+    print("Errou! Foi o Brasil.")</code></pre>
+    <p class="saida"><em>(exemplo digitando Brasil)</em><br>
+Qual país ganhou 5 Copas do Mundo? Brasil<br>
+Acertou!</p>
+    <div class="atencao"><strong>Atenção:</strong> Não confunda <code>=</code> (guardar um valor) com <code>==</code> (comparar). <code>if idade = 18:</code> dá erro; o certo é <code>if idade == 18:</code>.</div>
+
+    <h2>elif: vários caminhos</h2>
+    <p>Quando há mais de duas possibilidades, use <code>elif</code>. O Python testa as condições <strong>de cima para baixo</strong> e executa só o primeiro bloco cuja condição for verdadeira.</p>
+<pre class="codigo" data-executar="sim"><code>nota = 6.5
+if nota &gt;= 9:
+    print("Conceito A")
+elif nota &gt;= 7:
+    print("Conceito B")
+elif nota &gt;= 5:
+    print("Conceito C")
+else:
+    print("Conceito D")</code></pre>
+    <p class="saida">Conceito C</p>
+    <p>A nota 6.5 não é maior ou igual a 9, nem a 7, mas é maior ou igual a 5 — então aparece "Conceito C" e o resto é ignorado.</p>
+    <div class="dica"><strong>Dica:</strong> A ordem dos <code>elif</code> importa. Se você testar <code>nota &gt;= 5</code> antes de <code>nota &gt;= 9</code>, uma nota 10 cairia no "Conceito C". Comece sempre pela condição mais exigente.</div>
+
+    <h2>Um if dentro do outro</h2>
+    <p>Um bloco pode ter outro <code>if</code> dentro. Cada nível ganha mais 4 espaços de recuo:</p>
+<pre class="codigo" data-executar="sim"><code>saldo = 20
+preco = 15
+if saldo &gt;= preco:
+    print("Compra aprovada!")
+    troco = saldo - preco
+    if troco &gt; 0:
+        print(f"Seu troco: R$ {troco:.2f}")
+else:
+    print("Saldo insuficiente.")</code></pre>
+    <p class="saida">Compra aprovada!<br>
+Seu troco: R$ 5.00</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if nota &gt;= 7: print("Aprovado")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma variável <code>saldo</code> e mostre "Pode comprar o lanche" se ela for maior ou igual a 15, ou "Saldo insuficiente" caso contrário. Teste com <code>saldo = 12</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>saldo = 12
+if saldo &gt;= 15:
+    print("Pode comprar o lanche")
+else:
+    print("Saldo insuficiente")</code></pre>
+      <p class="saida">Saldo insuficiente</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça um programa que diga se um número guardado na variável <code>n</code> é positivo, negativo ou zero. Teste com <code>n = -4</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>n = -4
+if n &gt; 0:
+    print("Positivo")
+elif n &lt; 0:
+    print("Negativo")
+else:
+    print("Zero")</code></pre>
+      <p class="saida">Negativo</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Peça um número inteiro e diga se ele é par ou ímpar (dica: use <code>%</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numero = int(input("Digite um número: "))
+if numero % 2 == 0:
+    print(numero, "é par")
+else:
+    print(numero, "é ímpar")</code></pre>
+      <p class="saida"><em>(exemplo digitando 7)</em><br>
+Digite um número: 7<br>
+7 é ímpar</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Classifique o IMC de uma pessoa: abaixo de 18.5 é "abaixo do peso", até 24.9 é "peso normal", até 29.9 é "sobrepeso" e acima disso "obesidade". Calcule com <code>peso = 70</code> e <code>altura = 1.75</code> (IMC = peso / altura²).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>peso = 70
+altura = 1.75
+imc = peso / altura ** 2
+if imc &lt; 18.5:
+    faixa = "abaixo do peso"
+elif imc &lt;= 24.9:
+    faixa = "peso normal"
+elif imc &lt;= 29.9:
+    faixa = "sobrepeso"
+else:
+    faixa = "obesidade"
+print(f"IMC {imc:.1f}: {faixa}")</code></pre>
+      <p class="saida">IMC 22.9: peso normal</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Uma loja dá frete grátis para compras a partir de R$ 100. Abaixo disso, o frete custa R$ 15. Mostre o total a pagar para uma compra de R$ 85.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>compra = 85
+if compra &gt;= 100:
+    frete = 0
+else:
+    frete = 15
+print(f"Total: R$ {compra + frete:.2f}")</code></pre>
+      <p class="saida">Total: R$ 100.00</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="17-input.html" rel="prev">← Aula anterior</a>
+      <a href="19-operadores-relacionais-logicos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

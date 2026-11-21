@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 02 · Instalando Python e VS Code (Windows, Linux, macOS) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Passo a passo para instalar o Python 3 e o editor VS Code no Windows, no Linux e no macOS, e conferir se tudo funcionou.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 1 · Primeiros passos</p>
+    <h1>Aula 02 · Instalando Python e VS Code (Windows, Linux, macOS)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Baixar e instalar o Python 3 no Windows sem esquecer a opção do PATH</li>
+        <li>Instalar o Python no Linux e no macOS</li>
+        <li>Instalar o VS Code e a extensão de Python</li>
+        <li>Conferir a instalação pelo terminal e usar o modo interativo</li>
+        <li>Saber o que fazer se o comando <code>python</code> não for encontrado</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Por que instalar, se o site já roda Python?</h2>
+    <p>Os exemplos deste curso rodam no navegador, o que é ótimo para aprender. Mas, para criar seus próprios programas, salvar arquivos, instalar bibliotecas e fazer os projetos, você vai querer o Python no seu computador. Leva uns 10 minutos.</p>
+
+    <h2>Windows: instalando o Python</h2>
+    <ul>
+      <li>Entre em <a href="https://www.python.org/downloads/">python.org/downloads</a> e clique no botão amarelo <strong>Download Python 3.x</strong> (qualquer versão 3.12 ou mais nova serve).</li>
+      <li>Abra o arquivo baixado.</li>
+      <li><strong>Antes de clicar em Install Now</strong>, marque a caixinha <strong>Add python.exe to PATH</strong>, lá embaixo na janela.</li>
+      <li>Clique em <strong>Install Now</strong> e espere terminar. Se aparecer "Disable path length limit", pode clicar — não faz mal.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer de marcar <strong>Add python.exe to PATH</strong> é o erro de instalação mais comum. Sem ela, o Windows não acha o comando <code>python</code>. Se isso aconteceu, rode o instalador de novo, escolha <strong>Modify</strong> (ou desinstale e instale de novo) e marque a opção.</div>
+    <p>Para conferir, aperte a tecla <strong>Windows</strong>, digite <code>cmd</code>, abra o <strong>Prompt de Comando</strong> e digite:</p>
+<pre class="codigo"><code>python --version</code></pre>
+    <p>Se aparecer algo assim, deu certo:</p>
+    <p class="saida">Python 3.12.7</p>
+    <p>No Windows também existe o <strong>inicializador</strong> <code>py</code>, que funciona mesmo quando o PATH deu problema:</p>
+<pre class="codigo"><code>py --version</code></pre>
+    <div class="dica"><strong>Dica:</strong> Se <code>python</code> abrir a Microsoft Store em vez de mostrar a versão, é um atalho do Windows. Desligue em <strong>Configurações › Aplicativos › Configurações avançadas de aplicativos › Aliases de execução de aplicativo</strong>, desativando os itens "python.exe" e "python3.exe".</div>
+
+    <h2>Linux e macOS</h2>
+    <p>No <strong>Linux</strong> (Ubuntu, Mint, Debian), o Python 3 quase sempre já vem instalado. Abra o Terminal e confira. Se faltar algo, instale com o gerenciador de pacotes:</p>
+<pre class="codigo"><code>python3 --version
+sudo apt update
+sudo apt install python3 python3-pip python3-venv</code></pre>
+    <p>No <strong>macOS</strong>, baixe o instalador em <a href="https://www.python.org/downloads/">python.org/downloads</a> e siga as telas (Continuar, Concordar, Instalar). Quem usa o Homebrew pode instalar com <code>brew install python</code>. Depois, no Terminal:</p>
+<pre class="codigo"><code>python3 --version</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> No Linux e no macOS o comando costuma ser <code>python3</code> (e <code>pip3</code>), e não <code>python</code>. Sempre que este curso disser <code>python</code>, use <code>python3</code> nesses sistemas.</div>
+
+    <h2>Instalando o VS Code</h2>
+    <p>Dá para escrever Python até no Bloco de Notas, mas um <strong>editor de código</strong> ajuda muito: ele colore o código, avisa erros e roda o programa com um clique.</p>
+    <ul>
+      <li>Entre em <a href="https://code.visualstudio.com/">code.visualstudio.com</a> e baixe a versão do seu sistema (Windows, Linux ou macOS).</li>
+      <li>Instale aceitando as opções padrão. No Windows, se aparecer "Adicionar ao PATH" e "Abrir com Code", marque.</li>
+      <li>Abra o VS Code, clique no ícone de <strong>Extensões</strong> na barra lateral (quatro quadradinhos) ou aperte <code>Ctrl+Shift+X</code>.</li>
+      <li>Procure por <strong>Python</strong> e instale a extensão da <strong>Microsoft</strong>.</li>
+    </ul>
+
+    <h2>O modo interativo</h2>
+    <p>No terminal, digite só <code>python</code> (ou <code>python3</code>) e aperte Enter. Vai aparecer o sinal <code>&gt;&gt;&gt;</code>: é o <strong>modo interativo</strong>, onde cada linha roda na hora.</p>
+<pre class="codigo"><code>python</code></pre>
+    <p class="saida">Python 3.12.7 (tags/v3.12.7, ...) on win32<br>
+Type "help", "copyright", "credits" or "license" for more information.<br>
+&gt;&gt;&gt; print("Funcionou!")<br>
+Funcionou!<br>
+&gt;&gt;&gt; 2 + 2<br>
+4<br>
+&gt;&gt;&gt; exit()</p>
+    <p>Para sair, digite <code>exit()</code> e aperte Enter. Para conferir de dentro do Python qual versão está rodando, salve este código num arquivo e rode (você aprende como na aula 03):</p>
+<pre class="codigo"><code>import sys
+
+print("Versão do Python:", sys.version_info.major, sys.version_info.minor)</code></pre>
+    <p class="saida">Versão do Python: 3 12</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>python --version</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> No modo interativo do Python (<code>&gt;&gt;&gt;</code>), qual comando mostra o resultado de 365 vezes 24? Escreva também a versão para um arquivo <code>.py</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>print(365 * 24)</code></pre>
+      <p class="saida">8760</p>
+      <p>No modo interativo você pode digitar só <code>365 * 24</code>, e o resultado aparece. Em um arquivo <code>.py</code>, precisa do <code>print</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Você digitou <code>python --version</code> e o Windows respondeu que "python" não é reconhecido como um comando. Quais são duas formas de resolver?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">1. Rodar o instalador de novo, escolher Modify/Repair e marcar "Add python.exe to PATH"<br>
+&nbsp;&nbsp;&nbsp;(depois feche e abra o terminal de novo).<br>
+2. Usar o inicializador do Windows no lugar: py --version</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Abra o modo interativo e use <code>print</code> para mostrar a frase <code>Estou programando em Python!</code>. Depois saia do modo interativo. Quais foram os comandos?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">python<br>
+&gt;&gt;&gt; print("Estou programando em Python!")<br>
+Estou programando em Python!<br>
+&gt;&gt;&gt; exit()</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Sua prima usa Ubuntu e digitou <code>python --version</code>, mas apareceu "comando não encontrado". O que ela deve tentar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>python3 --version</code></pre>
+      <p>No Linux o comando costuma se chamar <code>python3</code>. Se nem ele existir, ela instala com <code>sudo apt install python3</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="01-o-que-e-python.html" rel="prev">← Aula anterior</a>
+      <a href="03-primeiro-programa.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

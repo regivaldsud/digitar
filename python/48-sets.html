@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 48 · Conjuntos (set) e suas operações — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use conjuntos para guardar itens sem repetição, comparar grupos com união, interseção e diferença e escolher a estrutura certa para cada problema.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 48 · Conjuntos (set) e suas operações</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar conjuntos com <code>set</code> e com chaves</li>
+        <li>Remover itens repetidos de uma lista</li>
+        <li>Adicionar e remover itens com <code>add</code>, <code>remove</code> e <code>discard</code></li>
+        <li>Comparar grupos com união, interseção, diferença e diferença simétrica</li>
+        <li>Escolher entre lista, tupla, dicionário e conjunto</li>
+      </ul>
+    </div>
+
+    <h2>Um saco sem repetições</h2>
+    <p>Um <strong>conjunto</strong> (<code>set</code>) é uma coleção que <strong>não aceita itens repetidos</strong> e <strong>não tem ordem</strong>. É como as figurinhas que você já colou no álbum: tirar a mesma figurinha duas vezes não muda nada.</p>
+<pre class="codigo" data-executar="sim"><code>figurinhas = {"Neymar", "Marta", "Vini Jr.", "Marta"}
+print(len(figurinhas))
+print("Marta" in figurinhas)
+print(sorted(figurinhas))</code></pre>
+    <p class="saida">3<br>
+True<br>
+['Marta', 'Neymar', 'Vini Jr.']</p>
+    <p>O "Marta" repetido foi descartado. Como o conjunto não tem ordem, usamos <code>sorted</code> para mostrá-lo sempre na mesma ordem (alfabética).</p>
+    <div class="atencao"><strong>Atenção:</strong> Conjuntos não têm índice: <code>figurinhas[0]</code> dá <code>TypeError</code>. E a ordem em que um conjunto aparece no <code>print</code> pode mudar — não conte com ela.</div>
+
+    <h2>Tirando repetidos de uma lista</h2>
+    <p>Um truque muito útil: transformar uma lista em conjunto remove as repetições.</p>
+<pre class="codigo" data-executar="sim"><code>presencas = ["Ana", "Beto", "Ana", "Caio", "Beto", "Ana"]
+unicos = set(presencas)
+print(len(presencas), "registros")
+print(len(unicos), "pessoas diferentes")
+print(sorted(unicos))</code></pre>
+    <p class="saida">6 registros<br>
+3 pessoas diferentes<br>
+['Ana', 'Beto', 'Caio']</p>
+
+    <h2>add, remove e discard</h2>
+<pre class="codigo" data-executar="sim"><code>cidades = set()
+cidades.add("Natal")
+cidades.add("Natal")
+cidades.add("Maceió")
+cidades.discard("Recife")
+cidades.remove("Natal")
+print(cidades)</code></pre>
+    <p class="saida">{'Maceió'}</p>
+    <p><code>remove</code> dá erro se o item não existe; <code>discard</code> não reclama.</p>
+    <div class="atencao"><strong>Atenção:</strong> Para criar um conjunto vazio, use <code>set()</code>. Escrever <code>{}</code> cria um <strong>dicionário</strong> vazio, não um conjunto.</div>
+
+    <h2>União, interseção e diferença</h2>
+    <p>O ponto forte dos conjuntos é comparar grupos, como na matemática:</p>
+    <ul>
+      <li><code>a | b</code> (união): tudo que está em <code>a</code> ou em <code>b</code>;</li>
+      <li><code>a &amp; b</code> (interseção): o que está nos dois;</li>
+      <li><code>a - b</code> (diferença): o que está em <code>a</code> mas não em <code>b</code>;</li>
+      <li><code>a ^ b</code> (diferença simétrica): o que está em só um dos dois.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>futebol = {"Ana", "Bruno", "Caio", "Duda"}
+volei = {"Caio", "Duda", "Elisa"}
+print(sorted(futebol | volei))
+print(sorted(futebol &amp; volei))
+print(sorted(futebol - volei))
+print(sorted(futebol ^ volei))
+print({"Caio"} &lt;= futebol)</code></pre>
+    <p class="saida">['Ana', 'Bruno', 'Caio', 'Duda', 'Elisa']<br>
+['Caio', 'Duda']<br>
+['Ana', 'Bruno']<br>
+['Ana', 'Bruno', 'Elisa']<br>
+True</p>
+    <p>O <code>&lt;=</code> pergunta se um conjunto está contido no outro. Os mesmos cálculos existem como métodos: <code>a.union(b)</code>, <code>a.intersection(b)</code>, <code>a.difference(b)</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Testar <code>item in conjunto</code> é muito mais rápido do que <code>item in lista</code> quando há milhares de itens. Se você só precisa saber "está ou não está", um conjunto é ótimo.</div>
+
+    <h2>Qual estrutura usar?</h2>
+    <p>Agora que você conhece as quatro coleções principais, compare:</p>
+    <ul>
+      <li><strong>Lista</strong> <code>[1, 2, 3]</code>: ordenada, pode mudar, aceita repetidos. Lista de compras, histórico de pontos.</li>
+      <li><strong>Tupla</strong> <code>(1, 2, 3)</code>: ordenada, não muda. Coordenadas, data de nascimento.</li>
+      <li><strong>Dicionário</strong> <code>{"a": 1}</code>: busca pelo nome (chave). Ficha de aluno, preço de cada produto.</li>
+      <li><strong>Conjunto</strong> <code>{1, 2, 3}</code>: sem ordem e sem repetidos. "Está ou não está?" e comparar grupos.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>compras = ["arroz", "feijão", "arroz"]
+nascimento = (15, 3, 2011)
+ficha = {"nome": "Iara", "turma": "8B"}
+tags = {"python", "jogos", "python"}
+for colecao in [compras, nascimento, ficha, tags]:
+    print(type(colecao).__name__, len(colecao))</code></pre>
+    <p class="saida">list 3<br>
+tuple 3<br>
+dict 2<br>
+set 2</p>
+    <p>Repare que o conjunto ficou com 2 itens, enquanto a lista manteve os dois "arroz". Na dúvida, comece com uma lista; se você perceber que vive procurando itens pelo nome, troque por um dicionário.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>comuns = sorted(futebol &amp; volei)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Remova as repetições da lista <code>[3, 1, 3, 2, 1, 5, 2]</code> e mostre os números únicos em ordem crescente.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numeros = [3, 1, 3, 2, 1, 5, 2]
+print(sorted(set(numeros)))</code></pre>
+      <p class="saida">[1, 2, 3, 5]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Lia tem as figurinhas <code>{1, 4, 7, 9, 12}</code> e Téo tem <code>{4, 5, 9, 10}</code>. Mostre as que os dois têm, as que só a Lia tem e as que só um deles tem (para trocar).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>lia = {1, 4, 7, 9, 12}
+teo = {4, 5, 9, 10}
+print("Os dois têm:", sorted(lia &amp; teo))
+print("Só a Lia tem:", sorted(lia - teo))
+print("Para trocar:", sorted(lia ^ teo))</code></pre>
+      <p class="saida">Os dois têm: [4, 9]<br>
+Só a Lia tem: [1, 7, 12]<br>
+Para trocar: [1, 5, 7, 10, 12]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Conte quantas palavras diferentes há na frase "o rato roeu a roupa do rei de roma e o rei riu".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>frase = "o rato roeu a roupa do rei de roma e o rei riu"
+palavras = frase.split()
+print(len(palavras), "palavras no total")
+print(len(set(palavras)), "palavras diferentes")</code></pre>
+      <p class="saida">13 palavras no total<br>
+11 palavras diferentes</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Verifique se "amor" e "roma" usam exatamente as mesmas letras, comparando conjuntos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(set("amor") == set("roma"))
+print(sorted(set("amor")))</code></pre>
+      <p class="saida">True<br>
+['a', 'm', 'o', 'r']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Qual estrutura você usaria para: (a) os 26 estados e o DF, que nunca mudam; (b) os produtos no carrinho de uma loja; (c) o preço de cada produto; (d) os usuários que já curtiram uma foto?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">(a) Tupla: são valores fixos, em ordem, que não mudam.<br>
+(b) Lista: o carrinho cresce e diminui, e pode ter itens repetidos.<br>
+(c) Dicionário: procuramos o preço pelo nome do produto (chave).<br>
+(d) Conjunto: cada usuário só conta uma vez e só queremos saber se curtiu ou não.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="47-copia-rasa-profunda.html" rel="prev">← Aula anterior</a>
+      <a href="49-lambda.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

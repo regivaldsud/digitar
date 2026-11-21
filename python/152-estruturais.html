@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 152 · Estruturais: Adapter, Composite, Decorator, Facade, Proxy, Flyweight, Bridge — Curso de Python · DIGITAR</title>
+<meta name="description" content="Padrões que combinam objetos e classes em estruturas maiores, explicados com exemplos curtos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 8 · Padrões de projeto</p>
+    <h1>Aula 152 · Estruturais: Adapter, Composite, Decorator, Facade, Proxy, Flyweight, Bridge</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Como adaptar um objeto a outra interface (Adapter)</li>
+        <li>Como tratar um grupo como se fosse um item só (Composite)</li>
+        <li>Como esconder um sistema complicado atrás de uma fachada (Facade)</li>
+        <li>A ideia de Decorator, Proxy, Flyweight e Bridge</li>
+      </ul>
+    </div>
+
+    <h2>Adapter: o "benjamim" do código</h2>
+    <p>Sabe o adaptador de tomada de três pinos? O <strong>Adapter</strong> faz o mesmo com objetos: um termômetro antigo só fala em Fahrenheit, mas o seu programa espera Celsius.</p>
+<pre class="codigo" data-executar="sim"><code>class TermometroAmericano:
+    def fahrenheit(self):
+        return 86.0
+
+
+class AdaptadorCelsius:
+    def __init__(self, termometro):
+        self.termometro = termometro
+
+    def celsius(self):
+        return (self.termometro.fahrenheit() - 32) * 5 / 9
+
+
+t = AdaptadorCelsius(TermometroAmericano())
+print(f"{t.celsius():.1f} °C")</code></pre>
+    <p class="saida">30.0 °C</p>
+
+    <h2>Composite: grupo que se comporta como item</h2>
+    <p>Uma pasta pode ter arquivos e outras pastas. Com o <strong>Composite</strong>, pasta e arquivo têm o mesmo método <code>tamanho</code>, e a pasta soma os tamanhos dos filhos:</p>
+<pre class="codigo" data-executar="sim"><code>class Arquivo:
+    def __init__(self, nome, kb):
+        self.nome = nome
+        self.kb = kb
+
+    def tamanho(self):
+        return self.kb
+
+
+class Pasta:
+    def __init__(self, nome):
+        self.nome = nome
+        self.itens = []
+
+    def adicionar(self, item):
+        self.itens.append(item)
+
+    def tamanho(self):
+        return sum(item.tamanho() for item in self.itens)
+
+
+fotos = Pasta("fotos")
+fotos.adicionar(Arquivo("praia.jpg", 300))
+fotos.adicionar(Arquivo("festa.jpg", 450))
+escola = Pasta("escola")
+escola.adicionar(Arquivo("redacao.txt", 4))
+escola.adicionar(fotos)
+print(escola.tamanho(), "KB")</code></pre>
+    <p class="saida">754 KB</p>
+
+    <h2>Facade: um botão para tudo</h2>
+    <p>A <strong>Facade</strong> (fachada) oferece um método simples que chama várias partes complicadas por trás:</p>
+<pre class="codigo" data-executar="sim"><code>class Estoque:
+    def reservar(self, item):
+        print(f"Estoque: {item} reservado")
+
+
+class Pagamento:
+    def cobrar(self, valor):
+        print(f"Pagamento: R$ {valor:.2f} cobrado")
+
+
+class Entrega:
+    def agendar(self, cep):
+        print(f"Entrega: agendada para o CEP {cep}")
+
+
+class LojaFacade:
+    def comprar(self, item, valor, cep):
+        Estoque().reservar(item)
+        Pagamento().cobrar(valor)
+        Entrega().agendar(cep)
+
+
+LojaFacade().comprar("tênis", 199.9, "01310-100")</code></pre>
+    <p class="saida">Estoque: tênis reservado<br>
+Pagamento: R$ 199.90 cobrado<br>
+Entrega: agendada para o CEP 01310-100</p>
+
+    <h2>Decorator, Proxy, Flyweight e Bridge</h2>
+    <ul>
+      <li><strong>Decorator</strong>: embrulha um objeto para acrescentar comportamento sem mudar a classe. Os decoradores do Python (<code>@</code>, aula 56) seguem essa ideia com funções.</li>
+      <li><strong>Proxy</strong>: um "representante" que fica no lugar do objeto real, por exemplo para só carregar uma imagem pesada quando ela for usada, ou para checar permissão.</li>
+      <li><strong>Flyweight</strong>: compartilha partes iguais entre muitos objetos para economizar memória (as letras de um editor de texto, por exemplo).</li>
+      <li><strong>Bridge</strong>: separa duas dimensões que variam, como "tipo de controle remoto" e "aparelho", para combinar qualquer um com qualquer outro.</li>
+    </ul>
+    <p>Um Proxy simples que carrega o dado só na primeira vez:</p>
+<pre class="codigo" data-executar="sim"><code>class ImagemPesada:
+    def __init__(self, nome):
+        print("Carregando", nome, "...")
+        self.nome = nome
+
+
+class ProxyImagem:
+    def __init__(self, nome):
+        self.nome = nome
+        self._real = None
+
+    def mostrar(self):
+        if self._real is None:
+            self._real = ImagemPesada(self.nome)
+        print("Mostrando", self.nome)
+
+
+foto = ProxyImagem("mapa.png")
+foto.mostrar()
+foto.mostrar()</code></pre>
+    <p class="saida">Carregando mapa.png ...<br>
+Mostrando mapa.png<br>
+Mostrando mapa.png</p>
+    <div class="dica"><strong>Dica:</strong> Não decore os nomes dos padrões. Entenda o problema que cada um resolve; o nome vem com o uso.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>return sum(item.tamanho() for item in self.itens)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um adaptador <code>AdaptadorKm</code> para um objeto <code>GpsAmericano</code> cujo método <code>milhas()</code> devolve 10. O adaptador deve ter o método <code>km()</code> (1 milha = 1,609 km).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class GpsAmericano:
+    def milhas(self):
+        return 10
+
+
+class AdaptadorKm:
+    def __init__(self, gps):
+        self.gps = gps
+
+    def km(self):
+        return self.gps.milhas() * 1.609
+
+
+print(f"{AdaptadorKm(GpsAmericano()).km():.2f} km")</code></pre>
+      <p class="saida">16.09 km</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Usando as classes <code>Arquivo</code> e <code>Pasta</code> do exemplo, monte uma pasta <code>musicas</code> com dois arquivos de 3000 KB e 4500 KB e mostre o tamanho total.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Arquivo:
+    def __init__(self, nome, kb):
+        self.nome = nome
+        self.kb = kb
+
+    def tamanho(self):
+        return self.kb
+
+
+class Pasta:
+    def __init__(self, nome):
+        self.nome = nome
+        self.itens = []
+
+    def adicionar(self, item):
+        self.itens.append(item)
+
+    def tamanho(self):
+        return sum(item.tamanho() for item in self.itens)
+
+
+musicas = Pasta("musicas")
+musicas.adicionar(Arquivo("samba.mp3", 3000))
+musicas.adicionar(Arquivo("forro.mp3", 4500))
+print(musicas.tamanho(), "KB")</code></pre>
+      <p class="saida">7500 KB</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="151-criacionais.html" rel="prev">← Aula anterior</a>
+      <a href="153-comportamentais.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

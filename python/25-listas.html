@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 25 · Listas: índices, append, insert, pop, del, extend — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a guardar vários valores numa só variável com listas e a acessar, adicionar, remover, ordenar e percorrer itens.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 25 · Listas: índices, append, insert, pop, del, extend</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar listas com colchetes <code>[]</code> e acessar itens por índice e fatia</li>
+        <li>Adicionar itens com <code>append</code>, <code>insert</code> e <code>extend</code></li>
+        <li>Remover itens com <code>pop</code>, <code>del</code> e <code>remove</code></li>
+        <li>Ordenar, contar e resumir listas</li>
+        <li>Percorrer uma lista com <code>for</code></li>
+      </ul>
+    </div>
+
+    <h2>Vários valores, uma variável</h2>
+    <p>Imagine guardar as notas de 30 alunos em 30 variáveis: <code>nota1</code>, <code>nota2</code>, <code>nota3</code>... Cansativo! Uma <strong>lista</strong> guarda vários valores em ordem, numa só variável. Ela é escrita entre colchetes, com os itens separados por vírgulas.</p>
+<pre class="codigo" data-executar="sim"><code>frutas = ["manga", "caju", "goiaba", "açaí"]
+notas = [7.5, 9.0, 6.0]
+vazia = []
+print(frutas)
+print(notas)
+print(vazia)
+print(len(frutas))</code></pre>
+    <p class="saida">['manga', 'caju', 'goiaba', 'açaí']<br>
+[7.5, 9.0, 6.0]<br>
+[]<br>
+4</p>
+    <p>Assim como nos textos (aula 20), cada item tem um <strong>índice</strong> que começa em <strong>zero</strong>, índices negativos contam do fim e fatias pegam pedaços. A diferença é que a lista <strong>pode mudar</strong>: dá para trocar um item pelo índice.</p>
+<pre class="codigo" data-executar="sim"><code>times = ["Flamengo", "Palmeiras", "Grêmio", "Bahia", "Fortaleza"]
+print(times[0], times[-1])
+print(times[1:3])
+times[2] = "Sport"
+print(times)
+print("Bahia" in times)</code></pre>
+    <p class="saida">Flamengo Fortaleza<br>
+['Palmeiras', 'Grêmio']<br>
+['Flamengo', 'Palmeiras', 'Sport', 'Bahia', 'Fortaleza']<br>
+True</p>
+    <div class="atencao"><strong>Atenção:</strong> Pedir um índice que não existe dá erro. Numa lista de 5 itens, o último é o índice 4. <code>times[5]</code> gera <code>IndexError: list index out of range</code>.</div>
+
+    <h2>Adicionando itens</h2>
+    <ul>
+      <li><code>append(item)</code> coloca um item no <strong>fim</strong>;</li>
+      <li><code>insert(posição, item)</code> coloca um item numa posição;</li>
+      <li><code>extend(outra_lista)</code> junta todos os itens de outra lista no fim.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>fila = ["Ana", "Bruno"]
+fila.append("Carla")
+fila.insert(0, "Vovó Zélia")
+print(fila)
+fila.extend(["Diego", "Elisa"])
+print(fila)</code></pre>
+    <p class="saida">['Vovó Zélia', 'Ana', 'Bruno', 'Carla']<br>
+['Vovó Zélia', 'Ana', 'Bruno', 'Carla', 'Diego', 'Elisa']</p>
+    <div class="dica"><strong>Dica:</strong> <code>append</code> e os outros são <strong>métodos</strong>: funções que pertencem à lista e são chamadas com ponto. Eles mudam a própria lista; não escreva <code>fila = fila.append(...)</code>, porque <code>append</code> devolve <code>None</code> e você perderia sua lista.</div>
+
+    <h2>Removendo itens</h2>
+    <ul>
+      <li><code>pop()</code> tira e <strong>devolve</strong> o último item; <code>pop(posição)</code> tira o item daquela posição;</li>
+      <li><code>del lista[posição]</code> apaga o item daquela posição (sem devolver nada);</li>
+      <li><code>remove(valor)</code> tira a primeira ocorrência daquele valor.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>fila = ["Vovó Zélia", "Ana", "Bruno", "Carla", "Diego"]
+atendido = fila.pop(0)
+print("Atendido:", atendido)
+ultimo = fila.pop()
+print("Desistiu:", ultimo)
+del fila[1]
+print(fila)
+fila.remove("Carla")
+print(fila)</code></pre>
+    <p class="saida">Atendido: Vovó Zélia<br>
+Desistiu: Diego<br>
+['Ana', 'Carla']<br>
+['Ana']</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>remove</code> dá <code>ValueError</code> se o valor não estiver na lista, e <code>pop</code> numa lista vazia dá <code>IndexError</code>. Antes, confira com <code>if item in lista:</code> ou <code>if len(lista) &gt; 0:</code>.</div>
+
+    <h2>Ordenar, contar e resumir</h2>
+    <p><code>sort()</code> ordena a <strong>própria lista</strong>; <code>sorted(lista)</code> devolve uma <strong>nova</strong> lista ordenada e deixa a original como estava. Com <code>reverse=True</code>, a ordem fica do maior para o menor.</p>
+<pre class="codigo" data-executar="sim"><code>pontos = [72, 95, 58, 88, 95]
+print(sorted(pontos))
+print(pontos)
+pontos.sort(reverse=True)
+print(pontos)
+print(pontos.count(95), pontos.index(58))
+print(sum(pontos), min(pontos), max(pontos))</code></pre>
+    <p class="saida">[58, 72, 88, 95, 95]<br>
+[72, 95, 58, 88, 95]<br>
+[95, 95, 88, 72, 58]<br>
+2 4<br>
+408 58 95</p>
+    <p><code>count</code> conta quantas vezes um valor aparece e <code>index</code> diz a posição da primeira ocorrência. <code>sum</code>, <code>min</code> e <code>max</code> resumem a lista inteira.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>pontos = pontos.sort()</code> apaga sua lista, pois <code>sort()</code> devolve <code>None</code>. Use <code>pontos.sort()</code> sozinho, ou <code>pontos = sorted(pontos)</code>.</div>
+
+    <h2>Percorrendo e montando listas</h2>
+    <p>O <code>for</code> percorre a lista item por item — é o jeito mais comum de trabalhar com listas. Também dá para montar uma lista aos poucos, começando vazia:</p>
+<pre class="codigo" data-executar="sim"><code>precos = [4.50, 12.00, 3.25, 8.75]
+total = 0
+for preco in precos:
+    total += preco
+print(f"Total: R$ {total:.2f}")
+pares = []
+for n in range(1, 11):
+    if n % 2 == 0:
+        pares.append(n)
+print(pares)</code></pre>
+    <p class="saida">Total: R$ 28.50<br>
+[2, 4, 6, 8, 10]</p>
+    <p>Uma lista pode até conter outras listas, como uma tabela. <code>boletim[1][0]</code> quer dizer: pegue a linha 1 e, dentro dela, o item 0.</p>
+<pre class="codigo" data-executar="sim"><code>boletim = [["Ana", 8, 9], ["Bruno", 6, 7], ["Carla", 10, 9]]
+print(boletim[1][0])
+for aluno in boletim:
+    print(aluno[0], (aluno[1] + aluno[2]) / 2)</code></pre>
+    <p class="saida">Bruno<br>
+Ana 8.5<br>
+Bruno 6.5<br>
+Carla 9.5</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>cores = ["azul", "verde", "amarelo"]</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Comece com uma lista vazia de compras e adicione "pão", "leite" e "café". Depois coloque "manteiga" na posição 1 e mostre a lista e quantos itens ela tem.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>compras = []
+compras.append("pão")
+compras.append("leite")
+compras.append("café")
+compras.insert(1, "manteiga")
+print(compras)
+print(len(compras))</code></pre>
+      <p class="saida">['pão', 'manteiga', 'leite', 'café']<br>
+4</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Na lista <code>numeros = [5, 3, 8, 1]</code>, insira o número 10 na posição 2, remova o 3 e mostre a lista final ordenada do menor para o maior.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numeros = [5, 3, 8, 1]
+numeros.insert(2, 10)
+numeros.remove(3)
+numeros.sort()
+print(numeros)</code></pre>
+      <p class="saida">[1, 5, 8, 10]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Dada a lista <code>gols = [2, 0, 3, 1, 3, 0, 3]</code> (gols por jogo), mostre o total de gols, a maior goleada e quantos jogos tiveram 3 gols.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>gols = [2, 0, 3, 1, 3, 0, 3]
+print("Total:", sum(gols))
+print("Maior:", max(gols))
+print("Jogos com 3 gols:", gols.count(3))</code></pre>
+      <p class="saida">Total: 12<br>
+Maior: 3<br>
+Jogos com 3 gols: 3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Junte as listas <code>manha = ["Matemática", "Português"]</code> e <code>tarde = ["Ciências", "Inglês"]</code> numa só, com <code>extend</code>. Depois tire a última matéria com <code>pop</code> e mostre qual foi tirada e a lista final.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>manha = ["Matemática", "Português"]
+tarde = ["Ciências", "Inglês"]
+manha.extend(tarde)
+tirada = manha.pop()
+print("Tirada:", tirada)
+print(manha)</code></pre>
+      <p class="saida">Tirada: Inglês<br>
+['Matemática', 'Português', 'Ciências']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Dada a lista <code>idades = [12, 17, 25, 9, 33, 15]</code>, crie uma nova lista só com as idades menores de 18 e mostre-a em ordem crescente.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>idades = [12, 17, 25, 9, 33, 15]
+menores = []
+for idade in idades:
+    if idade &lt; 18:
+        menores.append(idade)
+print(sorted(menores))</code></pre>
+      <p class="saida">[9, 12, 15, 17]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="24-for-range.html" rel="prev">← Aula anterior</a>
+      <a href="26-mutaveis-copy.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 104 · Copiar, mover e apagar com shutil — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use o módulo shutil para copiar arquivos e pastas inteiras, mover, renomear e apagar pastas com segurança.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 104 · Copiar, mover e apagar com shutil</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Copiar arquivos com <code>shutil.copy</code> e pastas com <code>shutil.copytree</code></li>
+        <li>Mover e renomear com <code>shutil.move</code></li>
+        <li>Apagar pastas inteiras com <code>shutil.rmtree</code> sem susto</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Por que shutil</h2>
+    <p>O <code>pathlib</code> (aula 103) cria, lê e lista arquivos. Para copiar e mover em grande quantidade, o Python tem o <code>shutil</code> ("shell utilities", utilidades do terminal). Ele é ótimo para automatizar tarefas chatas, como fazer backup da pasta de trabalhos da escola.</p>
+    <p>Esta aula é para o computador porque você vai mexer em arquivos de verdade. Teste sempre numa pasta de treino, nunca nos seus documentos importantes.</p>
+
+    <h2>Copiar e mover</h2>
+    <p>Salve como <code>organizar.py</code> numa pasta vazia de treino e rode com <code>python organizar.py</code>:</p>
+<pre class="codigo"><code>import shutil
+from pathlib import Path
+
+# prepara uma pasta de treino
+treino = Path("treino")
+treino.mkdir(exist_ok=True)
+(treino / "redacao.txt").write_text("Minhas férias em Salvador", encoding="utf-8")
+
+# copia um arquivo (o original continua lá)
+shutil.copy(treino / "redacao.txt", treino / "redacao_copia.txt")
+
+# copia a pasta inteira, com tudo dentro
+shutil.copytree(treino, "backup", dirs_exist_ok=True)
+
+# move (ou renomeia) um arquivo
+shutil.move(str(treino / "redacao_copia.txt"), str(treino / "redacao_v2.txt"))
+
+print("treino:", sorted(p.name for p in treino.iterdir()))
+print("backup:", sorted(p.name for p in Path("backup").iterdir()))</code></pre>
+    <p class="saida">treino: ['redacao.txt', 'redacao_v2.txt']<br>
+backup: ['redacao.txt', 'redacao_copia.txt']</p>
+    <ul>
+      <li><code>copy(origem, destino)</code> copia um arquivo;</li>
+      <li><code>copytree(origem, destino)</code> copia uma pasta inteira; <code>dirs_exist_ok=True</code> deixa copiar por cima de uma pasta que já existe;</li>
+      <li><code>move(origem, destino)</code> move; se o destino estiver na mesma pasta com outro nome, é o mesmo que renomear.</li>
+    </ul>
+
+    <h2>Apagar pastas</h2>
+    <p><code>Path.unlink()</code> apaga um arquivo e <code>Path.rmdir()</code> só apaga pastas <strong>vazias</strong>. Para apagar uma pasta com tudo dentro, use <code>shutil.rmtree</code>:</p>
+<pre class="codigo"><code>import shutil
+from pathlib import Path
+
+lixo = Path("temporario/cache")
+lixo.mkdir(parents=True, exist_ok=True)
+(lixo / "a.tmp").write_text("x", encoding="utf-8")
+
+shutil.rmtree("temporario")
+print("Ainda existe?", Path("temporario").exists())</code></pre>
+    <p class="saida">Ainda existe? False</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>rmtree</code> apaga <strong>para sempre</strong>: os arquivos não vão para a Lixeira. Antes de rodar, mostre na tela o caminho que será apagado e confira. Um erro de digitação no caminho pode apagar a pasta errada.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>shutil.copytree("fotos", "backup_fotos", dirs_exist_ok=True)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um programa que copie todos os arquivos <code>.txt</code> da pasta <code>textos</code> para a pasta <code>copias</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import shutil
+from pathlib import Path
+
+textos = Path("textos")
+textos.mkdir(exist_ok=True)
+for nome in ["a.txt", "b.txt", "foto.jpg"]:
+    (textos / nome).write_text("x", encoding="utf-8")
+
+copias = Path("copias")
+copias.mkdir(exist_ok=True)
+for arquivo in textos.glob("*.txt"):
+    shutil.copy(arquivo, copias / arquivo.name)
+
+print(sorted(p.name for p in copias.iterdir()))</code></pre>
+      <p class="saida">['a.txt', 'b.txt']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Qual é a diferença entre <code>Path("pasta").rmdir()</code> e <code>shutil.rmtree("pasta")</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">rmdir() só apaga a pasta se ela estiver vazia (senão dá OSError).<br>
+shutil.rmtree() apaga a pasta e tudo o que está dentro dela, sem passar pela Lixeira.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="103-os-pathlib.html" rel="prev">← Aula anterior</a>
+      <a href="105-json-avancado.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 170 · O que é banco relacional e SQL — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda o que é um banco de dados relacional, tabelas, linhas e colunas, e rode seus primeiros comandos SQL com sqlite3.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 170 · O que é banco relacional e SQL</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um banco de dados relacional</li>
+        <li>O que são tabelas, linhas, colunas e chave primária</li>
+        <li>Como rodar comandos SQL a partir do Python com sqlite3</li>
+      </ul>
+    </div>
+
+    <h2>Por que um banco de dados</h2>
+    <p>Na aula 62 você salvou dados em JSON. Isso funciona bem para poucos dados. Quando a escola tem milhares de alunos, notas e turmas, e várias pessoas mexem ao mesmo tempo, usamos um <strong>banco de dados</strong>: um programa especializado em guardar e buscar dados rapidamente e com segurança.</p>
+    <p>Um banco <strong>relacional</strong> guarda tudo em <strong>tabelas</strong>, parecidas com planilhas. Cada <strong>coluna</strong> é um tipo de informação (nome, idade) e cada <strong>linha</strong> é um registro (um aluno). A coluna que identifica cada linha sem repetir é a <strong>chave primária</strong>.</p>
+
+    <h2>A linguagem SQL</h2>
+    <p>Para conversar com o banco usamos o <strong>SQL</strong> (pronuncia-se "esse-quê-éle" ou "síquel"). Os comandos são quase frases em inglês: <code>CREATE TABLE</code> cria tabela, <code>INSERT</code> insere, <code>SELECT</code> busca.</p>
+    <p>O Python já vem com o <strong>SQLite</strong>, um banco pequeno que guarda tudo num arquivo, ou só na memória, com o nome especial <code>":memory:"</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (id INTEGER PRIMARY KEY, nome TEXT, idade INTEGER)")
+con.execute("INSERT INTO alunos (nome, idade) VALUES ('Ana', 12)")
+con.execute("INSERT INTO alunos (nome, idade) VALUES ('Caio', 13)")
+for linha in con.execute("SELECT id, nome, idade FROM alunos"):
+    print(linha)
+con.close()</code></pre>
+    <p class="saida">(1, 'Ana', 12)<br>
+(2, 'Caio', 13)</p>
+    <p>Cada linha volta como uma tupla. Repare que o <code>id</code> foi preenchido sozinho: <code>INTEGER PRIMARY KEY</code> numera automaticamente.</p>
+    <div class="dica"><strong>Dica:</strong> Na primeira vez que você roda um exemplo com <code>sqlite3</code> aqui no site, o navegador baixa o módulo do SQLite. Pode levar alguns segundos; depois fica rápido.</div>
+
+    <h2>Bancos diferentes, a mesma ideia</h2>
+    <p>Existem vários bancos relacionais: SQLite, MySQL, PostgreSQL, SQL Server. O SQL básico é quase igual em todos. O que você aprender neste módulo com SQLite vale para os outros (a aula 176 mostra o MySQL).</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+versao = con.execute("SELECT sqlite_version()").fetchone()[0]
+print("Versão do SQLite:", versao)
+print(con.execute("SELECT 2 + 3, 'texto', 10 * 1.5").fetchone())
+con.close()</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+Versão do SQLite: 3.49.1<br>
+(5, 'texto', 15.0)</p>
+    <div class="atencao"><strong>Atenção:</strong> Em SQL, textos vão entre <strong>aspas simples</strong>: <code>'Ana'</code>. Por isso, no Python, a string do comando costuma usar aspas duplas por fora.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>con = sqlite3.connect(":memory:")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma tabela <code>cidades</code> com as colunas <code>id</code>, <code>nome</code> e <code>estado</code>, insira Salvador (BA) e Manaus (AM) e mostre todas as linhas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE cidades (id INTEGER PRIMARY KEY, nome TEXT, estado TEXT)")
+con.execute("INSERT INTO cidades (nome, estado) VALUES ('Salvador', 'BA')")
+con.execute("INSERT INTO cidades (nome, estado) VALUES ('Manaus', 'AM')")
+for linha in con.execute("SELECT * FROM cidades"):
+    print(linha)
+con.close()</code></pre>
+      <p class="saida">(1, 'Salvador', 'BA')<br>
+(2, 'Manaus', 'AM')</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Numa tabela de alunos, por que o nome não é uma boa chave primária?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque dois alunos podem ter o mesmo nome. A chave primária precisa ser única,<br>
+por isso usamos um número (id) que nunca se repete.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="153-comportamentais.html" rel="prev">← Aula anterior</a>
+      <a href="171-sql-crud.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

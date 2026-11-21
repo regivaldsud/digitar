@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 19 · Comparações, and, or, not, in, not in — Curso de Python · DIGITAR</title>
+<meta name="description" content="Compare valores, combine condições com and, or e not e procure trechos com in e not in.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 19 · Comparações, and, or, not, in, not in</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Comparar valores com <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> e <code>&gt;=</code></li>
+        <li>Comparar textos e entender a diferença entre <code>"10"</code> e <code>10</code></li>
+        <li>Combinar condições com <code>and</code>, <code>or</code> e <code>not</code> e ler a tabela-verdade</li>
+        <li>Procurar um trecho dentro de um texto com <code>in</code> e <code>not in</code></li>
+      </ul>
+    </div>
+
+    <h2>Perguntas de sim ou não</h2>
+    <p>Um operador de comparação (ou <strong>relacional</strong>) faz uma pergunta e a resposta é sempre um <code>bool</code>: <code>True</code> ou <code>False</code>.</p>
+    <ul>
+      <li><code>==</code> igual a</li>
+      <li><code>!=</code> diferente de</li>
+      <li><code>&lt;</code> menor que, <code>&gt;</code> maior que</li>
+      <li><code>&lt;=</code> menor ou igual, <code>&gt;=</code> maior ou igual</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>print(5 &gt; 3)
+print(5 &lt; 3)
+print(10 == 10)
+print(10 != 10)
+print(7 &gt;= 7)
+idade = 13
+pode_ver = idade &gt;= 12
+print("Pode ver o filme de 12 anos?", pode_ver)</code></pre>
+    <p class="saida">True<br>
+False<br>
+True<br>
+False<br>
+True<br>
+Pode ver o filme de 12 anos? True</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>=</code> e <code>==</code> são coisas diferentes. Um <code>=</code> <strong>guarda</strong> um valor (<code>idade = 13</code>). Dois <code>==</code> <strong>comparam</strong> (<code>idade == 13</code>). Trocar um pelo outro é um dos erros mais comuns.</div>
+
+    <h2>Comparando textos</h2>
+    <p>Textos também podem ser comparados. A comparação diferencia maiúsculas de minúsculas:</p>
+<pre class="codigo" data-executar="sim"><code>print("banana" == "banana")
+print("Banana" == "banana")
+print("abacate" &lt; "banana")
+print("10" == 10)
+print("Sim".lower() == "sim")</code></pre>
+    <p class="saida">True<br>
+False<br>
+True<br>
+False<br>
+True</p>
+    <p>O <code>&lt;</code> entre textos compara em ordem alfabética (como no dicionário). E o texto <code>"10"</code> não é igual ao número <code>10</code>: são tipos diferentes.</p>
+
+    <h2>and, or e not</h2>
+    <p>Para juntar condições, use os <strong>operadores lógicos</strong>:</p>
+    <ul>
+      <li><code>and</code> (e): só é <code>True</code> se <strong>as duas</strong> forem verdadeiras.</li>
+      <li><code>or</code> (ou): é <code>True</code> se <strong>pelo menos uma</strong> for verdadeira.</li>
+      <li><code>not</code> (não): inverte, <code>True</code> vira <code>False</code> e vice-versa.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>idade = 15
+tem_autorizacao = True
+print(idade &gt;= 12 and tem_autorizacao)
+print(idade &lt; 12 or tem_autorizacao)
+print(not tem_autorizacao)
+if idade &gt;= 12 and tem_autorizacao:
+    print("Pode ir à excursão do museu.")</code></pre>
+    <p class="saida">True<br>
+True<br>
+False<br>
+Pode ir à excursão do museu.</p>
+    <p>A <strong>tabela-verdade</strong> mostra o resultado de cada combinação:</p>
+    <p class="saida">A &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| A and B | A or B<br>
+True &nbsp;&nbsp;True &nbsp;&nbsp;| True &nbsp;&nbsp;&nbsp;| True<br>
+True &nbsp;&nbsp;False &nbsp;| False &nbsp;&nbsp;| True<br>
+False &nbsp;True &nbsp;&nbsp;| False &nbsp;&nbsp;| True<br>
+False &nbsp;False &nbsp;| False &nbsp;&nbsp;| False</p>
+    <p>Um jeito de lembrar: no <code>and</code>, basta um <code>False</code> para tudo dar <code>False</code>. No <code>or</code>, basta um <code>True</code> para tudo dar <code>True</code>.</p>
+    <div class="dica"><strong>Dica:</strong> A ordem de prioridade é: primeiro <code>not</code>, depois <code>and</code>, depois <code>or</code>. Quando misturar <code>and</code> e <code>or</code>, use parênteses para deixar claro o que você quer: <code>(a or b) and c</code>.</div>
+
+    <h2>Intervalos</h2>
+    <p>Para saber se um valor está entre dois limites, use <code>and</code> ou a forma encadeada do Python, que lê igual à matemática:</p>
+<pre class="codigo" data-executar="sim"><code>nota = 7.5
+print(nota &gt;= 7 and nota &lt;= 10)
+print(7 &lt;= nota &lt;= 10)
+chovendo = False
+fim_de_semana = True
+vai_a_praia = fim_de_semana and not chovendo
+print("Vai à praia?", vai_a_praia)</code></pre>
+    <p class="saida">True<br>
+True<br>
+Vai à praia? True</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>if cor == "azul" or "verde":</code> <strong>não</strong> faz o que parece: o <code>"verde"</code> sozinho conta como verdadeiro, então a condição é sempre <code>True</code>. O certo é <code>if cor == "azul" or cor == "verde":</code>.</div>
+
+    <h2>Procurando com in e not in</h2>
+    <p>O operador <code>in</code> verifica se um trecho aparece dentro de um texto. <code>not in</code> faz a pergunta contrária:</p>
+<pre class="codigo" data-executar="sim"><code>email = "ana.souza@exemplo.com.br"
+print("@" in email)
+print(".br" in email)
+print("gmail" in email)
+print(" " not in email)
+if "@" not in email:
+    print("E-mail inválido")
+else:
+    print("E-mail parece válido")</code></pre>
+    <p class="saida">True<br>
+True<br>
+False<br>
+True<br>
+E-mail parece válido</p>
+    <p>Mais adiante você vai usar <code>in</code> também com listas, para saber se um item está nelas.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(idade &gt;= 12 and not chovendo)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Um número é par quando o resto da divisão por 2 é zero. Mostre se 84 é par usando <code>%</code> e <code>==</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numero = 84
+print(numero % 2 == 0)</code></pre>
+      <p class="saida">True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Para entrar no brinquedo, é preciso ter pelo menos 1,40 m <strong>e</strong> no máximo 1,95 m. Mostre se a altura 1.38 pode entrar.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>altura = 1.38
+print(1.40 &lt;= altura &lt;= 1.95)</code></pre>
+      <p class="saida">False</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Sem rodar, diga o resultado de <code>True and False or True</code>. Depois confira.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(True and False or True)</code></pre>
+      <p class="saida">True</p>
+      <p>O <code>and</code> é feito primeiro: <code>True and False</code> dá <code>False</code>. Depois <code>False or True</code> dá <code>True</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> A loja dá desconto para quem é estudante <strong>ou</strong> tem mais de 60 anos. Com <code>estudante = False</code> e <code>idade = 65</code>, mostre se a pessoa ganha desconto.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>estudante = False
+idade = 65
+print("Ganha desconto?", estudante or idade &gt; 60)</code></pre>
+      <p class="saida">Ganha desconto? True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça uma frase e avise se ela contém a palavra <code>python</code> (sem diferenciar maiúsculas de minúsculas).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>frase = input("Digite uma frase: ")
+if "python" in frase.lower():
+    print("A frase fala de Python!")
+else:
+    print("Nada de Python por aqui.")</code></pre>
+      <p class="saida"><em>(exemplo digitando Eu gosto de Python)</em><br>
+Digite uma frase: Eu gosto de Python<br>
+A frase fala de Python!</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="18-if-elif-else.html" rel="prev">← Aula anterior</a>
+      <a href="20-fatiamento-len.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

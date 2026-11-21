@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 47 · Cópia rasa e cópia profunda — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda por que copiar uma lista de listas nem sempre copia tudo e como usar copy.deepcopy para fazer uma cópia completa.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 47 · Cópia rasa e cópia profunda</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Lembrar a diferença entre apelido (<code>b = a</code>) e cópia</li>
+        <li>Entender o que é uma cópia <strong>rasa</strong> e quando ela não basta</li>
+        <li>Fazer uma cópia <strong>profunda</strong> com <code>copy.deepcopy</code></li>
+        <li>Conferir com <code>is</code> se dois nomes apontam para o mesmo objeto</li>
+      </ul>
+    </div>
+
+    <h2>Relembrando: apelido não é cópia</h2>
+    <p>Na aula 26 você viu que <code>b = a</code> não cria uma lista nova: <code>b</code> vira outro nome para a <strong>mesma</strong> lista. Para copiar, usamos <code>a.copy()</code>, <code>list(a)</code> ou <code>a[:]</code>. O operador <code>is</code> confirma se dois nomes são o mesmo objeto:</p>
+<pre class="codigo" data-executar="sim"><code>original = ["lápis", "borracha"]
+apelido = original
+copia = original.copy()
+print(apelido is original)
+print(copia is original)
+copia.append("régua")
+print(original)
+print(copia)</code></pre>
+    <p class="saida">True<br>
+False<br>
+['lápis', 'borracha']<br>
+['lápis', 'borracha', 'régua']</p>
+
+    <h2>Quando a cópia não basta</h2>
+    <p>O <code>copy()</code> faz uma cópia <strong>rasa</strong>: cria uma lista nova, mas os itens de dentro continuam sendo os <strong>mesmos objetos</strong>. Se os itens forem números ou textos, tudo bem. Mas se forem <strong>listas</strong> (ou dicionários), as duas "cópias" compartilham as listas de dentro:</p>
+<pre class="codigo" data-executar="sim"><code>turma_a = [["Ana", 8], ["Bruno", 6]]
+turma_b = turma_a.copy()
+turma_b.append(["Caio", 9])
+turma_b[0][1] = 10
+print(turma_a)
+print(turma_b)
+print(turma_a[0] is turma_b[0])</code></pre>
+    <p class="saida">[['Ana', 10], ['Bruno', 6]]<br>
+[['Ana', 10], ['Bruno', 6], ['Caio', 9]]<br>
+True</p>
+    <p>O <code>append</code> só mudou <code>turma_b</code> (a lista de fora é nova), mas a nota da Ana mudou nas <strong>duas</strong>, porque <code>["Ana", 8]</code> é o mesmo objeto nas duas listas.</p>
+    <div class="atencao"><strong>Atenção:</strong> A fatia <code>[:]</code>, o <code>list()</code>, o <code>dict.copy()</code> e o <code>copy.copy()</code> fazem <strong>todos</strong> cópia rasa. Para listas de listas e dicionários com listas dentro, eles não bastam.</div>
+
+    <h2>Cópia profunda com deepcopy</h2>
+    <p>O módulo <code>copy</code> tem a função <code>deepcopy</code>, que copia <strong>tudo</strong>, inclusive o que está dentro do que está dentro:</p>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+turma_a = [["Ana", 8], ["Bruno", 6]]
+turma_b = copy.deepcopy(turma_a)
+turma_b[0][1] = 10
+print(turma_a)
+print(turma_b)
+print(turma_a[0] is turma_b[0])</code></pre>
+    <p class="saida">[['Ana', 8], ['Bruno', 6]]<br>
+[['Ana', 10], ['Bruno', 6]]<br>
+False</p>
+
+    <h2>O mesmo vale para dicionários</h2>
+    <p>Um dicionário com listas dentro tem o mesmo problema:</p>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+cardapio = {"segunda": ["arroz", "feijão"], "terça": ["macarrão"]}
+raso = cardapio.copy()
+profundo = copy.deepcopy(cardapio)
+
+raso["segunda"].append("farofa")
+print(cardapio["segunda"])
+profundo["terça"].append("salada")
+print(cardapio["terça"])
+print(profundo["terça"])</code></pre>
+    <p class="saida">['arroz', 'feijão', 'farofa']<br>
+['macarrão']<br>
+['macarrão', 'salada']</p>
+    <div class="dica"><strong>Dica:</strong> Na dúvida, pergunte: "minha estrutura tem listas ou dicionários <strong>dentro</strong> dela?" Se tiver e você vai alterar a cópia, use <code>copy.deepcopy</code>. Se não tiver, um <code>copy()</code> simples resolve e é mais rápido.</div>
+
+    <h2>Um caso comum: o tabuleiro</h2>
+    <p>Criar uma grade com <code>*</code> também cria listas compartilhadas, porque repete o <strong>mesmo</strong> objeto:</p>
+<pre class="codigo" data-executar="sim"><code>errado = [["."] * 3] * 3
+errado[0][0] = "X"
+print(errado)
+
+certo = [["."] * 3 for _ in range(3)]
+certo[0][0] = "X"
+print(certo)</code></pre>
+    <p class="saida">[['X', '.', '.'], ['X', '.', '.'], ['X', '.', '.']]<br>
+[['X', '.', '.'], ['.', '.', '.'], ['.', '.', '.']]</p>
+    <p>Com a compreensão de lista (aula 50), cada linha é uma lista nova.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>copia = copy.deepcopy(original)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Explique o que este código mostra e corrija para que <code>a</code> não mude: <code>a = [[1, 2], [3, 4]]</code>, <code>b = a.copy()</code>, <code>b[1][0] = 99</code>, <code>print(a)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+a = [[1, 2], [3, 4]]
+b = copy.deepcopy(a)
+b[1][0] = 99
+print(a)
+print(b)</code></pre>
+      <p class="saida">[[1, 2], [3, 4]]<br>
+[[1, 2], [99, 4]]</p>
+      <p>Com <code>a.copy()</code> a lista de dentro <code>[3, 4]</code> seria a mesma nas duas, e <code>print(a)</code> mostraria <code>[[1, 2], [99, 4]]</code>. Com <code>deepcopy</code>, <code>a</code> fica intacta.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie uma ficha <code>{"nome": "Theo", "jogos": ["xadrez", "damas"]}</code>, faça uma cópia profunda, adicione "dominó" aos jogos da cópia e mostre as duas fichas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+ficha = {"nome": "Theo", "jogos": ["xadrez", "damas"]}
+copia = copy.deepcopy(ficha)
+copia["jogos"].append("dominó")
+print(ficha)
+print(copia)</code></pre>
+      <p class="saida">{'nome': 'Theo', 'jogos': ['xadrez', 'damas']}<br>
+{'nome': 'Theo', 'jogos': ['xadrez', 'damas', 'dominó']}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que <code>lista = [1, 2, 3]</code> e <code>copia = lista[:]</code> funciona bem como cópia, mesmo sendo rasa? Mostre com um teste.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>lista = [1, 2, 3]
+copia = lista[:]
+copia[0] = 100
+print(lista)
+print(copia)</code></pre>
+      <p class="saida">[1, 2, 3]<br>
+[100, 2, 3]</p>
+      <p>Os itens são números, que não podem ser alterados por dentro. Trocar <code>copia[0]</code> só troca o item da lista nova; a original não é afetada.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie um tabuleiro de jogo da velha 3x3 cheio de <code>" "</code> sem o problema das linhas compartilhadas, coloque um <code>"O"</code> no centro e mostre as linhas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>tabuleiro = [[" "] * 3 for _ in range(3)]
+tabuleiro[1][1] = "O"
+for linha in tabuleiro:
+    print(linha)</code></pre>
+      <p class="saida">[' ', ' ', ' ']<br>
+[' ', 'O', ' ']<br>
+[' ', ' ', ' ']</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="46-dicionarios.html" rel="prev">← Aula anterior</a>
+      <a href="48-sets.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

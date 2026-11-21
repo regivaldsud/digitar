@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 75 · Associação, agregação e composição — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda as três formas de um objeto se relacionar com outro: usar, reunir e ser feito de.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 75 · Associação, agregação e composição</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é <strong>associação</strong>: um objeto usa outro</li>
+        <li>O que é <strong>agregação</strong>: um objeto reúne outros que existem sozinhos</li>
+        <li>O que é <strong>composição</strong>: um objeto é feito de partes que ele mesmo cria</li>
+        <li>Escolher entre herança ("é um") e relação entre objetos ("tem um")</li>
+      </ul>
+    </div>
+
+    <h2>Objetos que conversam</h2>
+    <p>Programas de verdade têm vários objetos trabalhando juntos: um aluno tem uma mochila, um carrinho tem produtos, uma casa tem cômodos. Existem três jeitos principais de um objeto se ligar a outro, do mais solto ao mais forte: <strong>associação</strong>, <strong>agregação</strong> e <strong>composição</strong>.</p>
+
+    <h2>Associação: um objeto usa outro</h2>
+    <p>Na associação, um objeto <strong>conhece</strong> outro e o usa, mas cada um vive a sua vida. O escritor usa uma caneta; trocar de caneta não muda o escritor.</p>
+<pre class="codigo" data-executar="sim"><code>class Caneta:
+    def __init__(self, cor):
+        self.cor = cor
+
+    def escrever(self, texto):
+        return f"[{self.cor}] {texto}"
+
+class Escritor:
+    def __init__(self, nome):
+        self.nome = nome
+        self.ferramenta = None
+
+    def escrever(self, texto):
+        if self.ferramenta is None:
+            print(f"{self.nome} está sem caneta!")
+            return
+        print(self.ferramenta.escrever(texto))
+
+autor = Escritor("Ruth Rocha")
+autor.escrever("Era uma vez...")
+autor.ferramenta = Caneta("azul")
+autor.escrever("Era uma vez...")
+autor.ferramenta = Caneta("vermelha")
+autor.escrever("Fim.")</code></pre>
+    <p class="saida">Ruth Rocha está sem caneta!<br>
+[azul] Era uma vez...<br>
+[vermelha] Fim.</p>
+    <p>Repare em <code>self.ferramenta.escrever(texto)</code>: um objeto chamando o método de outro objeto guardado num atributo.</p>
+
+    <h2>Agregação: reunir objetos que existem sozinhos</h2>
+    <p>Na agregação, um objeto <strong>reúne</strong> outros, mas as partes existem por conta própria — foram criadas fora e continuam existindo se o "todo" sumir. Um carrinho de compras junta produtos que já estavam na prateleira.</p>
+<pre class="codigo" data-executar="sim"><code>class Produto:
+    def __init__(self, nome, preco):
+        self.nome = nome
+        self.preco = preco
+
+class Carrinho:
+    def __init__(self):
+        self.produtos = []
+
+    def adicionar(self, produto):
+        self.produtos.append(produto)
+
+    def total(self):
+        return sum(p.preco for p in self.produtos)
+
+arroz = Produto("Arroz 5 kg", 27.90)
+feijao = Produto("Feijão 1 kg", 8.49)
+cafe = Produto("Café 500 g", 18.00)
+
+meu = Carrinho()
+meu.adicionar(arroz)
+meu.adicionar(cafe)
+do_vizinho = Carrinho()
+do_vizinho.adicionar(arroz)
+do_vizinho.adicionar(feijao)
+
+print(f"Meu carrinho: R$ {meu.total():.2f}")
+print(f"Do vizinho: R$ {do_vizinho.total():.2f}")</code></pre>
+    <p class="saida">Meu carrinho: R$ 45.90<br>
+Do vizinho: R$ 36.39</p>
+    <p>O mesmo objeto <code>arroz</code> está nos dois carrinhos. Se você esvaziar um carrinho, o produto continua existindo.</p>
+
+    <h2>Composição: o todo é feito das partes</h2>
+    <p>Na composição, o objeto <strong>cria as próprias partes</strong> dentro dele, e elas só fazem sentido junto com ele. Uma casa é feita de cômodos; se a casa for demolida, os cômodos vão junto.</p>
+<pre class="codigo" data-executar="sim"><code>class Comodo:
+    def __init__(self, nome, area):
+        self.nome = nome
+        self.area = area
+
+class Casa:
+    def __init__(self, endereco):
+        self.endereco = endereco
+        self.comodos = []
+
+    def construir(self, nome, area):
+        self.comodos.append(Comodo(nome, area))
+
+    def area_total(self):
+        return sum(c.area for c in self.comodos)
+
+casa = Casa("Rua das Flores, 10")
+casa.construir("sala", 18)
+casa.construir("cozinha", 9.5)
+casa.construir("quarto", 12)
+for c in casa.comodos:
+    print(f"{c.nome}: {c.area} m²")
+print("Total:", casa.area_total(), "m²")</code></pre>
+    <p class="saida">sala: 18 m²<br>
+cozinha: 9.5 m²<br>
+quarto: 12 m²<br>
+Total: 39.5 m²</p>
+    <p>Ninguém de fora cria os objetos <code>Comodo</code>: quem cria é a própria <code>Casa</code>, no método <code>construir</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Para lembrar: <strong>associação</strong> = "usa um" (escritor e caneta); <strong>agregação</strong> = "tem vários, que existem sozinhos" (carrinho e produtos); <strong>composição</strong> = "é feito de" (casa e cômodos).</div>
+
+    <h2>Herança ou relação?</h2>
+    <p>Na aula 76 você vai ver herança, que é a relação "<strong>é um</strong>": um gato é um animal. Já associação, agregação e composição são relações "<strong>tem um</strong>": um carro tem um motor. Muitos programadores experientes preferem "tem um" sempre que der, porque deixa as classes mais independentes.</p>
+<pre class="codigo" data-executar="sim"><code>class Motor:
+    def __init__(self, potencia):
+        self.potencia = potencia
+
+    def ligar(self):
+        return f"motor de {self.potencia} cv ligado"
+
+class Carro:
+    def __init__(self, modelo, potencia):
+        self.modelo = modelo
+        self.motor = Motor(potencia)
+
+    def ligar(self):
+        print(f"{self.modelo}: {self.motor.ligar()}")
+
+Carro("Gol", 84).ligar()</code></pre>
+    <p class="saida">Gol: motor de 84 cv ligado</p>
+    <div class="atencao"><strong>Atenção:</strong> Não faça <code>class Carro(Motor)</code>: um carro não <strong>é</strong> um motor, ele <strong>tem</strong> um motor. Usar herança no lugar de composição deixa o código confuso.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>self.produtos.append(produto)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie as classes <code>Professor(nome)</code> e <code>Turma(codigo)</code> numa agregação: a turma guarda uma lista de professores criados fora dela, com o método <code>adicionar(professor)</code>. Coloque a mesma professora em duas turmas e mostre os nomes.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Professor:
+    def __init__(self, nome):
+        self.nome = nome
+
+class Turma:
+    def __init__(self, codigo):
+        self.codigo = codigo
+        self.professores = []
+
+    def adicionar(self, professor):
+        self.professores.append(professor)
+
+ana = Professor("Profa. Ana")
+leo = Professor("Prof. Léo")
+t7 = Turma("7A")
+t8 = Turma("8B")
+t7.adicionar(ana)
+t8.adicionar(ana)
+t8.adicionar(leo)
+for t in [t7, t8]:
+    print(t.codigo, [p.nome for p in t.professores])</code></pre>
+      <p class="saida">7A ['Profa. Ana']<br>
+8B ['Profa. Ana', 'Prof. Léo']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Pedido</code> que, por composição, cria seus próprios <code>Item(nome, qtd, preco)</code> no método <code>incluir(nome, qtd, preco)</code>, e um método <code>total()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Item:
+    def __init__(self, nome, qtd, preco):
+        self.nome = nome
+        self.qtd = qtd
+        self.preco = preco
+
+class Pedido:
+    def __init__(self):
+        self.itens = []
+
+    def incluir(self, nome, qtd, preco):
+        self.itens.append(Item(nome, qtd, preco))
+
+    def total(self):
+        return sum(i.qtd * i.preco for i in self.itens)
+
+p = Pedido()
+p.incluir("Pastel", 2, 8.0)
+p.incluir("Caldo de cana", 2, 6.5)
+print(f"Total: R$ {p.total():.2f}")</code></pre>
+      <p class="saida">Total: R$ 29.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie uma associação entre <code>Motorista(nome)</code> e <code>Onibus(linha)</code>: o ônibus tem um atributo <code>motorista</code> que pode ser trocado, e o método <code>partir()</code> mostra <code>Linha 101 partindo com Sr. Zé</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Motorista:
+    def __init__(self, nome):
+        self.nome = nome
+
+class Onibus:
+    def __init__(self, linha):
+        self.linha = linha
+        self.motorista = None
+
+    def partir(self):
+        if self.motorista is None:
+            print(f"Linha {self.linha} sem motorista!")
+        else:
+            print(f"Linha {self.linha} partindo com {self.motorista.nome}")
+
+bus = Onibus(101)
+bus.partir()
+bus.motorista = Motorista("Sr. Zé")
+bus.partir()</code></pre>
+      <p class="saida">Linha 101 sem motorista!<br>
+Linha 101 partindo com Sr. Zé</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Classifique cada relação como associação, agregação, composição ou herança: (a) livro e capítulos; (b) biblioteca e livros; (c) leitor e óculos; (d) romance e livro.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">(a) composição: os capítulos fazem parte do livro e não existem sem ele.<br>
+(b) agregação: a biblioteca reúne livros que existem por conta própria.<br>
+(c) associação: o leitor usa os óculos, mas cada um vive separado.<br>
+(d) herança: um romance "é um" livro.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="74-encapsulamento.html" rel="prev">← Aula anterior</a>
+      <a href="76-heranca.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

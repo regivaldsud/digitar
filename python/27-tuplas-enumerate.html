@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 27 · Tuplas, enumerate e desempacotamento — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a usar tuplas, sequências que não mudam, a desempacotar valores em várias variáveis e a numerar itens com enumerate.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 27 · Tuplas, enumerate e desempacotamento</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar tuplas e entender por que elas são <strong>imutáveis</strong></li>
+        <li>Desempacotar uma tupla em várias variáveis</li>
+        <li>Trocar o valor de duas variáveis em uma linha</li>
+        <li>Numerar itens de um laço com <code>enumerate</code></li>
+        <li>Usar o <code>*</code> para pegar "o resto" no desempacotamento</li>
+      </ul>
+    </div>
+
+    <h2>O que é uma tupla</h2>
+    <p>Uma <strong>tupla</strong> é parecida com uma lista: guarda vários valores em ordem. A diferença é que ela é escrita com <strong>parênteses</strong> e, depois de criada, <strong>não pode ser alterada</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>coordenada = (-23.55, -46.63)
+cores_bandeira = ("verde", "amarelo", "azul", "branco")
+print(coordenada)
+print(cores_bandeira[1])
+print(len(cores_bandeira))
+print("azul" in cores_bandeira)</code></pre>
+    <p class="saida">(-23.55, -46.63)<br>
+amarelo<br>
+4<br>
+True</p>
+    <p>Índices, fatias, <code>len</code>, <code>in</code>, <code>count</code>, <code>index</code> e <code>for</code> funcionam igualzinho às listas. O que não existe são os métodos que mudam a sequência, como <code>append</code> e <code>pop</code>.</p>
+
+    <h2>Imutável: não muda</h2>
+    <p>Tentar alterar um item de uma tupla dá erro:</p>
+<pre class="codigo" data-executar="sim"><code>dias = ("sáb", "dom")
+dias[0] = "seg"</code></pre>
+    <p class="saida">TypeError: 'tuple' object does not support item assignment</p>
+    <p>Isso é uma vantagem quando os dados <strong>não devem</strong> mudar: as coordenadas de uma cidade, os meses do ano, a data de nascimento. A tupla protege contra alterações por engano.</p>
+    <div class="atencao"><strong>Atenção:</strong> Uma tupla com um item só precisa de uma vírgula: <code>(5,)</code>. Sem a vírgula, <code>(5)</code> é apenas o número 5 entre parênteses.</div>
+<pre class="codigo" data-executar="sim"><code>print(type((5,)))
+print(type((5)))
+ponto = 3, 4
+print(ponto, type(ponto))</code></pre>
+    <p class="saida">&lt;class 'tuple'&gt;<br>
+&lt;class 'int'&gt;<br>
+(3, 4) &lt;class 'tuple'&gt;</p>
+    <p>Na verdade, quem cria a tupla é a <strong>vírgula</strong>: os parênteses são opcionais, como mostra <code>ponto = 3, 4</code>.</p>
+
+    <h2>Desempacotamento</h2>
+    <p>Você pode "abrir" uma tupla (ou lista) direto em variáveis. O número de variáveis tem que ser igual ao número de itens. Com isso, trocar o valor de duas variáveis fica fácil, sem variável auxiliar:</p>
+<pre class="codigo" data-executar="sim"><code>aluno = ("Júlia", 13, "8º ano")
+nome, idade, serie = aluno
+print(nome, idade, serie)
+goleiro = "Cássio"
+atacante = "Hulk"
+goleiro, atacante = atacante, goleiro
+print("Goleiro:", goleiro)
+print("Atacante:", atacante)</code></pre>
+    <p class="saida">Júlia 13 8º ano<br>
+Goleiro: Hulk<br>
+Atacante: Cássio</p>
+    <p>Se o número de itens não bater, o Python reclama. Para pegar só alguns itens e juntar o resto numa lista, use o <code>*</code>:</p>
+<pre class="codigo" data-executar="sim"><code>primeiro, *resto = ("ouro", "prata", "bronze", "quarto")
+print(primeiro)
+print(resto)
+*inicio, ultimo = [1, 2, 3, 4]
+print(inicio, ultimo)</code></pre>
+    <p class="saida">ouro<br>
+['prata', 'bronze', 'quarto']<br>
+[1, 2, 3] 4</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>a, b = (1, 2, 3)</code> dá <code>ValueError: too many values to unpack (expected 2)</code>. Confira se o número de variáveis bate com o número de itens.</div>
+
+    <h2>Pares no for</h2>
+    <p>Tuplas aparecem muito em listas de pares. O <code>for</code> pode desempacotar cada par direto:</p>
+<pre class="codigo" data-executar="sim"><code>capitais = [("BA", "Salvador"), ("CE", "Fortaleza"), ("PA", "Belém")]
+for sigla, cidade in capitais:
+    print(f"{sigla}: {cidade}")
+horas, minutos = divmod(135, 60)
+print(f"135 minutos = {horas}h{minutos}min")</code></pre>
+    <p class="saida">BA: Salvador<br>
+CE: Fortaleza<br>
+PA: Belém<br>
+135 minutos = 2h15min</p>
+    <p>A função <code>divmod</code> devolve uma tupla com o quociente e o resto da divisão. É com tuplas que o Python devolve vários valores de uma vez — você vai criar funções assim na aula 40.</p>
+
+    <h2>Numerando com enumerate</h2>
+    <p>Quando você precisa do item <strong>e</strong> da posição dele, use <code>enumerate</code>. Ele entrega, a cada volta, uma tupla <code>(posição, item)</code>, que o <code>for</code> desempacota. O <code>start=1</code> faz a contagem começar em 1:</p>
+<pre class="codigo" data-executar="sim"><code>podio = ["Rayssa", "Ítalo", "Rebeca"]
+for posicao, nome in enumerate(podio, start=1):
+    print(f"{posicao}º lugar: {nome}")
+print(list(enumerate("abc")))</code></pre>
+    <p class="saida">1º lugar: Rayssa<br>
+2º lugar: Ítalo<br>
+3º lugar: Rebeca<br>
+[(0, 'a'), (1, 'b'), (2, 'c')]</p>
+    <div class="dica"><strong>Dica:</strong> Regra prática: use <strong>lista</strong> quando a coleção vai crescer ou mudar (lista de compras) e <strong>tupla</strong> quando o conjunto de valores é fixo (latitude e longitude).</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>for i, nome in enumerate(nomes, start=1):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Desempacote a tupla <code>("Pão de Açúcar", "Rio de Janeiro", 396)</code> nas variáveis <code>ponto</code>, <code>cidade</code> e <code>altura</code> e mostre a frase "O Pão de Açúcar fica no Rio de Janeiro e tem 396 m".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>ponto, cidade, altura = ("Pão de Açúcar", "Rio de Janeiro", 396)
+print(f"O {ponto} fica no {cidade} e tem {altura} m")</code></pre>
+      <p class="saida">O Pão de Açúcar fica no Rio de Janeiro e tem 396 m</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Troque os valores de <code>x = 10</code> e <code>y = 20</code> em uma linha e mostre os dois.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>x = 10
+y = 20
+x, y = y, x
+print(x, y)</code></pre>
+      <p class="saida">20 10</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Dada a lista de pares <code>[("Ana", 9.5), ("Beto", 7.0), ("Caio", 8.0)]</code>, mostre cada nome com a nota e, no fim, a média da turma.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>turma = [("Ana", 9.5), ("Beto", 7.0), ("Caio", 8.0)]
+soma = 0
+for nome, nota in turma:
+    print(f"{nome}: {nota}")
+    soma += nota
+print(f"Média: {soma / len(turma):.2f}")</code></pre>
+      <p class="saida">Ana: 9.5<br>
+Beto: 7.0<br>
+Caio: 8.0<br>
+Média: 8.17</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre cada letra da palavra "teclado" com sua posição, começando em 1, no formato <code>1: t</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for pos, letra in enumerate("teclado", start=1):
+    print(f"{pos}: {letra}")</code></pre>
+      <p class="saida">1: t<br>
+2: e<br>
+3: c<br>
+4: l<br>
+5: a<br>
+6: d<br>
+7: o</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> A lista <code>fila = ["Ana", "Bia", "Caio", "Davi", "Edu"]</code> representa uma fila. Use desempacotamento com <code>*</code> para separar o primeiro da fila, o último e quem está no meio.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>fila = ["Ana", "Bia", "Caio", "Davi", "Edu"]
+primeiro, *meio, ultimo = fila
+print("Primeiro:", primeiro)
+print("Meio:", meio)
+print("Último:", ultimo)</code></pre>
+      <p class="saida">Primeiro: Ana<br>
+Meio: ['Bia', 'Caio', 'Davi']<br>
+Último: Edu</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="26-mutaveis-copy.html" rel="prev">← Aula anterior</a>
+      <a href="28-split-join-strip.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

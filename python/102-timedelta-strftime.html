@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 102 · Calculando e formatando datas (timedelta, strftime), calendar, locale — Curso de Python · DIGITAR</title>
+<meta name="description" content="Faça contas com datas usando timedelta, mostre datas no padrão brasileiro com strftime, leia datas digitadas com strptime e conheça os módulos calendar e locale.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 102 · Calculando e formatando datas (timedelta, strftime), calendar, locale</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Somar e subtrair datas com <code>timedelta</code></li>
+        <li>Formatar datas no padrão brasileiro com <code>strftime</code></li>
+        <li>Transformar texto em data com <code>strptime</code></li>
+        <li>Usar o módulo <code>calendar</code> para anos bissextos e dias do mês</li>
+        <li>Saber para que serve o <code>locale</code> e por que ele é delicado</li>
+      </ul>
+    </div>
+
+    <h2>Contas com timedelta</h2>
+    <p>Subtrair duas datas dá um <code>timedelta</code>: uma <strong>duração</strong>. E somar um <code>timedelta</code> a uma data dá outra data.</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import date, timedelta
+
+inicio_ferias = date(2026, 12, 18)
+volta_aulas = date(2027, 2, 1)
+duracao = volta_aulas - inicio_ferias
+print("Férias de", duracao.days, "dias")
+
+prova = date(2026, 11, 10)
+print("Revisão em:", prova - timedelta(days=7))
+print("Resultado em:", prova + timedelta(weeks=2))</code></pre>
+    <p class="saida">Férias de 45 dias<br>
+Revisão em: 2026-11-03<br>
+Resultado em: 2026-11-24</p>
+    <p>Um <code>timedelta</code> aceita <code>days</code>, <code>weeks</code>, <code>hours</code>, <code>minutes</code> e <code>seconds</code>. Com <code>total_seconds()</code> você converte tudo em segundos:</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import timedelta
+
+treino = timedelta(hours=1, minutes=15)
+print(treino)
+print(treino.total_seconds() / 60, "minutos")</code></pre>
+    <p class="saida">1:15:00<br>
+75.0 minutos</p>
+
+    <h2>strftime: data do jeito brasileiro</h2>
+    <p>O método <code>strftime</code> ("string format time") transforma uma data em texto. Cada código com <code>%</code> é trocado por uma parte da data:</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime
+
+momento = datetime(2026, 3, 8, 9, 5)
+print(momento.strftime("%d/%m/%Y"))
+print(momento.strftime("%d/%m/%y às %H:%M"))
+print(momento.strftime("%H:%M:%S"))</code></pre>
+    <p class="saida">08/03/2026<br>
+08/03/26 às 09:05<br>
+09:05:00</p>
+    <ul>
+      <li><code>%d</code> dia, <code>%m</code> mês, <code>%Y</code> ano com 4 dígitos, <code>%y</code> com 2;</li>
+      <li><code>%H</code> hora de 00 a 23, <code>%M</code> minuto, <code>%S</code> segundo.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> <code>%m</code> (minúsculo) é <strong>mês</strong> e <code>%M</code> (maiúsculo) é <strong>minuto</strong>. Trocar um pelo outro é um dos erros mais comuns com datas.</div>
+
+    <h2>strptime: de texto para data</h2>
+    <p><code>strptime</code> ("string parse time") faz o caminho contrário: lê um texto num formato que você descreve. Ótimo para datas digitadas pelo usuário.</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime, date
+
+def idade(nascimento, hoje):
+    anos = hoje.year - nascimento.year
+    if (hoje.month, hoje.day) &lt; (nascimento.month, nascimento.day):
+        anos -= 1
+    return anos
+
+nasc = datetime.strptime("15/08/2012", "%d/%m/%Y").date()
+print(nasc)
+print("Idade em 14/08/2026:", idade(nasc, date(2026, 8, 14)))
+print("Idade em 15/08/2026:", idade(nasc, date(2026, 8, 15)))</code></pre>
+    <p class="saida">2012-08-15<br>
+Idade em 14/08/2026: 13<br>
+Idade em 15/08/2026: 14</p>
+    <p>Se o texto não bater com o formato, como <code>"31-12-2026"</code> com <code>"%d/%m/%Y"</code>, o Python dá <code>ValueError</code>. Na aula 53 você aprendeu a tratar esse erro com <code>try</code>.</p>
+
+    <h2>O módulo calendar</h2>
+    <p>O <code>calendar</code> responde perguntas sobre o calendário:</p>
+<pre class="codigo" data-executar="sim"><code>import calendar
+
+print(calendar.isleap(2028))
+print(calendar.isleap(2026))
+primeiro_dia, total_dias = calendar.monthrange(2026, 2)
+print("Fevereiro de 2026 tem", total_dias, "dias")
+print(calendar.month(2026, 9))</code></pre>
+    <p class="saida">True<br>
+False<br>
+Fevereiro de 2026 tem 28 dias<br>
+&nbsp;&nbsp;&nbsp;September 2026<br>
+Mo Tu We Th Fr Sa Su<br>
+&nbsp;&nbsp;&nbsp;&nbsp;1 &nbsp;2 &nbsp;3 &nbsp;4 &nbsp;5 &nbsp;6<br>
+&nbsp;7 &nbsp;8 &nbsp;9 10 11 12 13<br>
+14 15 16 17 18 19 20<br>
+21 22 23 24 25 26 27<br>
+28 29 30</p>
+    <p><code>monthrange</code> devolve o dia da semana em que o mês começa (0 = segunda) e quantos dias ele tem. O calendário impresso sai em inglês, porque o Python começa usando o idioma "neutro".</p>
+
+    <h2>locale: nomes em português</h2>
+    <p>O módulo <code>locale</code> muda o idioma de coisas como o nome dos meses no <code>strftime("%B")</code>. Só que ele depende de o sistema ter o idioma instalado, e o nome muda de um sistema para outro:</p>
+<pre class="codigo"><code>import locale
+from datetime import date
+
+locale.setlocale(locale.LC_TIME, "pt_BR.UTF-8")   # Linux e macOS
+# locale.setlocale(locale.LC_TIME, "Portuguese_Brazil")   # Windows
+print(date(2026, 9, 7).strftime("%d de %B de %Y"))</code></pre>
+    <p>Por isso, em programas simples, muita gente prefere uma lista própria com os nomes, que funciona em qualquer lugar:</p>
+<pre class="codigo" data-executar="sim"><code>from datetime import date
+
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+         "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
+d = date(2026, 9, 7)
+print(f"{d.day} de {MESES[d.month - 1]} de {d.year}")</code></pre>
+    <p class="saida">7 de setembro de 2026</p>
+    <div class="dica"><strong>Dica:</strong> Se <code>setlocale</code> der <code>locale.Error: unsupported locale setting</code>, o idioma não está instalado no sistema. Use a solução da lista própria.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(hoje.strftime("%d/%m/%Y %H:%M"))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Um empréstimo de livro dura 14 dias. Se você pegou o livro em 28/10/2026, qual é a data de devolução, no formato <code>dd/mm/aaaa</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import date, timedelta
+
+retirada = date(2026, 10, 28)
+print((retirada + timedelta(days=14)).strftime("%d/%m/%Y"))</code></pre>
+      <p class="saida">11/11/2026</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Quantos dias se passaram entre o descobrimento (22/04/1500) e a Independência (07/09/1822)? Leia as duas datas de textos com <code>strptime</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime
+
+inicio = datetime.strptime("22/04/1500", "%d/%m/%Y")
+fim = datetime.strptime("07/09/1822", "%d/%m/%Y")
+print((fim - inicio).days, "dias")</code></pre>
+      <p class="saida">117746 dias</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Transforme <code>"31/12/2026 23:59"</code> em <code>datetime</code> e mostre quantos minutos faltam para 00:00 de 01/01/2027.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import datetime
+
+momento = datetime.strptime("31/12/2026 23:59", "%d/%m/%Y %H:%M")
+virada = datetime(2027, 1, 1, 0, 0)
+print(int((virada - momento).total_seconds() // 60), "minuto(s)")</code></pre>
+      <p class="saida">1 minuto(s)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre quais anos de 2024 a 2036 são bissextos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import calendar
+
+print([ano for ano in range(2024, 2037) if calendar.isleap(ano)])</code></pre>
+      <p class="saida">[2024, 2028, 2032, 2036]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva a data 25/12/2026 por extenso, como <code>25 de dezembro de 2026</code>, sem usar <code>locale</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from datetime import date
+
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+         "agosto", "setembro", "outubro", "novembro", "dezembro"]
+natal = date(2026, 12, 25)
+print(f"{natal.day} de {MESES[natal.month - 1]} de {natal.year}")</code></pre>
+      <p class="saida">25 de dezembro de 2026</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="101-datetime.html" rel="prev">← Aula anterior</a>
+      <a href="103-os-pathlib.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

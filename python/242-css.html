@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 242 · CSS3: seletores, caixa, flexbox e grid — Curso de Python · DIGITAR</title>
+<meta name="description" content="Dê cores, espaços e layout às páginas com CSS3: seletores, modelo de caixa, flexbox e grid.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 12 · Extras</p>
+    <h1>Aula 242 · CSS3: seletores, caixa, flexbox e grid</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Ligar um arquivo CSS a uma página HTML</li>
+        <li>Usar seletores de tag, de classe e de id</li>
+        <li>Entender o modelo de caixa (margin, border, padding)</li>
+        <li>Organizar elementos lado a lado com flexbox e em grade com grid</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que é CSS</h2>
+    <p>Se o HTML diz <strong>o que</strong> é cada parte da página, o <strong>CSS</strong> diz <strong>como</strong> ela aparece: cores, fontes, tamanhos, espaços e posição. O CSS fica num arquivo separado, <code>estilo.css</code>, ligado à página por uma linha dentro do <code>&lt;head&gt;</code>:</p>
+<pre class="codigo"><code>&lt;link rel="stylesheet" href="estilo.css"&gt;</code></pre>
+
+    <h2>Seletores e propriedades</h2>
+    <p>Uma regra de CSS tem um <strong>seletor</strong> (quem vai mudar) e, entre chaves, <strong>propriedades</strong> com valores:</p>
+<pre class="codigo"><code>body {
+  font-family: Arial, sans-serif;
+  background: #f4f7fb;
+  color: #222;
+}
+
+h1 { color: #0b6e4f; }            /* todas as tags h1 */
+.destaque { font-weight: bold; }   /* elementos com class="destaque" */
+#topo { padding: 16px; }           /* o elemento com id="topo" */</code></pre>
+    <p>No HTML, a classe vai assim: <code>&lt;p class="destaque"&gt;Promoção!&lt;/p&gt;</code>. Uma classe pode ser usada em vários elementos; um id deve ser único na página.</p>
+    <div class="atencao"><strong>Atenção:</strong> Cada propriedade termina com ponto e vírgula. Esquecer o <code>;</code> faz o navegador ignorar a propriedade seguinte, sem mostrar erro nenhum. Os comentários do CSS são <code>/* assim */</code>, não <code>#</code>.</div>
+
+    <h2>O modelo de caixa</h2>
+    <p>Todo elemento é uma caixa. De dentro para fora: o <strong>conteúdo</strong>, o <strong>padding</strong> (espaço interno), a <strong>border</strong> (borda) e a <strong>margin</strong> (espaço externo, que afasta das outras caixas).</p>
+<pre class="codigo"><code>.cartao {
+  padding: 16px;
+  border: 2px solid #0b6e4f;
+  border-radius: 8px;
+  margin: 12px;
+}</code></pre>
+
+    <h2>Flexbox e grid</h2>
+    <p>O <strong>flexbox</strong> coloca itens em linha (ou coluna) e distribui o espaço. O <strong>grid</strong> monta uma grade com linhas e colunas:</p>
+<pre class="codigo"><code>.menu {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.galeria {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}</code></pre>
+    <p><code>1fr</code> quer dizer "uma fração do espaço livre": com <code>repeat(3, 1fr)</code>, a galeria fica com três colunas iguais.</p>
+    <div class="dica"><strong>Dica:</strong> Aperte F12 no navegador para abrir as <strong>Ferramentas do desenvolvedor</strong>. Lá você clica num elemento, vê o CSS dele e testa mudanças na hora, sem salvar nada.</div>
+
+    <h2>Gerando o CSS com Python</h2>
+    <p>Um programa Python pode escrever o CSS também. Este cria um tema com as cores guardadas num dicionário:</p>
+<pre class="codigo"><code>from pathlib import Path
+
+cores = {"fundo": "#f4f7fb", "texto": "#222222", "destaque": "#0b6e4f"}
+
+css = f"""body {{
+  background: {cores["fundo"]};
+  color: {cores["texto"]};
+}}
+h1 {{ color: {cores["destaque"]}; }}
+"""
+Path("estilo.css").write_text(css, encoding="utf-8")
+print(css)</code></pre>
+    <p class="saida">body {<br>
+&nbsp;&nbsp;background: #f4f7fb;<br>
+&nbsp;&nbsp;color: #222222;<br>
+}<br>
+h1 { color: #0b6e4f; }</p>
+    <p>Repare que, dentro de uma f-string, as chaves do CSS precisam ser dobradas (<code>{{</code> e <code>}}</code>); as chaves simples são do Python.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>.menu { display: flex; gap: 12px; }</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva uma regra CSS que deixe todos os parágrafos com letra tamanho 18px e cor cinza-escuro (<code>#333</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>p {
+  font-size: 18px;
+  color: #333;
+}</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva o CSS de uma classe <code>.grade</code> que mostre os itens em 4 colunas iguais, com 10px de espaço entre eles.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>.grade {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Faça um programa Python que gere uma regra CSS <code>.botao-N</code> com uma cor diferente para cada cor da lista <code>["red", "green", "blue"]</code>, numerando de 1 a 3.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>cores = ["red", "green", "blue"]
+
+for numero, cor in enumerate(cores, start=1):
+    print(f".botao-{numero} {{ background: {cor}; }}")</code></pre>
+      <p class="saida">.botao-1 { background: red; }<br>
+.botao-2 { background: green; }<br>
+.botao-3 { background: blue; }</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="241-html.html" rel="prev">← Aula anterior</a>
+      <a href="243-landing-page.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

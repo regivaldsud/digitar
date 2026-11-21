@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 108 · string.Template e variáveis de ambiente (.env) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Monte textos com string.Template, leia configurações das variáveis de ambiente e entenda para que serve o arquivo .env.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 108 · string.Template e variáveis de ambiente (.env)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Preencher modelos de texto com <code>string.Template</code></li>
+        <li>Ler variáveis de ambiente com <code>os.environ</code></li>
+        <li>Entender o arquivo <code>.env</code> e por que ele não vai para o Git</li>
+      </ul>
+    </div>
+
+    <h2>string.Template</h2>
+    <p>Você já conhece as f-strings (aula 16). Elas são ótimas quando o texto está no código. Mas às vezes o <strong>modelo</strong> do texto vem de fora — de um arquivo, ou escrito por outra pessoa. Para isso existe o <code>string.Template</code>, que troca <code>$nome</code> pelo valor:</p>
+<pre class="codigo" data-executar="sim"><code>from string import Template
+
+modelo = Template("Olá, $nome! Seu pedido de $item chega em $dias dias.")
+print(modelo.substitute(nome="Rafa", item="tênis", dias=3))
+
+dados = {"nome": "Lu", "item": "mochila", "dias": 5}
+print(modelo.substitute(dados))</code></pre>
+    <p class="saida">Olá, Rafa! Seu pedido de tênis chega em 3 dias.<br>
+Olá, Lu! Seu pedido de mochila chega em 5 dias.</p>
+    <p>Use <code>${nome}</code> quando a variável estiver grudada em outras letras, e <code>$$</code> para escrever um cifrão de verdade:</p>
+<pre class="codigo" data-executar="sim"><code>from string import Template
+
+preco = Template("${produto}s em promoção: $$ ${valor}")
+print(preco.substitute(produto="Caderno", valor="9,90"))
+
+incompleto = Template("Oi, $nome. Você tem $pontos pontos.")
+print(incompleto.safe_substitute(nome="Gui"))</code></pre>
+    <p class="saida">Cadernos em promoção: $ 9,90<br>
+Oi, Gui. Você tem $pontos pontos.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>substitute</code> dá <code>KeyError</code> se faltar algum valor. <code>safe_substitute</code> não dá erro: ele deixa o <code>$pontos</code> no texto como estava.</div>
+    <div class="dica"><strong>Dica:</strong> Por que não usar f-string num modelo vindo de fora? Porque uma f-string executa expressões Python. Um <code>Template</code> só troca nomes — é mais seguro para textos que o usuário pode editar.</div>
+
+    <h2>Variáveis de ambiente</h2>
+    <p>Todo programa roda dentro de um <strong>ambiente</strong> com variáveis próprias, fora do código: o nome do usuário, a pasta de trabalho, configurações. O Python lê essas variáveis pelo dicionário <code>os.environ</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import os
+
+modo = os.environ.get("MODO_DO_APP", "teste")
+print("Rodando no modo:", modo)</code></pre>
+    <p class="saida">Rodando no modo: teste</p>
+    <p>Como <code>MODO_DO_APP</code> não foi definida, <code>get</code> devolveu o valor padrão <code>"teste"</code>. No terminal do Windows (PowerShell), você define a variável antes de rodar o programa:</p>
+<pre class="codigo"><code>$env:MODO_DO_APP = "producao"
+python app.py</code></pre>
+    <p>No Linux e no macOS: <code>MODO_DO_APP=producao python app.py</code>.</p>
+
+    <h2>O arquivo .env</h2>
+    <p>Senhas e chaves de API <strong>nunca</strong> devem ficar escritas no código: se você publicar o código no GitHub, todo mundo vê. O costume é guardá-las num arquivo <code>.env</code> na pasta do projeto e colocar <code>.env</code> no <code>.gitignore</code> (aula 244).</p>
+    <p>Um <code>.env</code> é só um texto com linhas <code>NOME=valor</code>. Este exemplo mostra a ideia lendo um <code>.env</code> à mão:</p>
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+Path(".env").write_text("CHAVE_API=abc123\nCIDADE=Natal\n# comentário\n", encoding="utf-8")
+
+config = {}
+for linha in Path(".env").read_text(encoding="utf-8").splitlines():
+    linha = linha.strip()
+    if linha and not linha.startswith("#"):
+        nome, valor = linha.split("=", 1)
+        config[nome] = valor
+
+print(config["CIDADE"])
+print("Chave carregada?", "CHAVE_API" in config)</code></pre>
+    <p class="saida">Natal<br>
+Chave carregada? True</p>
+    <p>No dia a dia, use a biblioteca <code>python-dotenv</code>, que faz isso e coloca os valores em <code>os.environ</code>:</p>
+<pre class="codigo"><code>pip install python-dotenv</code></pre>
+<pre class="codigo"><code>import os
+from dotenv import load_dotenv
+
+load_dotenv()                       # lê o .env da pasta atual
+chave = os.environ["CHAVE_API"]     # KeyError se a variável não existir</code></pre>
+    <p>Na aula 177 você usa essa ideia para guardar a senha de um banco de dados.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>msg = Template("Olá, $nome!").substitute(nome="Ana")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um modelo de convite de aniversário com <code>$nome</code>, <code>$data</code> e <code>$local</code> e preencha para duas pessoas diferentes usando um <code>for</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from string import Template
+
+convite = Template("$nome, venha à minha festa em $data, no $local!")
+for nome in ["Duda", "Enzo"]:
+    print(convite.substitute(nome=nome, data="12/12", local="salão do prédio"))</code></pre>
+      <p class="saida">Duda, venha à minha festa em 12/12, no salão do prédio!<br>
+Enzo, venha à minha festa em 12/12, no salão do prédio!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Leia a variável de ambiente <code>IDIOMA</code> e, se ela não existir, use <code>"pt-BR"</code>. Mostre o resultado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import os
+
+print(os.environ.get("IDIOMA", "pt-BR"))</code></pre>
+      <p class="saida">pt-BR</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que o arquivo <code>.env</code> deve estar no <code>.gitignore</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque ele guarda senhas e chaves. Se ele for para o Git e o projeto<br>
+for publicado no GitHub, qualquer pessoa pode copiar essas senhas.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="107-random-secrets.html" rel="prev">← Aula anterior</a>
+      <a href="109-email-smtp.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

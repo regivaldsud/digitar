@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 58 · map, filter, reduce e partial — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aplique uma função a cada item com map, escolha itens com filter, reduza uma lista a um valor com reduce e prepare funções com partial.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 58 · map, filter, reduce e partial</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Transformar todos os itens de uma lista com <code>map</code></li>
+        <li>Escolher itens com <code>filter</code></li>
+        <li>Reduzir uma lista a um só valor com <code>functools.reduce</code></li>
+        <li>Criar versões "pré-configuradas" de funções com <code>functools.partial</code></li>
+        <li>Saber quando uma compreensão de lista é mais clara</li>
+      </ul>
+    </div>
+
+    <h2>Programação funcional em três palavras</h2>
+    <p>Muitos problemas com listas são uma destas três tarefas: <strong>transformar</strong> cada item (map), <strong>escolher</strong> alguns itens (filter) ou <strong>juntar</strong> tudo num resultado só (reduce). O Python tem uma função para cada uma. Todas recebem outra função como argumento — muitas vezes uma <code>lambda</code> (aula 49).</p>
+
+    <h2>map: transformar cada item</h2>
+    <p><code>map(funcao, itens)</code> aplica a função a cada item. Ele devolve um objeto "preguiçoso", por isso usamos <code>list()</code> para ver o resultado:</p>
+<pre class="codigo" data-executar="sim"><code>precos = [10.0, 25.0, 40.0]
+com_aumento = list(map(lambda p: round(p * 1.1, 2), precos))
+print(com_aumento)
+
+idades_texto = ["12", "15", "13"]
+idades = list(map(int, idades_texto))
+print(idades, sum(idades))</code></pre>
+    <p class="saida">[11.0, 27.5, 44.0]<br>
+[12, 15, 13] 40</p>
+    <p>Repare no segundo exemplo: dá para passar qualquer função, inclusive as prontas, como <code>int</code>, <code>str</code> ou <code>len</code>. Sem parênteses! Você passa a função, não o resultado dela.</p>
+
+    <h2>filter: escolher itens</h2>
+    <p><code>filter(funcao, itens)</code> mantém só os itens para os quais a função devolve um valor verdadeiro:</p>
+<pre class="codigo" data-executar="sim"><code>idades = [9, 15, 12, 18, 21]
+maiores = list(filter(lambda i: i &gt;= 18, idades))
+print(maiores)
+
+nomes = ["Ana", "", "Bruno", "", "Carla"]
+print(list(filter(None, nomes)))</code></pre>
+    <p class="saida">[18, 21]<br>
+['Ana', 'Bruno', 'Carla']</p>
+    <p>Com <code>None</code> no lugar da função, o <code>filter</code> tira os valores "falsos", como textos vazios e zeros (você vê isso em detalhes na aula 51).</p>
+    <div class="atencao"><strong>Atenção:</strong> O resultado de <code>map</code> e <code>filter</code> só pode ser percorrido <strong>uma vez</strong>. Se você fizer <code>list(r)</code> duas vezes, a segunda dá <code>[]</code>. Guarde o resultado numa lista se for usar de novo.</div>
+<pre class="codigo" data-executar="sim"><code>pares = filter(lambda n: n % 2 == 0, [1, 2, 3, 4])
+print(list(pares))
+print(list(pares))</code></pre>
+    <p class="saida">[2, 4]<br>
+[]</p>
+
+    <h2>reduce: juntar tudo num valor</h2>
+    <p><code>reduce</code> (do módulo <code>functools</code>) pega os dois primeiros itens, aplica a função, depois junta o resultado com o terceiro, e assim por diante, até sobrar um valor só:</p>
+<pre class="codigo" data-executar="sim"><code>from functools import reduce
+
+numeros = [3, 5, 2, 4]
+produto = reduce(lambda acumulado, n: acumulado * n, numeros)
+print(produto)
+
+palavras = ["Python", "é", "muito", "legal"]
+frase = reduce(lambda a, b: a + " " + b, palavras)
+print(frase)</code></pre>
+    <p class="saida">120<br>
+Python é muito legal</p>
+    <p>Passo a passo do produto: 3 × 5 = 15, 15 × 2 = 30, 30 × 4 = 120.</p>
+    <div class="dica"><strong>Dica:</strong> Para somar, achar o maior ou juntar textos já existem <code>sum</code>, <code>max</code> e <code>" ".join(...)</code>, que são mais claros. Guarde o <code>reduce</code> para contas que não têm uma função pronta.</div>
+
+    <h2>partial: funções pré-configuradas</h2>
+    <p><code>partial</code> cria uma nova função a partir de outra, com alguns argumentos já preenchidos:</p>
+<pre class="codigo" data-executar="sim"><code>from functools import partial
+
+def preco_com_desconto(preco, desconto):
+    return round(preco * (1 - desconto), 2)
+
+black_friday = partial(preco_com_desconto, desconto=0.5)
+cupom_dez = partial(preco_com_desconto, desconto=0.1)
+
+print(black_friday(199.90))
+print(cupom_dez(199.90))
+
+print(list(map(black_friday, [40, 60, 100])))</code></pre>
+    <p class="saida">99.95<br>
+179.91<br>
+[20.0, 30.0, 50.0]</p>
+
+    <h2>Compreensão ou map/filter?</h2>
+    <p>As compreensões da aula 50 fazem o mesmo trabalho e costumam ser mais fáceis de ler:</p>
+<pre class="codigo" data-executar="sim"><code>precos = [10, 25, 40, 5]
+
+print(list(map(lambda p: p * 2, filter(lambda p: p &gt; 8, precos))))
+print([p * 2 for p in precos if p &gt; 8])</code></pre>
+    <p class="saida">[20, 50, 80]<br>
+[20, 50, 80]</p>
+    <p>Os dois dão o mesmo resultado. Use o que ficar mais claro: <code>map(int, lista)</code> é ótimo; já <code>map</code> com <code>lambda</code> comprida dentro de <code>filter</code> costuma ficar melhor como compreensão.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>total = reduce(lambda a, b: a + b, valores)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use <code>map</code> para transformar <code>["ana", "bruno", "carla"]</code> em nomes com a primeira letra maiúscula.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nomes = ["ana", "bruno", "carla"]
+print(list(map(str.capitalize, nomes)))</code></pre>
+      <p class="saida">['Ana', 'Bruno', 'Carla']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Use <code>filter</code> para pegar só as palavras com mais de 4 letras de <code>["sol", "praia", "mar", "coqueiro", "areia"]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>palavras = ["sol", "praia", "mar", "coqueiro", "areia"]
+print(list(filter(lambda p: len(p) &gt; 4, palavras)))</code></pre>
+      <p class="saida">['praia', 'coqueiro', 'areia']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>reduce</code> para achar o maior número de <code>[17, 42, 8, 33]</code> sem usar <code>max</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from functools import reduce
+
+numeros = [17, 42, 8, 33]
+print(reduce(lambda a, b: a if a &gt; b else b, numeros))</code></pre>
+      <p class="saida">42</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Converta as temperaturas em Celsius <code>[0, 25, 37, 100]</code> para Fahrenheit com <code>map</code> (F = C × 1,8 + 32).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>celsius = [0, 25, 37, 100]
+print(list(map(lambda c: c * 1.8 + 32, celsius)))</code></pre>
+      <p class="saida">[32.0, 77.0, 98.60000000000001, 212.0]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Crie com <code>partial</code> a função <code>potencia_de_dois(expoente)</code>, a partir de uma função <code>potencia(base, expoente)</code>, e mostre 2 elevado a 0 até 8.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from functools import partial
+
+def potencia(base, expoente):
+    return base ** expoente
+
+potencia_de_dois = partial(potencia, 2)
+print([potencia_de_dois(e) for e in range(9)])</code></pre>
+      <p class="saida">[1, 2, 4, 8, 16, 32, 64, 128, 256]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="57-itertools.html" rel="prev">← Aula anterior</a>
+      <a href="59-recursao.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

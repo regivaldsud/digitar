@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 105 · json.dumps/loads e TypedDict — Curso de Python · DIGITAR</title>
+<meta name="description" content="Domine as opções de json.dumps e json.loads, trate JSON inválido, salve datas e descreva o formato dos dados com TypedDict.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 105 · json.dumps/loads e TypedDict</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar as opções <code>indent</code>, <code>sort_keys</code>, <code>ensure_ascii</code> e <code>separators</code></li>
+        <li>Ler JSON com <code>json.loads</code> e tratar <code>JSONDecodeError</code></li>
+        <li>Converter tipos que o JSON não conhece, como datas, com <code>default</code></li>
+        <li>Descrever o formato de um dicionário com <code>TypedDict</code></li>
+      </ul>
+    </div>
+
+    <h2>Revisão rápida</h2>
+    <p>Na aula 62 você salvou dados em arquivos com <code>json.dump</code> e <code>json.load</code>. Aqui vamos usar as versões com "s" no fim, <code>dumps</code> e <code>loads</code>, que trabalham com <strong>textos</strong>. É assim que programas trocam dados pela internet: a resposta de um site chega como texto JSON.</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+pedido = {"cliente": "Bia", "itens": ["açaí", "granola"], "total": 22.5, "entregue": False}
+
+texto = json.dumps(pedido, ensure_ascii=False)
+print(texto)
+print(type(texto))
+
+de_volta = json.loads(texto)
+print(de_volta["itens"][0])</code></pre>
+    <p class="saida">{"cliente": "Bia", "itens": ["açaí", "granola"], "total": 22.5, "entregue": false}<br>
+&lt;class 'str'&gt;<br>
+açaí</p>
+
+    <h2>Deixando o JSON do seu jeito</h2>
+<pre class="codigo" data-executar="sim"><code>import json
+
+placar = {"Vasco": 3, "Bahia": 1, "Athletico": 2}
+
+print(json.dumps(placar, indent=2))
+print(json.dumps(placar, sort_keys=True))
+print(json.dumps(placar, separators=(",", ":")))</code></pre>
+    <p class="saida">{<br>
+&nbsp;&nbsp;"Vasco": 3,<br>
+&nbsp;&nbsp;"Bahia": 1,<br>
+&nbsp;&nbsp;"Athletico": 2<br>
+}<br>
+{"Athletico": 2, "Bahia": 1, "Vasco": 3}<br>
+{"Vasco":3,"Bahia":1,"Athletico":2}</p>
+    <ul>
+      <li><code>indent=2</code> coloca um item por linha, com recuo — bom para pessoas lerem;</li>
+      <li><code>sort_keys=True</code> ordena as chaves em ordem alfabética;</li>
+      <li><code>separators=(",", ":")</code> tira os espaços e deixa o texto o menor possível — bom para enviar pela rede.</li>
+    </ul>
+
+    <h2>JSON quebrado: JSONDecodeError</h2>
+    <p>Nem todo texto é JSON válido. Quando o texto está errado, <code>loads</code> dá <code>json.JSONDecodeError</code>, e a mensagem diz a linha e a coluna do problema:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+textos = ['{"nome": "Caio"}', "{'nome': 'Caio'}", '{"nome": "Caio",}']
+
+for t in textos:
+    try:
+        print("OK:", json.loads(t))
+    except json.JSONDecodeError as erro:
+        print("Inválido:", erro)</code></pre>
+    <p class="saida">OK: {'nome': 'Caio'}<br>
+Inválido: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)<br>
+Inválido: Expecting property name enclosed in double quotes: line 1 column 17 (char 16)</p>
+    <div class="atencao"><strong>Atenção:</strong> Os dois erros mais comuns ao escrever JSON à mão: usar aspas <strong>simples</strong> (JSON só aceita aspas duplas) e deixar uma vírgula sobrando depois do último item.</div>
+
+    <h2>Tipos que o JSON não conhece</h2>
+    <p>O JSON só entende textos, números, <code>true</code>/<code>false</code>, <code>null</code>, listas e objetos. Uma data do Python dá erro:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+from datetime import date
+
+print(json.dumps({"prova": date(2026, 11, 10)}))</code></pre>
+    <p class="saida">TypeError: Object of type date is not JSON serializable</p>
+    <p>A solução é o parâmetro <code>default</code>: uma função que o <code>dumps</code> chama para cada valor que ele não sabe converter.</p>
+<pre class="codigo" data-executar="sim"><code>import json
+from datetime import date
+
+def converter(valor):
+    if isinstance(valor, date):
+        return valor.isoformat()
+    raise TypeError(f"não sei converter {type(valor).__name__}")
+
+agenda = {"prova": date(2026, 11, 10), "materias": {"história", "geografia"}}
+agenda["materias"] = sorted(agenda["materias"])
+print(json.dumps(agenda, default=converter, ensure_ascii=False))</code></pre>
+    <p class="saida">{"prova": "2026-11-10", "materias": ["geografia", "história"]}</p>
+    <p>Ao carregar de volta, a data vem como texto. Use <code>date.fromisoformat</code> (aula 101) para transformá-la em data de novo.</p>
+
+    <h2>TypedDict: descrevendo o formato</h2>
+    <p>Quando um programa recebe muitos dicionários do mesmo formato, ajuda escrever esse formato em um só lugar. O <code>TypedDict</code> faz isso com type hints (que você estuda a fundo na aula 91):</p>
+<pre class="codigo" data-executar="sim"><code>import json
+from typing import TypedDict
+
+class Produto(TypedDict):
+    nome: str
+    preco: float
+    estoque: int
+
+def valor_em_estoque(p: Produto) -&gt; float:
+    return p["preco"] * p["estoque"]
+
+texto = '[{"nome": "caderno", "preco": 18.9, "estoque": 10}, {"nome": "lápis", "preco": 1.5, "estoque": 40}]'
+produtos: list[Produto] = json.loads(texto)
+
+for p in produtos:
+    print(f"{p['nome']}: R$ {valor_em_estoque(p):.2f}")</code></pre>
+    <p class="saida">caderno: R$ 189.00<br>
+lápis: R$ 60.00</p>
+    <p>Na hora de rodar, um <code>TypedDict</code> é um dicionário comum: o Python não confere os tipos. Quem confere é o editor (o VS Code sublinha se você escrever <code>p["prec"]</code>) e ferramentas como o <code>mypy</code>. Mesmo assim, só de olhar a classe <code>Produto</code> qualquer pessoa entende o que o JSON deve ter.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(json.dumps(dados, indent=2, ensure_ascii=False))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Transforme <code>{"cidade": "Belém", "temperatura": 31}</code> em JSON com as chaves em ordem alfabética e sem trocar o acento.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+print(json.dumps({"cidade": "Belém", "temperatura": 31}, sort_keys=True, ensure_ascii=False))</code></pre>
+      <p class="saida">{"cidade": "Belém", "temperatura": 31}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva uma função <code>ler_json(texto)</code> que devolve os dados ou <code>None</code> se o texto for inválido. Teste com <code>'[1, 2, 3]'</code> e <code>'[1, 2, 3'</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+def ler_json(texto):
+    try:
+        return json.loads(texto)
+    except json.JSONDecodeError:
+        return None
+
+print(ler_json("[1, 2, 3]"))
+print(ler_json("[1, 2, 3"))</code></pre>
+      <p class="saida">[1, 2, 3]<br>
+None</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Converta para JSON a lista de aniversários <code>[{"nome": "Rui", "data": date(2013, 5, 2)}]</code>, transformando a data em texto no formato <code>dd/mm/aaaa</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+from datetime import date
+
+def converter(valor):
+    if isinstance(valor, date):
+        return valor.strftime("%d/%m/%Y")
+    raise TypeError("tipo desconhecido")
+
+aniversarios = [{"nome": "Rui", "data": date(2013, 5, 2)}]
+print(json.dumps(aniversarios, default=converter))</code></pre>
+      <p class="saida">[{"nome": "Rui", "data": "02/05/2013"}]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie um <code>TypedDict</code> chamado <code>Aluno</code> com <code>nome</code> (str) e <code>notas</code> (list[float]) e uma função que recebe um <code>Aluno</code> e devolve a média. Teste com dados lidos de um texto JSON.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+from typing import TypedDict
+
+class Aluno(TypedDict):
+    nome: str
+    notas: list[float]
+
+def media(aluno: Aluno) -&gt; float:
+    return sum(aluno["notas"]) / len(aluno["notas"])
+
+aluno: Aluno = json.loads('{"nome": "Lia", "notas": [7.5, 9.0, 8.0]}')
+print(aluno["nome"], round(media(aluno), 2))</code></pre>
+      <p class="saida">Lia 8.17</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="104-shutil.html" rel="prev">← Aula anterior</a>
+      <a href="106-csv.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

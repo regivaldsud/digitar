@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 114 · Rodando programas externos com subprocess — Curso de Python · DIGITAR</title>
+<meta name="description" content="Rode outros programas e comandos do sistema a partir do Python com subprocess.run e capture a saída deles.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 5 · Biblioteca padrão e módulos úteis</p>
+    <h1>Aula 114 · Rodando programas externos com subprocess</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Rodar um programa externo com <code>subprocess.run</code></li>
+        <li>Capturar a saída com <code>capture_output</code> e <code>text</code></li>
+        <li>Conferir se o programa deu certo pelo código de retorno</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Chamando outros programas</h2>
+    <p>O Python pode rodar qualquer programa do computador, como se você digitasse no terminal. O jeito recomendado é <code>subprocess.run</code>, com o comando em forma de <strong>lista</strong>: primeiro o programa, depois os argumentos.</p>
+<pre class="codigo"><code>import subprocess
+import sys
+
+resultado = subprocess.run(
+    [sys.executable, "-c", "print('Oi, eu sou outro programa!')"],
+    capture_output=True,
+    text=True,
+)
+print("Código de retorno:", resultado.returncode)
+print("Saída:", resultado.stdout.strip())</code></pre>
+    <p class="saida">Código de retorno: 0<br>
+Saída: Oi, eu sou outro programa!</p>
+    <ul>
+      <li><code>sys.executable</code> é o caminho do próprio Python, então o exemplo funciona em qualquer computador;</li>
+      <li><code>capture_output=True</code> guarda a saída em vez de mostrar na tela; <code>text=True</code> entrega como texto;</li>
+      <li><code>returncode</code> 0 quer dizer "deu certo"; outro número quer dizer erro.</li>
+    </ul>
+
+    <h2>Quando o programa falha</h2>
+<pre class="codigo"><code>import subprocess
+import sys
+
+resultado = subprocess.run([sys.executable, "-c", "1 / 0"], capture_output=True, text=True)
+print("Código de retorno:", resultado.returncode)
+print("Última linha do erro:", resultado.stderr.strip().splitlines()[-1])</code></pre>
+    <p class="saida">Código de retorno: 1<br>
+Última linha do erro: ZeroDivisionError: division by zero</p>
+    <p>Com <code>check=True</code>, o <code>run</code> gera a exceção <code>subprocess.CalledProcessError</code> sozinho quando o programa falha — prático dentro de um <code>try</code> (aula 53).</p>
+    <p>Um uso comum é chamar o Git (aula 244) de dentro de um script:</p>
+<pre class="codigo"><code>import subprocess
+
+saida = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, check=True)
+print(saida.stdout or "Nada mudou.")</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Evite <code>shell=True</code> com textos digitados pelo usuário: alguém pode digitar <code>; del *.*</code> e o comando extra roda junto. Passe o comando como lista, sem shell.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>subprocess.run(["git", "status"], check=True)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Rode, com <code>subprocess.run</code>, o Python mostrando a própria versão (<code>-V</code>) e imprima o resultado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import subprocess
+import sys
+
+r = subprocess.run([sys.executable, "-V"], capture_output=True, text=True)
+print((r.stdout or r.stderr).split()[0])</code></pre>
+      <p class="saida">Python</p>
+      <p>O comando <code>python -V</code> mostra algo como <code>Python 3.12.7</code>; aqui imprimimos só a primeira palavra para a saída ser a mesma em qualquer versão.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O que significa <code>returncode</code> igual a 1?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Que o programa terminou com erro. Por convenção, 0 é sucesso e qualquer<br>
+outro número indica algum tipo de falha.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="113-selenium.html" rel="prev">← Aula anterior</a>
+      <a href="115-jupyter.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

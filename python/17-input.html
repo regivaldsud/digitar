@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 17 · Lendo dados do usuário com input — Curso de Python · DIGITAR</title>
+<meta name="description" content="Converse com quem usa o programa: faça perguntas com input, guarde as respostas e converta números para fazer contas.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 17 · Lendo dados do usuário com input</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Ler o que a pessoa digita com <code>input()</code></li>
+        <li>Entender que <code>input()</code> sempre devolve texto (<code>str</code>)</li>
+        <li>Combinar <code>input()</code> com <code>int()</code> e <code>float()</code> para ler números</li>
+        <li>Limpar a resposta com <code>strip()</code> e montar programas interativos</li>
+      </ul>
+    </div>
+
+    <h2>Perguntando com input</h2>
+    <p>A função <code>input()</code> mostra uma pergunta, espera a pessoa digitar e apertar Enter, e devolve o que foi digitado. Guarde a resposta numa variável:</p>
+<pre class="codigo" data-executar="sim"><code>nome = input("Qual é o seu nome? ")
+print("Prazer,", nome)</code></pre>
+    <p class="saida"><em>(exemplo digitando Marina)</em><br>
+Qual é o seu nome? Marina<br>
+Prazer, Marina</p>
+    <p>Aqui no site, ao apertar Executar, uma caixinha vai pedir a resposta. No computador, você digita direto no terminal.</p>
+    <div class="dica"><strong>Dica:</strong> Deixe um espaço no final da pergunta (<code>"Qual é o seu nome? "</code>). Assim o que a pessoa digita não fica grudado no ponto de interrogação.</div>
+
+    <h2>input sempre devolve texto</h2>
+    <p>Isso é muito importante: <strong>tudo</strong> que vem do <code>input()</code> é texto, mesmo que a pessoa digite números. Veja o que acontece ao "somar":</p>
+<pre class="codigo" data-executar="sim"><code>a = input("Primeiro número: ")
+b = input("Segundo número: ")
+print(a + b)
+print(type(a))</code></pre>
+    <p class="saida"><em>(exemplo digitando 12, 7)</em><br>
+Primeiro número: 12<br>
+Segundo número: 7<br>
+127<br>
+&lt;class 'str'&gt;</p>
+    <p>Deu <code>127</code> e não <code>19</code>! Como <code>a</code> e <code>b</code> são textos, o <code>+</code> <strong>junta</strong> os textos, em vez de somar.</p>
+
+    <h2>Lendo números</h2>
+    <p>Para fazer contas, converta a resposta, como você aprendeu na aula 13:</p>
+<pre class="codigo" data-executar="sim"><code>a = int(input("Primeiro número: "))
+b = int(input("Segundo número: "))
+print("A soma é", a + b)</code></pre>
+    <p class="saida"><em>(exemplo digitando 12, 7)</em><br>
+Primeiro número: 12<br>
+Segundo número: 7<br>
+A soma é 19</p>
+    <p>Repare no <code>int(input(...))</code>: primeiro o <code>input</code> lê o texto, depois o <code>int</code> converte. Os parênteses se fecham na ordem certa: <code>))</code>.</p>
+<pre class="codigo" data-executar="sim"><code>altura = float(input("Sua altura em metros: "))
+peso = float(input("Seu peso em kg: "))
+print(f"Altura: {altura} m, peso: {peso} kg")</code></pre>
+    <p class="saida"><em>(exemplo digitando 1.62, 52.5)</em><br>
+Sua altura em metros: 1.62<br>
+Seu peso em kg: 52.5<br>
+Altura: 1.62 m, peso: 52.5 kg</p>
+    <div class="atencao"><strong>Atenção:</strong> Se a pessoa digitar algo que não é número, como <code>doze</code>, o <code>int()</code> dá <code>ValueError</code> e o programa para. Para números com casas decimais, ela precisa digitar com <strong>ponto</strong>: <code>1.62</code>. Na aula 53 você vai aprender a tratar esses erros.</div>
+
+    <h2>Limpando a resposta</h2>
+    <p>Às vezes a pessoa digita espaços sem querer, ou mistura maiúsculas e minúsculas. O método <code>strip()</code> tira os espaços das pontas, e <code>lower()</code> deixa tudo minúsculo:</p>
+<pre class="codigo" data-executar="sim"><code>cidade = input("Sua cidade: ")
+print(f"[{cidade}]")
+print(f"[{cidade.strip()}]")</code></pre>
+    <p class="saida"><em>(exemplo digitando    Recife  )</em><br>
+Sua cidade: &nbsp;&nbsp;&nbsp;Recife &nbsp;<br>
+[ &nbsp;&nbsp;Recife &nbsp;]<br>
+[Recife]</p>
+<pre class="codigo" data-executar="sim"><code>resposta = input("Quer continuar? ").strip().lower()
+print("Você respondeu:", resposta)</code></pre>
+    <p class="saida"><em>(exemplo digitando SIM)</em><br>
+Quer continuar? SIM<br>
+Você respondeu: sim</p>
+
+    <h2>Um programa completo</h2>
+    <p>Juntando tudo, dá para fazer um pequeno caixa de lanchonete:</p>
+<pre class="codigo" data-executar="sim"><code>cliente = input("Nome do cliente: ")
+quantidade = int(input("Quantas coxinhas? "))
+preco = float(input("Preço de cada uma: "))
+total = quantidade * preco
+print(f"{cliente}, o total ficou R$ {total:.2f}")</code></pre>
+    <p class="saida"><em>(exemplo digitando Davi, 3, 6.5)</em><br>
+Nome do cliente: Davi<br>
+Quantas coxinhas? 3<br>
+Preço de cada uma: 6.5<br>
+Davi, o total ficou R$ 19.50</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>idade = int(input("Quantos anos você tem? "))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Pergunte o nome da cidade da pessoa e responda <code>Que legal, eu também gosto de &lt;cidade&gt;!</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cidade = input("Em que cidade você mora? ")
+print(f"Que legal, eu também gosto de {cidade}!")</code></pre>
+      <p class="saida"><em>(exemplo digitando Manaus)</em><br>
+Em que cidade você mora? Manaus<br>
+Que legal, eu também gosto de Manaus!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Peça o ano em que a pessoa nasceu e mostre quantos anos ela faz em 2026.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>ano = int(input("Em que ano você nasceu? "))
+print("Em 2026 você faz", 2026 - ano, "anos")</code></pre>
+      <p class="saida"><em>(exemplo digitando 2012)</em><br>
+Em que ano você nasceu? 2012<br>
+Em 2026 você faz 14 anos</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Peça o preço de um salgado e a quantidade comprada (o preço pode ter centavos) e mostre o total com duas casas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>preco = float(input("Preço do salgado: "))
+quantidade = int(input("Quantidade: "))
+print(f"Total: R$ {preco * quantidade:.2f}")</code></pre>
+      <p class="saida"><em>(exemplo digitando 6.5, 3)</em><br>
+Preço do salgado: 6.5<br>
+Quantidade: 3<br>
+Total: R$ 19.50</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Explique por que <code>print(input("Número: ") * 2)</code> mostra <code>55</code> quando a pessoa digita <code>5</code>. Como mostrar <code>10</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numero = int(input("Número: "))
+print(numero * 2)</code></pre>
+      <p class="saida"><em>(exemplo digitando 5)</em><br>
+Número: 5<br>
+10</p>
+      <p>Sem a conversão, <code>"5" * 2</code> repete o texto duas vezes e dá <code>"55"</code>. Com <code>int()</code>, vira a conta <code>5 * 2</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Peça uma temperatura em graus Celsius e mostre em Fahrenheit (F = C × 9 / 5 + 32), com uma casa decimal.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>celsius = float(input("Temperatura em °C: "))
+fahrenheit = celsius * 9 / 5 + 32
+print(f"{celsius} °C = {fahrenheit:.1f} °F")</code></pre>
+      <p class="saida"><em>(exemplo digitando 36.5)</em><br>
+Temperatura em °C: 36.5<br>
+36.5 °C = 97.7 °F</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="16-formatacao-strings.html" rel="prev">← Aula anterior</a>
+      <a href="18-if-elif-else.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

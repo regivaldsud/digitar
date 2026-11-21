@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 78 · Classes abstratas (abc, abstractmethod) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie classes-modelo que não podem virar objetos e obrigam as filhas a implementar certos métodos, com o módulo abc.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 78 · Classes abstratas (abc, abstractmethod)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma <strong>classe abstrata</strong> e para que serve</li>
+        <li>Criar classes abstratas com <code>ABC</code> e <code>@abstractmethod</code></li>
+        <li>Entender o erro ao instanciar uma classe abstrata ou uma filha incompleta</li>
+        <li>Misturar métodos abstratos com métodos prontos</li>
+      </ul>
+    </div>
+
+    <h2>Um molde incompleto de propósito</h2>
+    <p>Às vezes uma classe mãe existe só para dizer <strong>o que</strong> as filhas precisam ter, sem saber <strong>como</strong>. Por exemplo, toda forma geométrica tem área, mas não existe a área de uma "forma" genérica — só de um quadrado, de um círculo... Uma classe assim se chama <strong>abstrata</strong>: ela não vira objeto, só serve de modelo.</p>
+    <p>Na aula 76 a classe <code>Forma</code> devolvia <code>0</code> na área, o que é meio estranho. Com o módulo <code>abc</code> (*abstract base classes*) dá para fazer melhor.</p>
+
+    <h2>ABC e @abstractmethod</h2>
+    <p>Herde de <code>ABC</code> e marque os métodos obrigatórios com <code>@abstractmethod</code>. Eles não precisam de corpo: um <code>pass</code> (ou só a docstring) basta.</p>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Forma(ABC):
+    @abstractmethod
+    def area(self):
+        pass
+
+class Quadrado(Forma):
+    def __init__(self, lado):
+        self.lado = lado
+
+    def area(self):
+        return self.lado ** 2
+
+class Circulo(Forma):
+    def __init__(self, raio):
+        self.raio = raio
+
+    def area(self):
+        return 3.14159 * self.raio ** 2
+
+for f in [Quadrado(3), Circulo(1)]:
+    print(type(f).__name__, round(f.area(), 2))</code></pre>
+    <p class="saida">Quadrado 9<br>
+Circulo 3.14</p>
+
+    <h2>Abstrata não vira objeto</h2>
+    <p>Tentar criar um objeto da classe abstrata dá erro, porque ela está incompleta:</p>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Forma(ABC):
+    @abstractmethod
+    def area(self):
+        pass
+
+f = Forma()</code></pre>
+    <p class="saida">TypeError: Can't instantiate abstract class Forma without an implementation for abstract method 'area'</p>
+    <p>O mesmo erro acontece com uma filha que <strong>esqueceu</strong> de implementar algum método abstrato. Essa é a grande vantagem: o erro aparece logo ao criar o objeto, e não lá na frente, quando alguém chamar o método que falta.</p>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Pagamento(ABC):
+    @abstractmethod
+    def pagar(self, valor):
+        pass
+
+class Pix(Pagamento):
+    def pagr(self, valor):  # nome digitado errado!
+        print(f"Pix de R$ {valor:.2f}")
+
+p = Pix()</code></pre>
+    <p class="saida">TypeError: Can't instantiate abstract class Pix without an implementation for abstract method 'pagar'</p>
+    <div class="atencao"><strong>Atenção:</strong> A mensagem <code>Can't instantiate abstract class ...</code> quer dizer: "esta classe ainda tem métodos abstratos sem implementação". Confira se a filha implementou <strong>todos</strong> os métodos com <code>@abstractmethod</code>, com o nome escrito igualzinho.</div>
+
+    <h2>Métodos prontos junto com os abstratos</h2>
+    <p>Uma classe abstrata também pode ter métodos normais, que usam os abstratos. As filhas só preenchem o que falta.</p>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Relatorio(ABC):
+    def gerar(self):
+        print("=" * 20)
+        print(self.titulo())
+        print("=" * 20)
+        for linha in self.linhas():
+            print("-", linha)
+
+    @abstractmethod
+    def titulo(self):
+        pass
+
+    @abstractmethod
+    def linhas(self):
+        pass
+
+class RelatorioNotas(Relatorio):
+    def __init__(self, notas):
+        self.notas = notas
+
+    def titulo(self):
+        return "Boletim do 7º ano"
+
+    def linhas(self):
+        return [f"{nome}: {nota}" for nome, nota in self.notas.items()]
+
+RelatorioNotas({"Ana": 9.0, "Davi": 7.5}).gerar()</code></pre>
+    <p class="saida">====================<br>
+Boletim do 7º ano<br>
+====================<br>
+- Ana: 9.0<br>
+- Davi: 7.5</p>
+    <p>O método <code>gerar</code> define o "roteiro" e as filhas preenchem os detalhes. Esse jeito de organizar tem até nome: *Template Method*, um padrão de projeto que aparece no Módulo 8.</p>
+    <div class="dica"><strong>Dica:</strong> Também dá para ter <strong>property abstrata</strong>: coloque <code>@property</code> em cima de <code>@abstractmethod</code>. As filhas então precisam ter esse property.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>from abc import ABC, abstractmethod</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe abstrata <code>Animal</code> com o método abstrato <code>som()</code> e as filhas <code>Cachorro</code> e <code>Galo</code>. Mostre o som de cada um num laço.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Animal(ABC):
+    @abstractmethod
+    def som(self):
+        pass
+
+class Cachorro(Animal):
+    def som(self):
+        return "au au"
+
+class Galo(Animal):
+    def som(self):
+        return "cocoricó"
+
+for a in [Cachorro(), Galo()]:
+    print(type(a).__name__, "-&gt;", a.som())</code></pre>
+      <p class="saida">Cachorro -&gt; au au<br>
+Galo -&gt; cocoricó</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe abstrata <code>Pagamento</code> com o método abstrato <code>pagar(valor)</code> e as filhas <code>Pix</code> e <code>Boleto</code>. O boleto cobra R$ 3,50 de taxa. Mostre o que cada um faz ao pagar R$ 100.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Pagamento(ABC):
+    @abstractmethod
+    def pagar(self, valor):
+        pass
+
+class Pix(Pagamento):
+    def pagar(self, valor):
+        print(f"Pix de R$ {valor:.2f} enviado na hora.")
+
+class Boleto(Pagamento):
+    def pagar(self, valor):
+        print(f"Boleto de R$ {valor + 3.5:.2f} gerado (com taxa).")
+
+for forma in [Pix(), Boleto()]:
+    forma.pagar(100)</code></pre>
+      <p class="saida">Pix de R$ 100.00 enviado na hora.<br>
+Boleto de R$ 103.50 gerado (com taxa).</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O que acontece ao rodar este código? Explique e corrija: a classe abstrata <code>Veiculo</code> tem os métodos abstratos <code>acelerar</code> e <code>frear</code>, e a classe <code>Bike(Veiculo)</code> implementa só <code>acelerar</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Veiculo(ABC):
+    @abstractmethod
+    def acelerar(self):
+        pass
+
+    @abstractmethod
+    def frear(self):
+        pass
+
+class Bike(Veiculo):
+    def acelerar(self):
+        print("pedalando mais rápido")
+
+    def frear(self):
+        print("apertando o freio")
+
+b = Bike()
+b.acelerar()
+b.frear()</code></pre>
+      <p class="saida">pedalando mais rápido<br>
+apertando o freio</p>
+      <p>Sem o método <code>frear</code>, <code>Bike()</code> dá <code>TypeError: Can't instantiate abstract class Bike...</code>. A correção é implementar todos os métodos abstratos.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe abstrata <code>Jogo</code> com um método pronto <code>jogar()</code> que mostra <code>Começando &lt;nome&gt;...</code>, chama o método abstrato <code>rodada()</code> três vezes e mostra <code>Fim!</code>. Faça a filha <code>JogoDaVelha</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+class Jogo(ABC):
+    def jogar(self):
+        print(f"Começando {self.nome}...")
+        for n in range(1, 4):
+            self.rodada(n)
+        print("Fim!")
+
+    @abstractmethod
+    def rodada(self, n):
+        pass
+
+class JogoDaVelha(Jogo):
+    nome = "jogo da velha"
+
+    def rodada(self, n):
+        print(f"Rodada {n}: marque X ou O")
+
+JogoDaVelha().jogar()</code></pre>
+      <p class="saida">Começando jogo da velha...<br>
+Rodada 1: marque X ou O<br>
+Rodada 2: marque X ou O<br>
+Rodada 3: marque X ou O<br>
+Fim!</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="77-heranca-multipla.html" rel="prev">← Aula anterior</a>
+      <a href="79-polimorfismo.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

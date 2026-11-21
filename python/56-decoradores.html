@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 56 · Decoradores, decoradores com parâmetros e ordem de aplicação — Curso de Python · DIGITAR</title>
+<meta name="description" content="Escreva decoradores que acrescentam comportamento a funções, crie decoradores que recebem parâmetros e entenda a ordem quando há vários.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 56 · Decoradores, decoradores com parâmetros e ordem de aplicação</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um decorador e o que o <code>@</code> faz</li>
+        <li>Escrever decoradores para qualquer função com <code>*args</code>, <code>**kwargs</code> e <code>functools.wraps</code></li>
+        <li>Criar decoradores com parâmetros, como <code>@repetir(3)</code></li>
+        <li>Entender a ordem em que vários decoradores são aplicados</li>
+      </ul>
+    </div>
+
+    <h2>A ideia: embrulhar uma função</h2>
+    <p>Na aula 45 você viu que funções são valores e que uma função pode criar e devolver outra. Um <strong>decorador</strong> usa exatamente isso: é uma função que recebe uma função e devolve uma versão "embrulhada" dela, com algo a mais antes ou depois.</p>
+<pre class="codigo" data-executar="sim"><code>def anunciar(funcao):
+    def embrulho():
+        print("--- começando ---")
+        funcao()
+        print("--- terminou ---")
+    return embrulho
+
+
+def boas_vindas():
+    print("Bem-vindo ao DIGITAR!")
+
+
+boas_vindas = anunciar(boas_vindas)
+boas_vindas()</code></pre>
+    <p class="saida">--- começando ---<br>
+Bem-vindo ao DIGITAR!<br>
+--- terminou ---</p>
+
+    <h2>O atalho @</h2>
+    <p>Escrever <code>boas_vindas = anunciar(boas_vindas)</code> funciona, mas o Python tem um atalho: o <code>@</code> em cima do <code>def</code>. As duas formas fazem a mesma coisa.</p>
+<pre class="codigo" data-executar="sim"><code>def anunciar(funcao):
+    def embrulho():
+        print("--- começando ---")
+        funcao()
+        print("--- terminou ---")
+    return embrulho
+
+
+@anunciar
+def lembrete():
+    print("Hoje tem treino de digitação!")
+
+
+lembrete()</code></pre>
+    <p class="saida">--- começando ---<br>
+Hoje tem treino de digitação!<br>
+--- terminou ---</p>
+
+    <h2>Para qualquer função: *args, **kwargs e wraps</h2>
+    <p>Para o decorador servir em funções com quaisquer parâmetros, o embrulho recebe <code>*args</code> e <code>**kwargs</code> (aula 43) e repassa tudo. E não esqueça de <strong>devolver</strong> o resultado da função original!</p>
+    <p>Use também <code>functools.wraps</code>: sem ele, a função decorada perde o próprio nome e a docstring.</p>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def registrar(funcao):
+    @wraps(funcao)
+    def embrulho(*args, **kwargs):
+        print(f"Chamando {funcao.__name__} com {args} {kwargs}")
+        resultado = funcao(*args, **kwargs)
+        print(f"{funcao.__name__} devolveu {resultado}")
+        return resultado
+    return embrulho
+
+
+@registrar
+def preco_final(preco, desconto=0):
+    """Calcula o preço com desconto."""
+    return preco - desconto
+
+
+preco_final(50, desconto=5)
+print(preco_final.__name__)
+print(preco_final.__doc__)</code></pre>
+    <p class="saida">Chamando preco_final com (50,) {'desconto': 5}<br>
+preco_final devolveu 45<br>
+preco_final<br>
+Calcula o preço com desconto.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer o <code>return resultado</code> dentro do embrulho é o erro mais comum: a função decorada passa a devolver <code>None</code>, sem nenhuma mensagem de erro.</div>
+    <p>Um uso clássico é medir o tempo que uma função demora com <code>time.perf_counter()</code>, o relógio mais preciso do Python. O tempo muda a cada execução:</p>
+<pre class="codigo" data-executar="sim"><code>import time
+from functools import wraps
+
+
+def cronometrar(funcao):
+    @wraps(funcao)
+    def embrulho(*args, **kwargs):
+        inicio = time.perf_counter()
+        resultado = funcao(*args, **kwargs)
+        print(f"{funcao.__name__} levou {time.perf_counter() - inicio:.4f} s")
+        return resultado
+    return embrulho
+
+
+@cronometrar
+def somar_ate(n):
+    return sum(range(n))
+
+
+print(somar_ate(1_000_000))</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+somar_ate levou 0.0261 s<br>
+499999500000</p>
+
+    <h2>Decoradores com parâmetros</h2>
+    <p>E se o decorador precisar de uma configuração, como <code>@repetir(3)</code>? Aí são <strong>três</strong> funções, uma dentro da outra: a de fora recebe o parâmetro e devolve o decorador de verdade.</p>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def repetir(vezes):
+    def decorador(funcao):
+        @wraps(funcao)
+        def embrulho(*args, **kwargs):
+            for _ in range(vezes):
+                resultado = funcao(*args, **kwargs)
+            return resultado
+        return embrulho
+    return decorador
+
+
+@repetir(3)
+def torcer(time):
+    print(f"Vai, {time}!")
+
+
+torcer("Fortaleza")</code></pre>
+    <p class="saida">Vai, Fortaleza!<br>
+Vai, Fortaleza!<br>
+Vai, Fortaleza!</p>
+    <p>Leia <code>@repetir(3)</code> em duas etapas: primeiro <code>repetir(3)</code> roda e devolve <code>decorador</code>; depois <code>decorador</code> embrulha <code>torcer</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Um decorador com parâmetro muito útil é o que confere permissões ou valores. Por exemplo, <code>@limite(0, 10)</code> poderia recusar notas fora da faixa antes mesmo de a função rodar.</div>
+
+    <h2>Vários decoradores: a ordem importa</h2>
+    <p>Você pode empilhar decoradores. Eles são aplicados <strong>de baixo para cima</strong> (o mais perto do <code>def</code> embrulha primeiro), mas, na hora de rodar, o de <strong>cima</strong> começa primeiro — como caixas uma dentro da outra.</p>
+<pre class="codigo" data-executar="sim"><code>def negrito(funcao):
+    def embrulho():
+        return "&lt;b&gt;" + funcao() + "&lt;/b&gt;"
+    return embrulho
+
+
+def italico(funcao):
+    def embrulho():
+        return "&lt;i&gt;" + funcao() + "&lt;/i&gt;"
+    return embrulho
+
+
+@negrito
+@italico
+def titulo():
+    return "Python"
+
+
+print(titulo())</code></pre>
+    <p class="saida">&lt;b&gt;&lt;i&gt;Python&lt;/i&gt;&lt;/b&gt;</p>
+    <p>É o mesmo que <code>titulo = negrito(italico(titulo))</code>: o <code>italico</code> embrulha primeiro, e o <code>negrito</code> embrulha o resultado. Troque a ordem e veja as etiquetas mudarem de lugar.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def embrulho(*args, **kwargs):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva um decorador <code>em_maiusculas</code> que transforma em maiúsculas o texto devolvido pela função decorada. Teste com uma função que devolve <code>"Vai, Bahia!"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def em_maiusculas(funcao):
+    @wraps(funcao)
+    def embrulho(*args, **kwargs):
+        return funcao(*args, **kwargs).upper()
+    return embrulho
+
+
+@em_maiusculas
+def grito(time):
+    return f"Vai, {time}!"
+
+
+print(grito("Bahia"))</code></pre>
+      <p class="saida">VAI, BAHIA!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O que está errado neste decorador? <code>def dobrar(f): def e(x): f(x) * 2; return e</code>. Corrija e teste com uma função que devolve <code>x + 1</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def dobrar(f):
+    def e(x):
+        return f(x) * 2
+    return e
+
+
+@dobrar
+def mais_um(x):
+    return x + 1
+
+
+print(mais_um(4))</code></pre>
+      <p class="saida">10</p>
+      <p>Faltava o <code>return</code> dentro de <code>e</code>: sem ele, a função decorada devolvia <code>None</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva um decorador <code>contar_chamadas</code> que mostre quantas vezes a função já foi chamada. Dica: guarde o contador como atributo do embrulho.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def contar_chamadas(funcao):
+    @wraps(funcao)
+    def embrulho(*args, **kwargs):
+        embrulho.chamadas += 1
+        print(f"Chamada número {embrulho.chamadas}")
+        return funcao(*args, **kwargs)
+    embrulho.chamadas = 0
+    return embrulho
+
+
+@contar_chamadas
+def tocar_campainha():
+    print("Dim-dom!")
+
+
+tocar_campainha()
+tocar_campainha()</code></pre>
+      <p class="saida">Chamada número 1<br>
+Dim-dom!<br>
+Chamada número 2<br>
+Dim-dom!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie o decorador com parâmetro <code>prefixo(texto)</code>, que coloca <code>texto</code> antes do resultado da função. Teste com <code>@prefixo("Aviso: ")</code> numa função que devolve <code>"amanhã não tem aula"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def prefixo(texto):
+    def decorador(funcao):
+        @wraps(funcao)
+        def embrulho(*args, **kwargs):
+            return texto + funcao(*args, **kwargs)
+        return embrulho
+    return decorador
+
+
+@prefixo("Aviso: ")
+def recado():
+    return "amanhã não tem aula"
+
+
+print(recado())</code></pre>
+      <p class="saida">Aviso: amanhã não tem aula</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Sem rodar, diga o que aparece ao chamar <code>saudacao()</code>, sabendo que <code>@exclamar</code> (acrescenta <code>"!"</code> no fim) está em cima de <code>@maiusculas</code> (deixa em maiúsculas) e a função devolve <code>"oi"</code>. Depois rode para conferir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def exclamar(funcao):
+    def embrulho():
+        return funcao() + "!"
+    return embrulho
+
+
+def maiusculas(funcao):
+    def embrulho():
+        return funcao().upper()
+    return embrulho
+
+
+@exclamar
+@maiusculas
+def saudacao():
+    return "oi"
+
+
+print(saudacao())</code></pre>
+      <p class="saida">OI!</p>
+      <p>O <code>maiusculas</code> embrulha primeiro (<code>"OI"</code>), depois o <code>exclamar</code> acrescenta o <code>"!"</code>. Resultado: <code>OI!</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="55-pacotes.html" rel="prev">← Aula anterior</a>
+      <a href="57-itertools.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

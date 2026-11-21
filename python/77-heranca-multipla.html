@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 77 · Herança múltipla e a ordem de resolução (MRO) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Herde de mais de uma classe ao mesmo tempo, use mixins e entenda em que ordem o Python procura os métodos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 77 · Herança múltipla e a ordem de resolução (MRO)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar uma classe que herda de duas ou mais classes</li>
+        <li>Usar <strong>mixins</strong>: pequenas classes que acrescentam uma habilidade</li>
+        <li>Entender a <strong>MRO</strong> (ordem de resolução de métodos) e ver com <code>__mro__</code></li>
+        <li>Saber como o <code>super()</code> segue a MRO</li>
+      </ul>
+    </div>
+
+    <h2>Mais de uma mãe</h2>
+    <p>Em Python, uma classe pode herdar de várias classes de uma vez: basta separar os nomes por vírgula. A filha ganha os métodos de todas.</p>
+<pre class="codigo" data-executar="sim"><code>class Voador:
+    def voar(self):
+        print(f"{self.nome} está voando.")
+
+class Nadador:
+    def nadar(self):
+        print(f"{self.nome} está nadando.")
+
+class Pato(Voador, Nadador):
+    def __init__(self, nome):
+        self.nome = nome
+
+donald = Pato("Donald")
+donald.voar()
+donald.nadar()
+print(isinstance(donald, Voador), isinstance(donald, Nadador))</code></pre>
+    <p class="saida">Donald está voando.<br>
+Donald está nadando.<br>
+True True</p>
+
+    <h2>Mixins: habilidades de encaixar</h2>
+    <p>Um <strong>mixin</strong> é uma classe pequena, que não serve sozinha, criada só para dar <strong>uma habilidade</strong> a outras classes. Por convenção, o nome termina em <code>Mixin</code>.</p>
+<pre class="codigo" data-executar="sim"><code>class DescricaoMixin:
+    def descrever(self):
+        partes = [f"{k}={v}" for k, v in vars(self).items()]
+        return f"{type(self).__name__}(" + ", ".join(partes) + ")"
+
+class Produto(DescricaoMixin):
+    def __init__(self, nome, preco):
+        self.nome = nome
+        self.preco = preco
+
+class Cliente(DescricaoMixin):
+    def __init__(self, nome, cidade):
+        self.nome = nome
+        self.cidade = cidade
+
+print(Produto("Açaí", 15.0).descrever())
+print(Cliente("Bia", "Belém").descrever())</code></pre>
+    <p class="saida">Produto(nome=Açaí, preco=15.0)<br>
+Cliente(nome=Bia, cidade=Belém)</p>
+    <p>Classes que não têm nada a ver uma com a outra ganham o mesmo método <code>descrever</code>, sem copiar código.</p>
+
+    <h2>E se as duas mães tiverem o mesmo método?</h2>
+    <p>O Python segue uma ordem fixa para procurar métodos, chamada <strong>MRO</strong> (*Method Resolution Order*, ordem de resolução de métodos). Na regra simples: primeiro a própria classe, depois as mães <strong>da esquerda para a direita</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>class Celular:
+    def ligar(self):
+        return "ligando para um contato"
+
+class Camera:
+    def ligar(self):
+        return "ligando a câmera"
+
+class Smartphone(Celular, Camera):
+    pass
+
+class CameraDeAcao(Camera, Celular):
+    pass
+
+print(Smartphone().ligar())
+print(CameraDeAcao().ligar())
+print([c.__name__ for c in Smartphone.__mro__])</code></pre>
+    <p class="saida">ligando para um contato<br>
+ligando a câmera<br>
+['Smartphone', 'Celular', 'Camera', 'object']</p>
+    <p>O atributo <code>__mro__</code> mostra a ordem exata da busca. Repare que no fim sempre aparece <code>object</code>: toda classe em Python herda dele.</p>
+
+    <h2>O losango e o super()</h2>
+    <p>Quando duas mães herdam da mesma avó, o desenho das classes forma um losango. O <code>super()</code> não chama simplesmente "a mãe": ele chama <strong>a próxima classe da MRO</strong>. Assim, cada método roda uma única vez.</p>
+<pre class="codigo" data-executar="sim"><code>class A:
+    def ola(self):
+        print("A")
+
+class B(A):
+    def ola(self):
+        print("B")
+        super().ola()
+
+class C(A):
+    def ola(self):
+        print("C")
+        super().ola()
+
+class D(B, C):
+    def ola(self):
+        print("D")
+        super().ola()
+
+D().ola()
+print([c.__name__ for c in D.__mro__])</code></pre>
+    <p class="saida">D<br>
+B<br>
+C<br>
+A<br>
+['D', 'B', 'C', 'A', 'object']</p>
+    <p>O <code>super()</code> dentro de <code>B</code> chamou <code>C</code>, e não <code>A</code>, porque na MRO de <code>D</code> quem vem depois de <code>B</code> é <code>C</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Herança múltipla é poderosa, mas confunde rápido. Use principalmente com mixins pequenos. Se você precisar de um desenho complicado para entender suas classes, provavelmente composição (aula 75) resolve melhor.</div>
+
+    <h2>Mixin com super()</h2>
+    <p>Mixins bem escritos chamam <code>super()</code> para não "quebrar a corrente". Este mixin registra uma mensagem antes de salvar:</p>
+<pre class="codigo" data-executar="sim"><code>class Salvavel:
+    def salvar(self):
+        print(f"salvando {self.nome}")
+
+class LogMixin:
+    def salvar(self):
+        print("[log] vai salvar...")
+        super().salvar()
+
+class Documento(LogMixin, Salvavel):
+    def __init__(self, nome):
+        self.nome = nome
+
+Documento("redacao.txt").salvar()</code></pre>
+    <p class="saida">[log] vai salvar...<br>
+salvando redacao.txt</p>
+    <div class="dica"><strong>Dica:</strong> Coloque os mixins <strong>à esquerda</strong> da classe principal (<code>class Documento(LogMixin, Salvavel)</code>), para que o método do mixin rode primeiro e depois passe a vez com <code>super()</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>class Pato(Animal, Voador, Nadador):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie os mixins <code>CorreMixin</code> (método <code>correr</code>) e <code>PulaMixin</code> (método <code>pular</code>) e a classe <code>Atleta(nome)</code> que usa os dois.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class CorreMixin:
+    def correr(self):
+        print(f"{self.nome} correu 100 m.")
+
+class PulaMixin:
+    def pular(self):
+        print(f"{self.nome} saltou 7 m.")
+
+class Atleta(CorreMixin, PulaMixin):
+    def __init__(self, nome):
+        self.nome = nome
+
+a = Atleta("Rebeca")
+a.correr()
+a.pular()</code></pre>
+      <p class="saida">Rebeca correu 100 m.<br>
+Rebeca saltou 7 m.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Sem rodar, diga o que aparece: <code>class X</code> e <code>class Y</code> têm o método <code>quem()</code> que devolve <code>"X"</code> e <code>"Y"</code>; <code>class Z(Y, X): pass</code>. O que mostra <code>Z().quem()</code>? Rode para conferir e mostre a MRO.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class X:
+    def quem(self):
+        return "X"
+
+class Y:
+    def quem(self):
+        return "Y"
+
+class Z(Y, X):
+    pass
+
+print(Z().quem())
+print([c.__name__ for c in Z.__mro__])</code></pre>
+      <p class="saida">Y<br>
+['Z', 'Y', 'X', 'object']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie o mixin <code>JsonMixin</code> com um método <code>para_json()</code> que devolve <code>json.dumps(vars(self), ensure_ascii=False)</code>, e use-o numa classe <code>Filme(titulo, ano)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+class JsonMixin:
+    def para_json(self):
+        return json.dumps(vars(self), ensure_ascii=False)
+
+class Filme(JsonMixin):
+    def __init__(self, titulo, ano):
+        self.titulo = titulo
+        self.ano = ano
+
+print(Filme("Central do Brasil", 1998).para_json())</code></pre>
+      <p class="saida">{"titulo": "Central do Brasil", "ano": 1998}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Na hierarquia em losango <code>A</code>, <code>B(A)</code>, <code>C(A)</code>, <code>D(C, B)</code>, em que ordem aparecem as letras se cada <code>ola()</code> mostra a sua letra e chama <code>super().ola()</code> (menos <code>A</code>)?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class A:
+    def ola(self):
+        print("A")
+
+class B(A):
+    def ola(self):
+        print("B")
+        super().ola()
+
+class C(A):
+    def ola(self):
+        print("C")
+        super().ola()
+
+class D(C, B):
+    def ola(self):
+        print("D")
+        super().ola()
+
+D().ola()</code></pre>
+      <p class="saida">D<br>
+C<br>
+B<br>
+A</p>
+      <p>Como <code>D</code> herda de <code>(C, B)</code>, a MRO é D, C, B, A: a ordem das mães entre parênteses decide.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="76-heranca.html" rel="prev">← Aula anterior</a>
+      <a href="78-classes-abstratas.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

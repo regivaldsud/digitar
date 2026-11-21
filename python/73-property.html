@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 73 · @property e @setter: getters e setters pythônicos — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use @property para criar atributos calculados e @setter para validar valores, sem mudar o jeito de usar o objeto.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 73 · @property e @setter: getters e setters pythônicos</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Transformar um método em atributo calculado com <code>@property</code></li>
+        <li>Validar valores com um <strong>setter</strong></li>
+        <li>Criar atributos somente leitura</li>
+        <li>Evitar o erro de recursão infinita no property</li>
+      </ul>
+    </div>
+
+    <h2>Getters e setters, do jeito Python</h2>
+    <p>Em muitas linguagens, para ler e mudar um dado do objeto você escreve métodos como <code>get_preco()</code> e <code>set_preco(valor)</code>. Em Python isso é raro: usamos atributos simples e, quando precisamos de controle, trocamos por um <strong>property</strong>, sem que quem usa a classe perceba a diferença.</p>
+
+    <h2>Atributos calculados</h2>
+    <p>O <code>@property</code> transforma um método em algo que você usa <strong>como atributo</strong>, sem parênteses. É ótimo para valores que dependem de outros.</p>
+<pre class="codigo" data-executar="sim"><code>class Retangulo:
+    def __init__(self, largura, altura):
+        self.largura = largura
+        self.altura = altura
+
+    @property
+    def area(self):
+        return self.largura * self.altura
+
+r = Retangulo(4, 3)
+print(r.area)
+r.largura = 10
+print(r.area)</code></pre>
+    <p class="saida">12<br>
+30</p>
+    <p>A área é recalculada toda vez que você lê <code>r.area</code>, então nunca fica desatualizada.</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __init__(self, nome, notas):
+        self.nome = nome
+        self.notas = notas
+
+    @property
+    def media(self):
+        return sum(self.notas) / len(self.notas)
+
+    @property
+    def situacao(self):
+        return "aprovado" if self.media &gt;= 6 else "recuperação"
+
+a = Aluno("Iago", [7, 5, 8.5])
+print(f"{a.nome}: média {a.media:.1f}, {a.situacao}")
+a.notas.append(3)
+print(f"{a.nome}: média {a.media:.1f}, {a.situacao}")</code></pre>
+    <p class="saida">Iago: média 6.8, aprovado<br>
+Iago: média 5.9, recuperação</p>
+
+    <h2>Somente leitura</h2>
+    <p>Um property <strong>sem</strong> setter não pode receber valor: é somente leitura.</p>
+<pre class="codigo" data-executar="sim"><code>class Circulo:
+    def __init__(self, raio):
+        self.raio = raio
+
+    @property
+    def diametro(self):
+        return self.raio * 2
+
+c = Circulo(5)
+print(c.diametro)
+c.diametro = 20</code></pre>
+    <p class="saida">10<br>
+AttributeError: property 'diametro' of 'Circulo' object has no setter</p>
+
+    <h2>Setter: validando antes de guardar</h2>
+    <p>Para permitir <code>objeto.atributo = valor</code> com validação, crie um <strong>setter</strong> com <code>@nome.setter</code>. O valor de verdade fica guardado num atributo com sublinhado (<code>_celsius</code>).</p>
+<pre class="codigo" data-executar="sim"><code>class Termometro:
+    def __init__(self, celsius):
+        self.celsius = celsius
+
+    @property
+    def celsius(self):
+        return self._celsius
+
+    @celsius.setter
+    def celsius(self, valor):
+        if valor &lt; -273.15:
+            raise ValueError("abaixo do zero absoluto")
+        self._celsius = valor
+
+    @property
+    def fahrenheit(self):
+        return self._celsius * 9 / 5 + 32
+
+t = Termometro(25)
+print(t.celsius, "°C =", t.fahrenheit, "°F")
+t.celsius = 37
+print(t.celsius, "°C =", t.fahrenheit, "°F")
+try:
+    t.celsius = -500
+except ValueError as e:
+    print("Recusado:", e)</code></pre>
+    <p class="saida">25 °C = 77.0 °F<br>
+37 °C = 98.6 °F<br>
+Recusado: abaixo do zero absoluto</p>
+    <p>Por fora, quem usa a classe continua escrevendo <code>t.celsius = 37</code>. Por dentro, o valor passa pela validação — inclusive no <code>__init__</code>, porque <code>self.celsius = celsius</code> também chama o setter.</p>
+    <div class="atencao"><strong>Atenção:</strong> Dentro do property, use o nome com sublinhado (<code>self._celsius</code>). Se você escrever <code>return self.celsius</code> dentro do próprio property <code>celsius</code>, ele chama a si mesmo sem parar e dá <code>RecursionError</code>.</div>
+
+    <h2>Setter que ajusta em vez de recusar</h2>
+    <p>Nem todo setter precisa dar erro. Ele pode corrigir o valor, como um volume que nunca passa de 0 a 10:</p>
+<pre class="codigo" data-executar="sim"><code>class Volume:
+    def __init__(self):
+        self.nivel = 5
+
+    @property
+    def nivel(self):
+        return self._nivel
+
+    @nivel.setter
+    def nivel(self, valor):
+        self._nivel = max(0, min(10, valor))
+
+v = Volume()
+for novo in [15, -3, 7]:
+    v.nivel = novo
+    print(f"pedido {novo} -&gt; nível {v.nivel}")</code></pre>
+    <p class="saida">pedido 15 -&gt; nível 10<br>
+pedido -3 -&gt; nível 0<br>
+pedido 7 -&gt; nível 7</p>
+    <div class="dica"><strong>Dica:</strong> Comece sempre com atributos simples. Só troque por property quando precisar calcular ou validar — quem usa a classe não precisa mudar nada.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def area(self): return self.largura * self.altura</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Produto(nome, preco)</code> em que <code>preco</code> é um property com setter que gera <code>ValueError</code> se o preço for negativo. Teste com um preço válido e outro inválido.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Produto:
+    def __init__(self, nome, preco):
+        self.nome = nome
+        self.preco = preco
+
+    @property
+    def preco(self):
+        return self._preco
+
+    @preco.setter
+    def preco(self, valor):
+        if valor &lt; 0:
+            raise ValueError("preço não pode ser negativo")
+        self._preco = valor
+
+p = Produto("Guaraná", 6.0)
+print(p.nome, p.preco)
+try:
+    p.preco = -2
+except ValueError as e:
+    print("Erro:", e)</code></pre>
+      <p class="saida">Guaraná 6.0<br>
+Erro: preço não pode ser negativo</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Pessoa(nome, ano_nascimento)</code> com um property <code>idade</code> (somente leitura) calculado para o ano de 2026.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Pessoa:
+    def __init__(self, nome, ano_nascimento):
+        self.nome = nome
+        self.ano_nascimento = ano_nascimento
+
+    @property
+    def idade(self):
+        return 2026 - self.ano_nascimento
+
+p = Pessoa("Kauã", 2013)
+print(p.nome, "tem", p.idade, "anos")</code></pre>
+      <p class="saida">Kauã tem 13 anos</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a classe <code>Usuario</code> com um property <code>apelido</code> cujo setter tira espaços das pontas, deixa tudo minúsculo e recusa apelido vazio com <code>ValueError</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Usuario:
+    def __init__(self, apelido):
+        self.apelido = apelido
+
+    @property
+    def apelido(self):
+        return self._apelido
+
+    @apelido.setter
+    def apelido(self, valor):
+        valor = valor.strip().lower()
+        if not valor:
+            raise ValueError("apelido vazio")
+        self._apelido = valor
+
+u = Usuario("  DigitaRapido  ")
+print(u.apelido)
+try:
+    u.apelido = "   "
+except ValueError as e:
+    print("Erro:", e)</code></pre>
+      <p class="saida">digitarapido<br>
+Erro: apelido vazio</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe <code>Viagem(km, litros)</code> com o property <code>consumo</code> (km por litro, arredondado com 1 casa). Mostre o consumo de 420 km com 35 litros.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Viagem:
+    def __init__(self, km, litros):
+        self.km = km
+        self.litros = litros
+
+    @property
+    def consumo(self):
+        return round(self.km / self.litros, 1)
+
+print(Viagem(420, 35).consumo, "km/l")</code></pre>
+      <p class="saida">12.0 km/l</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que o código abaixo dá <code>RecursionError</code>? <code>@property def nome(self): return self.nome</code>. Corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Cliente:
+    def __init__(self, nome):
+        self._nome = nome
+
+    @property
+    def nome(self):
+        return self._nome
+
+print(Cliente("Sueli").nome)</code></pre>
+      <p class="saida">Sueli</p>
+      <p><code>self.nome</code> dentro do property <code>nome</code> chama o próprio property de novo, para sempre. O valor deve ficar em outro nome, como <code>self._nome</code>.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="72-classmethod-staticmethod.html" rel="prev">← Aula anterior</a>
+      <a href="74-encapsulamento.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

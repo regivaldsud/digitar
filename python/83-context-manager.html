@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 83 · Gerenciadores de contexto com classes e com contextlib — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda como o with funciona por dentro e crie seus próprios gerenciadores de contexto com __enter__, __exit__ e contextlib.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 83 · Gerenciadores de contexto com classes e com contextlib</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que o <code>with</code> faz por você: preparar e sempre arrumar no final</li>
+        <li>Como criar um gerenciador de contexto com <code>__enter__</code> e <code>__exit__</code></li>
+        <li>Como o <code>__exit__</code> fica sabendo de um erro e pode até engoli-lo</li>
+        <li>Como criar gerenciadores mais curtos com <code>@contextmanager</code> e usar <code>suppress</code></li>
+      </ul>
+    </div>
+
+    <h2>Preparar, usar, arrumar</h2>
+    <p>Na aula 61 você usou <code>with open(...)</code> para abrir arquivos. A grande vantagem do <code>with</code> é que o arquivo é <strong>fechado sempre</strong> no final do bloco — mesmo se acontecer um erro no meio.</p>
+    <p>Esse "prepara, usa e arruma" aparece em muitas situações: abrir e fechar arquivos, ligar e desligar algo, mudar uma configuração e voltar ao normal. O objeto que cuida disso se chama <strong>gerenciador de contexto</strong>.</p>
+
+    <h2>Seu gerenciador com uma classe</h2>
+    <p>Uma classe vira gerenciador de contexto quando tem dois métodos especiais:</p>
+    <ul>
+      <li><code>__enter__</code>: roda no começo do <code>with</code>. O que ele devolver vai para a variável depois do <code>as</code>.</li>
+      <li><code>__exit__</code>: roda no final do bloco, aconteça o que acontecer.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>class Aula:
+    def __init__(self, materia):
+        self.materia = materia
+
+    def __enter__(self):
+        print(f"Abrindo o caderno de {self.materia}")
+        return self
+
+    def __exit__(self, tipo, valor, rastro):
+        print(f"Fechando o caderno de {self.materia}")
+
+with Aula("Matemática") as aula:
+    print("Estudando", aula.materia)
+print("Fim do bloco with")</code></pre>
+    <p class="saida">Abrindo o caderno de Matemática<br>
+Estudando Matemática<br>
+Fechando o caderno de Matemática<br>
+Fim do bloco with</p>
+    <p>O <code>__exit__</code> recebe três informações sobre um possível erro: o tipo da exceção, a exceção em si e o traceback. Quando não houve erro, as três chegam como <code>None</code>.</p>
+
+    <h2>Mesmo com erro, o __exit__ roda</h2>
+    <p>Veja que a mensagem de fechar aparece mesmo quando o bloco quebra no meio:</p>
+<pre class="codigo" data-executar="sim"><code>class Luz:
+    def __enter__(self):
+        print("Luz acesa")
+        return self
+
+    def __exit__(self, tipo, valor, rastro):
+        print("Luz apagada")
+        if tipo is not None:
+            print("Aconteceu um erro:", tipo.__name__)
+
+try:
+    with Luz():
+        print("Lendo um livro...")
+        resultado = 10 / 0
+        print("Esta linha não roda")
+except ZeroDivisionError:
+    print("O erro chegou até o try de fora")</code></pre>
+    <p class="saida">Luz acesa<br>
+Lendo um livro...<br>
+Luz apagada<br>
+Aconteceu um erro: ZeroDivisionError<br>
+O erro chegou até o try de fora</p>
+    <p>Se o <code>__exit__</code> devolver <code>True</code>, o Python considera o erro resolvido e <strong>não</strong> o repassa adiante. Use com cuidado:</p>
+<pre class="codigo" data-executar="sim"><code>class IgnorarDivisaoPorZero:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, tipo, valor, rastro):
+        if tipo is ZeroDivisionError:
+            print("Divisão por zero ignorada")
+            return True
+        return False
+
+with IgnorarDivisaoPorZero():
+    print(8 / 0)
+print("O programa continuou")</code></pre>
+    <p class="saida">Divisão por zero ignorada<br>
+O programa continuou</p>
+    <div class="atencao"><strong>Atenção:</strong> Engolir erros esconde problemas. Devolva <code>True</code> no <code>__exit__</code> só para um tipo de erro específico que você sabe tratar, nunca para todos.</div>
+
+    <h2>O jeito curto: @contextmanager</h2>
+    <p>O módulo <code>contextlib</code> tem o decorator <code>@contextmanager</code>, que transforma uma função geradora (aula 52) em gerenciador de contexto. Tudo antes do <code>yield</code> é o "preparar"; tudo depois é o "arrumar":</p>
+<pre class="codigo" data-executar="sim"><code>from contextlib import contextmanager
+
+@contextmanager
+def etiqueta(nome):
+    print(f"&lt;{nome}&gt;")
+    try:
+        yield
+    finally:
+        print(f"&lt;/{nome}&gt;")
+
+with etiqueta("p"):
+    print("Olá do Brasil!")</code></pre>
+    <p class="saida">&lt;p&gt;<br>
+Olá do Brasil!<br>
+&lt;/p&gt;</p>
+    <p>O <code>try</code>/<code>finally</code> garante que a parte de arrumar rode mesmo se houver erro dentro do <code>with</code>. Um uso prático: mudar uma configuração só durante um trecho e depois voltar ao valor antigo.</p>
+<pre class="codigo" data-executar="sim"><code>from contextlib import contextmanager
+
+config = {"volume": 50}
+
+@contextmanager
+def volume_temporario(valor):
+    antigo = config["volume"]
+    config["volume"] = valor
+    try:
+        yield config
+    finally:
+        config["volume"] = antigo
+
+with volume_temporario(10) as c:
+    print("Durante o filme:", c["volume"])
+print("Depois do filme:", config["volume"])</code></pre>
+    <p class="saida">Durante o filme: 10<br>
+Depois do filme: 50</p>
+    <div class="dica"><strong>Dica:</strong> Esqueceu o <code>try</code>/<code>finally</code> em volta do <code>yield</code>? Então, se der erro dentro do <code>with</code>, a parte de arrumar não roda. Coloque sempre.</div>
+
+    <h2>Pronto para usar: suppress</h2>
+    <p>Para o caso simples de "ignore este erro", o <code>contextlib</code> já tem o <code>suppress</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from contextlib import suppress
+
+estoque = {"arroz": 10, "feijão": 4}
+with suppress(KeyError):
+    del estoque["macarrão"]
+print(estoque)</code></pre>
+    <p class="saida">{'arroz': 10, 'feijão': 4}</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def __exit__(self, tipo, valor, rastro):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Secao</code> que, ao entrar no <code>with</code>, mostra <code>=== título ===</code> e, ao sair, mostra uma linha de sinais de igual do mesmo tamanho.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Secao:
+    def __init__(self, titulo):
+        self.cabecalho = f"=== {titulo} ==="
+
+    def __enter__(self):
+        print(self.cabecalho)
+        return self
+
+    def __exit__(self, tipo, valor, rastro):
+        print("=" * len(self.cabecalho))
+
+with Secao("Notas"):
+    print("Ana: 9")
+    print("Rui: 7")</code></pre>
+      <p class="saida">=== Notas ===<br>
+Ana: 9<br>
+Rui: 7<br>
+=============</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Reescreva a classe <code>Secao</code> como uma função com <code>@contextmanager</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from contextlib import contextmanager
+
+@contextmanager
+def secao(titulo):
+    cabecalho = f"=== {titulo} ==="
+    print(cabecalho)
+    try:
+        yield
+    finally:
+        print("=" * len(cabecalho))
+
+with secao("Notas"):
+    print("Ana: 9")</code></pre>
+      <p class="saida">=== Notas ===<br>
+Ana: 9<br>
+=============</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie um gerenciador <code>Contador</code> que guarda numa lista tudo o que for anotado com o método <code>anotar(texto)</code> e, no final do <code>with</code>, mostra quantas anotações foram feitas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Contador:
+    def __enter__(self):
+        self.anotacoes = []
+        return self
+
+    def anotar(self, texto):
+        self.anotacoes.append(texto)
+
+    def __exit__(self, tipo, valor, rastro):
+        print(f"{len(self.anotacoes)} anotações feitas")
+
+with Contador() as c:
+    c.anotar("comprar pão")
+    c.anotar("estudar Python")
+    c.anotar("treinar digitação")</code></pre>
+      <p class="saida">3 anotações feitas</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use <code>suppress</code> para tentar converter as entradas <code>"12"</code>, <code>"doze"</code> e <code>"7"</code> com <code>int()</code>, somando só as que funcionarem.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from contextlib import suppress
+
+total = 0
+for texto in ["12", "doze", "7"]:
+    with suppress(ValueError):
+        total += int(texto)
+print(total)</code></pre>
+      <p class="saida">19</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> O que este código mostra? Explique por que a mensagem "fim" aparece antes do erro ser tratado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from contextlib import contextmanager
+
+@contextmanager
+def tarefa():
+    print("início")
+    try:
+        yield
+    finally:
+        print("fim")
+
+try:
+    with tarefa():
+        int("abc")
+except ValueError:
+    print("erro tratado")</code></pre>
+      <p class="saida">início<br>
+fim<br>
+erro tratado</p>
+      <p>O <code>finally</code> do gerenciador roda assim que o bloco <code>with</code> quebra; só depois a exceção chega ao <code>except</code> de fora.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="82-new-init.html" rel="prev">← Aula anterior</a>
+      <a href="84-decoradores-classes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

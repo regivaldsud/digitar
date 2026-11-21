@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 249 · Próximos passos e como continuar estudando — Curso de Python · DIGITAR</title>
+<meta name="description" content="Você terminou o curso! Veja como continuar praticando, que áreas explorar e como montar seu portfólio.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 12 · Extras</p>
+    <h1>Aula 249 · Próximos passos e como continuar estudando</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Revisar o caminho que você percorreu no curso</li>
+        <li>Conhecer áreas onde o Python é usado e por onde começar em cada uma</li>
+        <li>Montar um plano de estudos e um portfólio de projetos</li>
+      </ul>
+    </div>
+
+    <h2>Olha só até onde você chegou</h2>
+    <p>Você começou com <code>print("Olá, mundo!")</code> e passou por variáveis, decisões, laços, listas, dicionários, funções, arquivos, exceções, classes, testes e muito mais. Isso é a base de qualquer programador Python — parabéns!</p>
+    <p>O próximo passo é o mais importante: <strong>praticar com projetos seus</strong>. Programação se aprende como digitação: um pouco todo dia vale mais do que muito de vez em quando.</p>
+
+    <h2>Para onde ir agora</h2>
+    <ul>
+      <li><strong>Sites e APIs:</strong> aprofunde o Django (módulo 11) ou experimente o Flask e o FastAPI.</li>
+      <li><strong>Dados e ciência:</strong> aprenda pandas para planilhas e matplotlib para gráficos, usando o Jupyter (aula 115).</li>
+      <li><strong>Automação:</strong> junte arquivos, planilhas e e-mail (módulo 5) para acabar com tarefas repetitivas.</li>
+      <li><strong>Jogos:</strong> a biblioteca pygame é um ótimo jeito de treinar laços, classes e eventos.</li>
+      <li><strong>Inteligência artificial:</strong> depois de dominar o básico e um pouco de matemática, conheça o scikit-learn.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Desafios curtos ajudam a manter o ritmo. Sites como o Beecrowd (feito no Brasil) e o Exercism têm milhares de exercícios, e você pode resolver em Python.</div>
+
+    <h2>Monte seu plano de estudos</h2>
+    <p>Que tal usar Python para organizar o próprio estudo? Este programa distribui os temas pelas semanas e mostra o plano:</p>
+<pre class="codigo" data-executar="sim"><code>temas = ["Revisar funções", "Projeto com pygame", "pandas básico",
+         "Gráficos com matplotlib", "Publicar no GitHub"]
+
+for semana, tema in enumerate(temas, start=1):
+    print(f"Semana {semana}: {tema}")
+
+print(f"Total: {len(temas)} semanas de estudo")</code></pre>
+    <p class="saida">Semana 1: Revisar funções<br>
+Semana 2: Projeto com pygame<br>
+Semana 3: pandas básico<br>
+Semana 4: Gráficos com matplotlib<br>
+Semana 5: Publicar no GitHub<br>
+Total: 5 semanas de estudo</p>
+    <p>E este conta quantos minutos você pratica por semana, juntando o treino de digitação no DIGITAR e o de programação:</p>
+<pre class="codigo" data-executar="sim"><code>pratica = {"seg": 30, "ter": 20, "qua": 0, "qui": 45, "sex": 25}
+
+total = sum(pratica.values())
+dias_parados = [dia for dia, minutos in pratica.items() if minutos == 0]
+
+print(f"Você praticou {total} minutos nesta semana.")
+print("Dias sem prática:", ", ".join(dias_parados))</code></pre>
+    <p class="saida">Você praticou 120 minutos nesta semana.<br>
+Dias sem prática: qua</p>
+    <div class="atencao"><strong>Atenção:</strong> Não tente aprender tudo ao mesmo tempo. Escolha <strong>uma</strong> área, faça um projeto pequeno do começo ao fim e só então passe para a próxima.</div>
+
+    <h2>Seu portfólio</h2>
+    <p>Guarde cada projeto no GitHub (aula 244), com um <code>README.md</code> explicando o que ele faz e como rodar. Os projetos deste curso — jogo de adivinhação, lista de tarefas, analisador de texto, treino de digitação, agenda de contatos — já são um ótimo começo. Melhore cada um com as ideias dos "Desafios extras".</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>for semana, tema in enumerate(temas, start=1):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma lista com três projetos que você quer fazer e mostre cada um numerado, no formato <code>1. Nome do projeto</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>projetos = ["Jogo da forca", "Controle de mesada", "Quiz de geografia"]
+
+for numero, projeto in enumerate(projetos, start=1):
+    print(f"{numero}. {projeto}")</code></pre>
+      <p class="saida">1. Jogo da forca<br>
+2. Controle de mesada<br>
+3. Quiz de geografia</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Usando o dicionário <code>pratica</code> do exemplo, descubra o dia em que você mais praticou.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>pratica = {"seg": 30, "ter": 20, "qua": 0, "qui": 45, "sex": 25}
+
+melhor_dia = max(pratica, key=pratica.get)
+print(f"O dia com mais prática foi {melhor_dia}: {pratica[melhor_dia]} minutos.")</code></pre>
+      <p class="saida">O dia com mais prática foi qui: 45 minutos.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Faça uma função <code>meta_atingida(minutos, meta=150)</code> que devolva <code>True</code> se o total de minutos da semana chegou à meta, e teste com 140 e com 160.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def meta_atingida(minutos, meta=150):
+    return minutos &gt;= meta
+
+
+print(meta_atingida(140))
+print(meta_atingida(160))</code></pre>
+      <p class="saida">False<br>
+True</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="244-git-github.html" rel="prev">← Aula anterior</a>
+      <a href="index.html" rel="next">Voltar ao início do curso →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

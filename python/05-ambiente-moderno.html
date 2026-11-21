@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 05 · Gerenciadores de pacotes: pip, uv e pyproject.toml — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça os pacotes do Python, o pip, a ferramenta uv e o arquivo pyproject.toml, que descreve um projeto moderno.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 1 · Primeiros passos</p>
+    <h1>Aula 05 · Gerenciadores de pacotes: pip, uv e pyproject.toml</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que são pacotes e o que é o PyPI</li>
+        <li>Instalar e listar pacotes com <code>pip</code></li>
+        <li>Criar e rodar um projeto com a ferramenta <code>uv</code></li>
+        <li>Ler um arquivo <code>pyproject.toml</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Bibliotecas de outras pessoas</h2>
+    <p>O Python já vem com muita coisa pronta (a <strong>biblioteca padrão</strong>), mas a comunidade criou centenas de milhares de <strong>pacotes</strong> extras: para fazer jogos (<code>pygame</code>), acessar sites (<code>requests</code>), fazer gráficos (<code>matplotlib</code>) e muito mais. Eles ficam no <strong>PyPI</strong> (<a href="https://pypi.org">pypi.org</a>), a "loja de aplicativos" gratuita do Python.</p>
+    <p>Esta aula é uma visão geral, para você saber que essas ferramentas existem. Não precisa decorar nada: na aula 60 você vai praticar com calma os ambientes virtuais e o <code>pip</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esta aula é feita no <strong>terminal do seu computador</strong>. Abra o terminal do VS Code com <code>Ctrl+'</code>, dentro da pasta do seu projeto.</div>
+
+    <h2>pip: o instalador que vem com o Python</h2>
+    <p>O <strong>pip</strong> vem junto com o Python. Os comandos principais são:</p>
+<pre class="codigo"><code>pip install pygame          :: baixa e instala o pacote
+pip list                    :: mostra os pacotes instalados
+pip show pygame             :: mostra detalhes de um pacote
+pip uninstall pygame        :: remove o pacote</code></pre>
+    <p>Depois de instalado, o pacote é usado com <code>import</code>. Este programa só funciona no seu computador, depois do <code>pip install pygame</code>:</p>
+<pre class="codigo"><code>import pygame
+
+print("pygame versão", pygame.version.ver)</code></pre>
+    <div class="dica"><strong>Dica:</strong> Se o comando <code>pip</code> não for encontrado no Windows, use <code>py -m pip install pygame</code>. No Linux e no macOS, use <code>pip3</code> ou <code>python3 -m pip</code>.</div>
+
+    <h2>uv: uma ferramenta moderna e rápida</h2>
+    <p>O <strong>uv</strong> é uma ferramenta mais nova que faz o trabalho do <code>pip</code> e de outras ferramentas de uma vez: cria o projeto, cuida do ambiente virtual e instala pacotes muito rápido. Instale com o próprio pip (ou, no Windows, com <code>winget install astral-sh.uv</code>):</p>
+<pre class="codigo"><code>pip install uv
+uv --version</code></pre>
+    <p>Para começar um projeto novo:</p>
+<pre class="codigo"><code>uv init meu-jogo
+cd meu-jogo
+uv add pygame
+uv run main.py</code></pre>
+    <ul>
+      <li><code>uv init meu-jogo</code> cria a pasta do projeto com um <code>main.py</code> e um <code>pyproject.toml</code>;</li>
+      <li><code>uv add pygame</code> instala o pacote e anota no <code>pyproject.toml</code>;</li>
+      <li><code>uv run main.py</code> roda o programa usando o ambiente do projeto.</li>
+    </ul>
+
+    <h2>O arquivo pyproject.toml</h2>
+    <p>O <code>pyproject.toml</code> é a "ficha de identidade" do projeto: nome, versão, versão mínima do Python e pacotes de que ele precisa. Depois do <code>uv add pygame</code>, ele fica parecido com isto:</p>
+    <p class="saida">[project]<br>
+name = "meu-jogo"<br>
+version = "0.1.0"<br>
+description = "Add your description here"<br>
+readme = "README.md"<br>
+requires-python = "&gt;=3.12"<br>
+dependencies = [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"pygame&gt;=2.6.1",<br>
+]</p>
+    <p>O formato TOML é feito de pares <code>chave = valor</code>, agrupados em seções entre colchetes, como <code>[project]</code>. O Python sabe ler esse formato com o módulo <code>tomllib</code>. Rode no seu computador, na pasta do projeto:</p>
+<pre class="codigo"><code>import tomllib
+
+texto = """
+[project]
+name = "meu-jogo"
+version = "0.1.0"
+requires-python = "&gt;=3.12"
+dependencies = ["pygame&gt;=2.6.1"]
+"""
+
+dados = tomllib.loads(texto)
+print("Projeto:", dados["project"]["name"])
+print("Versão:", dados["project"]["version"])
+print("Precisa de:", dados["project"]["dependencies"])</code></pre>
+    <p class="saida">Projeto: meu-jogo<br>
+Versão: 0.1.0<br>
+Precisa de: ['pygame&gt;=2.6.1']</p>
+    <p>Não se preocupe com os colchetes e as aspas desse código: você vai entender cada parte nas próximas aulas.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>uv add pygame</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Qual comando instala o pacote <code>requests</code> com o pip? E qual mostra todos os pacotes instalados?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>pip install requests
+pip list</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva os comandos do uv para criar um projeto chamado <code>calculadora</code>, entrar na pasta e rodar o arquivo <code>main.py</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>uv init calculadora
+cd calculadora
+uv run main.py</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Num <code>pyproject.toml</code>, em que linha você descobre a versão mínima do Python que o projeto exige?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Na linha requires-python, por exemplo: requires-python = "&gt;=3.12"<br>
+(o projeto precisa do Python 3.12 ou mais novo).</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que é o PyPI?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">É o repositório oficial de pacotes do Python (pypi.org). É de lá que o pip<br>
+e o uv baixam os pacotes quando você pede para instalar.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="04-comentarios-docstrings.html" rel="prev">← Aula anterior</a>
+      <a href="06-lendo-mensagens-de-erro.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

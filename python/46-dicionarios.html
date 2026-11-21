@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 46 · Dicionários: chaves, valores e métodos — Curso de Python · DIGITAR</title>
+<meta name="description" content="Guarde informações em pares de chave e valor, como numa agenda, e conheça os principais métodos dos dicionários.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 46 · Dicionários: chaves, valores e métodos</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar dicionários com chaves e valores</li>
+        <li>Ler, adicionar, alterar e apagar itens</li>
+        <li>Usar <code>get</code> para ler uma chave que pode não existir</li>
+        <li>Percorrer com <code>keys</code>, <code>values</code> e <code>items</code></li>
+        <li>Usar <code>update</code>, <code>pop</code> e <code>setdefault</code>, e contar coisas com um dicionário</li>
+      </ul>
+    </div>
+
+    <h2>Chave e valor</h2>
+    <p>Numa lista, você acha um item pela posição. Num <strong>dicionário</strong>, você acha pelo <strong>nome</strong> — a <strong>chave</strong>. É como uma agenda: você procura "Mãe" e encontra o telefone. Dicionários usam chaves <code>{}</code> e cada item é <code>chave: valor</code>:</p>
+<pre class="codigo" data-executar="sim"><code>aluno = {"nome": "Rafael", "idade": 14, "cidade": "Curitiba"}
+print(aluno["nome"])
+print(aluno["idade"])
+print(aluno)</code></pre>
+    <p class="saida">Rafael<br>
+14<br>
+{'nome': 'Rafael', 'idade': 14, 'cidade': 'Curitiba'}</p>
+    <p>As chaves geralmente são textos (também podem ser números ou tuplas), e os valores podem ser qualquer coisa: números, textos, listas e até outros dicionários.</p>
+
+    <h2>Adicionar, alterar e apagar</h2>
+    <p>Atribuir a uma chave nova <strong>adiciona</strong>; atribuir a uma chave que já existe <strong>altera</strong>. Para apagar, use <code>del</code>:</p>
+<pre class="codigo" data-executar="sim"><code>estoque = {"pão de queijo": 30, "coxinha": 12}
+estoque["empada"] = 8
+estoque["coxinha"] = 20
+del estoque["pão de queijo"]
+print(estoque)
+print(len(estoque))</code></pre>
+    <p class="saida">{'coxinha': 20, 'empada': 8}<br>
+2</p>
+    <div class="dica"><strong>Dica:</strong> Cada chave aparece uma vez só. Se você criar <code>{"a": 1, "a": 2}</code>, fica valendo o último valor: <code>{"a": 2}</code>.</div>
+
+    <h2>Chaves que não existem: in e get</h2>
+    <p>Ler uma chave que não existe dá <code>KeyError</code>. Para evitar, confira com <code>in</code> ou use <code>get</code>, que devolve <code>None</code> (ou o valor padrão que você escolher) em vez de dar erro:</p>
+<pre class="codigo" data-executar="sim"><code>precos = {"banana": 6.99, "maçã": 9.50}
+print("uva" in precos)
+print(precos.get("uva"))
+print(precos.get("uva", 0))
+print(precos.get("banana", 0))</code></pre>
+    <p class="saida">False<br>
+None<br>
+0<br>
+6.99</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>precos["uva"]</code> com uma chave que não existe dá <code>KeyError: 'uva'</code>. Esse erro é muito comum — sempre que a chave puder faltar, prefira <code>get</code> ou teste com <code>in</code>.</div>
+
+    <h2>Percorrendo um dicionário</h2>
+    <p><code>keys()</code> dá as chaves, <code>values()</code> dá os valores e <code>items()</code> dá os pares. Um <code>for</code> direto no dicionário percorre as chaves. Desde o Python 3.7, os dicionários mantêm a ordem em que os itens foram inseridos.</p>
+<pre class="codigo" data-executar="sim"><code>populacao = {"São Paulo": 11.4, "Rio de Janeiro": 6.2, "Brasília": 2.8}
+for cidade in populacao:
+    print(cidade)
+print(round(sum(populacao.values()), 1))
+for cidade, milhoes in populacao.items():
+    print(f"{cidade}: {milhoes} milhões")</code></pre>
+    <p class="saida">São Paulo<br>
+Rio de Janeiro<br>
+Brasília<br>
+20.4<br>
+São Paulo: 11.4 milhões<br>
+Rio de Janeiro: 6.2 milhões<br>
+Brasília: 2.8 milhões</p>
+
+    <h2>Métodos úteis: update, pop e setdefault</h2>
+    <ul>
+      <li><code>update(outro)</code> copia os itens de outro dicionário para este (alterando os que já existem);</li>
+      <li><code>pop(chave, padrao)</code> tira a chave e devolve o valor dela;</li>
+      <li><code>setdefault(chave, valor)</code> devolve o valor da chave e, se ela não existir, cria com o valor dado.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>perfil = {"nome": "Duda", "nivel": 3}
+perfil.update({"nivel": 4, "ppm": 38})
+print(perfil)
+ppm = perfil.pop("ppm")
+print(ppm, perfil)
+print(perfil.pop("medalhas", 0))
+
+turmas = {}
+turmas.setdefault("8A", []).append("Ana")
+turmas.setdefault("8A", []).append("Caio")
+turmas.setdefault("9B", []).append("Lia")
+print(turmas)</code></pre>
+    <p class="saida">{'nome': 'Duda', 'nivel': 4, 'ppm': 38}<br>
+38 {'nome': 'Duda', 'nivel': 4}<br>
+0<br>
+{'8A': ['Ana', 'Caio'], '9B': ['Lia']}</p>
+    <p>O <code>setdefault</code> é ótimo para montar um <strong>dicionário de listas</strong>, como as turmas acima.</p>
+
+    <h2>Contando com dicionário</h2>
+    <p>Um uso clássico: contar quantas vezes cada coisa aparece. Para cada item, somamos 1 ao valor atual, que começa em 0 graças ao <code>get</code>:</p>
+<pre class="codigo" data-executar="sim"><code>votos = ["pizza", "hambúrguer", "pizza", "açaí", "pizza", "açaí"]
+contagem = {}
+for voto in votos:
+    contagem[voto] = contagem.get(voto, 0) + 1
+print(contagem)</code></pre>
+    <p class="saida">{'pizza': 3, 'hambúrguer': 1, 'açaí': 2}</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>contagem[voto] = contagem.get(voto, 0) + 1</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um dicionário com o nome, a série e a matéria favorita de um aluno e mostre a frase "Lívia está no 7º ano e gosta de Ciências".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>aluno = {"nome": "Lívia", "serie": "7º ano", "materia": "Ciências"}
+print(f"{aluno['nome']} está no {aluno['serie']} e gosta de {aluno['materia']}")</code></pre>
+      <p class="saida">Lívia está no 7º ano e gosta de Ciências</p>
+      <p>Repare que, dentro da f-string com aspas duplas, usamos aspas simples na chave.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Num dicionário de preços <code>{"café": 4.0, "pão": 0.75, "suco": 6.5}</code>, aumente o café para 4.5, adicione "bolo" por 7.0 e mostre todos os itens no formato <code>café: R$ 4.50</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>precos = {"café": 4.0, "pão": 0.75, "suco": 6.5}
+precos["café"] = 4.5
+precos["bolo"] = 7.0
+for item, preco in precos.items():
+    print(f"{item}: R$ {preco:.2f}")</code></pre>
+      <p class="saida">café: R$ 4.50<br>
+pão: R$ 0.75<br>
+suco: R$ 6.50<br>
+bolo: R$ 7.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>get</code> para mostrar o DDD de uma cidade ou "desconhecido" se ela não estiver no dicionário <code>{"São Paulo": 11, "Salvador": 71, "Manaus": 92}</code>. Teste com "Salvador" e com "Natal".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>ddd = {"São Paulo": 11, "Salvador": 71, "Manaus": 92}
+print(ddd.get("Salvador", "desconhecido"))
+print(ddd.get("Natal", "desconhecido"))</code></pre>
+      <p class="saida">71<br>
+desconhecido</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Conte quantas vezes cada letra aparece na palavra "paralelepipedo" usando um dicionário.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>contagem = {}
+for letra in "paralelepipedo":
+    contagem[letra] = contagem.get(letra, 0) + 1
+print(contagem)</code></pre>
+      <p class="saida">{'p': 3, 'a': 2, 'r': 1, 'l': 2, 'e': 3, 'i': 1, 'd': 1, 'o': 1}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Agrupe as frutas <code>["abacaxi", "banana", "acerola", "caju", "bacuri"]</code> pela letra inicial num dicionário de listas, usando <code>setdefault</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>frutas = ["abacaxi", "banana", "acerola", "caju", "bacuri"]
+grupos = {}
+for fruta in frutas:
+    grupos.setdefault(fruta[0], []).append(fruta)
+print(grupos)</code></pre>
+      <p class="saida">{'a': ['abacaxi', 'acerola'], 'b': ['banana', 'bacuri'], 'c': ['caju']}</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="45-funcoes-primeira-classe.html" rel="prev">← Aula anterior</a>
+      <a href="47-copia-rasa-profunda.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

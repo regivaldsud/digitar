@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 130 · Por que testar e o ciclo do TDD (vermelho, verde, refatorar) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda o que são testes automáticos, por que eles economizam tempo e como funciona o ciclo do TDD.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 6 · Testes automatizados</p>
+    <h1>Aula 130 · Por que testar e o ciclo do TDD (vermelho, verde, refatorar)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>A diferença entre testar na mão e testar automaticamente</li>
+        <li>Usar o comando <code>assert</code> para conferir resultados</li>
+        <li>O ciclo do TDD: vermelho, verde e refatorar</li>
+        <li>Escolher bons casos de teste, incluindo os limites</li>
+      </ul>
+    </div>
+
+    <h2>Testar na mão cansa</h2>
+    <p>Até agora você testou seus programas assim: roda, olha a saída e confere com os olhos. Funciona para programas pequenos, mas imagine conferir 50 casos toda vez que mudar uma linha. A gente cansa, esquece um caso e o erro escapa.</p>
+    <p>Um <strong>teste automático</strong> é um pedacinho de código que confere outro código. Ele roda em segundos, quantas vezes você quiser, e nunca fica com preguiça.</p>
+
+    <h2>O comando assert</h2>
+    <p>O jeito mais simples de testar em Python é o <code>assert</code>: você afirma que algo é verdade. Se for, nada acontece. Se não for, o Python para com um <code>AssertionError</code>.</p>
+<pre class="codigo" data-executar="sim"><code>def dobro(n):
+    return n * 2
+
+
+assert dobro(3) == 6
+assert dobro(0) == 0
+assert dobro(-2) == -4
+print("Todos os testes passaram!")</code></pre>
+    <p class="saida">Todos os testes passaram!</p>
+    <p>Agora veja o que acontece quando a função tem um erro (ela soma em vez de multiplicar):</p>
+<pre class="codigo" data-executar="sim"><code>def dobro(n):
+    return n + 2
+
+
+assert dobro(3) == 6, "dobro(3) deveria dar 6"
+print("Esta linha nem chega a rodar.")</code></pre>
+    <p class="saida">AssertionError: dobro(3) deveria dar 6</p>
+    <p>O texto depois da vírgula é a mensagem que aparece quando o <code>assert</code> falha. Ela ajuda a entender o que deu errado.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>assert</code> não tem parênteses em volta de tudo. Escrever <code>assert(dobro(3) == 6, "mensagem")</code> cria uma tupla, que é sempre verdadeira, e o teste nunca falha! Escreva <code>assert condicao, "mensagem"</code>.</div>
+
+    <h2>O ciclo do TDD</h2>
+    <p><strong>TDD</strong> (do inglês *Test-Driven Development*, desenvolvimento guiado por testes) é um jeito de programar em que você escreve o teste <strong>antes</strong> do código. O ciclo tem três cores:</p>
+    <ul>
+      <li><strong>Vermelho:</strong> escreva um teste para algo que ainda não existe. Rode: ele falha.</li>
+      <li><strong>Verde:</strong> escreva o código mais simples que faz o teste passar.</li>
+      <li><strong>Refatorar:</strong> melhore o código (nomes, organização) sem mudar o que ele faz. Os testes avisam se algo quebrar.</li>
+    </ul>
+    <p>Depois, repita com o próximo pedacinho. Veja o ciclo com a função <code>e_maior_de_idade</code>. Primeiro o vermelho: a função ainda não faz nada.</p>
+<pre class="codigo" data-executar="sim"><code>def e_maior_de_idade(idade):
+    pass  # ainda não escrevemos
+
+
+assert e_maior_de_idade(18) is True, "18 anos é maior de idade"</code></pre>
+    <p class="saida">AssertionError: 18 anos é maior de idade</p>
+    <p>Agora o verde: o código mais simples que passa nos testes.</p>
+<pre class="codigo" data-executar="sim"><code>def e_maior_de_idade(idade):
+    return idade &gt;= 18
+
+
+assert e_maior_de_idade(18) is True
+assert e_maior_de_idade(30) is True
+assert e_maior_de_idade(17) is False
+print("Verde: tudo passou!")</code></pre>
+    <p class="saida">Verde: tudo passou!</p>
+    <div class="dica"><strong>Dica:</strong> Ver o teste falhar primeiro é importante: prova que o teste realmente consegue pegar um erro. Um teste que nunca falha pode estar testando nada.</div>
+
+    <h2>Escolhendo bons casos</h2>
+    <p>Os erros adoram se esconder nos <strong>limites</strong>. Se a regra é "a partir de 18", teste 17, 18 e 19. Se é "nota maior ou igual a 7", teste 6.9, 7 e 7.1. Teste também casos estranhos: zero, número negativo, texto vazio.</p>
+<pre class="codigo" data-executar="sim"><code>def situacao(nota):
+    if nota &gt;= 7:
+        return "aprovado"
+    if nota &gt;= 5:
+        return "recuperação"
+    return "reprovado"
+
+
+casos = [(7, "aprovado"), (6.9, "recuperação"), (5, "recuperação"),
+         (4.9, "reprovado"), (0, "reprovado"), (10, "aprovado")]
+for nota, esperado in casos:
+    assert situacao(nota) == esperado, f"nota {nota}"
+print(len(casos), "casos testados, todos certos")</code></pre>
+    <p class="saida">6 casos testados, todos certos</p>
+    <p>Na próxima aula você vai organizar testes assim com o módulo <code>unittest</code>, que mostra um relatório bonito de quais passaram e quais falharam.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>assert dobro(3) == 6, "dobro(3) deveria dar 6"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva três <code>assert</code> para a função <code>triplo(n)</code>, que devolve o número vezes 3, testando 2, 0 e -1.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def triplo(n):
+    return n * 3
+
+
+assert triplo(2) == 6
+assert triplo(0) == 0
+assert triplo(-1) == -3
+print("ok")</code></pre>
+      <p class="saida">ok</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> A regra da meia-entrada do cinema é: até 12 anos (inclusive) ou a partir de 60 anos. Quais idades você testaria para pegar erros nos limites? Escreva a função e os testes.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def meia_entrada(idade):
+    return idade &lt;= 12 or idade &gt;= 60
+
+
+assert meia_entrada(12) is True
+assert meia_entrada(13) is False
+assert meia_entrada(59) is False
+assert meia_entrada(60) is True
+print("limites conferidos")</code></pre>
+      <p class="saida">limites conferidos</p>
+      <p>Os limites são 12/13 e 59/60: é exatamente onde um <code>&lt;</code> trocado por <code>&lt;=</code> faria diferença.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que <code>assert(1 == 2, "erro")</code> nunca falha? Rode e veja.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>resultado = (1 == 2, "erro")
+print(bool(resultado))</code></pre>
+      <p class="saida">True</p>
+      <p>Os parênteses criam uma tupla com dois itens, e toda tupla que não está vazia é verdadeira. O certo é <code>assert 1 == 2, "erro"</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Coloque em ordem as três etapas do TDD e diga o que acontece em cada uma.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">1. Vermelho: escrevo um teste para algo que ainda não existe; ele falha.<br>
+2. Verde: escrevo o código mais simples que faz o teste passar.<br>
+3. Refatorar: melhoro o código sem mudar o comportamento; os testes continuam passando.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="119-imagens-pillow.html" rel="prev">← Aula anterior</a>
+      <a href="131-unittest.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

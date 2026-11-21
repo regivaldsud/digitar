@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 241 · HTML5 para quem programa em Python — Curso de Python · DIGITAR</title>
+<meta name="description" content="O básico do HTML5 — tags, títulos, parágrafos, listas, links e imagens — e como gerar páginas HTML com Python.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 12 · Extras</p>
+    <h1>Aula 241 · HTML5 para quem programa em Python</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender o que é HTML e como uma página é montada com tags</li>
+        <li>Escrever uma página simples com títulos, parágrafos, listas, links e imagens</li>
+        <li>Gerar um arquivo HTML a partir de um programa Python</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>O que é HTML</h2>
+    <p>Toda página da internet é um arquivo de texto escrito em <strong>HTML</strong>. Ele não é uma linguagem de programação: não tem <code>if</code> nem laços. É uma linguagem de <strong>marcação</strong>, que diz ao navegador o que é cada pedaço — isto é um título, isto é um parágrafo, isto é um link.</p>
+    <p>Cada pedaço fica entre <strong>tags</strong>: uma de abertura, como <code>&lt;p&gt;</code>, e uma de fechamento, como <code>&lt;/p&gt;</code>. Quem programa em Python precisa de HTML para fazer sites com Django (módulo 11) e para gerar relatórios bonitos.</p>
+
+    <h2>Uma página completa</h2>
+    <p>Crie no VS Code um arquivo <code>index.html</code> com este conteúdo e abra-o com dois cliques (ele abre no navegador):</p>
+<pre class="codigo"><code>&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;Minha página&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Olá, eu sou a Bia!&lt;/h1&gt;
+  &lt;p&gt;Estou aprendendo &lt;strong&gt;Python&lt;/strong&gt; e HTML.&lt;/p&gt;
+  &lt;h2&gt;Minhas comidas favoritas&lt;/h2&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Coxinha&lt;/li&gt;
+    &lt;li&gt;Açaí&lt;/li&gt;
+    &lt;li&gt;Pão de queijo&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;p&gt;Treino digitação no &lt;a href="https://example.com"&gt;DIGITAR&lt;/a&gt;.&lt;/p&gt;
+  &lt;img src="foto.jpg" alt="Minha foto na praia"&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <ul>
+      <li><code>&lt;head&gt;</code> guarda informações sobre a página (como o título da aba); <code>&lt;body&gt;</code> guarda o que aparece na tela.</li>
+      <li><code>&lt;h1&gt;</code> a <code>&lt;h6&gt;</code> são títulos, do maior ao menor; <code>&lt;p&gt;</code> é parágrafo; <code>&lt;strong&gt;</code> é destaque.</li>
+      <li><code>&lt;ul&gt;</code> é uma lista com marcadores e cada item é um <code>&lt;li&gt;</code>; <code>&lt;ol&gt;</code> faz uma lista numerada.</li>
+      <li><code>&lt;a href="..."&gt;</code> é um link e <code>&lt;img src="..." alt="..."&gt;</code> é uma imagem. O <code>alt</code> descreve a imagem para quem não pode vê-la.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer de fechar uma tag (escrever <code>&lt;p&gt;</code> e não pôr <code>&lt;/p&gt;</code>) ou fechar na ordem errada bagunça a página. Feche sempre na ordem inversa da abertura: <code>&lt;p&gt;&lt;strong&gt;oi&lt;/strong&gt;&lt;/p&gt;</code>.</div>
+    <div class="dica"><strong>Dica:</strong> <code>&lt;meta charset="utf-8"&gt;</code> faz os acentos e o ç aparecerem certos. Sem ele, "Açaí" pode virar letras estranhas.</div>
+
+    <h2>Gerando HTML com Python</h2>
+    <p>Como o HTML é só texto, o Python consegue escrever páginas sozinho. Este programa monta uma lista a partir de uma lista do Python e salva o arquivo <code>comidas.html</code>:</p>
+<pre class="codigo"><code>from pathlib import Path
+
+comidas = ["Coxinha", "Açaí", "Pão de queijo"]
+itens = "\n".join(f"    &lt;li&gt;{comida}&lt;/li&gt;" for comida in comidas)
+
+pagina = f"""&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;title&gt;Comidas&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Comidas favoritas&lt;/h1&gt;
+  &lt;ul&gt;
+{itens}
+  &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"""
+Path("comidas.html").write_text(pagina, encoding="utf-8")
+print(itens)
+print("Página salva em comidas.html")</code></pre>
+    <p class="saida">&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Coxinha&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Açaí&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Pão de queijo&lt;/li&gt;<br>
+Página salva em comidas.html</p>
+    <p>Abra <code>comidas.html</code> no navegador para ver o resultado. Mude a lista no Python, rode de novo e a página muda junto.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>&lt;p&gt;Estou aprendendo &lt;strong&gt;Python&lt;/strong&gt;&lt;/p&gt;</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva o HTML de uma lista numerada (<code>&lt;ol&gt;</code>) com os três primeiros passos para fazer um café.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>&lt;ol&gt;
+  &lt;li&gt;Ferver a água&lt;/li&gt;
+  &lt;li&gt;Colocar o pó no coador&lt;/li&gt;
+  &lt;li&gt;Despejar a água devagar&lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça um programa Python que receba um dicionário de contatos (nome e telefone) e gere as linhas de uma tabela HTML, uma <code>&lt;tr&gt;</code> por contato, mostrando o resultado com <code>print</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>contatos = {"Mãe": "(11) 99999-1234", "Pai": "(11) 98888-4321"}
+
+for nome, telefone in contatos.items():
+    print(f"&lt;tr&gt;&lt;td&gt;{nome}&lt;/td&gt;&lt;td&gt;{telefone}&lt;/td&gt;&lt;/tr&gt;")</code></pre>
+      <p class="saida">&lt;tr&gt;&lt;td&gt;Mãe&lt;/td&gt;&lt;td&gt;(11) 99999-1234&lt;/td&gt;&lt;/tr&gt;<br>
+&lt;tr&gt;&lt;td&gt;Pai&lt;/td&gt;&lt;td&gt;(11) 98888-4321&lt;/td&gt;&lt;/tr&gt;</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Para que serve o atributo <code>alt</code> em <code>&lt;img src="gato.jpg" alt="Gato dormindo no sofá"&gt;</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O alt descreve a imagem em texto. Ele é lido por leitores de tela (usados por pessoas cegas)<br>
+e aparece no lugar da imagem quando ela não carrega.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="240-terminal.html" rel="prev">← Aula anterior</a>
+      <a href="242-css.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

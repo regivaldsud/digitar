@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 60 · Ambientes virtuais (venv), pip e requirements.txt — Curso de Python · DIGITAR</title>
+<meta name="description" content="Instale bibliotecas de outras pessoas com pip, isole cada projeto num ambiente virtual com venv e guarde as dependências em requirements.txt.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 60 · Ambientes virtuais (venv), pip e requirements.txt</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que são pacotes e o que é o PyPI</li>
+        <li>Criar e ativar um ambiente virtual com <code>venv</code></li>
+        <li>Instalar, listar e remover pacotes com <code>pip</code></li>
+        <li>Guardar as dependências do projeto em <code>requirements.txt</code></li>
+        <li>Conferir, pelo próprio Python, se você está num ambiente virtual</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Bibliotecas de outras pessoas</h2>
+    <p>A biblioteca padrão do Python já é enorme, mas a comunidade criou centenas de milhares de <strong>pacotes</strong> extras: para fazer jogos (<code>pygame</code>), acessar sites (<code>requests</code>), fazer gráficos (<code>matplotlib</code>) e muito mais. Eles ficam no <strong>PyPI</strong> (<a href="https://pypi.org">pypi.org</a>), a "loja de aplicativos" gratuita do Python.</p>
+    <p>Quem instala esses pacotes é o <strong>pip</strong>, um programa que vem junto com o Python. Esta aula é feita no terminal do seu computador: abra o terminal do VS Code com <code>Ctrl+'</code>, dentro da pasta do seu projeto (aula 03).</p>
+
+    <h2>Por que um ambiente virtual?</h2>
+    <p>Imagine que o projeto A precisa da versão 1 de um pacote e o projeto B precisa da versão 2. Se tudo for instalado no mesmo lugar, um projeto quebra o outro. Um <strong>ambiente virtual</strong> (venv) é uma pasta com um Python só daquele projeto: o que você instala ali não afeta mais nada.</p>
+<pre class="codigo"><code>cd curso-python
+python -m venv .venv</code></pre>
+    <p>Isso cria a pasta <code>.venv</code>. O nome com ponto é um costume que muitos editores reconhecem.</p>
+
+    <h2>Ativando o ambiente</h2>
+    <p>No <strong>Prompt de Comando</strong> (cmd):</p>
+<pre class="codigo"><code>.venv\Scripts\activate</code></pre>
+    <p>No <strong>PowerShell</strong> (o terminal padrão do VS Code):</p>
+<pre class="codigo"><code>.venv\Scripts\Activate.ps1</code></pre>
+    <p>No <strong>Linux</strong> e no <strong>macOS</strong>:</p>
+<pre class="codigo"><code>source .venv/bin/activate</code></pre>
+    <p>Quando der certo, o nome do ambiente aparece entre parênteses no começo da linha:</p>
+    <p class="saida">(.venv) C:\Users\Ana\Documents\curso-python&gt;</p>
+    <p>Para sair do ambiente, digite <code>deactivate</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se o PowerShell disser que "a execução de scripts foi desabilitada neste sistema", rode uma vez <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>, confirme com <code>S</code> e tente ativar de novo. Isso libera scripts só para o seu usuário. Se preferir, use o Prompt de Comando.</div>
+    <div class="dica"><strong>Dica:</strong> O VS Code percebe a pasta <code>.venv</code> e pergunta se quer usá-la. Aceite! Para escolher manualmente, aperte <code>Ctrl+Shift+P</code> e procure <strong>Python: Select Interpreter</strong>.</div>
+    <p>Este pequeno programa diz se está rodando num ambiente virtual. Salve como <code>onde_estou.py</code> e rode com e sem o venv ativado:</p>
+<pre class="codigo"><code>import sys
+
+if sys.prefix != sys.base_prefix:
+    print("Estou num ambiente virtual:", sys.prefix)
+else:
+    print("Estou no Python principal do computador")</code></pre>
+    <p class="saida">Estou num ambiente virtual: C:\Users\Ana\Documents\curso-python\.venv</p>
+
+    <h2>Instalando pacotes com pip</h2>
+    <p>Com o ambiente ativado:</p>
+<pre class="codigo"><code>pip install requests
+pip list
+pip show requests
+pip uninstall requests</code></pre>
+    <ul>
+      <li><code>pip install nome</code> baixa e instala (e <code>pip install nome==2.32.5</code> instala uma versão exata);</li>
+      <li><code>pip list</code> mostra o que está instalado;</li>
+      <li><code>pip show nome</code> mostra detalhes de um pacote;</li>
+      <li><code>pip uninstall nome</code> remove.</li>
+    </ul>
+    <p>Depois de instalar, use normalmente com <code>import</code>. Este programa precisa da internet, então rode no seu computador:</p>
+<pre class="codigo"><code>import requests
+
+resposta = requests.get("https://api.github.com")
+print(resposta.status_code)</code></pre>
+    <p class="saida">200</p>
+    <p>Para saber pelo Python qual versão de um pacote está instalada, use <code>importlib.metadata</code>:</p>
+<pre class="codigo"><code>from importlib.metadata import version
+
+print("pip versão", version("pip"))</code></pre>
+    <p class="saida">pip versão 24.2</p>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>ModuleNotFoundError: No module named 'requests'</code> mesmo depois de instalar, provavelmente você instalou num Python e está rodando em outro. Ative o venv antes de rodar e confira no VS Code (canto inferior direito) se o interpretador escolhido é o da <code>.venv</code>. Usar <code>python -m pip install ...</code> garante que o pip é o do mesmo Python.</div>
+
+    <h2>requirements.txt</h2>
+    <p>Para que outra pessoa (ou você em outro computador) instale os mesmos pacotes, guarde a lista num arquivo:</p>
+<pre class="codigo"><code>pip freeze &gt; requirements.txt</code></pre>
+    <p>O arquivo fica assim, um pacote por linha com a versão:</p>
+    <p class="saida">certifi==2025.8.3<br>
+charset-normalizer==3.4.3<br>
+idna==3.10<br>
+requests==2.32.5<br>
+urllib3==2.5.0</p>
+    <p>Em outro computador, depois de criar e ativar um venv novo:</p>
+<pre class="codigo"><code>pip install -r requirements.txt</code></pre>
+    <p>Como o <code>requirements.txt</code> é só texto, dá para lê-lo com Python, como qualquer arquivo (aula 61):</p>
+<pre class="codigo"><code>with open("requirements.txt", "w", encoding="utf-8") as f:
+    f.write("requests==2.32.5\nidna==3.10\n")
+
+with open("requirements.txt", encoding="utf-8") as f:
+    for linha in f:
+        nome, versao = linha.strip().split("==")
+        print(f"{nome}: versão {versao}")</code></pre>
+    <p class="saida">requests: versão 2.32.5<br>
+idna: versão 3.10</p>
+    <div class="dica"><strong>Dica:</strong> Não envie a pasta <code>.venv</code> para o GitHub nem para os amigos: ela é grande e só funciona no seu computador. Envie o <code>requirements.txt</code> — com ele, qualquer um recria o ambiente. Na aula 05 você conhece o <code>uv</code> e o <code>pyproject.toml</code>, um jeito mais moderno de fazer tudo isso.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>python -m venv .venv</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva os comandos para: criar um ambiente virtual chamado <code>.venv</code>, ativá-lo no Prompt de Comando e instalar o pacote <code>pygame</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>python -m venv .venv
+.venv\Scripts\activate
+pip install pygame</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Como você sabe que o ambiente virtual está ativado? Cite dois jeitos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">1. O nome do ambiente aparece entre parênteses no começo da linha do terminal:<br>
+&nbsp;&nbsp;&nbsp;(.venv) C:\Users\Ana\Documents\curso-python&gt;<br>
+2. Rodando um programa que compara sys.prefix com sys.base_prefix:<br>
+&nbsp;&nbsp;&nbsp;se forem diferentes, você está num venv.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Qual comando salva a lista de pacotes do projeto num arquivo, e qual comando instala tudo a partir dele em outro computador?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>pip freeze &gt; requirements.txt
+pip install -r requirements.txt</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Ao ativar o venv no PowerShell, apareceu um erro dizendo que a execução de scripts está desabilitada. O que fazer?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Rodar uma vez: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned<br>
+(e confirmar com S). Outra opção é usar o Prompt de Comando (cmd)<br>
+e ativar com .venv\Scripts\activate</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que não é uma boa ideia enviar a pasta <code>.venv</code> junto com o seu projeto para o GitHub?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque ela é grande e só funciona no computador onde foi criada. O certo é<br>
+enviar o requirements.txt; quem baixar o projeto cria o próprio venv e roda<br>
+pip install -r requirements.txt.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="59-recursao.html" rel="prev">← Aula anterior</a>
+      <a href="61-arquivos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

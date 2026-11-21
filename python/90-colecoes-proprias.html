@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 90 · Sua própria coleção com Iterable, Iterator e Sequence — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie classes que funcionam no for, com len, índices e in, usando os protocolos do Python e o módulo collections.abc.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 90 · Sua própria coleção com Iterable, Iterator e Sequence</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender a diferença entre iterável e iterador</li>
+        <li>Escrever uma classe iteradora com <code>__iter__</code> e <code>__next__</code></li>
+        <li>Tornar uma classe iterável de um jeito curto, com <code>yield</code></li>
+        <li>Criar uma sequência com <code>__len__</code> e <code>__getitem__</code></li>
+        <li>Usar <code>collections.abc</code> para conferir e herdar comportamentos prontos</li>
+      </ul>
+    </div>
+
+    <h2>Iterável e iterador: dois papéis</h2>
+    <p>Na aula 52 você viu que o <code>for</code> funciona com qualquer <strong>iterável</strong>: listas, textos, dicionários, geradores. Por dentro, o <code>for</code> faz duas coisas: pede um <strong>iterador</strong> ao objeto com <code>iter()</code> e depois chama <code>next()</code> nele até acabar.</p>
+    <ul>
+      <li><strong>Iterável</strong> é quem sabe criar um iterador: tem o método <code>__iter__</code>.</li>
+      <li><strong>Iterador</strong> é quem entrega os itens um por um: tem <code>__next__</code> (e também <code>__iter__</code>, que devolve ele mesmo). Quando acabam os itens, ele levanta <code>StopIteration</code>.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>frutas = ["caju", "manga", "acerola"]
+it = iter(frutas)
+print(next(it))
+print(next(it))
+print(next(it))
+try:
+    next(it)
+except StopIteration:
+    print("Acabaram as frutas!")</code></pre>
+    <p class="saida">caju<br>
+manga<br>
+acerola<br>
+Acabaram as frutas!</p>
+
+    <h2>Uma classe iteradora</h2>
+    <p>Vamos criar uma contagem regressiva de lançamento de foguete. A classe guarda onde está e entrega o próximo número a cada <code>next</code>:</p>
+<pre class="codigo" data-executar="sim"><code>class ContagemRegressiva:
+    def __init__(self, inicio):
+        self.atual = inicio
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.atual &lt; 0:
+            raise StopIteration
+        numero = self.atual
+        self.atual -= 1
+        return numero
+
+
+for n in ContagemRegressiva(5):
+    print(n, end=" ")
+print("Decolar!")</code></pre>
+    <p class="saida">5 4 3 2 1 0 Decolar!</p>
+    <div class="atencao"><strong>Atenção:</strong> Um iterador só pode ser percorrido <strong>uma vez</strong>. Depois que ele chega ao fim, um segundo <code>for</code> no mesmo objeto não mostra nada. Se você precisa percorrer várias vezes, faça uma classe <strong>iterável</strong> que cria um iterador novo a cada <code>for</code>, como na próxima seção.</div>
+
+    <h2>O jeito curto: __iter__ com yield</h2>
+    <p>Escrever <code>__next__</code> à mão dá trabalho. Quase sempre é mais simples fazer <code>__iter__</code> ser um gerador: cada <code>for</code> chama <code>__iter__</code> de novo e ganha um gerador novinho.</p>
+<pre class="codigo" data-executar="sim"><code>class Turma:
+    def __init__(self, nome):
+        self.nome = nome
+        self.alunos = []
+
+    def matricular(self, aluno):
+        self.alunos.append(aluno)
+
+    def __iter__(self):
+        for numero, aluno in enumerate(self.alunos, start=1):
+            yield f"{numero}. {aluno}"
+
+
+turma = Turma("7º ano B")
+turma.matricular("Davi")
+turma.matricular("Helena")
+turma.matricular("Yasmin")
+for linha in turma:
+    print(linha)
+print(list(turma))</code></pre>
+    <p class="saida">1. Davi<br>
+2. Helena<br>
+3. Yasmin<br>
+['1. Davi', '2. Helena', '3. Yasmin']</p>
+    <p>Repare que <code>list(turma)</code> funcionou mesmo depois do <code>for</code>: cada uso começa do zero.</p>
+
+    <h2>Uma sequência: __len__ e __getitem__</h2>
+    <p>Listas e textos são <strong>sequências</strong>: têm tamanho e aceitam índices. Para sua classe se comportar assim, escreva <code>__len__</code> (usado por <code>len()</code>) e <code>__getitem__</code> (usado por <code>obj[i]</code>). Se você herdar de <code>collections.abc.Sequence</code>, o Python ainda dá de presente <code>in</code>, <code>index</code>, <code>count</code> e <code>reversed</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from collections.abc import Sequence
+
+
+class Estante(Sequence):
+    def __init__(self, *livros):
+        self._livros = list(livros)
+
+    def __len__(self):
+        return len(self._livros)
+
+    def __getitem__(self, indice):
+        return self._livros[indice]
+
+
+estante = Estante("O Pequeno Príncipe", "Capitães da Areia", "A Bolsa Amarela")
+print(len(estante))
+print(estante[0])
+print(estante[-1])
+print(estante[0:2])
+print("Capitães da Areia" in estante)
+print(estante.index("A Bolsa Amarela"))
+print(list(reversed(estante)))</code></pre>
+    <p class="saida">3<br>
+O Pequeno Príncipe<br>
+A Bolsa Amarela<br>
+['O Pequeno Príncipe', 'Capitães da Areia']<br>
+True<br>
+2<br>
+['A Bolsa Amarela', 'Capitães da Areia', 'O Pequeno Príncipe']</p>
+    <p>Como <code>__getitem__</code> repassa o índice para a lista interna, até as fatias (<code>estante[0:2]</code>) funcionam.</p>
+    <div class="dica"><strong>Dica:</strong> Herdar de <code>Sequence</code> obriga você a escrever <code>__len__</code> e <code>__getitem__</code>. Se esquecer um deles, o Python avisa com <code>TypeError: Can't instantiate abstract class</code> — é a ideia das classes abstratas da aula 78.</div>
+
+    <h2>Conferindo com isinstance</h2>
+    <p>O módulo <code>collections.abc</code> também serve para perguntar "esse objeto é iterável?" sem testar na marra:</p>
+<pre class="codigo" data-executar="sim"><code>from collections.abc import Iterable, Iterator
+
+numeros = [1, 2, 3]
+print(isinstance(numeros, Iterable))
+print(isinstance(numeros, Iterator))
+print(isinstance(iter(numeros), Iterator))
+print(isinstance(42, Iterable))</code></pre>
+    <p class="saida">True<br>
+False<br>
+True<br>
+False</p>
+    <p>Uma lista é iterável, mas não é iteradora; <code>iter(lista)</code> é. E um número não é iterável — por isso <code>for x in 42</code> dá erro.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def __getitem__(self, indice): return self._itens[indice]</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma classe iteradora <code>Dado</code> que entregue as faces de 1 a 6, uma por vez, e use-a num <code>for</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Dado:
+    def __init__(self):
+        self.face = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.face == 6:
+            raise StopIteration
+        self.face += 1
+        return self.face
+
+
+for face in Dado():
+    print(face, end=" ")
+print()</code></pre>
+      <p class="saida">1 2 3 4 5 6</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie uma classe <code>Cardapio</code> com uma lista de pratos e um <code>__iter__</code> com <code>yield</code> que entregue só os pratos que custam até R$ 20.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Cardapio:
+    def __init__(self):
+        self.pratos = [("Pastel", 8.0), ("Feijoada", 32.0), ("Coxinha", 6.5), ("Moqueca", 45.0)]
+
+    def __iter__(self):
+        for nome, preco in self.pratos:
+            if preco &lt;= 20:
+                yield nome
+
+
+print(list(Cardapio()))</code></pre>
+      <p class="saida">['Pastel', 'Coxinha']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a sequência <code>Semana</code> (herdando de <code>Sequence</code>) com os sete dias. Mostre <code>len</code>, o primeiro dia, o último e teste se "sábado" está nela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections.abc import Sequence
+
+
+class Semana(Sequence):
+    dias = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"]
+
+    def __len__(self):
+        return len(self.dias)
+
+    def __getitem__(self, indice):
+        return self.dias[indice]
+
+
+semana = Semana()
+print(len(semana), semana[0], semana[-1])
+print("sábado" in semana)</code></pre>
+      <p class="saida">7 domingo sábado<br>
+True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que acontece se você percorrer duas vezes o mesmo objeto <code>ContagemRegressiva(3)</code>? Teste e explique.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class ContagemRegressiva:
+    def __init__(self, inicio):
+        self.atual = inicio
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.atual &lt; 0:
+            raise StopIteration
+        numero = self.atual
+        self.atual -= 1
+        return numero
+
+
+contagem = ContagemRegressiva(3)
+print(list(contagem))
+print(list(contagem))</code></pre>
+      <p class="saida">[3, 2, 1, 0]<br>
+[]</p>
+      <p>Na segunda vez a lista sai vazia: o iterador já chegou ao fim e não volta sozinho. Uma classe com <code>__iter__</code> que usa <code>yield</code> não tem esse problema.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="89-namedtuple.html" rel="prev">← Aula anterior</a>
+      <a href="91-type-hints.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

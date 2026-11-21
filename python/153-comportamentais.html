@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 153 · Comportamentais: Strategy, Observer, Command, State, Template Method, Iterator, Chain of Responsibility, Mediator, Memento, Visitor — Curso de Python · DIGITAR</title>
+<meta name="description" content="Padrões que organizam como os objetos conversam e dividem tarefas, com exemplos curtos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 8 · Padrões de projeto</p>
+    <h1>Aula 153 · Comportamentais: Strategy, Observer, Command, State, Template Method, Iterator, Chain of Responsibility, Mediator, Memento, Visitor</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Trocar o algoritmo em tempo de execução (Strategy)</li>
+        <li>Avisar vários interessados quando algo muda (Observer)</li>
+        <li>Guardar ações para desfazer (Command e Memento)</li>
+        <li>Uma visão geral dos outros padrões comportamentais</li>
+      </ul>
+    </div>
+
+    <h2>Strategy: trocar a estratégia</h2>
+    <p>No Python, funções são valores (aula 45), então a <strong>Strategy</strong> fica bem simples: passe a função que faz o cálculo.</p>
+<pre class="codigo" data-executar="sim"><code>def sem_desconto(valor):
+    return valor
+
+
+def black_friday(valor):
+    return valor * 0.7
+
+
+def cupom_10(valor):
+    return valor - 10
+
+
+def fechar_compra(valor, estrategia):
+    return round(estrategia(valor), 2)
+
+
+for estrategia in [sem_desconto, black_friday, cupom_10]:
+    print(estrategia.__name__, fechar_compra(200, estrategia))</code></pre>
+    <p class="saida">sem_desconto 200<br>
+black_friday 140.0<br>
+cupom_10 190</p>
+
+    <h2>Observer: avisar quem se inscreveu</h2>
+    <p>Um canal de vídeos avisa todos os inscritos quando publica algo novo:</p>
+<pre class="codigo" data-executar="sim"><code>class Canal:
+    def __init__(self, nome):
+        self.nome = nome
+        self.inscritos = []
+
+    def inscrever(self, funcao):
+        self.inscritos.append(funcao)
+
+    def publicar(self, video):
+        for avisar in self.inscritos:
+            avisar(self.nome, video)
+
+
+def avisar_bia(canal, video):
+    print(f"Bia: novo vídeo em {canal}: {video}")
+
+
+def avisar_leo(canal, video):
+    print(f"Leo: {canal} postou {video}!")
+
+
+canal = Canal("Ciência Fácil")
+canal.inscrever(avisar_bia)
+canal.inscrever(avisar_leo)
+canal.publicar("Por que o céu é azul?")</code></pre>
+    <p class="saida">Bia: novo vídeo em Ciência Fácil: Por que o céu é azul?<br>
+Leo: Ciência Fácil postou Por que o céu é azul?!</p>
+
+    <h2>Command e Memento: desfazer</h2>
+    <p>O <strong>Command</strong> transforma uma ação em objeto, que pode ser guardado numa lista e desfeito depois. O <strong>Memento</strong> guarda uma "foto" do estado para voltar a ela. Um editor bem simples com <code>Ctrl+Z</code>:</p>
+<pre class="codigo" data-executar="sim"><code>class Editor:
+    def __init__(self):
+        self.texto = ""
+        self.historico = []
+
+    def escrever(self, trecho):
+        self.historico.append(self.texto)
+        self.texto += trecho
+
+    def desfazer(self):
+        if self.historico:
+            self.texto = self.historico.pop()
+
+
+ed = Editor()
+ed.escrever("Olá")
+ed.escrever(", mundo")
+ed.escrever("!!!")
+print(ed.texto)
+ed.desfazer()
+print(ed.texto)
+ed.desfazer()
+print(ed.texto)</code></pre>
+    <p class="saida">Olá, mundo!!!<br>
+Olá, mundo<br>
+Olá</p>
+
+    <h2>Os outros, em uma frase</h2>
+    <ul>
+      <li><strong>State</strong>: o objeto muda de comportamento conforme o estado (semáforo verde, amarelo, vermelho).</li>
+      <li><strong>Template Method</strong>: a classe-mãe define os passos; as filhas preenchem alguns deles.</li>
+      <li><strong>Iterator</strong>: percorre uma coleção sem mostrar como ela é guardada por dentro (aula 52 e aula 90).</li>
+      <li><strong>Chain of Responsibility</strong>: um pedido passa por uma corrente de "atendentes" até alguém resolver.</li>
+      <li><strong>Mediator</strong>: um objeto central coordena a conversa entre os outros, como a torre de controle de um aeroporto.</li>
+      <li><strong>Visitor</strong>: acrescenta operações novas a uma estrutura de objetos sem mudar as classes deles.</li>
+    </ul>
+    <p>Um exemplo de State com o semáforo:</p>
+<pre class="codigo" data-executar="sim"><code>proximo = {"verde": "amarelo", "amarelo": "vermelho", "vermelho": "verde"}
+estado = "verde"
+for _ in range(4):
+    print(estado)
+    estado = proximo[estado]</code></pre>
+    <p class="saida">verde<br>
+amarelo<br>
+vermelho<br>
+verde</p>
+    <div class="atencao"><strong>Atenção:</strong> No <code>Observer</code>, passe a função <strong>sem</strong> parênteses: <code>inscrever(avisar_bia)</code>. Com parênteses, você chamaria a função na hora e guardaria o resultado (<code>None</code>).</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print(fechar_compra(200, black_friday))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma estratégia <code>frete_gratis_acima_100</code> que dá 15 reais de desconto quando o valor passa de 100 e use com <code>fechar_compra(150, ...)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def frete_gratis_acima_100(valor):
+    if valor &gt; 100:
+        return valor - 15
+    return valor
+
+
+def fechar_compra(valor, estrategia):
+    return round(estrategia(valor), 2)
+
+
+print(fechar_compra(150, frete_gratis_acima_100))
+print(fechar_compra(80, frete_gratis_acima_100))</code></pre>
+      <p class="saida">135<br>
+80</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Inscreva no <code>Canal</code> uma terceira função que apenas conta quantos vídeos foram publicados, usando uma lista <code>contagem</code> de fora.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Canal:
+    def __init__(self, nome):
+        self.nome = nome
+        self.inscritos = []
+
+    def inscrever(self, funcao):
+        self.inscritos.append(funcao)
+
+    def publicar(self, video):
+        for avisar in self.inscritos:
+            avisar(self.nome, video)
+
+
+contagem = []
+
+
+def contar(canal, video):
+    contagem.append(video)
+
+
+canal = Canal("Ciência Fácil")
+canal.inscrever(contar)
+canal.publicar("Vulcões")
+canal.publicar("Eclipses")
+print(len(contagem), "vídeos publicados")</code></pre>
+      <p class="saida">2 vídeos publicados</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Acrescente ao semáforo um estado de "piscando" que sempre continua em "piscando", e mostre 3 passos a partir dele.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>proximo = {"verde": "amarelo", "amarelo": "vermelho", "vermelho": "verde",
+           "piscando": "piscando"}
+estado = "piscando"
+for _ in range(3):
+    print(estado)
+    estado = proximo[estado]</code></pre>
+      <p class="saida">piscando<br>
+piscando<br>
+piscando</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="152-estruturais.html" rel="prev">← Aula anterior</a>
+      <a href="170-sql-intro.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

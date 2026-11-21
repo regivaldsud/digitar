@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 50 · List, dict e set comprehension (mapear e filtrar) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie listas, dicionários e conjuntos em uma linha com compreensões, transformando e filtrando itens, e saiba quando é melhor não usá-las.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 50 · List, dict e set comprehension (mapear e filtrar)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar listas com compreensão de lista</li>
+        <li>Transformar (mapear) e filtrar itens com <code>if</code></li>
+        <li>Escolher entre dois valores com <code>if</code>/<code>else</code> dentro da compreensão</li>
+        <li>Criar dicionários e conjuntos com compreensão</li>
+        <li>Saber quando um <code>for</code> comum é mais claro</li>
+      </ul>
+    </div>
+
+    <h2>Do for à compreensão</h2>
+    <p>Muitas vezes criamos uma lista vazia e enchemos com <code>append</code> num <code>for</code>. A <strong>compreensão de lista</strong> faz isso numa linha só:</p>
+<pre class="codigo" data-executar="sim"><code>quadrados = []
+for n in range(1, 6):
+    quadrados.append(n * n)
+print(quadrados)
+
+quadrados = [n * n for n in range(1, 6)]
+print(quadrados)</code></pre>
+    <p class="saida">[1, 4, 9, 16, 25]<br>
+[1, 4, 9, 16, 25]</p>
+    <p>Leia assim: "<code>n * n</code> <strong>para cada</strong> <code>n</code> em <code>range(1, 6)</code>". Primeiro vem o que você quer guardar, depois o <code>for</code>.</p>
+
+    <h2>Mapear: transformar cada item</h2>
+    <p>Aplicar a mesma transformação em todos os itens se chama <strong>mapear</strong>:</p>
+<pre class="codigo" data-executar="sim"><code>precos = [10.0, 25.5, 8.0]
+print([round(p * 0.9, 2) for p in precos])
+nomes = ["ana", "bruno", "carla"]
+print([nome.capitalize() for nome in nomes])
+print([len(nome) for nome in nomes])</code></pre>
+    <p class="saida">[9.0, 22.95, 7.2]<br>
+['Ana', 'Bruno', 'Carla']<br>
+[3, 5, 5]</p>
+
+    <h2>Filtrar com if</h2>
+    <p>Coloque um <code>if</code> no <strong>fim</strong> para guardar só os itens que passam no teste:</p>
+<pre class="codigo" data-executar="sim"><code>numeros = [4, 7, 10, 13, 16, 19]
+pares = [n for n in numeros if n % 2 == 0]
+print(pares)
+palavras = ["sol", "abacaxi", "mar", "computador"]
+print([p.upper() for p in palavras if len(p) &gt; 3])</code></pre>
+    <p class="saida">[4, 10, 16]<br>
+['ABACAXI', 'COMPUTADOR']</p>
+    <p>Se em vez de filtrar você quer <strong>escolher entre dois valores</strong>, o <code>if</code>/<code>else</code> (o ternário da aula 30) vai no <strong>começo</strong>:</p>
+<pre class="codigo" data-executar="sim"><code>notas = [5.5, 8.0, 9.5, 6.0]
+print(["aprovado" if n &gt;= 7 else "recuperação" for n in notas])</code></pre>
+    <p class="saida">['recuperação', 'aprovado', 'aprovado', 'recuperação']</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>if</code> sozinho vai <strong>depois</strong> do <code>for</code> (filtra). <code>if ... else</code> vai <strong>antes</strong> do <code>for</code> (escolhe o valor). Trocar os lugares dá <code>SyntaxError</code>.</div>
+
+    <h2>Compreensão de dicionário e de conjunto</h2>
+    <p>Com chaves <code>{}</code> e <code>chave: valor</code>, você cria um dicionário. Com chaves e só um valor, cria um conjunto:</p>
+<pre class="codigo" data-executar="sim"><code>frutas = ["uva", "caju", "melancia"]
+print({fruta: len(fruta) for fruta in frutas})
+precos = {"pão": 0.8, "leite": 5.5, "queijo": 32.0}
+print({item: valor for item, valor in precos.items() if valor &gt; 5})
+iniciais = {nome[0] for nome in ["Ana", "Alice", "Bruno"]}
+print(sorted(iniciais))</code></pre>
+    <p class="saida">{'uva': 3, 'caju': 4, 'melancia': 8}<br>
+{'leite': 5.5, 'queijo': 32.0}<br>
+['A', 'B']</p>
+
+    <h2>Dois for e quando não usar</h2>
+    <p>Uma compreensão pode ter dois <code>for</code>, na mesma ordem em que você os escreveria aninhados. Isso serve, por exemplo, para "achatar" uma lista de listas:</p>
+<pre class="codigo" data-executar="sim"><code>turmas = [["Ana", "Caio"], ["Lia"], ["Rui", "Bia"]]
+todos = [aluno for turma in turmas for aluno in turma]
+print(todos)</code></pre>
+    <p class="saida">['Ana', 'Caio', 'Lia', 'Rui', 'Bia']</p>
+    <p>Mas cuidado: compreensões deixam o código curto, não devem deixá-lo difícil. Se a linha ficar comprida, com vários <code>for</code> e <code>if</code>, um <code>for</code> comum é mais fácil de ler e de corrigir.</p>
+    <div class="dica"><strong>Dica:</strong> Compreensões servem para <strong>criar</strong> coleções. Se você precisa de <code>print</code> ou de várias ações para cada item, use um <code>for</code> comum.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>pares = [n for n in range(20) if n % 2 == 0]</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Use uma compreensão de lista para criar a lista dos cubos de 1 a 5 (<code>[1, 8, 27, 64, 125]</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cubos = [n ** 3 for n in range(1, 6)]
+print(cubos)</code></pre>
+      <p class="saida">[1, 8, 27, 64, 125]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Dada a lista de temperaturas em Celsius <code>[0, 25, 30, 37]</code>, crie uma lista em Fahrenheit (F = C x 9 / 5 + 32).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>celsius = [0, 25, 30, 37]
+fahrenheit = [c * 9 / 5 + 32 for c in celsius]
+print(fahrenheit)</code></pre>
+      <p class="saida">[32.0, 77.0, 86.0, 98.6]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Da lista <code>["Ana", "Bernardo", "Léo", "Valentina", "Gabi"]</code>, crie uma lista só com os nomes de até 4 letras.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nomes = ["Ana", "Bernardo", "Léo", "Valentina", "Gabi"]
+print([nome for nome in nomes if len(nome) &lt;= 4])</code></pre>
+      <p class="saida">['Ana', 'Léo', 'Gabi']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> A partir de <code>estoque = {"lápis": 40, "caneta": 0, "borracha": 15, "cola": 0}</code>, crie uma lista com os produtos que acabaram e um dicionário só com os que ainda têm estoque.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>estoque = {"lápis": 40, "caneta": 0, "borracha": 15, "cola": 0}
+acabaram = [item for item, qtd in estoque.items() if qtd == 0]
+tem = {item: qtd for item, qtd in estoque.items() if qtd &gt; 0}
+print(acabaram)
+print(tem)</code></pre>
+      <p class="saida">['caneta', 'cola']<br>
+{'lápis': 40, 'borracha': 15}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Para os números de 1 a 6, crie uma lista que diga <code>"par"</code> ou <code>"ímpar"</code> para cada um.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(["par" if n % 2 == 0 else "ímpar" for n in range(1, 7)])</code></pre>
+      <p class="saida">['ímpar', 'par', 'ímpar', 'par', 'ímpar', 'par']</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="49-lambda.html" rel="prev">← Aula anterior</a>
+      <a href="51-truthy-falsy.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

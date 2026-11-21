@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 23 · Operadores de atribuição (+=, -= …) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça os atalhos +=, -=, *=, /=, //=, %= e **= para atualizar variáveis, inclusive com textos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 23 · Operadores de atribuição (+=, -= …)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender o que significa atualizar uma variável usando o valor dela mesma</li>
+        <li>Usar os atalhos <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>//=</code>, <code>%=</code> e <code>**=</code></li>
+        <li>Usar <code>+=</code> e <code>*=</code> com textos</li>
+        <li>Evitar os erros mais comuns com atribuição composta</li>
+      </ul>
+    </div>
+
+    <h2>Atualizar uma variável</h2>
+    <p>Em programação, é muito comum mudar uma variável a partir do valor que ela já tem: somar um ponto no placar, tirar um real do saldo, dobrar uma receita. Na aula 22 você escreveu muito <code>contador = contador + 1</code>. Leia assim: "pegue o valor atual de <code>contador</code>, some 1 e guarde de volta em <code>contador</code>".</p>
+<pre class="codigo" data-executar="sim"><code>pontos = 10
+pontos = pontos + 5
+print(pontos)</code></pre>
+    <p class="saida">15</p>
+    <p>O sinal <code>=</code> não é "igual" da matemática: ele <strong>guarda</strong> o resultado da direita na variável da esquerda.</p>
+
+    <h2>Os atalhos</h2>
+    <p>Como isso aparece o tempo todo, o Python tem <strong>operadores de atribuição composta</strong>. Eles fazem a conta e guardam o resultado na mesma variável:</p>
+<pre class="codigo" data-executar="sim"><code>saldo = 100
+saldo += 50   # saldo = saldo + 50
+print(saldo)
+saldo -= 30   # saldo = saldo - 30
+print(saldo)
+saldo *= 2    # saldo = saldo * 2
+print(saldo)
+saldo /= 4    # saldo = saldo / 4
+print(saldo)</code></pre>
+    <p class="saida">150<br>
+120<br>
+240<br>
+60.0</p>
+    <p>Repare que depois do <code>/=</code> o saldo virou <code>60.0</code>: a divisão <code>/</code> sempre dá um <code>float</code>, como você viu na aula 15.</p>
+
+    <h2>Os outros atalhos</h2>
+    <p>Todo operador aritmético tem seu atalho. Os menos usados também são úteis:</p>
+<pre class="codigo" data-executar="sim"><code>balas = 17
+balas //= 5    # divisão inteira: balas = balas // 5
+print(balas)
+minutos = 135
+minutos %= 60  # resto: minutos = minutos % 60
+print(minutos)
+lado = 3
+lado **= 2     # potência: lado = lado ** 2
+print(lado)</code></pre>
+    <p class="saida">3<br>
+15<br>
+9</p>
+
+    <h2>Atalhos com textos</h2>
+    <p>Com strings, <code>+=</code> junta um texto no fim e <code>*=</code> repete o texto. Isso é ótimo para montar frases aos poucos dentro de um laço:</p>
+<pre class="codigo" data-executar="sim"><code>frase = "Bom"
+frase += " dia"
+frase += ", turma!"
+print(frase)
+linha = "-"
+linha *= 20
+print(linha)</code></pre>
+    <p class="saida">Bom dia, turma!<br>
+--------------------</p>
+<pre class="codigo" data-executar="sim"><code>contagem = ""
+n = 5
+while n &gt; 0:
+    contagem += str(n) + "... "
+    n -= 1
+contagem += "Já!"
+print(contagem)</code></pre>
+    <p class="saida">5... 4... 3... 2... 1... Já!</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>+=</code> só junta texto com texto. <code>contagem += 5</code> dá <code>TypeError: can only concatenate str (not "int") to str</code>. Converta antes com <code>str(5)</code>.</div>
+
+    <h2>Erros comuns</h2>
+    <p>A variável precisa existir antes do atalho. Se ela ainda não tem valor, o Python não sabe a que somar:</p>
+<pre class="codigo" data-executar="sim"><code>total += 10</code></pre>
+    <p class="saida">NameError: name 'total' is not defined</p>
+    <p>O certo é começar a variável antes, por exemplo <code>total = 0</code>, e só depois usar <code>total += 10</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Não existe <code>++</code> em Python. <code>contador++</code> dá <code>SyntaxError</code>. Use <code>contador += 1</code>.</div>
+    <div class="dica"><strong>Dica:</strong> Não confunda a ordem: <code>x += 1</code> soma 1 em <code>x</code>. Já <code>x =+ 1</code> é lido como <code>x = +1</code> — guarda o número 1 positivo em <code>x</code>, sem dar erro. Um bug silencioso!</div>
+<pre class="codigo" data-executar="sim"><code>x = 10
+x =+ 1
+print(x)</code></pre>
+    <p class="saida">1</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>saldo -= preco * quantidade</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Você tem R$ 50,00 de mesada. Com <code>-=</code>, desconte um lanche de R$ 12,50 e uma recarga de R$ 15,00 e mostre o que sobrou.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>mesada = 50.0
+mesada -= 12.5
+mesada -= 15.0
+print("Sobrou:", mesada)</code></pre>
+      <p class="saida">Sobrou: 22.5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Um investimento rende 10% ao mês. Começando com R$ 1000, use <code>*=</code> dentro de um <code>while</code> para mostrar o valor depois de cada um dos 3 meses (com duas casas decimais).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>valor = 1000
+mes = 1
+while mes &lt;= 3:
+    valor *= 1.10
+    print(f"Mês {mes}: R$ {valor:.2f}")
+    mes += 1</code></pre>
+      <p class="saida">Mês 1: R$ 1100.00<br>
+Mês 2: R$ 1210.00<br>
+Mês 3: R$ 1331.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Monte com <code>+=</code> o texto <code>"1, 2, 3, 4, 5"</code> usando um <code>while</code> (sem vírgula depois do 5).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>texto = ""
+n = 1
+while n &lt;= 5:
+    texto += str(n)
+    if n &lt; 5:
+        texto += ", "
+    n += 1
+print(texto)</code></pre>
+      <p class="saida">1, 2, 3, 4, 5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Qual é o valor de <code>x</code> no fim deste programa? <code>x = 7</code>, depois <code>x **= 2</code>, depois <code>x %= 10</code>, depois <code>x //= 3</code>. Calcule de cabeça e confira rodando.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>x = 7
+x **= 2
+print(x)
+x %= 10
+print(x)
+x //= 3
+print(x)</code></pre>
+      <p class="saida">49<br>
+9<br>
+3</p>
+      <p>7 elevado a 2 é 49; o resto de 49 por 10 é 9; e a divisão inteira de 9 por 3 é 3.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="22-while.html" rel="prev">← Aula anterior</a>
+      <a href="24-for-range.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

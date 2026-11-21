@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 141 · Metacaracteres, classes e quantificadores — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda os símbolos especiais das expressões regulares: ponto, classes como \d e [a-z], e quantificadores como +, * e {n,m}.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 7 · Expressões regulares</p>
+    <h1>Aula 141 · Metacaracteres, classes e quantificadores</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar os atalhos <code>\d</code>, <code>\w</code>, <code>\s</code> e o ponto <code>.</code></li>
+        <li>Montar classes de caracteres com colchetes, como <code>[aeiou]</code> e <code>[^0-9]</code></li>
+        <li>Controlar repetições com <code>*</code>, <code>+</code>, <code>?</code> e <code>{n,m}</code></li>
+        <li>Entender o modo guloso e o modo preguiçoso <code>*?</code></li>
+        <li>Escapar caracteres especiais com a barra invertida</li>
+      </ul>
+    </div>
+
+    <h2>Os atalhos mais usados</h2>
+    <p>Alguns símbolos representam um <strong>grupo</strong> de caracteres:</p>
+    <ul>
+      <li><code>\d</code>: um dígito (0 a 9). <code>\D</code>: qualquer coisa que <strong>não</strong> seja dígito.</li>
+      <li><code>\w</code>: uma letra, dígito ou <code>_</code> (inclui letras acentuadas). <code>\W</code>: o contrário.</li>
+      <li><code>\s</code>: um espaço em branco (espaço, tab, nova linha). <code>\S</code>: o contrário.</li>
+      <li><code>.</code> (ponto): qualquer caractere, menos a quebra de linha.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Placa ABC1D23, km 42."
+print(re.findall(r"\d", texto))
+print(re.findall(r"\w+", texto))
+print(re.findall(r"k.", texto))</code></pre>
+    <p class="saida">['1', '2', '3', '4', '2']<br>
+['Placa', 'ABC1D23', 'km', '42']<br>
+['km']</p>
+
+    <h2>Classes com colchetes</h2>
+    <p>Entre colchetes você lista os caracteres aceitos <strong>numa única posição</strong>. Um hífen cria um intervalo, e <code>^</code> logo no começo inverte (aceita tudo, <strong>menos</strong> aqueles):</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+frase = "Paçoca, pé de moleque e quentão!"
+print(re.findall(r"[aeiou]", frase))
+print(re.findall(r"[A-Z]", frase))
+print(re.findall(r"[^a-zA-Z ]", frase))</code></pre>
+    <p class="saida">['a', 'o', 'a', 'e', 'o', 'e', 'u', 'e', 'e', 'u', 'e', 'o']<br>
+['P']<br>
+['ç', ',', 'é', 'ã', '!']</p>
+    <p>O último exemplo pega o que não é letra sem acento nem espaço: veja que aparecem <code>ç</code>, <code>é</code>, <code>ã</code>, a vírgula e a exclamação.</p>
+    <div class="dica"><strong>Dica:</strong> <code>[0-9]</code> e <code>\d</code> fazem quase a mesma coisa. Escolha o que deixar seu padrão mais fácil de ler.</div>
+
+    <h2>Quantificadores: quantas vezes?</h2>
+    <p>O quantificador vem <strong>logo depois</strong> do que ele repete:</p>
+    <ul>
+      <li><code>+</code>: uma ou mais vezes.</li>
+      <li><code>*</code>: zero ou mais vezes.</li>
+      <li><code>?</code>: zero ou uma vez (ou seja, opcional).</li>
+      <li><code>{3}</code>: exatamente 3 vezes. <code>{2,4}</code>: de 2 a 4 vezes. <code>{2,}</code>: 2 ou mais.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"go+l", "gol, gool, goooool, gl"))
+print(re.findall(r"go*l", "gol, gl"))
+print(re.findall(r"ovos?", "ovo, ovos, ovelha"))
+print(re.findall(r"\d{2,4}", "1 12 123 12345"))</code></pre>
+    <p class="saida">['gol', 'gool', 'goooool']<br>
+['gol', 'gl']<br>
+['ovo', 'ovos']<br>
+['12', '123', '1234']</p>
+    <p>No último, <code>12345</code> vira <code>1234</code> e sobra o <code>5</code> sozinho, que não tem os 2 dígitos mínimos.</p>
+
+    <h2>Guloso ou preguiçoso</h2>
+    <p>Por padrão, <code>*</code> e <code>+</code> são <strong>gulosos</strong>: pegam o máximo possível. Colocando <code>?</code> depois deles (<code>*?</code>, <code>+?</code>), eles ficam <strong>preguiçosos</strong> e pegam o mínimo:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+html = "&lt;b&gt;Feijão&lt;/b&gt; e &lt;b&gt;arroz&lt;/b&gt;"
+print(re.findall(r"&lt;b&gt;.*&lt;/b&gt;", html))
+print(re.findall(r"&lt;b&gt;.*?&lt;/b&gt;", html))</code></pre>
+    <p class="saida">['&lt;b&gt;Feijão&lt;/b&gt; e &lt;b&gt;arroz&lt;/b&gt;']<br>
+['&lt;b&gt;Feijão&lt;/b&gt;', '&lt;b&gt;arroz&lt;/b&gt;']</p>
+    <p>O guloso engoliu tudo, do primeiro <code>&lt;b&gt;</code> até o último <code>&lt;/b&gt;</code>. O preguiçoso parou no primeiro <code>&lt;/b&gt;</code> que encontrou.</p>
+
+    <h2>Escapando os caracteres especiais</h2>
+    <p>Os símbolos <code>. + * ? ( ) [ ] { } ^ $ | \</code> têm significado especial. Para procurar um deles de verdade, coloque uma barra antes: <code>\.</code> é um ponto de verdade, <code>\$</code> é um cifrão.</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+preco = "Total: R$ 59.90 (com frete)"
+print(re.findall(r"R\$ \d+\.\d{2}", preco))
+print(re.findall(r"\(.+?\)", preco))</code></pre>
+    <p class="saida">['R$ 59.90']<br>
+['(com frete)']</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer de escapar o ponto é um erro clássico: <code>r"\d+.\d+"</code> também aceita <code>"12x34"</code>, porque o <code>.</code> sozinho aceita qualquer caractere. Para o ponto decimal, use <code>\.</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>re.findall(r"[A-Z]{3}\d[A-Z0-9]\d{2}", texto)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Pegue todas as palavras que começam com letra maiúscula em <code>"Ontem Ana e Bruno foram a Salvador"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"[A-Z]\w*", "Ontem Ana e Bruno foram a Salvador"))</code></pre>
+      <p class="saida">['Ontem', 'Ana', 'Bruno', 'Salvador']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça um padrão que aceite <code>"email"</code>, <code>"e-mail"</code> e <code>"e mail"</code> e teste com <code>findall</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Mande um email, um e-mail ou um e mail."
+print(re.findall(r"e[- ]?mail", texto))</code></pre>
+      <p class="saida">['email', 'e-mail', 'e mail']</p>
+      <p><code>[- ]?</code> aceita um hífen ou um espaço, uma vez ou nenhuma. Repare que o hífen vem primeiro dentro dos colchetes, para não virar um intervalo.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Ache todos os preços no formato <code>12,50</code> (dígitos, vírgula, dois dígitos) em <code>"Coxinha 6,50, suco 8,00 e bolo 12,75"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+cardapio = "Coxinha 6,50, suco 8,00 e bolo 12,75"
+print(re.findall(r"\d+,\d{2}", cardapio))</code></pre>
+      <p class="saida">['6,50', '8,00', '12,75']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Explique a diferença de resultado entre <code>r"\(.*\)"</code> e <code>r"\(.*?\)"</code> no texto <code>"(um) e (dois)"</code>. Rode para conferir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "(um) e (dois)"
+print(re.findall(r"\(.*\)", texto))
+print(re.findall(r"\(.*?\)", texto))</code></pre>
+      <p class="saida">['(um) e (dois)']<br>
+['(um)', '(dois)']</p>
+      <p>O guloso pega do primeiro <code>(</code> até o último <code>)</code>, num trecho só. O preguiçoso fecha no primeiro <code>)</code> e acha dois trechos.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="140-regex-intro.html" rel="prev">← Aula anterior</a>
+      <a href="142-regex-grupos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

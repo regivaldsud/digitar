@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 99 · Projeto: banco simples com contas, clientes e exceções — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa passo a passo um banco no terminal com clientes, conta corrente, poupança, saques, depósitos, transferências e exceções próprias.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 99 · Projeto: banco simples com contas, clientes e exceções</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Planejar um programa orientado a objetos dividindo as responsabilidades entre classes</li>
+        <li>Criar exceções próprias para os erros do negócio</li>
+        <li>Usar classe abstrata, herança e polimorfismo nas contas</li>
+        <li>Proteger o saldo com <code>@property</code> e ligar clientes e contas por composição</li>
+        <li>Juntar tudo num programa com menu</li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>Um banco de mentirinha, o <strong>Banco Digitar</strong>, que roda no terminal. Antes de programar, vale pensar em <strong>quem faz o quê</strong> — esse é o coração da orientação a objetos:</p>
+    <ul>
+      <li><strong>Conta</strong>: guarda o saldo e sabe depositar e sacar. Existem dois tipos: <strong>Conta corrente</strong> (tem limite de cheque especial) e <strong>Conta poupança</strong> (não pode ficar negativa, mas rende juros).</li>
+      <li><strong>Cliente</strong>: tem nome, CPF e as suas contas.</li>
+      <li><strong>Banco</strong>: cadastra clientes, abre contas, encontra contas pelo número e faz transferências.</li>
+      <li><strong>Exceções</strong>: <code>SaldoInsuficiente</code> e <code>ValorInvalido</code> avisam quando uma operação não pode acontecer.</li>
+    </ul>
+    <p>Vamos usar quase tudo do Módulo 4: classes (aula 70), <code>@property</code> (aula 73), encapsulamento (aula 74), composição (aula 75), herança (aula 76), classe abstrata (aula 78), polimorfismo (aula 79), exceções próprias (aula 80) e <code>__str__</code> (aula 81).</p>
+
+    <h2>Passo 1: as exceções do banco</h2>
+    <p>Erros de negócio merecem nomes próprios. Assim, quem usa as contas pode tratar exatamente o erro que interessa. Uma classe base <code>ErroBancario</code> agrupa todos:</p>
+<pre class="codigo" data-executar="sim"><code>class ErroBancario(Exception):
+    """Base para todos os erros do banco."""
+
+
+class ValorInvalido(ErroBancario):
+    pass
+
+
+class SaldoInsuficiente(ErroBancario):
+    def __init__(self, disponivel, pedido):
+        super().__init__(
+            f"Saldo insuficiente: disponível R$ {disponivel:.2f}, pedido R$ {pedido:.2f}."
+        )
+        self.disponivel = disponivel
+        self.pedido = pedido
+
+
+try:
+    raise SaldoInsuficiente(50, 80)
+except ErroBancario as erro:
+    print(type(erro).__name__, "-&gt;", erro)
+    print("Faltaram R$", erro.pedido - erro.disponivel)</code></pre>
+    <p class="saida">SaldoInsuficiente -&gt; Saldo insuficiente: disponível R$ 50.00, pedido R$ 80.00.<br>
+Faltaram R$ 30</p>
+    <p>Como <code>SaldoInsuficiente</code> herda de <code>ErroBancario</code>, um <code>except ErroBancario</code> pega os dois tipos de erro de uma vez.</p>
+
+    <h2>Passo 2: a conta abstrata</h2>
+    <p>Toda conta deposita do mesmo jeito, mas cada tipo decide <strong>quanto</strong> dá para sacar. Por isso <code>Conta</code> é abstrata: ela tem o método abstrato <code>disponivel_para_saque</code>, que cada filha é obrigada a escrever. O saldo fica em <code>_saldo</code> e só pode ser lido pela <code>@property</code> — ninguém de fora muda o saldo sem passar por <code>depositar</code> ou <code>sacar</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+
+class ErroBancario(Exception):
+    pass
+
+
+class ValorInvalido(ErroBancario):
+    pass
+
+
+class SaldoInsuficiente(ErroBancario):
+    pass
+
+
+class Conta(ABC):
+    def __init__(self, numero):
+        self.numero = numero
+        self._saldo = 0.0
+        self.extrato = []
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    @abstractmethod
+    def disponivel_para_saque(self):
+        ...
+
+    def depositar(self, valor):
+        if valor &lt;= 0:
+            raise ValorInvalido("O valor precisa ser positivo.")
+        self._saldo += valor
+        self.extrato.append(f"Depósito  +{valor:8.2f}")
+
+    def sacar(self, valor):
+        if valor &lt;= 0:
+            raise ValorInvalido("O valor precisa ser positivo.")
+        if valor &gt; self.disponivel_para_saque():
+            raise SaldoInsuficiente(f"Disponível: R$ {self.disponivel_para_saque():.2f}")
+        self._saldo -= valor
+        self.extrato.append(f"Saque     -{valor:8.2f}")
+
+
+try:
+    Conta(1)
+except TypeError as erro:
+    print("Não dá para criar uma Conta genérica:")
+    print(erro)</code></pre>
+    <p class="saida">Não dá para criar uma Conta genérica:<br>
+Can't instantiate abstract class Conta without an implementation for abstract method 'disponivel_para_saque'</p>
+    <p>O <code>TypeError</code> mostra que a classe abstrata cumpre seu papel: ela é um molde, não uma conta de verdade.</p>
+    <div class="atencao"><strong>Atenção:</strong> Não esqueça de levantar o erro <strong>antes</strong> de mexer no saldo. Se você descontar primeiro e conferir depois, a conta fica com o saldo errado quando o saque falha.</div>
+
+    <h2>Passo 3: conta corrente e poupança</h2>
+    <p>Agora as filhas. Cada uma responde à mesma pergunta — "quanto posso sacar?" — do seu jeito. Isso é <strong>polimorfismo</strong>: o método <code>sacar</code> da classe mãe funciona para as duas sem saber qual é qual.</p>
+<pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
+
+
+class SaldoInsuficiente(Exception):
+    pass
+
+
+class Conta(ABC):
+    def __init__(self, numero):
+        self.numero = numero
+        self._saldo = 0.0
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    @abstractmethod
+    def disponivel_para_saque(self):
+        ...
+
+    def depositar(self, valor):
+        self._saldo += valor
+
+    def sacar(self, valor):
+        if valor &gt; self.disponivel_para_saque():
+            raise SaldoInsuficiente(f"Disponível: R$ {self.disponivel_para_saque():.2f}")
+        self._saldo -= valor
+
+
+class ContaCorrente(Conta):
+    def __init__(self, numero, limite=200.0):
+        super().__init__(numero)
+        self.limite = limite
+
+    def disponivel_para_saque(self):
+        return self._saldo + self.limite
+
+
+class ContaPoupanca(Conta):
+    def __init__(self, numero, taxa_mensal=0.005):
+        super().__init__(numero)
+        self.taxa_mensal = taxa_mensal
+
+    def disponivel_para_saque(self):
+        return self._saldo
+
+    def render(self):
+        self._saldo += self._saldo * self.taxa_mensal
+
+
+corrente = ContaCorrente(1)
+poupanca = ContaPoupanca(2)
+for conta in (corrente, poupanca):
+    conta.depositar(100)
+    try:
+        conta.sacar(150)
+        print(type(conta).__name__, "sacou 150. Saldo:", conta.saldo)
+    except SaldoInsuficiente as erro:
+        print(type(conta).__name__, "não sacou:", erro)
+
+poupanca.render()
+print(f"Poupança depois de render: R$ {poupanca.saldo:.2f}")</code></pre>
+    <p class="saida">ContaCorrente sacou 150. Saldo: -50.0<br>
+ContaPoupanca não sacou: Disponível: R$ 100.00<br>
+Poupança depois de render: R$ 100.50</p>
+    <p>A conta corrente sacou 150 com só 100 de saldo, usando o limite, e ficou com −50. A poupança recusou.</p>
+
+    <h2>Passo 4: clientes e o banco</h2>
+    <p>O <code>Cliente</code> <strong>tem</strong> contas (composição/agregação, aula 75), e o <code>Banco</code> <strong>tem</strong> clientes. O banco também numera as contas e faz a transferência, que é um saque numa conta seguido de um depósito em outra:</p>
+<pre class="codigo" data-executar="sim"><code>class SaldoInsuficiente(Exception):
+    pass
+
+
+class Conta:
+    def __init__(self, numero, titular):
+        self.numero = numero
+        self.titular = titular
+        self._saldo = 0.0
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    def depositar(self, valor):
+        self._saldo += valor
+
+    def sacar(self, valor):
+        if valor &gt; self._saldo:
+            raise SaldoInsuficiente(f"Disponível: R$ {self._saldo:.2f}")
+        self._saldo -= valor
+
+    def __str__(self):
+        return f"Conta {self.numero} de {self.titular.nome}: R$ {self.saldo:.2f}"
+
+
+class Cliente:
+    def __init__(self, nome, cpf):
+        self.nome = nome
+        self.cpf = cpf
+        self.contas = []
+
+
+class Banco:
+    def __init__(self, nome):
+        self.nome = nome
+        self.clientes = {}
+        self.contas = {}
+        self._proximo_numero = 1
+
+    def cadastrar(self, nome, cpf):
+        cliente = Cliente(nome, cpf)
+        self.clientes[cpf] = cliente
+        return cliente
+
+    def abrir_conta(self, cliente):
+        conta = Conta(self._proximo_numero, cliente)
+        self._proximo_numero += 1
+        cliente.contas.append(conta)
+        self.contas[conta.numero] = conta
+        return conta
+
+    def transferir(self, origem, destino, valor):
+        self.contas[origem].sacar(valor)
+        self.contas[destino].depositar(valor)
+
+
+banco = Banco("Banco Digitar")
+bia = banco.cadastrar("Bia", "111")
+caio = banco.cadastrar("Caio", "222")
+conta_bia = banco.abrir_conta(bia)
+conta_caio = banco.abrir_conta(caio)
+conta_bia.depositar(300)
+
+banco.transferir(1, 2, 120)
+print(conta_bia)
+print(conta_caio)
+try:
+    banco.transferir(2, 1, 500)
+except SaldoInsuficiente as erro:
+    print("Transferência recusada.", erro)</code></pre>
+    <p class="saida">Conta 1 de Bia: R$ 180.00<br>
+Conta 2 de Caio: R$ 120.00<br>
+Transferência recusada. Disponível: R$ 120.00</p>
+    <p>Repare na ordem dentro de <code>transferir</code>: primeiro o saque, que pode falhar. Se ele levantar <code>SaldoInsuficiente</code>, o depósito nem acontece e o dinheiro não "aparece do nada" na outra conta.</p>
+    <div class="dica"><strong>Dica:</strong> Os CPFs aqui são de brincadeira ("111", "222"). Na aula 31 você aprendeu a validar um CPF de verdade — um ótimo desafio é usar aquela função no <code>cadastrar</code>.</div>
+
+    <h2>Passo 5: o programa completo</h2>
+    <p>Juntando tudo e colocando um menu. O <code>try/except ErroBancario</code> do menu mostra a mensagem de qualquer erro do banco sem fechar o programa, e o <code>except ValueError</code> cuida de quem digita letras no lugar de números:</p>
+<pre class="codigo"><code>from abc import ABC, abstractmethod
+
+
+class ErroBancario(Exception):
+    """Base para os erros do banco."""
+
+
+class ValorInvalido(ErroBancario):
+    pass
+
+
+class SaldoInsuficiente(ErroBancario):
+    pass
+
+
+class ContaNaoEncontrada(ErroBancario):
+    pass
+
+
+class Conta(ABC):
+    def __init__(self, numero, titular):
+        self.numero = numero
+        self.titular = titular
+        self._saldo = 0.0
+        self.extrato = []
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    @abstractmethod
+    def disponivel_para_saque(self):
+        ...
+
+    def depositar(self, valor):
+        if valor &lt;= 0:
+            raise ValorInvalido("O valor precisa ser maior que zero.")
+        self._saldo += valor
+        self.extrato.append(f"Depósito    +{valor:9.2f}")
+
+    def sacar(self, valor):
+        if valor &lt;= 0:
+            raise ValorInvalido("O valor precisa ser maior que zero.")
+        if valor &gt; self.disponivel_para_saque():
+            raise SaldoInsuficiente(
+                f"Saldo insuficiente. Disponível: R$ {self.disponivel_para_saque():.2f}"
+            )
+        self._saldo -= valor
+        self.extrato.append(f"Saque       -{valor:9.2f}")
+
+    def __str__(self):
+        return f"{self.numero} | {self.TIPO:&lt;9} | {self.titular.nome:&lt;12} | R$ {self.saldo:9.2f}"
+
+
+class ContaCorrente(Conta):
+    TIPO = "Corrente"
+
+    def __init__(self, numero, titular, limite=200.0):
+        super().__init__(numero, titular)
+        self.limite = limite
+
+    def disponivel_para_saque(self):
+        return self._saldo + self.limite
+
+
+class ContaPoupanca(Conta):
+    TIPO = "Poupança"
+
+    def disponivel_para_saque(self):
+        return self._saldo
+
+
+class Cliente:
+    def __init__(self, nome, cpf):
+        self.nome = nome
+        self.cpf = cpf
+        self.contas = []
+
+
+class Banco:
+    def __init__(self, nome):
+        self.nome = nome
+        self.clientes = {}
+        self.contas = {}
+        self._proximo = 1
+
+    def cadastrar(self, nome, cpf):
+        nome = nome.strip()
+        if not nome or not cpf.strip():
+            raise ErroBancario("Nome e CPF são obrigatórios.")
+        if cpf in self.clientes:
+            raise ErroBancario("Já existe um cliente com esse CPF.")
+        cliente = Cliente(nome, cpf)
+        self.clientes[cpf] = cliente
+        return cliente
+
+    def abrir_conta(self, cpf, tipo):
+        cliente = self.clientes.get(cpf)
+        if cliente is None:
+            raise ErroBancario("Cliente não encontrado.")
+        classe = ContaCorrente if tipo == "c" else ContaPoupanca
+        conta = classe(self._proximo, cliente)
+        self._proximo += 1
+        cliente.contas.append(conta)
+        self.contas[conta.numero] = conta
+        return conta
+
+    def conta(self, numero):
+        if numero not in self.contas:
+            raise ContaNaoEncontrada(f"A conta {numero} não existe.")
+        return self.contas[numero]
+
+    def transferir(self, origem, destino, valor):
+        conta_origem = self.conta(origem)
+        conta_destino = self.conta(destino)
+        conta_origem.sacar(valor)
+        conta_destino.depositar(valor)
+
+
+def ler_numero(mensagem):
+    return int(input(mensagem))
+
+
+def ler_valor(mensagem):
+    return float(input(mensagem).replace(",", "."))
+
+
+def main():
+    banco = Banco("Banco Digitar")
+    print(f"=== {banco.nome} ===")
+    while True:
+        print()
+        print("1 Cliente  2 Abrir conta  3 Depositar  4 Sacar")
+        print("5 Transferir  6 Extrato  7 Listar contas  0 Sair")
+        opcao = input("Opção: ").strip()
+        try:
+            if opcao == "1":
+                cliente = banco.cadastrar(input("Nome: "), input("CPF: "))
+                print(f"Cliente {cliente.nome} cadastrado.")
+            elif opcao == "2":
+                cpf = input("CPF do cliente: ")
+                tipo = input("Corrente (c) ou poupança (p)? ").strip().lower()
+                conta = banco.abrir_conta(cpf, tipo)
+                print(f"Conta {conta.numero} aberta.")
+            elif opcao == "3":
+                conta = banco.conta(ler_numero("Número da conta: "))
+                conta.depositar(ler_valor("Valor: R$ "))
+                print(f"Novo saldo: R$ {conta.saldo:.2f}")
+            elif opcao == "4":
+                conta = banco.conta(ler_numero("Número da conta: "))
+                conta.sacar(ler_valor("Valor: R$ "))
+                print(f"Novo saldo: R$ {conta.saldo:.2f}")
+            elif opcao == "5":
+                origem = ler_numero("Conta de origem: ")
+                destino = ler_numero("Conta de destino: ")
+                banco.transferir(origem, destino, ler_valor("Valor: R$ "))
+                print("Transferência feita.")
+            elif opcao == "6":
+                conta = banco.conta(ler_numero("Número da conta: "))
+                for linha in conta.extrato:
+                    print(" ", linha)
+                print(f"  Saldo:       R$ {conta.saldo:.2f}")
+            elif opcao == "7":
+                for conta in banco.contas.values():
+                    print(conta)
+            elif opcao == "0":
+                print("Obrigado por usar o Banco Digitar!")
+                break
+            else:
+                print("Opção inválida.")
+        except ErroBancario as erro:
+            print("Erro:", erro)
+        except ValueError:
+            print("Erro: digite um número válido.")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p class="saida"><em>(exemplo digitando 1, Bia Souza, 123, 1, Caio Lima, 456, 2, 123, c, 2, 456, p, 3, 1, 500, 4, 1, 800, 4, 2, 10, 5, 1, 2, 150, 5, 1, 2, 1000, 6, 1, 3, x, 7, 8, 0)</em><br>
+=== Banco Digitar ===<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 1<br>
+Nome: Bia Souza<br>
+CPF: 123<br>
+Cliente Bia Souza cadastrado.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 1<br>
+Nome: Caio Lima<br>
+CPF: 456<br>
+Cliente Caio Lima cadastrado.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 2<br>
+CPF do cliente: 123<br>
+Corrente (c) ou poupança (p)? c<br>
+Conta 1 aberta.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 2<br>
+CPF do cliente: 456<br>
+Corrente (c) ou poupança (p)? p<br>
+Conta 2 aberta.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 3<br>
+Número da conta: 1<br>
+Valor: R$ 500<br>
+Novo saldo: R$ 500.00<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 4<br>
+Número da conta: 1<br>
+Valor: R$ 800<br>
+Erro: Saldo insuficiente. Disponível: R$ 700.00<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 4<br>
+Número da conta: 2<br>
+Valor: R$ 10<br>
+Erro: Saldo insuficiente. Disponível: R$ 0.00<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 5<br>
+Conta de origem: 1<br>
+Conta de destino: 2<br>
+Valor: R$ 150<br>
+Transferência feita.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 5<br>
+Conta de origem: 1<br>
+Conta de destino: 2<br>
+Valor: R$ 1000<br>
+Erro: Saldo insuficiente. Disponível: R$ 550.00<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 6<br>
+Número da conta: 1<br>
+&nbsp;&nbsp;Depósito &nbsp;&nbsp;&nbsp;+ &nbsp;&nbsp;500.00<br>
+&nbsp;&nbsp;Saque &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- &nbsp;&nbsp;150.00<br>
+&nbsp;&nbsp;Saldo: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ 350.00<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 3<br>
+Número da conta: x<br>
+Erro: digite um número válido.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 7<br>
+1 | Corrente &nbsp;| Bia Souza &nbsp;&nbsp;&nbsp;| R$ &nbsp;&nbsp;&nbsp;350.00<br>
+2 | Poupança &nbsp;| Caio Lima &nbsp;&nbsp;&nbsp;| R$ &nbsp;&nbsp;&nbsp;150.00<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 8<br>
+Opção inválida.<br>
+&nbsp;<br>
+1 Cliente &nbsp;2 Abrir conta &nbsp;3 Depositar &nbsp;4 Sacar<br>
+5 Transferir &nbsp;6 Extrato &nbsp;7 Listar contas &nbsp;0 Sair<br>
+Opção: 0<br>
+Obrigado por usar o Banco Digitar!</p>
+    <ul>
+      <li><code>banco.conta(numero)</code> levanta <code>ContaNaoEncontrada</code> em vez de deixar escapar um <code>KeyError</code> sem explicação.</li>
+      <li>Cada tipo de conta tem o atributo de classe <code>TIPO</code>, usado no <code>__str__</code> — mais um exemplo de polimorfismo.</li>
+      <li><code>ler_valor</code> troca a vírgula por ponto, porque no Brasil a gente digita <code>10,50</code>.</li>
+      <li>O <code>__str__</code> usa alinhamento das f-strings (aula 16) para a listagem sair em colunas.</li>
+    </ul>
+
+    <h2>Como rodar no seu computador</h2>
+    <ul>
+      <li>Salve o código como <code>banco.py</code> e rode com o comando abaixo.</li>
+      <li>Cadastre um cliente (opção 1), abra uma conta para ele (opção 2) e experimente depositar, sacar além do limite e transferir.</li>
+    </ul>
+<pre class="codigo"><code>python banco.py</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Num banco de verdade, dinheiro nunca é guardado em <code>float</code>, por causa da imprecisão que você viu na aula 29. Os bancos usam <code>Decimal</code> ou guardam tudo em centavos, como número inteiro. Aqui usamos <code>float</code> para o código ficar mais curto.</div>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Salve clientes e contas num arquivo JSON (aula 62) para não perder tudo ao fechar.</li>
+      <li>Crie a opção "render poupanças", que aplica juros de 0,5% em todas as contas poupança.</li>
+      <li>Cobre uma tarifa de R$ 1,00 por saque na conta corrente.</li>
+      <li>Use <code>Decimal</code> no lugar de <code>float</code> em todos os valores.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>class SaldoInsuficiente(ErroBancario):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Acrescente à conta poupança o método <code>render()</code>, que aplica a taxa mensal de 0,5% ao saldo e registra no extrato. Mostre o saldo de uma poupança com R$ 1.000,00 depois de 3 meses.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class ContaPoupanca:
+    def __init__(self, taxa_mensal=0.005):
+        self._saldo = 0.0
+        self.taxa_mensal = taxa_mensal
+        self.extrato = []
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    def depositar(self, valor):
+        self._saldo += valor
+        self.extrato.append(f"Depósito    +{valor:9.2f}")
+
+    def render(self):
+        juros = self._saldo * self.taxa_mensal
+        self._saldo += juros
+        self.extrato.append(f"Rendimento  +{juros:9.2f}")
+
+
+poupanca = ContaPoupanca()
+poupanca.depositar(1000)
+for mes in range(3):
+    poupanca.render()
+for linha in poupanca.extrato:
+    print(linha)
+print(f"Saldo: R$ {poupanca.saldo:.2f}")</code></pre>
+      <p class="saida">Depósito &nbsp;&nbsp;&nbsp;+ &nbsp;1000.00<br>
+Rendimento &nbsp;+ &nbsp;&nbsp;&nbsp;&nbsp;5.00<br>
+Rendimento &nbsp;+ &nbsp;&nbsp;&nbsp;&nbsp;5.03<br>
+Rendimento &nbsp;+ &nbsp;&nbsp;&nbsp;&nbsp;5.05<br>
+Saldo: R$ 1015.08</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça a conta corrente cobrar uma tarifa de R$ 1,00 em cada saque. A tarifa também precisa caber no disponível (saldo + limite).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class SaldoInsuficiente(Exception):
+    pass
+
+
+class ContaCorrente:
+    TARIFA = 1.0
+
+    def __init__(self, limite=200.0):
+        self._saldo = 0.0
+        self.limite = limite
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    def depositar(self, valor):
+        self._saldo += valor
+
+    def sacar(self, valor):
+        total = valor + self.TARIFA
+        if total &gt; self._saldo + self.limite:
+            raise SaldoInsuficiente("Saldo insuficiente para o saque e a tarifa.")
+        self._saldo -= total
+
+
+conta = ContaCorrente(limite=50)
+conta.depositar(100)
+conta.sacar(40)
+print(f"Saldo: R$ {conta.saldo:.2f}")
+try:
+    conta.sacar(110)
+except SaldoInsuficiente as erro:
+    print("Erro:", erro)</code></pre>
+      <p class="saida">Saldo: R$ 59.00<br>
+Erro: Saldo insuficiente para o saque e a tarifa.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a função <code>total_do_banco(contas)</code>, que soma o saldo de todas as contas, e <code>clientes_negativos(contas)</code>, que devolve os nomes dos titulares com saldo negativo. Use objetos simples com <code>titular</code> e <code>saldo</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Conta:
+    def __init__(self, titular, saldo):
+        self.titular = titular
+        self.saldo = saldo
+
+
+def total_do_banco(contas):
+    return sum(c.saldo for c in contas)
+
+
+def clientes_negativos(contas):
+    return [c.titular for c in contas if c.saldo &lt; 0]
+
+
+contas = [Conta("Bia", 350.0), Conta("Caio", -40.0), Conta("Duda", 1200.5), Conta("Edu", -5.0)]
+print(f"Total: R$ {total_do_banco(contas):.2f}")
+print("No vermelho:", clientes_negativos(contas))</code></pre>
+      <p class="saida">Total: R$ 1505.50<br>
+No vermelho: ['Caio', 'Edu']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use <code>add_note</code> (aula 80) para acrescentar ao <code>SaldoInsuficiente</code> uma dica para o cliente, e mostre a mensagem e a nota.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class SaldoInsuficiente(Exception):
+    pass
+
+
+def sacar(saldo, valor):
+    if valor &gt; saldo:
+        erro = SaldoInsuficiente(f"Faltam R$ {valor - saldo:.2f}")
+        erro.add_note("Dica: consulte o extrato ou faça um depósito antes.")
+        raise erro
+    return saldo - valor
+
+
+try:
+    sacar(80.0, 100.0)
+except SaldoInsuficiente as erro:
+    print("Erro:", erro)
+    for nota in erro.__notes__:
+        print(nota)</code></pre>
+      <p class="saida">Erro: Faltam R$ 20.00<br>
+Dica: consulte o extrato ou faça um depósito antes.</p>
+      <p>As notas ficam na lista <code>__notes__</code> da exceção e aparecem também no traceback quando o erro não é tratado.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="93-projeto-agenda-de-contatos.html" rel="prev">← Aula anterior</a>
+      <a href="100-name-main.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

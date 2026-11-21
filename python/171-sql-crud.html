@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 171 · CREATE, INSERT, SELECT, UPDATE, DELETE — Curso de Python · DIGITAR</title>
+<meta name="description" content="Os quatro comandos básicos de qualquer banco: criar, ler, atualizar e apagar registros.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 171 · CREATE, INSERT, SELECT, UPDATE, DELETE</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar tabelas com CREATE TABLE</li>
+        <li>Inserir, buscar, alterar e apagar com INSERT, SELECT, UPDATE e DELETE</li>
+        <li>O que significa CRUD e por que o WHERE é tão importante</li>
+      </ul>
+    </div>
+
+    <h2>CRUD</h2>
+    <p>Quase todo sistema faz quatro coisas com os dados: <strong>C</strong>reate (criar), <strong>R</strong>ead (ler), <strong>U</strong>pdate (atualizar) e <strong>D</strong>elete (apagar). Em SQL: <code>INSERT</code>, <code>SELECT</code>, <code>UPDATE</code> e <code>DELETE</code>.</p>
+
+    <h2>Criando e inserindo</h2>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("""
+    CREATE TABLE produtos (
+        id INTEGER PRIMARY KEY,
+        nome TEXT NOT NULL,
+        preco REAL,
+        estoque INTEGER DEFAULT 0
+    )
+""")
+con.execute("INSERT INTO produtos (nome, preco, estoque) VALUES ('Caderno', 18.5, 30)")
+con.execute("INSERT INTO produtos (nome, preco, estoque) VALUES ('Lápis', 1.2, 200)")
+con.execute("INSERT INTO produtos (nome, preco) VALUES ('Mochila', 120.0)")
+for p in con.execute("SELECT * FROM produtos"):
+    print(p)
+con.close()</code></pre>
+    <p class="saida">(1, 'Caderno', 18.5, 30)<br>
+(2, 'Lápis', 1.2, 200)<br>
+(3, 'Mochila', 120.0, 0)</p>
+    <p><code>NOT NULL</code> obriga a coluna a ter valor; <code>DEFAULT 0</code> define o valor quando nada é informado (a mochila ficou com estoque 0).</p>
+
+    <h2>Atualizando e apagando</h2>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE produtos (id INTEGER PRIMARY KEY, nome TEXT, preco REAL)")
+con.execute("INSERT INTO produtos (nome, preco) VALUES ('Caderno', 18.5)")
+con.execute("INSERT INTO produtos (nome, preco) VALUES ('Lápis', 1.2)")
+con.execute("INSERT INTO produtos (nome, preco) VALUES ('Borracha', 2.0)")
+
+con.execute("UPDATE produtos SET preco = 20.0 WHERE nome = 'Caderno'")
+con.execute("DELETE FROM produtos WHERE id = 3")
+
+print(con.execute("SELECT * FROM produtos").fetchall())
+con.close()</code></pre>
+    <p class="saida">[(1, 'Caderno', 20.0), (2, 'Lápis', 1.2)]</p>
+    <p><code>fetchall()</code> devolve todas as linhas numa lista; <code>fetchone()</code> devolve só a próxima.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>UPDATE</code> ou <code>DELETE</code> <strong>sem</strong> <code>WHERE</code> mudam ou apagam a tabela inteira! Antes de rodar, leia o comando e confira o <code>WHERE</code>.</div>
+
+    <h2>Salvando as mudanças</h2>
+    <p>Num banco em arquivo, as alterações só ficam gravadas depois de <code>con.commit()</code>. Usar a conexão num <code>with</code> faz o commit sozinho quando tudo dá certo:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect("loja.db")
+with con:
+    con.execute("DROP TABLE IF EXISTS clientes")
+    con.execute("CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT)")
+    con.execute("INSERT INTO clientes (nome) VALUES ('Joana')")
+print(con.execute("SELECT COUNT(*) FROM clientes").fetchone()[0], "cliente(s)")
+con.close()</code></pre>
+    <p class="saida">1 cliente(s)</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>UPDATE produtos SET preco = 20.0 WHERE id = 1</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma tabela <code>filmes</code> (id, titulo, ano), insira três filmes, mude o ano de um deles e apague outro. Mostre o resultado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE filmes (id INTEGER PRIMARY KEY, titulo TEXT, ano INTEGER)")
+con.execute("INSERT INTO filmes (titulo, ano) VALUES ('Central do Brasil', 1998)")
+con.execute("INSERT INTO filmes (titulo, ano) VALUES ('O Auto da Compadecida', 2001)")
+con.execute("INSERT INTO filmes (titulo, ano) VALUES ('Cidade de Deus', 2000)")
+con.execute("UPDATE filmes SET ano = 2002 WHERE titulo = 'Cidade de Deus'")
+con.execute("DELETE FROM filmes WHERE id = 1")
+for f in con.execute("SELECT * FROM filmes"):
+    print(f)
+con.close()</code></pre>
+      <p class="saida">(2, 'O Auto da Compadecida', 2001)<br>
+(3, 'Cidade de Deus', 2002)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O que acontece com o comando <code>DELETE FROM produtos</code>, sem <code>WHERE</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Ele apaga TODAS as linhas da tabela produtos. A tabela continua existindo, mas vazia.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="170-sql-intro.html" rel="prev">← Aula anterior</a>
+      <a href="172-sql-filtros.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

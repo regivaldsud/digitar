@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 54 · Módulos: import, from, as — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use as ferramentas prontas do Python com import, from e as, e conheça o módulo math e a biblioteca padrão.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 54 · Módulos: import, from, as</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um módulo e por que ele existe</li>
+        <li>As formas <code>import</code>, <code>from ... import</code> e <code>as</code></li>
+        <li>As funções mais úteis do módulo <code>math</code></li>
+        <li>Como descobrir o que existe dentro de um módulo</li>
+        <li>Os erros mais comuns ao importar</li>
+      </ul>
+    </div>
+
+    <h2>Uma caixa de ferramentas</h2>
+    <p>O Python vem com centenas de ferramentas prontas — a chamada <strong>biblioteca padrão</strong> —, mas elas não ficam todas carregadas o tempo todo. Seria como carregar a caixa de ferramentas inteira para apertar um parafuso. Elas ficam guardadas em <strong>módulos</strong>, e você pega só o que precisa com <code>import</code>.</p>
+    <p>Um <strong>módulo</strong> é simplesmente um arquivo <code>.py</code> cheio de funções e variáveis que você pode usar em outro programa.</p>
+
+    <h2>import</h2>
+<pre class="codigo" data-executar="sim"><code>import math
+
+print(math.sqrt(81))
+print(math.pi)</code></pre>
+    <p class="saida">9.0<br>
+3.141592653589793</p>
+    <p>Depois do <code>import math</code>, usamos <code>math.</code> e o nome da ferramenta. O ponto quer dizer "a ferramenta <code>sqrt</code> que está dentro de <code>math</code>". Esse jeito é o mais claro: quem lê o código sabe exatamente de onde veio cada função.</p>
+
+    <h2>from ... import e as</h2>
+    <p>Se você vai usar poucas ferramentas muitas vezes, pode trazê-las diretamente, sem o prefixo:</p>
+<pre class="codigo" data-executar="sim"><code>from math import sqrt, pi
+
+print(sqrt(16))
+print(round(pi, 2))</code></pre>
+    <p class="saida">4.0<br>
+3.14</p>
+    <p>Com <code>as</code> você dá um apelido, útil para nomes compridos:</p>
+<pre class="codigo" data-executar="sim"><code>import statistics as est
+from random import randint as sortear
+
+notas = [7.5, 8.0, 9.5, 6.0]
+print(est.mean(notas))
+print(est.median(notas))
+print(sortear(5, 5))</code></pre>
+    <p class="saida">7.75<br>
+7.75<br>
+5</p>
+    <div class="atencao"><strong>Atenção:</strong> Evite <code>from math import *</code>. Ele traz tudo de uma vez, e você perde a noção de onde veio cada nome. Pior: um nome do módulo pode apagar uma variável sua com o mesmo nome sem aviso.</div>
+
+    <h2>O módulo math</h2>
+    <p>O <code>math</code> traz funções que vão além de <code>+ - * /</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import math
+
+print(math.sqrt(49))        # raiz quadrada
+print(math.pow(2, 10))      # potência (devolve float)
+print(math.hypot(3, 4))     # hipotenusa de um triângulo retângulo
+print(math.factorial(5))    # fatorial
+print(math.floor(4.9))      # arredonda para baixo
+print(math.ceil(4.1))       # arredonda para cima</code></pre>
+    <p class="saida">7.0<br>
+1024.0<br>
+5.0<br>
+120<br>
+4<br>
+5</p>
+    <p>O <code>ceil</code> resolve problemas do dia a dia, como saber quantas vans levar numa excursão:</p>
+<pre class="codigo" data-executar="sim"><code>import math
+
+alunos = 37
+por_van = 15
+print(f"Precisamos de {math.ceil(alunos / por_van)} vans")</code></pre>
+    <p class="saida">Precisamos de 3 vans</p>
+
+    <h2>O que tem dentro de um módulo?</h2>
+    <p>A função <code>dir</code> lista os nomes de um módulo, e <code>help</code> mostra a documentação de cada um. Para não encher a tela, vamos filtrar só os nomes que começam com "s":</p>
+<pre class="codigo" data-executar="sim"><code>import math
+
+print([nome for nome in dir(math) if nome.startswith("s")])
+print(math.sqrt.__doc__)</code></pre>
+    <p class="saida">['sin', 'sinh', 'sqrt', 'sumprod']<br>
+Return the square root of x.</p>
+    <div class="dica"><strong>Dica:</strong> A documentação completa da biblioteca padrão está em <a href="https://docs.python.org/pt-br/3/library/">docs.python.org/pt-br/3/library</a>. Vale a pena passear por lá: muita coisa que você pensaria em programar já está pronta.</div>
+    <div class="atencao"><strong>Atenção:</strong> Nunca dê ao seu arquivo o nome de um módulo do Python, como <code>random.py</code> ou <code>math.py</code>. O <code>import random</code> vai achar o <strong>seu</strong> arquivo primeiro, e nada funciona. Se isso acontecer, renomeie o arquivo e apague a pasta <code>__pycache__</code>.</div>
+    <p>Se o nome do módulo estiver errado ou ele não estiver instalado, aparece <code>ModuleNotFoundError</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import matematica</code></pre>
+    <p class="saida">ModuleNotFoundError: No module named 'matematica'</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>from math import sqrt, pi</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Importe o módulo <code>math</code> e mostre a raiz quadrada de 144 e o valor de pi com 4 casas decimais.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import math
+
+print(math.sqrt(144))
+print(round(math.pi, 4))</code></pre>
+      <p class="saida">12.0<br>
+3.1416</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Reescreva usando <code>from ... import</code>: <code>import math</code> e depois <code>print(math.floor(7.8))</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from math import floor
+
+print(floor(7.8))</code></pre>
+      <p class="saida">7</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma pizzaria corta cada pizza em 8 pedaços. Quantas pizzas pedir para 27 pessoas comerem 2 pedaços cada? Use <code>math.ceil</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import math
+
+pedacos = 27 * 2
+print(math.ceil(pedacos / 8), "pizzas")</code></pre>
+      <p class="saida">7 pizzas</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Importe o módulo <code>statistics</code> com o apelido <code>est</code> e mostre a média e o maior valor mais comum (<code>mode</code>) das idades <code>[12, 13, 13, 14, 12, 13]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import statistics as est
+
+idades = [12, 13, 13, 14, 12, 13]
+print(est.mean(idades))
+print(est.mode(idades))</code></pre>
+      <p class="saida">12.833333333333334<br>
+13</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que um arquivo chamado <code>random.py</code> na sua pasta faz o <code>import random</code> parar de funcionar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque o Python procura os módulos primeiro na pasta do programa. Ele encontra o<br>
+seu random.py e importa ele no lugar do random de verdade. Renomeie o arquivo<br>
+(por exemplo, sorteio.py) e apague a pasta __pycache__.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="53-excecoes.html" rel="prev">← Aula anterior</a>
+      <a href="55-pacotes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

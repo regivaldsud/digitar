@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 24 · for e range; como o for usa iteráveis — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a repetir um número certo de vezes com for e range, a percorrer textos e a colocar um laço dentro de outro.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 24 · for e range; como o for usa iteráveis</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Repetir um bloco um número exato de vezes com <code>for</code> e <code>range</code></li>
+        <li>Usar <code>range(início, fim, passo)</code> para contar do jeito que quiser</li>
+        <li>Percorrer as letras de uma string com <code>for</code></li>
+        <li>Entender o que é um <strong>iterável</strong> e como o <code>for</code> usa <code>iter</code> e <code>next</code></li>
+        <li>Colocar um laço dentro de outro (laços aninhados)</li>
+      </ul>
+    </div>
+
+    <h2>for: repetir para cada item</h2>
+    <p>O <code>for</code> (para) repete um bloco <strong>para cada</strong> item de uma sequência. Junto com <code>range</code>, ele conta para você — sem precisar criar e aumentar um contador na mão, como no <code>while</code>.</p>
+<pre class="codigo" data-executar="sim"><code>for i in range(5):
+    print("Volta número", i)</code></pre>
+    <p class="saida">Volta número 0<br>
+Volta número 1<br>
+Volta número 2<br>
+Volta número 3<br>
+Volta número 4</p>
+    <p><code>range(5)</code> gera os números 0, 1, 2, 3 e 4. São 5 números, mas começando do <strong>zero</strong> e parando <strong>antes</strong> do 5.</p>
+    <div class="atencao"><strong>Atenção:</strong> O fim do <code>range</code> nunca entra. <code>range(1, 10)</code> vai de 1 a 9. Para incluir o 10, escreva <code>range(1, 11)</code>.</div>
+
+    <h2>range com início, fim e passo</h2>
+    <p><code>range</code> aceita até três valores: <code>range(início, fim, passo)</code>.</p>
+<pre class="codigo" data-executar="sim"><code>print(list(range(1, 6)))
+print(list(range(0, 21, 5)))
+print(list(range(10, 0, -2)))</code></pre>
+    <p class="saida">[1, 2, 3, 4, 5]<br>
+[0, 5, 10, 15, 20]<br>
+[10, 8, 6, 4, 2]</p>
+    <p>Aqui usamos <code>list(...)</code> só para ver todos os números de uma vez (listas são o assunto da aula 25). Com passo negativo, o <code>range</code> conta para trás. O acumulador da aula 22 fica mais curto com <code>for</code>:</p>
+<pre class="codigo" data-executar="sim"><code>total = 0
+for dia in range(1, 31):
+    total += 2
+print(f"Guardando R$ 2 por dia, em 30 dias você junta R$ {total}")</code></pre>
+    <p class="saida">Guardando R$ 2 por dia, em 30 dias você junta R$ 60</p>
+
+    <h2>Percorrendo uma string</h2>
+    <p>O <code>for</code> também percorre textos, uma letra de cada vez:</p>
+<pre class="codigo" data-executar="sim"><code>frase = "Programar em Python é divertido"
+vogais = 0
+for letra in frase.lower():
+    if letra in "aeiouáéíóúâêôãõ":
+        vogais += 1
+print(f"A frase tem {vogais} vogais")</code></pre>
+    <p class="saida">A frase tem 10 vogais</p>
+    <div class="dica"><strong>Dica:</strong> Use <code>for</code> quando você sabe quantas vezes vai repetir (ou tem uma sequência para percorrer). Use <code>while</code> quando a repetição depende de algo que você não sabe de antemão, como o que o usuário vai digitar.</div>
+
+    <h2>Por dentro do for: iteráveis</h2>
+    <p>Tudo o que o <code>for</code> consegue percorrer se chama <strong>iterável</strong>: textos, <code>range</code>, listas, tuplas e muitos outros. Por trás dos panos, o <code>for</code> pede ao iterável um <strong>iterador</strong> com <code>iter()</code> e vai pegando um item de cada vez com <code>next()</code>. Você pode fazer isso na mão:</p>
+<pre class="codigo" data-executar="sim"><code>iterador = iter("sol")
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))</code></pre>
+    <p class="saida">s<br>
+o<br>
+l</p>
+    <p>Quando os itens acabam, <code>next</code> avisa com o erro <code>StopIteration</code> — e é exatamente esse aviso que faz o <code>for</code> parar sozinho. Você vai aprofundar isso na aula 52.</p>
+<pre class="codigo" data-executar="sim"><code>iterador = iter("ok")
+next(iterador)
+next(iterador)
+next(iterador)</code></pre>
+    <p class="saida">StopIteration</p>
+    <p>Assim como o <code>while</code>, o <code>for</code> pode ter <code>else</code> (que roda se não houve <code>break</code>), <code>break</code> e <code>continue</code>:</p>
+<pre class="codigo" data-executar="sim"><code>for numero in range(1, 11):
+    if numero % 3 == 0:
+        continue
+    print(numero, end=" ")
+print()</code></pre>
+    <p class="saida">1 2 4 5 7 8 10</p>
+
+    <h2>Um laço dentro do outro</h2>
+    <p>Um laço pode ficar dentro de outro. Para <strong>cada</strong> volta do laço de fora, o laço de dentro roda <strong>inteiro</strong>. Pense num relógio: para cada hora, o ponteiro dos minutos dá uma volta completa.</p>
+<pre class="codigo" data-executar="sim"><code>for tabuada in range(2, 4):
+    print(f"--- Tabuada do {tabuada} ---")
+    for i in range(1, 6):
+        print(f"{tabuada} x {i} = {tabuada * i}")</code></pre>
+    <p class="saida">--- Tabuada do 2 ---<br>
+2 x 1 = 2<br>
+2 x 2 = 4<br>
+2 x 3 = 6<br>
+2 x 4 = 8<br>
+2 x 5 = 10<br>
+--- Tabuada do 3 ---<br>
+3 x 1 = 3<br>
+3 x 2 = 6<br>
+3 x 3 = 9<br>
+3 x 4 = 12<br>
+3 x 5 = 15</p>
+    <p>Laços aninhados também desenham. Multiplicar um texto repete: <code>"*" * 3</code> vira <code>"***"</code>:</p>
+<pre class="codigo" data-executar="sim"><code>for linha in range(1, 6):
+    print("*" * linha)
+for fila in "ABC":
+    for numero in range(1, 5):
+        print(f"{fila}{numero}", end=" ")
+    print()</code></pre>
+    <p class="saida">*<br>
+**<br>
+***<br>
+****<br>
+*****<br>
+A1 A2 A3 A4 <br>
+B1 B2 B3 B4 <br>
+C1 C2 C3 C4</p>
+    <div class="atencao"><strong>Atenção:</strong> Preste atenção na indentação: o que está com 4 espaços pertence ao laço de fora; o que está com 8, ao de dentro. Um recuo errado muda tudo.</div>
+    <div class="dica"><strong>Dica:</strong> Um <code>break</code> dentro do laço de dentro só interrompe o laço de dentro. O de fora continua normalmente.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>for i in range(1, 11): print(i * 2)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Mostre a contagem regressiva de 10 até 1 usando <code>for</code> e <code>range</code>, e depois a frase "Decolar!".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for i in range(10, 0, -1):
+    print(i)
+print("Decolar!")</code></pre>
+      <p class="saida">10<br>
+9<br>
+8<br>
+7<br>
+6<br>
+5<br>
+4<br>
+3<br>
+2<br>
+1<br>
+Decolar!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Calcule o fatorial de 6 (6 x 5 x 4 x 3 x 2 x 1) usando <code>for</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>fatorial = 1
+for n in range(1, 7):
+    fatorial *= n
+print(fatorial)</code></pre>
+      <p class="saida">720</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Conte quantas vezes a letra "a" aparece em "banana com farofa" usando <code>for</code> (sem usar <code>count</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>texto = "banana com farofa"
+quantidade = 0
+for letra in texto:
+    if letra == "a":
+        quantidade += 1
+print(quantidade)</code></pre>
+      <p class="saida">5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mostre todos os resultados possíveis ao jogar dois dados cuja soma seja 7, no formato <code>1 + 6</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for d1 in range(1, 7):
+    for d2 in range(1, 7):
+        if d1 + d2 == 7:
+            print(f"{d1} + {d2}")</code></pre>
+      <p class="saida">1 + 6<br>
+2 + 5<br>
+3 + 4<br>
+4 + 3<br>
+5 + 2<br>
+6 + 1</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Desenhe uma pirâmide centralizada de 4 linhas, usando espaços e asteriscos (a linha 1 tem 1 asterisco, a linha 2 tem 3, e assim por diante).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>altura = 4
+for linha in range(1, altura + 1):
+    espacos = " " * (altura - linha)
+    estrelas = "*" * (2 * linha - 1)
+    print(espacos + estrelas)</code></pre>
+      <p class="saida">&nbsp;&nbsp;&nbsp;*<br>
+&nbsp;&nbsp;***<br>
+&nbsp;*****<br>
+*******</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="23-atribuicao-composta.html" rel="prev">← Aula anterior</a>
+      <a href="25-listas.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

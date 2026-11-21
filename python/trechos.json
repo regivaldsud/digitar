@@ -1,0 +1,180 @@
+{
+  "trechos": [
+    {
+      "aula": "01-o-que-e-python.html",
+      "codigo": "print(\"Olá, mundo!\")"
+    },
+    {
+      "aula": "01-o-que-e-python.html",
+      "codigo": "print(\"2 + 3 =\", 2 + 3)"
+    },
+    {
+      "aula": "04-comentarios-docstrings.html",
+      "codigo": "# Este programa calcula a media da turma"
+    },
+    {
+      "aula": "10-print.html",
+      "codigo": "print(\"Dia\", \"mês\", \"ano\", sep=\"/\")"
+    },
+    {
+      "aula": "14-variaveis.html",
+      "codigo": "nome_do_aluno = \"Pedro\""
+    },
+    {
+      "aula": "12-tipos-numeros-bool.html",
+      "codigo": "populacao = 215_000_000"
+    },
+    {
+      "aula": "13-conversao-tipos.html",
+      "codigo": "total = int(\"12\") + float(\"7.5\")"
+    },
+    {
+      "aula": "17-input.html",
+      "codigo": "idade = int(input(\"Quantos anos você tem? \"))"
+    },
+    {
+      "aula": "15-operadores-aritmeticos.html",
+      "codigo": "media = (nota1 + nota2 + nota3) / 3"
+    },
+    {
+      "aula": "15-operadores-aritmeticos.html",
+      "codigo": "horas, resto = minutos // 60, minutos % 60"
+    },
+    {
+      "aula": "19-operadores-relacionais-logicos.html",
+      "codigo": "pode_entrar = 1.40 <= altura <= 1.95 and not chovendo"
+    },
+    {
+      "aula": "18-if-elif-else.html",
+      "codigo": "if nota >= 7: print(\"Aprovado\")"
+    },
+    {
+      "aula": "21-none-is-id.html",
+      "codigo": "if apelido is None: print(\"Sem apelido\")"
+    },
+    {
+      "aula": "20-fatiamento-len.html",
+      "codigo": "print(frase[0:3], frase[-6:], frase[::-1])"
+    },
+    {
+      "aula": "28-split-join-strip.html",
+      "codigo": "print(frase.strip().lower().replace(\" \", \"_\"))"
+    },
+    {
+      "aula": "16-formatacao-strings.html",
+      "codigo": "print(f\"{'Produto':<12}{preco:>8.2f}\")"
+    },
+    {
+      "aula": "22-while.html",
+      "codigo": "while contador <= 10: contador = contador + 1"
+    },
+    {
+      "aula": "24-for-range.html",
+      "codigo": "for i in range(1, 11): print(i * 2)"
+    },
+    {
+      "aula": "25-listas.html",
+      "codigo": "cores = [\"azul\", \"verde\", \"amarelo\"]"
+    },
+    {
+      "aula": "27-tuplas-enumerate.html",
+      "codigo": "for i, nome in enumerate(nomes, start=1):"
+    },
+    {
+      "aula": "29-float-decimal.html",
+      "codigo": "from decimal import Decimal"
+    },
+    {
+      "aula": "31-projeto-cpf.html",
+      "codigo": "d1 = 0 if resto < 2 else 11 - resto"
+    },
+    {
+      "aula": "32-projeto-jogo-de-adivinhacao.html",
+      "codigo": "secreto = random.randint(1, 100)"
+    },
+    {
+      "aula": "40-funcoes.html",
+      "codigo": "def dobro(n): return n * 2"
+    },
+    {
+      "aula": "41-argumentos.html",
+      "codigo": "def pedir(sabor, tamanho=\"média\"):"
+    },
+    {
+      "aula": "43-args-kwargs.html",
+      "codigo": "def somar(*args): return sum(args)"
+    },
+    {
+      "aula": "46-dicionarios.html",
+      "codigo": "contagem[voto] = contagem.get(voto, 0) + 1"
+    },
+    {
+      "aula": "49-lambda.html",
+      "codigo": "ranking = sorted(alunos, key=lambda a: a[1], reverse=True)"
+    },
+    {
+      "aula": "50-comprehensions.html",
+      "codigo": "pares = [n for n in range(20) if n % 2 == 0]"
+    },
+    {
+      "aula": "52-geradores.html",
+      "codigo": "numeros = (n * 2 for n in range(10))"
+    },
+    {
+      "aula": "62-json.html",
+      "codigo": "json.dump(dados, f, indent=2, ensure_ascii=False)"
+    },
+    {
+      "aula": "61-arquivos.html",
+      "codigo": "with open(\"notas.txt\", \"w\", encoding=\"utf-8\") as f:"
+    },
+    {
+      "aula": "53-excecoes.html",
+      "codigo": "raise ValueError(\"a nota deve estar entre 0 e 10\")"
+    },
+    {
+      "aula": "66-depuracao.html",
+      "codigo": "print(f\"{idade=} {type(idade)=}\")"
+    },
+    {
+      "aula": "68-projeto-treino-de-digitacao.html",
+      "codigo": "ppm = (len(digitado) / 5) / (segundos / 60)"
+    },
+    {
+      "aula": "70-classes.html",
+      "codigo": "def __init__(self, nome, idade):"
+    },
+    {
+      "aula": "76-heranca.html",
+      "codigo": "class Gerente(Funcionario):"
+    },
+    {
+      "aula": "91-type-hints.html",
+      "codigo": "precos: dict[str, float] = {\"pão\": 0.75}"
+    },
+    {
+      "aula": "88-dataclasses.html",
+      "codigo": "itens: list[str] = field(default_factory=list)"
+    },
+    {
+      "aula": "56-decoradores.html",
+      "codigo": "def embrulho(*args, **kwargs):"
+    },
+    {
+      "aula": "81-metodos-especiais.html",
+      "codigo": "def __add__(self, outro): return Vetor(self.x + outro.x)"
+    },
+    {
+      "aula": "100-name-main.html",
+      "codigo": "if __name__ == \"__main__\":"
+    },
+    {
+      "aula": "140-regex-intro.html",
+      "codigo": "cep = re.search(r\"\\d{5}-\\d{3}\", texto)"
+    },
+    {
+      "aula": "175-placeholders.html",
+      "codigo": "con.execute(\"DELETE FROM alunos WHERE nome = ?\", (nome,))"
+    }
+  ]
+}

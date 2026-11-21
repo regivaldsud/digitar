@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 70 · Classes e objetos: class, __init__, self — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda o que são classes e objetos e crie seus primeiros tipos com class, __init__ e self.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 70 · Classes e objetos: class, __init__, self</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma classe e o que é um objeto (instância)</li>
+        <li>Criar uma classe com <code>class</code> e objetos a partir dela</li>
+        <li>Preparar os atributos do objeto com o método <code>__init__</code></li>
+        <li>Entender o que é o <code>self</code> e escrever métodos</li>
+      </ul>
+    </div>
+
+    <h2>Moldes e coisas feitas com o molde</h2>
+    <p>Pense numa forma de bolo. A forma não é um bolo, mas com ela você faz quantos bolos quiser — um de chocolate, outro de cenoura. Em programação é igual:</p>
+    <ul>
+      <li>a <strong>classe</strong> é o molde: descreve como as coisas daquele tipo são e o que elas fazem;</li>
+      <li>o <strong>objeto</strong> (ou <strong>instância</strong>) é cada coisa concreta feita com o molde.</li>
+    </ul>
+    <p>Você já usa objetos desde a primeira aula! <code>"banana"</code> é um objeto da classe <code>str</code> e <code>[1, 2]</code> é um objeto da classe <code>list</code>. É por isso que eles têm métodos, como <code>"banana".upper()</code>.</p>
+<pre class="codigo" data-executar="sim"><code>print(type("banana"))
+print(type([1, 2]))
+print(type(3.5))
+print("banana".upper())</code></pre>
+    <p class="saida">&lt;class 'str'&gt;<br>
+&lt;class 'list'&gt;<br>
+&lt;class 'float'&gt;<br>
+BANANA</p>
+    <p>Até agora você usou classes que já vêm com o Python. Neste módulo você vai criar as suas.</p>
+
+    <h2>Criando a sua classe</h2>
+    <p>Use a palavra <code>class</code> e um nome com a primeira letra maiúscula. Para criar um objeto, chame a classe como se fosse uma função, com parênteses.</p>
+<pre class="codigo" data-executar="sim"><code>class Cachorro:
+    pass
+
+rex = Cachorro()
+pipoca = Cachorro()
+
+rex.nome = "Rex"
+pipoca.nome = "Pipoca"
+
+print(rex.nome)
+print(pipoca.nome)
+print(type(rex))</code></pre>
+    <p class="saida">Rex<br>
+Pipoca<br>
+&lt;class '__main__.Cachorro'&gt;</p>
+    <p>O <code>pass</code> deixa a classe vazia por enquanto. Cada objeto guarda seus próprios <strong>atributos</strong> — variáveis que pertencem ao objeto e que você acessa com ponto: <code>rex.nome</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Por convenção, nomes de classe usam <strong>CamelCase</strong>: cada palavra começa com maiúscula, sem <code>_</code>, como <code>ContaBancaria</code> ou <code>JogoDaVelha</code>. Variáveis e funções continuam em <code>snake_case</code>: <code>minha_conta</code>.</div>
+
+    <h2>O método __init__</h2>
+    <p>Criar os atributos "na mão" depois de criar o objeto é trabalhoso e fácil de esquecer. O <code>__init__</code> (dois sublinhados antes e dois depois; lê-se "dunder init") é um método especial que o Python chama <strong>automaticamente</strong> toda vez que um objeto é criado. É o lugar de preparar os atributos.</p>
+<pre class="codigo" data-executar="sim"><code>class Pokemon:
+    def __init__(self, nome, tipo, nivel):
+        self.nome = nome
+        self.tipo = tipo
+        self.nivel = nivel
+
+pika = Pokemon("Pikachu", "elétrico", 12)
+bulba = Pokemon("Bulbasaur", "planta", 9)
+
+print(pika.nome, pika.tipo, pika.nivel)
+print(bulba.nome, bulba.tipo, bulba.nivel)</code></pre>
+    <p class="saida">Pikachu elétrico 12<br>
+Bulbasaur planta 9</p>
+    <p>Os valores em <code>Pokemon("Pikachu", "elétrico", 12)</code> vão para os parâmetros do <code>__init__</code>. A linha <code>self.nome = nome</code> guarda o parâmetro como atributo do objeto: o <code>nome</code> da esquerda pertence ao objeto, o da direita é só o parâmetro.</p>
+    <div class="atencao"><strong>Atenção:</strong> São <strong>dois</strong> sublinhados de cada lado: <code>__init__</code>. Se você escrever <code>_init_</code> ou <code>__int__</code>, o método nunca é chamado, e ao criar o objeto aparece <code>TypeError: Pokemon() takes no arguments</code>.</div>
+
+    <h2>Métodos e o self</h2>
+    <p>Um <strong>método</strong> é uma função escrita dentro da classe. Todo método recebe primeiro o parâmetro <code>self</code>, que é o próprio objeto que chamou o método.</p>
+<pre class="codigo" data-executar="sim"><code>class ContaBancaria:
+    def __init__(self, titular, saldo=0):
+        self.titular = titular
+        self.saldo = saldo
+
+    def depositar(self, valor):
+        self.saldo += valor
+
+    def sacar(self, valor):
+        if valor &gt; self.saldo:
+            print("Saldo insuficiente!")
+        else:
+            self.saldo -= valor
+
+conta = ContaBancaria("Marina")
+conta.depositar(150)
+conta.sacar(40)
+conta.sacar(500)
+print(conta.titular, "tem R$", conta.saldo)</code></pre>
+    <p class="saida">Saldo insuficiente!<br>
+Marina tem R$ 110</p>
+    <p>Quando você escreve <code>conta.depositar(150)</code>, o Python faz <code>ContaBancaria.depositar(conta, 150)</code>: a <code>conta</code> vai para o <code>self</code> e o <code>150</code> vai para <code>valor</code>. Por isso, dentro do método, <code>self.saldo</code> é o saldo <strong>desta</strong> conta.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer o <code>self</code> na definição é um erro muito comum. Com <code>def depositar(valor):</code>, chamar <code>conta.depositar(150)</code> dá <code>TypeError: ContaBancaria.depositar() takes 1 positional argument but 2 were given</code> — o Python passou o objeto e mais o 150.</div>
+
+    <h2>Cada objeto é independente</h2>
+    <p>Mudar um objeto não muda os outros feitos com a mesma classe. Cada um tem os próprios atributos.</p>
+<pre class="codigo" data-executar="sim"><code>class Cofrinho:
+    def __init__(self, dono):
+        self.dono = dono
+        self.total = 0
+
+    def guardar(self, valor):
+        self.total += valor
+
+    def mostrar(self):
+        print(f"{self.dono}: R$ {self.total:.2f}")
+
+meu = Cofrinho("Lia")
+do_irmao = Cofrinho("Theo")
+
+meu.guardar(5)
+meu.guardar(2.5)
+do_irmao.guardar(10)
+
+meu.mostrar()
+do_irmao.mostrar()</code></pre>
+    <p class="saida">Lia: R$ 7.50<br>
+Theo: R$ 10.00</p>
+    <p>Repare que <code>total</code> não veio como parâmetro: o <code>__init__</code> pode criar atributos com um valor inicial fixo.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def __init__(self, nome, tipo, nivel):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Gato</code> com <code>nome</code> no <code>__init__</code> e um método <code>miar</code> que mostra <code>&lt;nome&gt; diz: Miau!</code>. Crie dois gatos e faça os dois miarem.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Gato:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def miar(self):
+        print(f"{self.nome} diz: Miau!")
+
+Gato("Frajola").miar()
+Gato("Mingau").miar()</code></pre>
+      <p class="saida">Frajola diz: Miau!<br>
+Mingau diz: Miau!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Lampada</code>, que começa apagada, com os métodos <code>ligar</code>, <code>desligar</code> e <code>estado</code> (mostra <code>ligada</code> ou <code>desligada</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Lampada:
+    def __init__(self):
+        self.acesa = False
+
+    def ligar(self):
+        self.acesa = True
+
+    def desligar(self):
+        self.acesa = False
+
+    def estado(self):
+        print("ligada" if self.acesa else "desligada")
+
+sala = Lampada()
+sala.estado()
+sala.ligar()
+sala.estado()</code></pre>
+      <p class="saida">desligada<br>
+ligada</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a classe <code>Retangulo</code> com <code>largura</code> e <code>altura</code> e os métodos <code>area()</code> e <code>perimetro()</code>, que devolvem os valores. Teste com 5 por 3.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Retangulo:
+    def __init__(self, largura, altura):
+        self.largura = largura
+        self.altura = altura
+
+    def area(self):
+        return self.largura * self.altura
+
+    def perimetro(self):
+        return 2 * (self.largura + self.altura)
+
+r = Retangulo(5, 3)
+print("Área:", r.area())
+print("Perímetro:", r.perimetro())</code></pre>
+      <p class="saida">Área: 15<br>
+Perímetro: 16</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe <code>Personagem</code> com <code>nome</code> e <code>vida</code> (padrão 100) e o método <code>levar_dano(dano)</code>, que não deixa a vida ficar abaixo de 0. Mostre a vida depois de 30 e depois de 90 de dano.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Personagem:
+    def __init__(self, nome, vida=100):
+        self.nome = nome
+        self.vida = vida
+
+    def levar_dano(self, dano):
+        self.vida = max(0, self.vida - dano)
+
+heroi = Personagem("Saci")
+heroi.levar_dano(30)
+print(heroi.nome, heroi.vida)
+heroi.levar_dano(90)
+print(heroi.nome, heroi.vida)</code></pre>
+      <p class="saida">Saci 70<br>
+Saci 0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Qual é a diferença entre classe e objeto? Dê um exemplo do dia a dia.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">A classe é o molde (a descrição do tipo); o objeto é uma coisa concreta feita com o molde.<br>
+Exemplo: "Celular" é a classe; o seu celular e o da sua mãe são dois objetos,<br>
+cada um com sua própria cor, bateria e contatos.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="69-projeto-intermediario.html" rel="prev">← Aula anterior</a>
+      <a href="71-atributos-metodos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

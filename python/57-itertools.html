@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 57 · itertools: count, combinations, permutations, product, groupby — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça o módulo itertools e resolva em poucas linhas problemas de contar, combinar, ordenar de todos os jeitos e agrupar.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 57 · itertools: count, combinations, permutations, product, groupby</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Contar sem fim com <code>count</code> e parar na hora certa com <code>islice</code></li>
+        <li>Gerar combinações e permutações de uma lista</li>
+        <li>Montar todas as combinações de várias listas com <code>product</code></li>
+        <li>Agrupar itens parecidos com <code>groupby</code></li>
+        <li>Juntar e acumular sequências com <code>chain</code> e <code>accumulate</code></li>
+      </ul>
+    </div>
+
+    <h2>Uma fábrica de iteradores</h2>
+    <p>O módulo <code>itertools</code> traz ferramentas para criar e combinar sequências. Elas devolvem <strong>iteradores</strong> "preguiçosos" (como os geradores da aula 52): os valores são produzidos um de cada vez, só quando alguém pede. Por isso usamos <code>list()</code> para ver tudo de uma vez.</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import chain
+
+manha = ["matemática", "português"]
+tarde = ["educação física", "digitação"]
+
+print(list(chain(manha, tarde)))</code></pre>
+    <p class="saida">['matemática', 'português', 'educação física', 'digitação']</p>
+    <p>O <code>chain</code> emenda várias sequências como se fossem uma só, sem criar listas novas no meio do caminho.</p>
+
+    <h2>count: contando sem parar</h2>
+    <p><code>count(inicio, passo)</code> conta para sempre. Como ele nunca termina, use-o com um <code>break</code> ou com <code>islice</code>, que pega só um pedaço:</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import count, islice
+
+for senha in count(101):
+    print("Senha", senha)
+    if senha == 104:
+        break
+
+print(list(islice(count(0, 5), 6)))</code></pre>
+    <p class="saida">Senha 101<br>
+Senha 102<br>
+Senha 103<br>
+Senha 104<br>
+[0, 5, 10, 15, 20, 25]</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca faça <code>list(count())</code>: como a contagem não acaba, o programa fica preso para sempre tentando montar uma lista infinita.</div>
+
+    <h2>combinations e permutations</h2>
+    <p><code>combinations(itens, k)</code> dá todos os grupos de <code>k</code> itens, <strong>sem</strong> se importar com a ordem. <code>permutations(itens, k)</code> dá todas as filas, em que a ordem <strong>importa</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import combinations, permutations
+
+amigos = ["Ana", "Bia", "Caio"]
+
+print("Duplas para o trabalho:")
+for dupla in combinations(amigos, 2):
+    print(dupla)
+
+print("Pódio (1º e 2º lugar):")
+for podio in permutations(amigos, 2):
+    print(podio)</code></pre>
+    <p class="saida">Duplas para o trabalho:<br>
+('Ana', 'Bia')<br>
+('Ana', 'Caio')<br>
+('Bia', 'Caio')<br>
+Pódio (1º e 2º lugar):<br>
+('Ana', 'Bia')<br>
+('Ana', 'Caio')<br>
+('Bia', 'Ana')<br>
+('Bia', 'Caio')<br>
+('Caio', 'Ana')<br>
+('Caio', 'Bia')</p>
+    <p>Repare: na dupla, <code>("Ana", "Bia")</code> é o mesmo que <code>("Bia", "Ana")</code>, então aparece uma vez só. No pódio, Ana em primeiro e Bia em segundo é diferente de Bia em primeiro e Ana em segundo.</p>
+    <div class="dica"><strong>Dica:</strong> Para saber só <strong>quantas</strong> combinações existem, sem gerar todas, use <code>math.comb(n, k)</code> e <code>math.perm(n, k)</code>. Por exemplo, <code>math.comb(60, 6)</code> dá o número de jogos possíveis da Mega-Sena: 50.063.860.</div>
+
+    <h2>product: todas as misturas</h2>
+    <p><code>product</code> combina cada item de uma lista com cada item de outra — como montar todas as opções de um cardápio:</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import product
+
+sabores = ["calabresa", "frango"]
+bordas = ["catupiry", "cheddar", "sem borda"]
+
+for sabor, borda in product(sabores, bordas):
+    print(f"Pizza de {sabor}, borda {borda}")</code></pre>
+    <p class="saida">Pizza de calabresa, borda catupiry<br>
+Pizza de calabresa, borda cheddar<br>
+Pizza de calabresa, borda sem borda<br>
+Pizza de frango, borda catupiry<br>
+Pizza de frango, borda cheddar<br>
+Pizza de frango, borda sem borda</p>
+    <p>Com <code>repeat</code>, a mesma lista é combinada com ela mesma. Todas as senhas de 2 dígitos com 0 e 1:</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import product
+
+for digitos in product("01", repeat=2):
+    print("".join(digitos))</code></pre>
+    <p class="saida">00<br>
+01<br>
+10<br>
+11</p>
+
+    <h2>groupby: agrupando vizinhos</h2>
+    <p><code>groupby(itens, key)</code> junta itens <strong>seguidos</strong> que têm a mesma chave. Por isso, quase sempre ordenamos antes pela mesma chave:</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import groupby
+
+alunos = [
+    ("Ana", "7º A"), ("Leo", "7º B"), ("Bia", "7º A"),
+    ("Caio", "7º B"), ("Davi", "7º A"),
+]
+
+def turma(aluno):
+    return aluno[1]
+
+alunos.sort(key=turma)
+for nome_turma, grupo in groupby(alunos, key=turma):
+    nomes = [nome for nome, _ in grupo]
+    print(nome_turma, nomes)</code></pre>
+    <p class="saida">7º A ['Ana', 'Bia', 'Davi']<br>
+7º B ['Leo', 'Caio']</p>
+    <div class="atencao"><strong>Atenção:</strong> Sem o <code>sort</code> antes, o <code>groupby</code> cria um grupo novo cada vez que a chave muda, e a mesma turma aparece repetida várias vezes.</div>
+    <p>E o <code>accumulate</code> vai somando (ou aplicando outra conta) passo a passo — ótimo para saldos e placares:</p>
+<pre class="codigo" data-executar="sim"><code>from itertools import accumulate
+
+gols_por_rodada = [2, 0, 3, 1]
+print(list(accumulate(gols_por_rodada)))</code></pre>
+    <p class="saida">[2, 2, 5, 6]</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>for a, b in combinations(times, 2):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Quatro times vão jogar um torneio em que todos se enfrentam uma vez: <code>["Bahia", "Vitória", "Sport", "Náutico"]</code>. Mostre todos os jogos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from itertools import combinations
+
+times = ["Bahia", "Vitória", "Sport", "Náutico"]
+for a, b in combinations(times, 2):
+    print(f"{a} x {b}")</code></pre>
+      <p class="saida">Bahia x Vitória<br>
+Bahia x Sport<br>
+Bahia x Náutico<br>
+Vitória x Sport<br>
+Vitória x Náutico<br>
+Sport x Náutico</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Mostre todas as ordens possíveis para três pessoas na fila do caixa: <code>["mãe", "pai", "eu"]</code>. Quantas são?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from itertools import permutations
+
+filas = list(permutations(["mãe", "pai", "eu"]))
+for fila in filas:
+    print(" -&gt; ".join(fila))
+print(len(filas), "ordens")</code></pre>
+      <p class="saida">mãe -&gt; pai -&gt; eu<br>
+mãe -&gt; eu -&gt; pai<br>
+pai -&gt; mãe -&gt; eu<br>
+pai -&gt; eu -&gt; mãe<br>
+eu -&gt; mãe -&gt; pai<br>
+eu -&gt; pai -&gt; mãe<br>
+6 ordens</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma loja vende camisetas nas cores <code>azul</code> e <code>branca</code> e nos tamanhos <code>P</code>, <code>M</code> e <code>G</code>. Use <code>product</code> para listar todas as opções no formato <code>azul-P</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from itertools import product
+
+for cor, tamanho in product(["azul", "branca"], ["P", "M", "G"]):
+    print(f"{cor}-{tamanho}")</code></pre>
+      <p class="saida">azul-P<br>
+azul-M<br>
+azul-G<br>
+branca-P<br>
+branca-M<br>
+branca-G</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Agrupe as palavras <code>["banana", "abacaxi", "caju", "amora", "cacau", "bacuri"]</code> pela primeira letra, mostrando cada letra com a sua lista.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from itertools import groupby
+
+frutas = sorted(["banana", "abacaxi", "caju", "amora", "cacau", "bacuri"])
+for letra, grupo in groupby(frutas, key=lambda f: f[0]):
+    print(letra, list(grupo))</code></pre>
+      <p class="saida">a ['abacaxi', 'amora']<br>
+b ['bacuri', 'banana']<br>
+c ['cacau', 'caju']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Use <code>count</code> para mostrar os 5 primeiros múltiplos de 7 (começando em 7) e <code>accumulate</code> para mostrar o saldo após os depósitos <code>[50, 20, -30, 10]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from itertools import accumulate, count, islice
+
+print(list(islice(count(7, 7), 5)))
+print(list(accumulate([50, 20, -30, 10])))</code></pre>
+      <p class="saida">[7, 14, 21, 28, 35]<br>
+[50, 70, 40, 50]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="56-decoradores.html" rel="prev">← Aula anterior</a>
+      <a href="58-map-filter-reduce.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

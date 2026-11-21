@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 15 · Operadores aritméticos, precedência, + e * com textos — Curso de Python · DIGITAR</title>
+<meta name="description" content="Faça contas com Python: as quatro operações, divisão inteira, resto, potência, ordem das contas e o + e o * com textos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 15 · Operadores aritméticos, precedência, + e * com textos</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar os operadores <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>//</code>, <code>%</code> e <code>**</code></li>
+        <li>Entender a ordem em que as contas são feitas (precedência)</li>
+        <li>Usar parênteses para mudar a ordem</li>
+        <li>Juntar textos com <code>+</code> e repeti-los com <code>*</code></li>
+      </ul>
+    </div>
+
+    <h2>As quatro operações</h2>
+<pre class="codigo" data-executar="sim"><code>print(7 + 3)
+print(7 - 3)
+print(7 * 3)
+print(7 / 2)
+print(6 / 2)</code></pre>
+    <p class="saida">10<br>
+4<br>
+21<br>
+3.5<br>
+3.0</p>
+    <p>A multiplicação usa <code>*</code> (asterisco), não <code>x</code>. E repare: a divisão <code>/</code> sempre dá um <code>float</code>, mesmo quando a conta é exata — <code>6 / 2</code> dá <code>3.0</code>.</p>
+
+    <h2>Divisão inteira, resto e potência</h2>
+    <ul>
+      <li><code>//</code> faz a <strong>divisão inteira</strong>: descarta o que sobra depois da vírgula.</li>
+      <li><code>%</code> dá o <strong>resto</strong> da divisão (o nome é "módulo").</li>
+      <li><code>**</code> é a <strong>potência</strong>: <code>2 ** 3</code> é 2 elevado a 3.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>print(17 // 5)
+print(17 % 5)
+print(2 ** 3)
+print(9 ** 0.5)</code></pre>
+    <p class="saida">3<br>
+2<br>
+8<br>
+3.0</p>
+    <p>Exemplo da vida real: 17 brigadeiros para dividir entre 5 amigos. Cada um ganha <code>17 // 5</code>, que dá 3, e sobram <code>17 % 5</code>, que dá 2. E <code>9 ** 0.5</code> é a raiz quadrada de 9.</p>
+<pre class="codigo" data-executar="sim"><code>minutos = 135
+horas = minutos // 60
+resto = minutos % 60
+print(minutos, "minutos são", horas, "horas e", resto, "minutos")</code></pre>
+    <p class="saida">135 minutos são 2 horas e 15 minutos</p>
+    <div class="dica"><strong>Dica:</strong> O <code>%</code> é ótimo para saber se um número é par: se <code>numero % 2</code> dá <code>0</code>, o número é par.</div>
+    <div class="atencao"><strong>Atenção:</strong> Dividir por zero não pode, nem na matemática: <code>10 / 0</code>, <code>10 // 0</code> e <code>10 % 0</code> dão <code>ZeroDivisionError</code>.</div>
+
+    <h2>Quem vem primeiro: precedência</h2>
+    <p>O Python segue a mesma ordem da matemática da escola: primeiro <code>**</code>, depois <code>*</code>, <code>/</code>, <code>//</code> e <code>%</code>, e por último <code>+</code> e <code>-</code>. Em empate, a conta é feita da esquerda para a direita. Use parênteses para mudar a ordem:</p>
+<pre class="codigo" data-executar="sim"><code>print(2 + 3 * 4)
+print((2 + 3) * 4)
+print(10 - 4 - 3)
+print(2 * 3 ** 2)
+nota1 = 7
+nota2 = 9
+print("Errado:", nota1 + nota2 / 2)
+print("Certo:", (nota1 + nota2) / 2)</code></pre>
+    <p class="saida">14<br>
+20<br>
+3<br>
+18<br>
+Errado: 11.5<br>
+Certo: 8.0</p>
+    <div class="atencao"><strong>Atenção:</strong> O erro clássico da média: <code>nota1 + nota2 / 2</code> divide só a <code>nota2</code>. Para a média, coloque a soma entre parênteses: <code>(nota1 + nota2) / 2</code>.</div>
+
+    <h2>+ e * com textos</h2>
+    <p>Os operadores <code>+</code> e <code>*</code> também funcionam com textos, mas com outro sentido:</p>
+    <ul>
+      <li><code>+</code> entre dois textos <strong>junta</strong> (concatena);</li>
+      <li><code>*</code> entre um texto e um inteiro <strong>repete</strong> o texto.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>nome = "Ana"
+sobrenome = "Lima"
+print(nome + " " + sobrenome)
+print("ha" * 3)
+print("=" * 20)
+print("-" * 5 + " MENU " + "-" * 5)</code></pre>
+    <p class="saida">Ana Lima<br>
+hahaha<br>
+====================<br>
+----- MENU -----</p>
+    <div class="atencao"><strong>Atenção:</strong> Somar texto com número dá <code>TypeError</code>: <code>"Idade: " + 13</code> não funciona. Converta o número com <code>str(13)</code> (aula 13) ou use vírgulas no <code>print</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>media = (nota1 + nota2 + nota3) / 3</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Calcule a média das notas 6.5, 8.0 e 9.5.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>media = (6.5 + 8.0 + 9.5) / 3
+print(media)</code></pre>
+      <p class="saida">8.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Uma turma de 34 alunos vai fazer grupos de 4. Quantos grupos completos são formados e quantos alunos sobram?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>alunos = 34
+print("Grupos:", alunos // 4)
+print("Sobram:", alunos % 4)</code></pre>
+      <p class="saida">Grupos: 8<br>
+Sobram: 2</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Converta 200 segundos em minutos e segundos (por exemplo, <code>3 minutos e 20 segundos</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>total = 200
+print(total // 60, "minutos e", total % 60, "segundos")</code></pre>
+      <p class="saida">3 minutos e 20 segundos</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Calcule a área de um terreno quadrado de 12 metros de lado usando <code>**</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>lado = 12
+print("Área:", lado ** 2, "metros quadrados")</code></pre>
+      <p class="saida">Área: 144 metros quadrados</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Use <code>*</code> e <code>+</code> com textos para mostrar uma linha de 10 asteriscos, a palavra <code>PROMOÇÃO</code> e outra linha de 10 asteriscos, tudo numa linha só.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("*" * 10 + " PROMOÇÃO " + "*" * 10)</code></pre>
+      <p class="saida">********** PROMOÇÃO **********</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="14-variaveis.html" rel="prev">← Aula anterior</a>
+      <a href="16-formatacao-strings.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

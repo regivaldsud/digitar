@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 49 · Funções lambda e ordenação com key — Curso de Python · DIGITAR</title>
+<meta name="description" content="Escreva funções pequenas de uma linha com lambda e use-as para ordenar listas e achar o menor e o maior item por qualquer critério.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 49 · Funções lambda e ordenação com key</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é uma função <code>lambda</code> e como escrevê-la</li>
+        <li>Como ordenar com <code>sorted</code> e <code>sort</code> usando <code>key</code></li>
+        <li>Como usar <code>key</code> em <code>min</code> e <code>max</code></li>
+        <li>Como ordenar por mais de um critério</li>
+        <li>Quando é melhor usar <code>def</code> em vez de <code>lambda</code></li>
+      </ul>
+    </div>
+
+    <h2>Uma função numa linha</h2>
+    <p><code>lambda</code> cria uma função pequena, sem nome, que cabe numa linha. Ela recebe parâmetros e devolve <strong>uma expressão</strong> — sem escrever <code>return</code>. A forma é <code>lambda parâmetros: expressão</code>:</p>
+<pre class="codigo" data-executar="sim"><code>dobro = lambda x: x * 2
+soma = lambda a, b: a + b
+
+print(dobro(8))
+print(soma(3, 4))</code></pre>
+    <p class="saida">16<br>
+7</p>
+    <p>Isso equivale a <code>def dobro(x): return x * 2</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Uma lambda só pode ter uma expressão: nada de laços ou vários comandos. Se precisa disso, use <code>def</code>. E dar nome a uma lambda (como fizemos acima, só para aprender) não é bom estilo: se a função vai ter nome, use <code>def</code>.</div>
+
+    <h2>Onde a lambda brilha: ordenar</h2>
+    <p>A <code>lambda</code> é mais útil quando uma função precisa receber <strong>outra função</strong> (aula 45). O <code>sorted</code> aceita uma <code>key</code>: uma função que diz por qual critério ordenar. O <code>sorted</code> chama a <code>key</code> para cada item e ordena pelos resultados:</p>
+<pre class="codigo" data-executar="sim"><code>frutas = ["melancia", "uva", "abacaxi", "kiwi"]
+print(sorted(frutas))
+print(sorted(frutas, key=lambda f: len(f)))
+print(sorted(frutas, key=len, reverse=True))</code></pre>
+    <p class="saida">['abacaxi', 'kiwi', 'melancia', 'uva']<br>
+['uva', 'kiwi', 'abacaxi', 'melancia']<br>
+['melancia', 'abacaxi', 'kiwi', 'uva']</p>
+    <p>Quando já existe uma função pronta (como <code>len</code>), passe-a direto, sem lambda.</p>
+
+    <h2>Listas de tuplas e de dicionários</h2>
+    <p>Com listas de tuplas ou dicionários, a lambda escolhe qual parte comparar. O método <code>sort</code> da lista aceita a mesma <code>key</code>, mas altera a própria lista:</p>
+<pre class="codigo" data-executar="sim"><code>alunos = [("Ana", 8.5), ("Bruno", 9.7), ("Carla", 7.0)]
+ranking = sorted(alunos, key=lambda aluno: aluno[1], reverse=True)
+for nome, nota in ranking:
+    print(nome, nota)
+
+produtos = [{"nome": "Caderno", "preco": 18.9}, {"nome": "Lápis", "preco": 1.5}]
+produtos.sort(key=lambda p: p["preco"])
+print([p["nome"] for p in produtos])</code></pre>
+    <p class="saida">Bruno 9.7<br>
+Ana 8.5<br>
+Carla 7.0<br>
+['Lápis', 'Caderno']</p>
+
+    <h2>min e max com key</h2>
+    <p><code>min</code> e <code>max</code> também aceitam <code>key</code>, e devolvem o item inteiro, não só o valor comparado:</p>
+<pre class="codigo" data-executar="sim"><code>produtos = [
+    {"nome": "Caderno", "preco": 18.90},
+    {"nome": "Lápis", "preco": 1.50},
+    {"nome": "Mochila", "preco": 129.00},
+]
+mais_barato = min(produtos, key=lambda p: p["preco"])
+mais_caro = max(produtos, key=lambda p: p["preco"])
+print("Mais barato:", mais_barato["nome"])
+print("Mais caro:", mais_caro["nome"])</code></pre>
+    <p class="saida">Mais barato: Lápis<br>
+Mais caro: Mochila</p>
+
+    <h2>Mais de um critério</h2>
+    <p>Se a <code>key</code> devolve uma <strong>tupla</strong>, o Python compara o primeiro item; em caso de empate, o segundo, e assim por diante. Para inverter só um critério numérico, use o sinal de menos:</p>
+<pre class="codigo" data-executar="sim"><code>classificacao = [("Bahia", 20), ("Ceará", 23), ("Vitória", 20), ("Sport", 23)]
+tabela = sorted(classificacao, key=lambda t: (-t[1], t[0]))
+for time, pontos in tabela:
+    print(f"{time:&lt;8} {pontos}")</code></pre>
+    <p class="saida">Ceará &nbsp;&nbsp;&nbsp;23<br>
+Sport &nbsp;&nbsp;&nbsp;23<br>
+Bahia &nbsp;&nbsp;&nbsp;20<br>
+Vitória &nbsp;20</p>
+    <p>Os times com mais pontos vêm primeiro e, no empate, ficam em ordem alfabética.</p>
+    <div class="dica"><strong>Dica:</strong> Para ordenar textos sem diferenciar maiúsculas de minúsculas, use <code>key=str.lower</code>. Sem ela, todas as palavras com maiúscula vêm antes das minúsculas.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>ranking = sorted(alunos, key=lambda a: a[1], reverse=True)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie uma lambda <code>quadrado</code> que devolve o número ao quadrado e mostre <code>quadrado(12)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>quadrado = lambda n: n ** 2
+print(quadrado(12))</code></pre>
+      <p class="saida">144</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Ordene a lista de cidades <code>["São Paulo", "Rio", "Belo Horizonte", "Recife"]</code> da maior para a menor quantidade de letras.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cidades = ["São Paulo", "Rio", "Belo Horizonte", "Recife"]
+print(sorted(cidades, key=lambda c: len(c), reverse=True))</code></pre>
+      <p class="saida">['Belo Horizonte', 'São Paulo', 'Recife', 'Rio']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Na lista de jogadores <code>[("Duda", 120), ("Gabi", 340), ("Leo", 95)]</code>, cada tupla tem nome e pontos. Use <code>max</code> com <code>key</code> para mostrar o nome de quem fez mais pontos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>jogadores = [("Duda", 120), ("Gabi", 340), ("Leo", 95)]
+campeao = max(jogadores, key=lambda j: j[1])
+print(campeao[0])</code></pre>
+      <p class="saida">Gabi</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Ordene os nomes <code>["bia", "Ana", "carlos", "Bruno"]</code> em ordem alfabética ignorando maiúsculas e minúsculas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nomes = ["bia", "Ana", "carlos", "Bruno"]
+print(sorted(nomes))
+print(sorted(nomes, key=str.lower))</code></pre>
+      <p class="saida">['Ana', 'Bruno', 'bia', 'carlos']<br>
+['Ana', 'bia', 'Bruno', 'carlos']</p>
+      <p>Sem a <code>key</code>, "Ana" e "Bruno" (maiúsculas) vêm antes de "bia". Com <code>str.lower</code>, a ordem fica alfabética de verdade.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Ordene os alunos <code>[("Rui", 8), ("Ana", 9), ("Lia", 8), ("Gil", 9)]</code> da maior para a menor nota e, no empate, por nome.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>alunos = [("Rui", 8), ("Ana", 9), ("Lia", 8), ("Gil", 9)]
+print(sorted(alunos, key=lambda a: (-a[1], a[0])))</code></pre>
+      <p class="saida">[('Ana', 9), ('Gil', 9), ('Lia', 8), ('Rui', 8)]</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="48-sets.html" rel="prev">← Aula anterior</a>
+      <a href="50-comprehensions.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

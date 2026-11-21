@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 206 · Usuários, login, logout e login_required — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use o sistema de usuários do Django para entrar, sair e proteger páginas só para quem está logado.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 206 · Usuários, login, logout e login_required</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Usar as views prontas de login e logout do Django</li>
+        <li>Proteger páginas com <code>@login_required</code></li>
+        <li>Mostrar só os dados do usuário logado e criar contas</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Login e logout prontos</h2>
+    <p>O Django já tem tudo de usuários: senha guardada com segurança (nunca em texto puro), login e logout. Basta incluir as URLs:</p>
+<pre class="codigo"><code># config/urls.py
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("contas/", include("django.contrib.auth.urls")),
+    path("", include("contatos.urls")),
+]</code></pre>
+<pre class="codigo"><code># config/settings.py (trecho)
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "lista"
+LOGOUT_REDIRECT_URL = "login"</code></pre>
+    <p>O template do login fica em <code>templates/registration/login.html</code>:</p>
+<pre class="codigo"><code>&lt;form method="post"&gt;
+  {% csrf_token %}
+  {{ form.as_p }}
+  &lt;button type="submit"&gt;Entrar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> No Django 5, o logout precisa ser um <strong>POST</strong>: um link <code>&lt;a href="/contas/logout/"&gt;</code> não funciona mais. Use um formulário com <code>{% csrf_token %}</code> e um botão "Sair".</div>
+
+    <h2>Páginas só para quem entrou</h2>
+<pre class="codigo"><code>from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Contato
+
+
+@login_required
+def lista(request):
+    contatos = Contato.objects.filter(dono=request.user)
+    return render(request, "contatos/lista.html", {"contatos": contatos})</code></pre>
+    <p>Para cada usuário ver só os próprios contatos, o model ganha um dono:</p>
+<pre class="codigo"><code>from django.conf import settings
+from django.db import models
+
+
+class Contato(models.Model):
+    dono = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    nome = models.CharField(max_length=100)</code></pre>
+    <p>No template, <code>{% if user.is_authenticated %}Olá, {{ user.username }}!{% endif %}</code> mostra quem está logado.</p>
+
+    <h2>Cadastro de usuários</h2>
+<pre class="codigo"><code>from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import redirect, render
+
+
+def cadastro(request):
+    form = UserCreationForm(request.POST or None)
+    if form.is_valid():
+        usuario = form.save()
+        login(request, usuario)
+        return redirect("lista")
+    return render(request, "registration/cadastro.html", {"form": form})</code></pre>
+    <div class="dica"><strong>Dica:</strong> <code>@login_required</code> é um decorador, como os da aula 56: ele "embrulha" a view e manda para o login quem não entrou.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>@login_required</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva o formulário de logout (Django 5) para colocar no menu.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>&lt;form method="post" action="{% url 'logout' %}"&gt;
+  {% csrf_token %}
+  &lt;button type="submit"&gt;Sair&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Na view <code>novo</code> (aula 205), como gravar o usuário logado como dono antes de salvar o contato?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>contato = form.save(commit=False)
+contato.dono = request.user
+contato.save()</code></pre>
+      <p><code>commit=False</code> cria o objeto sem salvar, para você completar o campo <code>dono</code> antes.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="205-forms.html" rel="prev">← Aula anterior</a>
+      <a href="207-projeto-agenda.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 12 · Números (int, float) e verdadeiro/falso (bool) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Conheça os números inteiros e reais do Python e o tipo bool, que guarda verdadeiro ou falso.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 12 · Números (int, float) e verdadeiro/falso (bool)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Diferenciar números inteiros (<code>int</code>) de números reais (<code>float</code>)</li>
+        <li>Escrever números grandes com <code>_</code> e decimais com ponto</li>
+        <li>Conhecer o tipo <code>bool</code> e seus dois valores, <code>True</code> e <code>False</code></li>
+        <li>Saber qual tipo resulta de uma conta</li>
+      </ul>
+    </div>
+
+    <h2>Inteiros: o tipo int</h2>
+    <p>Números sem casas decimais são do tipo <code>int</code> (de *integer*, inteiro): <code>13</code>, <code>0</code>, <code>-5</code>, <code>2025</code>. Eles podem ser enormes, sem limite de tamanho.</p>
+<pre class="codigo" data-executar="sim"><code>print(13)
+print(-5)
+print(type(2025))
+print(2 ** 100)</code></pre>
+    <p class="saida">13<br>
+-5<br>
+&lt;class 'int'&gt;<br>
+1267650600228229401496703205376</p>
+    <p><code>2 ** 100</code> é 2 elevado a 100, um número com 31 dígitos. O Python faz essa conta sem reclamar.</p>
+    <div class="dica"><strong>Dica:</strong> Para números grandes, você pode separar os milhares com <code>_</code> para ficar fácil de ler: <code>1_000_000</code> é um milhão. O Python ignora o sublinhado.</div>
+
+    <h2>Reais: o tipo float</h2>
+    <p>Números com casas decimais são do tipo <code>float</code>: <code>1.75</code>, <code>3.5</code>, <code>-0.25</code>. Em Python, a parte decimal é separada por <strong>ponto</strong>, como na calculadora, e não por vírgula.</p>
+<pre class="codigo" data-executar="sim"><code>print(1.75)
+print(type(1.75))
+print(type(10.0))
+print(1_000_000)
+print(.5)</code></pre>
+    <p class="saida">1.75<br>
+&lt;class 'float'&gt;<br>
+&lt;class 'float'&gt;<br>
+1000000<br>
+0.5</p>
+    <p>Repare que <code>10.0</code> é <code>float</code>, mesmo valendo dez: o ponto já basta para ser real. E <code>.5</code> é o mesmo que <code>0.5</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Escrever <code>1,75</code> não dá o número 1,75! Para o Python, a vírgula separa valores: <code>print(1,75)</code> mostra <code>1 75</code>, dois números inteiros.</div>
+
+    <h2>Que tipo sai de uma conta?</h2>
+    <p>Quando você faz uma conta, o tipo do resultado segue regras simples:</p>
+    <ul>
+      <li><code>int</code> com <code>int</code> dá <code>int</code> (na soma, subtração e multiplicação);</li>
+      <li>se aparecer um <code>float</code> na conta, o resultado é <code>float</code>;</li>
+      <li>a divisão <code>/</code> <strong>sempre</strong> dá <code>float</code>, mesmo quando é exata.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>print(7 + 3)
+print(7 + 3.0)
+print(6 / 2)
+print(type(6 / 2))
+print(2 * 2.5)</code></pre>
+    <p class="saida">10<br>
+10.0<br>
+3.0<br>
+&lt;class 'float'&gt;<br>
+5.0</p>
+
+    <h2>Verdadeiro ou falso: o tipo bool</h2>
+    <p>O tipo <code>bool</code> tem só dois valores: <code>True</code> (verdadeiro) e <code>False</code> (falso). Ele é a base das decisões que o programa vai tomar.</p>
+<pre class="codigo" data-executar="sim"><code>print(True)
+print(False)
+print(type(True))
+print(10 &gt; 3)
+print(10 &lt; 3)</code></pre>
+    <p class="saida">True<br>
+False<br>
+&lt;class 'bool'&gt;<br>
+True<br>
+False</p>
+    <p>Toda comparação, como <code>10 &gt; 3</code>, dá um <code>bool</code>. Você vai estudar as comparações a fundo na aula 19.</p>
+    <div class="atencao"><strong>Atenção:</strong> Escreva <code>True</code> e <code>False</code> com a primeira letra maiúscula e sem aspas. <code>true</code> dá <code>NameError</code>, e <code>"True"</code> (com aspas) é um texto, não um <code>bool</code>.</div>
+
+    <h2>Curiosidade: bool também é número</h2>
+    <p>Por dentro, <code>True</code> vale 1 e <code>False</code> vale 0. Por isso dá até para somar:</p>
+<pre class="codigo" data-executar="sim"><code>print(True + True)
+print(True + 10)
+print(False * 100)</code></pre>
+    <p class="saida">2<br>
+11<br>
+0</p>
+    <p>Isso parece estranho, mas é útil para contar quantas coisas são verdadeiras — você vai ver isso no futuro.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>populacao = 215_000_000</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Qual é o tipo de cada valor: <code>42</code>, <code>4.2</code>, <code>-7</code> e <code>True</code>? Use <code>type()</code> para conferir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(type(42))
+print(type(4.2))
+print(type(-7))
+print(type(True))</code></pre>
+      <p class="saida">&lt;class 'int'&gt;<br>
+&lt;class 'float'&gt;<br>
+&lt;class 'int'&gt;<br>
+&lt;class 'bool'&gt;</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Sem rodar, diga se o resultado de cada conta é <code>int</code> ou <code>float</code>: <code>5 + 5</code>, <code>5 + 5.0</code>, <code>10 / 5</code>, <code>3 * 4</code>. Depois confira.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(type(5 + 5))
+print(type(5 + 5.0))
+print(type(10 / 5))
+print(type(3 * 4))</code></pre>
+      <p class="saida">&lt;class 'int'&gt;<br>
+&lt;class 'float'&gt;<br>
+&lt;class 'float'&gt;<br>
+&lt;class 'int'&gt;</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Mostre o número de habitantes do Brasil, 215 milhões, escrito no código com <code>_</code> para separar os milhares.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(215_000_000)</code></pre>
+      <p class="saida">215000000</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Explique por que <code>print(3,14)</code> não mostra o número pi. Como escrever certo?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(3,14)
+print(3.14)</code></pre>
+      <p class="saida">3 14<br>
+3.14</p>
+      <p>Com vírgula, o <code>print</code> recebe dois números, <code>3</code> e <code>14</code>, e mostra os dois separados por espaço. O número real se escreve com ponto: <code>3.14</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Mostre o resultado de <code>True + True + False + True</code>. Por que dá esse número?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(True + True + False + True)</code></pre>
+      <p class="saida">3</p>
+      <p>Cada <code>True</code> vale 1 e cada <code>False</code> vale 0, então a conta é 1 + 1 + 0 + 1.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="11-tipos-str.html" rel="prev">← Aula anterior</a>
+      <a href="13-conversao-tipos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

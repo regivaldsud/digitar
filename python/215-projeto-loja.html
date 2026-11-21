@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 215 · Projeto: loja virtual (produtos, variações, carrinho na sessão, pedidos) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Planeje uma loja com produtos e variações, guarde o carrinho na sessão do usuário e transforme o carrinho em pedido.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 215 · Projeto: loja virtual (produtos, variações, carrinho na sessão, pedidos)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Modelar produtos com variações (tamanho, cor) e estoque</li>
+        <li>Guardar o carrinho em <code>request.session</code></li>
+        <li>Calcular totais com <code>Decimal</code> e gerar um pedido</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Os models</h2>
+<pre class="codigo"><code># loja/models.py
+from django.conf import settings
+from django.db import models
+
+
+class Produto(models.Model):
+    nome = models.CharField(max_length=120)
+    slug = models.SlugField(unique=True)
+    descricao = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.nome
+
+
+class Variacao(models.Model):
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name="variacoes")
+    nome = models.CharField(max_length=60)  # ex.: "Camiseta P azul"
+    preco = models.DecimalField(max_digits=8, decimal_places=2)
+    estoque = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.produto} - {self.nome}"
+
+
+class Pedido(models.Model):
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+
+class ItemPedido(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name="itens")
+    variacao = models.ForeignKey(Variacao, on_delete=models.PROTECT)
+    quantidade = models.PositiveIntegerField()
+    preco = models.DecimalField(max_digits=8, decimal_places=2)</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Dinheiro sempre com <code>DecimalField</code> e <code>Decimal</code> (aula 29), nunca <code>float</code>: 0,1 + 0,2 não dá exatamente 0,3 com float.</div>
+    <p>O <code>ItemPedido</code> guarda o <strong>preço do momento da compra</strong>: se o produto ficar mais caro amanhã, o pedido antigo continua certo.</p>
+
+    <h2>O carrinho na sessão</h2>
+    <p>A <strong>sessão</strong> é um dicionário que o Django guarda para cada visitante, mesmo sem login. O carrinho pode ser <code>{id_da_variacao: quantidade}</code>. Como a sessão é salva em JSON, as chaves viram texto:</p>
+<pre class="codigo"><code>from django.shortcuts import get_object_or_404, redirect
+from .models import Variacao
+
+
+def adicionar(request, variacao_id):
+    variacao = get_object_or_404(Variacao, pk=variacao_id)
+    carrinho = request.session.get("carrinho", {})
+    chave = str(variacao.pk)
+    carrinho[chave] = min(carrinho.get(chave, 0) + 1, variacao.estoque)
+    request.session["carrinho"] = carrinho
+    return redirect("carrinho")</code></pre>
+
+    <h2>A conta do carrinho, em Python puro</h2>
+<pre class="codigo" data-executar="sim"><code>from decimal import Decimal
+
+precos = {"1": Decimal("49.90"), "2": Decimal("12.50")}
+carrinho = {"1": 2, "2": 3}
+
+total = sum(precos[chave] * qtd for chave, qtd in carrinho.items())
+print(f"Total: R$ {total}")
+print(f"Total: R$ {total:.2f}".replace(".", ","))</code></pre>
+    <p class="saida">Total: R$ 137.30<br>
+Total: R$ 137,30</p>
+    <div class="dica"><strong>Dica:</strong> Ao fechar o pedido, use <code>transaction.atomic()</code> do Django: criar o pedido, os itens e baixar o estoque acontece tudo junto ou nada acontece, mesmo se der erro no meio.</div>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Botões "+" e "−" no carrinho e um botão para remover o item.</li>
+      <li>Um cupom de desconto de 10% (calcule com <code>Decimal("0.10")</code>).</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>carrinho = request.session.get("carrinho", {})</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva a função <code>aplicar_cupom(total, porcento)</code> com <code>Decimal</code> que devolve o total com desconto, arredondado a 2 casas. Teste com R$ 137,30 e 10%.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from decimal import Decimal, ROUND_HALF_UP
+
+
+def aplicar_cupom(total, porcento):
+    desconto = total * Decimal(porcento) / 100
+    return (total - desconto).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+print(aplicar_cupom(Decimal("137.30"), 10))</code></pre>
+      <p class="saida">123.57</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva a view <code>remover(request, variacao_id)</code> que tira o item do carrinho da sessão.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django.shortcuts import redirect
+
+
+def remover(request, variacao_id):
+    carrinho = request.session.get("carrinho", {})
+    carrinho.pop(str(variacao_id), None)
+    request.session["carrinho"] = carrinho
+    return redirect("carrinho")</code></pre>
+      <p><code>pop(chave, None)</code> não dá erro se o item não estiver no carrinho.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="211-projeto-blog.html" rel="prev">← Aula anterior</a>
+      <a href="220-deploy.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

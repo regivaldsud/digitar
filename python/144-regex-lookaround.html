@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 144 · Lookahead e lookbehind — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use lookahead e lookbehind para exigir (ou proibir) que algo venha antes ou depois de um padrão, sem incluir isso no resultado.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 7 · Expressões regulares</p>
+    <h1>Aula 144 · Lookahead e lookbehind</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender o que é um lookaround (olhar em volta)</li>
+        <li>Usar o lookahead positivo <code>(?=...)</code> e o negativo <code>(?!...)</code></li>
+        <li>Usar o lookbehind positivo <code>(?&lt;=...)</code> e o negativo <code>(?&lt;!...)</code></li>
+        <li>Validar senhas e formatar números com lookarounds</li>
+      </ul>
+    </div>
+
+    <h2>Olhar sem pegar</h2>
+    <p>Às vezes você quer achar algo <strong>só se</strong> vier antes ou depois de outra coisa, mas sem colocar essa outra coisa no resultado. Exemplo: pegar só o número dos preços, sem o <code>R$</code>.</p>
+    <p>Os <strong>lookarounds</strong> conferem o que está em volta e não "gastam" nenhum caractere:</p>
+    <ul>
+      <li><code>(?=...)</code>: o que vem <strong>depois</strong> tem que ser isso (lookahead positivo).</li>
+      <li><code>(?!...)</code>: o que vem depois <strong>não</strong> pode ser isso (lookahead negativo).</li>
+      <li><code>(?&lt;=...)</code>: o que vem <strong>antes</strong> tem que ser isso (lookbehind positivo).</li>
+      <li><code>(?&lt;!...)</code>: o que vem antes <strong>não</strong> pode ser isso (lookbehind negativo).</li>
+    </ul>
+
+    <h2>Lookbehind: o que vem antes</h2>
+    <p>Pegue os valores em reais, sem o símbolo:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+extrato = "Lanche R$ 18, Uber R$ 25, 3 pastéis e R$ 9 de caldo de cana"
+valores = re.findall(r"(?&lt;=R\$ )\d+", extrato)
+print(valores)
+print("Total:", sum(map(int, valores)))</code></pre>
+    <p class="saida">['18', '25', '9']<br>
+Total: 52</p>
+    <p>Os <code>3</code> pastéis não entraram, porque não vinham depois de <code>R$ </code>. E o <code>R$</code> não aparece no resultado.</p>
+    <p>Com o lookbehind negativo, você pega números que <strong>não</strong> vêm depois de um sinal de menos:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"(?&lt;![-\d])\d+", "Temperaturas: 12, -3, 25, -7"))</code></pre>
+    <p class="saida">['12', '25']</p>
+    <div class="atencao"><strong>Atenção:</strong> No Python, o lookbehind precisa ter tamanho fixo: <code>(?&lt;=R\$ )</code> funciona, mas <code>(?&lt;=R\$ *)</code> dá erro <code>look-behind requires fixed-width pattern</code>.</div>
+
+    <h2>Lookahead: o que vem depois</h2>
+    <p>Pegue as palavras que vêm antes de um ponto de exclamação, e as quantidades que <strong>não</strong> são em gramas:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"\w+(?=!)", "Gol! Que jogo! Incrível"))
+print(re.findall(r"\b\d+(?!\d|g)\b", "200g de queijo, 3 ovos, 500g de farinha, 2 xícaras"))</code></pre>
+    <p class="saida">['Gol', 'jogo']<br>
+['3', '2']</p>
+
+    <h2>Validando senhas</h2>
+    <p>Lookaheads no começo do padrão funcionam como uma lista de exigências: cada um confere uma regra no texto todo, sem sair do lugar.</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+SENHA_FORTE = re.compile(r"""
+    (?=.*[a-z])      # pelo menos uma minúscula
+    (?=.*[A-Z])      # pelo menos uma maiúscula
+    (?=.*\d)         # pelo menos um dígito
+    .{8,}            # oito caracteres ou mais
+""", re.VERBOSE)
+
+for senha in ["abc123", "abcdefgh1", "Abcdefgh1", "SENHA2025x"]:
+    status = "forte" if SENHA_FORTE.fullmatch(senha) else "fraca"
+    print(f"{senha}: {status}")</code></pre>
+    <p class="saida">abc123: fraca<br>
+abcdefgh1: fraca<br>
+Abcdefgh1: forte<br>
+SENHA2025x: forte</p>
+    <div class="dica"><strong>Dica:</strong> Regras de senha também podem ser escritas com <code>any()</code> e laços, sem regex. Escolha a forma que você e sua equipe leem com mais facilidade.</div>
+
+    <h2>Separando milhares</h2>
+    <p>Um truque famoso: colocar pontos de milhar com <code>re.sub</code> e lookarounds. O padrão acha <strong>posições</strong> (não caracteres) em que, à direita, há grupos de três dígitos até o fim do número:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+
+def milhares(numero):
+    return re.sub(r"(?&lt;=\d)(?=(\d{3})+(?!\d))", ".", str(numero))
+
+
+print(milhares(1234567))
+print(milhares(950))
+print(milhares(2026000))</code></pre>
+    <p class="saida">1.234.567<br>
+950<br>
+2.026.000</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>re.findall(r"(?&lt;=R\$ )\d+", extrato)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Pegue só os nomes de usuário (sem o <code>@</code>) em <code>"Valeu @ana_b e @joaoP pelo jogo!"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"(?&lt;=@)\w+", "Valeu @ana_b e @joaoP pelo jogo!"))</code></pre>
+      <p class="saida">['ana_b', 'joaoP']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Ache os números seguidos de <code>"km"</code> em <code>"Corri 5km, andei 3 km e pedalei 20km"</code> (só quando o <code>km</code> vem colado), sem incluir o <code>km</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"\d+(?=km)", "Corri 5km, andei 3 km e pedalei 20km"))</code></pre>
+      <p class="saida">['5', '20']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva uma regex com lookahead que aceite só senhas com pelo menos um dígito e 6 caracteres ou mais. Teste com <code>"abcdef"</code>, <code>"abc123"</code> e <code>"a1"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+for senha in ["abcdef", "abc123", "a1"]:
+    print(senha, bool(re.fullmatch(r"(?=.*\d).{6,}", senha)))</code></pre>
+      <p class="saida">abcdef False<br>
+abc123 True<br>
+a1 False</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Ache as palavras que começam com <code>"pre"</code> mas <strong>não</strong> com <code>"prev"</code> em <code>"prever presente prego previsão preço"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+print(re.findall(r"\bpre(?!v)\w*", "prever presente prego previsão preço"))</code></pre>
+      <p class="saida">['presente', 'prego', 'preço']</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="143-regex-ancoras-flags.html" rel="prev">← Aula anterior</a>
+      <a href="145-regex-projeto.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

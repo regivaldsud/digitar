@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 74 · Encapsulamento: público, _protegido, __privado — Curso de Python · DIGITAR</title>
+<meta name="description" content="Proteja os dados dos seus objetos com as convenções de nomes do Python e deixe que eles mudem só pelos métodos certos.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 74 · Encapsulamento: público, _protegido, __privado</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é encapsulamento e por que proteger os dados de um objeto</li>
+        <li>As três "visibilidades" do Python: público, <code>_protegido</code> e <code>__privado</code></li>
+        <li>Como funciona o *name mangling*</li>
+        <li>Montar uma interface pública com métodos e properties</li>
+      </ul>
+    </div>
+
+    <h2>Por que proteger os dados</h2>
+    <p>Imagine uma classe <code>ContaBancaria</code> em que qualquer parte do programa pode fazer <code>conta.saldo = -1000000</code>. Nada impede! <strong>Encapsular</strong> é esconder os detalhes internos do objeto e deixar que os dados mudem só pelos métodos certos, que conferem se a mudança faz sentido.</p>
+<pre class="codigo" data-executar="sim"><code>class Termometro:
+    def __init__(self, celsius):
+        self.celsius = celsius
+
+t = Termometro(25)
+t.celsius = -500
+print(t.celsius, "graus? Mais frio que o zero absoluto!")</code></pre>
+    <p class="saida">-500 graus? Mais frio que o zero absoluto!</p>
+    <p>Pense num controle remoto: você aperta botões (a parte <strong>pública</strong>), mas não mexe nos circuitos lá dentro (a parte <strong>interna</strong>).</p>
+
+    <h2>Público: o jeito normal</h2>
+    <p>Em Python, todo atributo sem sublinhado é <strong>público</strong>: qualquer um pode ler e mudar. Isso é o normal e está tudo bem para dados simples, como o nome de um aluno.</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __init__(self, nome):
+        self.nome = nome
+
+a = Aluno("Rafa")
+a.nome = "Rafaela"
+print(a.nome)</code></pre>
+    <p class="saida">Rafaela</p>
+
+    <h2>_protegido: um aviso entre programadores</h2>
+    <p>Um atributo que começa com <strong>um</strong> sublinhado (<code>_saldo</code>) quer dizer: "isto é interno, não mexa de fora". O Python não proíbe; é um combinado entre programadores, e editores como o VS Code às vezes avisam.</p>
+<pre class="codigo" data-executar="sim"><code>class ContaBancaria:
+    def __init__(self, titular):
+        self.titular = titular
+        self._saldo = 0
+
+    def depositar(self, valor):
+        if valor &lt;= 0:
+            print("Depósito inválido.")
+            return
+        self._saldo += valor
+
+    def ver_saldo(self):
+        return self._saldo
+
+c = ContaBancaria("Joana")
+c.depositar(200)
+c.depositar(-50)
+print(c.ver_saldo())</code></pre>
+    <p class="saida">Depósito inválido.<br>
+200</p>
+    <p>Métodos também podem ser protegidos, como um <code>_calcular_juros()</code> que só a própria classe deve chamar.</p>
+
+    <h2>__privado: o name mangling</h2>
+    <p>Com <strong>dois</strong> sublinhados no começo (<code>__senha</code>), o Python troca o nome por dentro para <code>_Classe__senha</code>. Isso se chama *name mangling* ("embaralhar o nome") e evita acessos de fora sem querer.</p>
+<pre class="codigo" data-executar="sim"><code>class Cofre:
+    def __init__(self, senha):
+        self.__senha = senha
+
+    def abrir(self, tentativa):
+        return "Aberto!" if tentativa == self.__senha else "Senha errada."
+
+cofre = Cofre("1234")
+print(cofre.abrir("0000"))
+print(cofre.abrir("1234"))
+print(cofre.__senha)</code></pre>
+    <p class="saida">Senha errada.<br>
+Aberto!<br>
+AttributeError: 'Cofre' object has no attribute '__senha'</p>
+    <p>O atributo continua lá, só que com outro nome:</p>
+<pre class="codigo" data-executar="sim"><code>class Cofre:
+    def __init__(self, senha):
+        self.__senha = senha
+
+cofre = Cofre("1234")
+print(vars(cofre))
+print(cofre._Cofre__senha)</code></pre>
+    <p class="saida">{'_Cofre__senha': '1234'}<br>
+1234</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>__privado</code> <strong>não é segredo de verdade</strong>: dá para acessar com <code>_Cofre__senha</code>. Nunca guarde senhas reais assim. Na prática, a maioria dos programadores Python usa só um sublinhado e reserva os dois para evitar conflito de nomes com classes filhas.</div>
+
+    <h2>Interface pública com property</h2>
+    <p>Juntando tudo: o dado fica protegido e o mundo de fora usa métodos e properties. O saldo pode ser lido como atributo, mas só muda por depósito e saque.</p>
+<pre class="codigo" data-executar="sim"><code>class Conta:
+    def __init__(self, titular):
+        self.titular = titular
+        self._saldo = 0.0
+        self._extrato = []
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    def depositar(self, valor):
+        self._mover(valor, "depósito")
+
+    def sacar(self, valor):
+        if valor &gt; self._saldo:
+            print(f"Saque de R$ {valor:.2f} negado.")
+            return
+        self._mover(-valor, "saque")
+
+    def _mover(self, valor, tipo):
+        self._saldo += valor
+        self._extrato.append(f"{tipo}: {valor:+.2f}")
+
+c = Conta("Paulo")
+c.depositar(100)
+c.sacar(30)
+c.sacar(500)
+print("Saldo:", c.saldo)
+print(c._extrato)</code></pre>
+    <p class="saida">Saque de R$ 500.00 negado.<br>
+Saldo: 70.0<br>
+['depósito: +100.00', 'saque: -30.00']</p>
+    <div class="dica"><strong>Dica:</strong> Pergunte-se: "o que quem usa minha classe <strong>precisa</strong> ver?". Isso é público. O resto — como os detalhes de <code>_mover</code> — fica com sublinhado.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>self._saldo = 0</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Placar</code> com o atributo protegido <code>_pontos</code>, o método <code>marcar()</code> (soma 1) e um property <code>pontos</code> sem setter. Mostre que <code>placar.pontos = 100</code> dá erro.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Placar:
+    def __init__(self):
+        self._pontos = 0
+
+    def marcar(self):
+        self._pontos += 1
+
+    @property
+    def pontos(self):
+        return self._pontos
+
+placar = Placar()
+placar.marcar()
+placar.marcar()
+print(placar.pontos)
+try:
+    placar.pontos = 100
+except AttributeError:
+    print("Não dá para mudar os pontos direto!")</code></pre>
+      <p class="saida">2<br>
+Não dá para mudar os pontos direto!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Qual é a diferença entre <code>self._saldo</code> e <code>self.__saldo</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">_saldo (um sublinhado): só um aviso de "uso interno"; o Python não muda nada.<br>
+__saldo (dois sublinhados): o Python troca o nome para _Classe__saldo (name mangling),<br>
+então conta.__saldo de fora da classe dá AttributeError.<br>
+Nenhum dos dois é proteção real; são formas de avisar e evitar acessos sem querer.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a classe <code>Estoque</code> com um dicionário protegido <code>_itens</code>, os métodos <code>entrar(produto, qtd)</code> e <code>sair(produto, qtd)</code> (que recusa sair mais do que tem) e <code>quantidade(produto)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Estoque:
+    def __init__(self):
+        self._itens = {}
+
+    def entrar(self, produto, qtd):
+        self._itens[produto] = self._itens.get(produto, 0) + qtd
+
+    def sair(self, produto, qtd):
+        if qtd &gt; self.quantidade(produto):
+            print(f"Não há {qtd} de {produto}.")
+            return
+        self._itens[produto] -= qtd
+
+    def quantidade(self, produto):
+        return self._itens.get(produto, 0)
+
+e = Estoque()
+e.entrar("arroz", 10)
+e.sair("arroz", 3)
+e.sair("arroz", 50)
+print("arroz:", e.quantidade("arroz"))
+print("feijão:", e.quantidade("feijão"))</code></pre>
+      <p class="saida">Não há 50 de arroz.<br>
+arroz: 7<br>
+feijão: 0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe <code>Celular</code> com o atributo privado <code>__pin</code> e o método <code>desbloquear(tentativa)</code>, que bloqueia o celular depois de 3 tentativas erradas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Celular:
+    def __init__(self, pin):
+        self.__pin = pin
+        self._erros = 0
+
+    def desbloquear(self, tentativa):
+        if self._erros &gt;= 3:
+            return "Bloqueado!"
+        if tentativa == self.__pin:
+            self._erros = 0
+            return "Desbloqueado"
+        self._erros += 1
+        return "PIN errado"
+
+cel = Celular("2580")
+for t in ["1111", "0000", "1234", "2580"]:
+    print(t, "-&gt;", cel.desbloquear(t))</code></pre>
+      <p class="saida">1111 -&gt; PIN errado<br>
+0000 -&gt; PIN errado<br>
+1234 -&gt; PIN errado<br>
+2580 -&gt; Bloqueado!</p>
+      <p>Na quarta tentativa o PIN estava certo, mas o celular já tinha sido bloqueado pelas três tentativas erradas.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="73-property.html" rel="prev">← Aula anterior</a>
+      <a href="75-associacao-agregacao-composicao.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

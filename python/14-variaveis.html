@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 14 · Variáveis e nomes em snake_case — Curso de Python · DIGITAR</title>
+<meta name="description" content="Guarde valores em variáveis, mude o valor delas e escolha bons nomes seguindo as regras e o estilo snake_case.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 14 · Variáveis e nomes em snake_case</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar variáveis com <code>=</code> e usá-las depois</li>
+        <li>Mudar o valor de uma variável</li>
+        <li>Seguir as regras para nomes e o estilo snake_case</li>
+        <li>Criar e trocar várias variáveis numa linha só</li>
+      </ul>
+    </div>
+
+    <h2>Variável é uma caixinha com nome</h2>
+    <p>Uma <strong>variável</strong> guarda um valor para usar depois. Pense numa caixinha com uma etiqueta: a etiqueta é o nome, e dentro está o valor. Para criar, use o sinal <code>=</code>:</p>
+<pre class="codigo" data-executar="sim"><code>nome = "Júlia"
+idade = 13
+print(nome)
+print(idade)
+print(nome, "tem", idade, "anos")</code></pre>
+    <p class="saida">Júlia<br>
+13<br>
+Júlia tem 13 anos</p>
+    <p>O <code>=</code> em Python <strong>não</strong> é o "igual" da matemática: ele quer dizer "guarde o valor da direita na variável da esquerda". Leia <code>idade = 13</code> como "idade recebe 13".</p>
+    <div class="atencao"><strong>Atenção:</strong> Usar uma variável antes de criá-la dá <code>NameError: name '...' is not defined</code>. O Python lê de cima para baixo, então a linha com <code>=</code> precisa vir antes do uso. Confira também se não há erro de digitação no nome.</div>
+
+    <h2>Mudando o valor</h2>
+    <p>Uma variável pode mudar de valor (por isso o nome "variável"). O valor antigo é substituído:</p>
+<pre class="codigo" data-executar="sim"><code>placar = 0
+print("Começo do jogo:", placar)
+placar = 1
+print("Depois do gol:", placar)
+placar = placar + 1
+print("Depois do segundo gol:", placar)</code></pre>
+    <p class="saida">Começo do jogo: 0<br>
+Depois do gol: 1<br>
+Depois do segundo gol: 2</p>
+    <p>A linha <code>placar = placar + 1</code> parece estranha, mas é muito comum: o Python calcula primeiro o lado direito (<code>1 + 1</code>) e depois guarda o resultado em <code>placar</code>.</p>
+
+    <h2>A variável não tem tipo fixo</h2>
+    <p>O tipo pertence ao <strong>valor</strong>, não à variável. A mesma variável pode guardar um número e, depois, um texto:</p>
+<pre class="codigo" data-executar="sim"><code>coisa = 10
+print(coisa, type(coisa))
+coisa = "dez"
+print(coisa, type(coisa))</code></pre>
+    <p class="saida">10 &lt;class 'int'&gt;<br>
+dez &lt;class 'str'&gt;</p>
+    <p>Isso é permitido, mas evite: fica confuso para quem lê o código.</p>
+
+    <h2>Regras para nomes</h2>
+    <p>Os nomes de variáveis seguem regras:</p>
+    <ul>
+      <li>podem ter letras, números e o sublinhado <code>_</code>;</li>
+      <li><strong>não</strong> podem começar com número (<code>1lugar</code> é inválido; <code>lugar1</code> é válido);</li>
+      <li><strong>não</strong> podem ter espaços nem hífen (<code>nota-final</code> é inválido);</li>
+      <li>não podem ser palavras reservadas do Python, como <code>if</code>, <code>for</code>, <code>True</code>;</li>
+      <li>maiúsculas e minúsculas são diferentes: <code>nome</code> e <code>Nome</code> são duas variáveis.</li>
+    </ul>
+    <p>Em Python, a convenção é usar letras minúsculas e separar as palavras com <code>_</code>. Esse estilo se chama <strong>snake_case</strong> (de *snake*, cobra, porque o nome fica comprido e "rastejando" no chão):</p>
+<pre class="codigo" data-executar="sim"><code>nota_final = 8.5
+nome_do_aluno = "Pedro"
+total_de_pontos = 120
+print(nome_do_aluno, nota_final, total_de_pontos)</code></pre>
+    <p class="saida">Pedro 8.5 120</p>
+    <div class="dica"><strong>Dica:</strong> Escolha nomes que digam o que a variável guarda. <code>preco_do_lanche</code> é muito melhor que <code>p</code> ou <code>x</code>. Evite acentos nos nomes: o Python aceita, mas em muitos projetos isso causa confusão.</div>
+
+    <h2>Várias variáveis de uma vez</h2>
+    <p>Dá para criar várias variáveis numa linha só, separando nomes e valores por vírgula:</p>
+<pre class="codigo" data-executar="sim"><code>x, y = 10, 20
+print(x, y)
+x, y = y, x
+print(x, y)
+a = b = 0
+print(a, b)</code></pre>
+    <p class="saida">10 20<br>
+20 10<br>
+0 0</p>
+    <p>A linha <code>x, y = y, x</code> troca os valores das duas variáveis. E <code>a = b = 0</code> dá o mesmo valor para as duas.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>nome_do_aluno = "Pedro"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie variáveis para guardar o nome de um filme, o ano de lançamento e a nota que você dá (com casa decimal). Mostre as três.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>filme = "Central do Brasil"
+ano = 1998
+nota = 9.5
+print(filme, ano, nota)</code></pre>
+      <p class="saida">Central do Brasil 1998 9.5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Quais destes nomes são inválidos e por quê: <code>idade</code>, <code>2ano</code>, <code>nome completo</code>, <code>_contador</code>, <code>preco-total</code>, <code>cidade2</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Inválidos: 2ano (começa com número), nome completo (tem espaço)<br>
+e preco-total (tem hífen). Os outros são válidos.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma variável <code>moedas</code> começa com 5. O jogador ganha 3 moedas e depois gasta 2. Use <code>moedas = moedas + ...</code> e <code>moedas = moedas - ...</code> e mostre o valor final.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>moedas = 5
+moedas = moedas + 3
+moedas = moedas - 2
+print("Moedas:", moedas)</code></pre>
+      <p class="saida">Moedas: 6</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Troque os valores de <code>a = "café"</code> e <code>b = "leite"</code> usando uma linha só, e mostre o resultado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>a = "café"
+b = "leite"
+a, b = b, a
+print(a, b)</code></pre>
+      <p class="saida">leite café</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Reescreva em snake_case os nomes <code>NomeDoCliente</code>, <code>VALORTOTAL</code> e <code>diaDoPagamento</code>, criando as variáveis com valores de exemplo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nome_do_cliente = "Carla"
+valor_total = 89.9
+dia_do_pagamento = 10
+print(nome_do_cliente, valor_total, dia_do_pagamento)</code></pre>
+      <p class="saida">Carla 89.9 10</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="13-conversao-tipos.html" rel="prev">← Aula anterior</a>
+      <a href="15-operadores-aritmeticos.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

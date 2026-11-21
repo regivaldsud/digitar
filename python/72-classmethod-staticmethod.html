@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 72 · @classmethod (métodos fábrica) e @staticmethod — Curso de Python · DIGITAR</title>
+<meta name="description" content="Crie métodos que pertencem à classe com @classmethod, use-os como fábricas de objetos e escreva funções auxiliares com @staticmethod.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 72 · @classmethod (métodos fábrica) e @staticmethod</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>A diferença entre método de instância, de classe e estático</li>
+        <li>Criar <strong>métodos fábrica</strong> com <code>@classmethod</code> e o parâmetro <code>cls</code></li>
+        <li>Escrever funções auxiliares dentro da classe com <code>@staticmethod</code></li>
+        <li>Saber quando usar cada um</li>
+      </ul>
+    </div>
+
+    <h2>Três tipos de método</h2>
+    <p>Até agora todo método recebia <code>self</code>, o objeto. Mas às vezes o método não precisa de um objeto específico:</p>
+    <ul>
+      <li><strong>método de instância</strong> (o normal): recebe <code>self</code> e trabalha com <strong>um objeto</strong>;</li>
+      <li><strong>método de classe</strong> (<code>@classmethod</code>): recebe <code>cls</code>, a <strong>própria classe</strong>;</li>
+      <li><strong>método estático</strong> (<code>@staticmethod</code>): não recebe nem <code>self</code> nem <code>cls</code>; é uma função comum que mora dentro da classe.</li>
+    </ul>
+    <p>O <code>@</code> antes do nome é um <strong>decorador</strong> (você aprofunda na aula 56). Por enquanto, pense nele como uma etiqueta que muda o jeito de o método funcionar.</p>
+
+    <h2>@classmethod: métodos fábrica</h2>
+    <p>O uso mais comum do <code>@classmethod</code> é criar objetos de outro jeito, além do <code>__init__</code>. Esses métodos são chamados de <strong>fábricas</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    def __init__(self, nome, idade):
+        self.nome = nome
+        self.idade = idade
+
+    @classmethod
+    def de_texto(cls, texto):
+        nome, idade = texto.split(";")
+        return cls(nome, int(idade))
+
+a = Aluno("Ana", 13)
+b = Aluno.de_texto("Bruno;12")
+print(a.nome, a.idade)
+print(b.nome, b.idade)</code></pre>
+    <p class="saida">Ana 13<br>
+Bruno 12</p>
+    <p>O <code>cls</code> é a classe <code>Aluno</code>, então <code>cls(nome, int(idade))</code> é o mesmo que <code>Aluno(nome, int(idade))</code>. Repare que chamamos o método pela classe: <code>Aluno.de_texto(...)</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Por que usar <code>cls(...)</code> e não <code>Aluno(...)</code>? Porque, se outra classe herdar de <code>Aluno</code> (aula 76), a fábrica vai criar objetos da classe filha automaticamente.</div>
+
+    <h2>Mais de uma fábrica</h2>
+    <p>Uma classe pode ter várias fábricas, cada uma para um formato de entrada diferente.</p>
+<pre class="codigo" data-executar="sim"><code>class Pessoa:
+    ANO_ATUAL = 2026
+
+    def __init__(self, nome, idade):
+        self.nome = nome
+        self.idade = idade
+
+    @classmethod
+    def pelo_ano(cls, nome, ano_nascimento):
+        return cls(nome, cls.ANO_ATUAL - ano_nascimento)
+
+    @classmethod
+    def bebe(cls, nome):
+        return cls(nome, 0)
+
+for p in [Pessoa("Vó Cida", 71), Pessoa.pelo_ano("Kauã", 2013), Pessoa.bebe("Helena")]:
+    print(f"{p.nome}: {p.idade} anos")</code></pre>
+    <p class="saida">Vó Cida: 71 anos<br>
+Kauã: 13 anos<br>
+Helena: 0 anos</p>
+    <p>O <code>cls</code> também dá acesso aos atributos de classe, como <code>cls.ANO_ATUAL</code>.</p>
+
+    <h2>@staticmethod: uma função que mora na classe</h2>
+    <p>Um método estático não usa o objeto nem a classe. Ele fica dentro da classe só porque o assunto tem a ver com ela — como uma função de validação ou de conversão.</p>
+<pre class="codigo" data-executar="sim"><code>class Termometro:
+    def __init__(self, celsius):
+        self.celsius = celsius
+
+    @staticmethod
+    def para_fahrenheit(c):
+        return c * 9 / 5 + 32
+
+    def mostrar(self):
+        f = Termometro.para_fahrenheit(self.celsius)
+        print(f"{self.celsius} °C = {f} °F")
+
+print(Termometro.para_fahrenheit(100))
+Termometro(25).mostrar()</code></pre>
+    <p class="saida">212.0<br>
+25 °C = 77.0 °F</p>
+<pre class="codigo" data-executar="sim"><code>class Placa:
+    @staticmethod
+    def valida(texto):
+        # padrão Mercosul: 3 letras, 1 número, 1 letra, 2 números (ex.: BRA2E19)
+        if len(texto) != 7:
+            return False
+        return (texto[:3].isalpha() and texto[3].isdigit()
+                and texto[4].isalpha() and texto[5:].isdigit())
+
+for p in ["BRA2E19", "ABC1234", "XY12"]:
+    print(p, Placa.valida(p))</code></pre>
+    <p class="saida">BRA2E19 True<br>
+ABC1234 False<br>
+XY12 False</p>
+    <div class="atencao"><strong>Atenção:</strong> Num <code>@staticmethod</code> não existe <code>self</code>. Se você tentar usar <code>self.algo</code> lá dentro, aparece <code>NameError: name 'self' is not defined</code>. Se o método precisa do objeto, ele não é estático.</div>
+
+    <h2>Qual usar?</h2>
+    <ul>
+      <li>Precisa dos dados de <strong>um objeto</strong> (<code>self.nome</code>, <code>self.saldo</code>)? Método de instância.</li>
+      <li>Quer <strong>criar objetos</strong> de outro jeito ou mexer em atributos de classe? <code>@classmethod</code>.</li>
+      <li>É uma função auxiliar que não usa nem objeto nem classe? <code>@staticmethod</code> (ou até uma função comum fora da classe).</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def de_texto(cls, texto):</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Produto(nome, preco)</code> com a fábrica <code>de_csv(linha)</code> que recebe <code>"Pão de queijo,4.50"</code> e cria o produto com o preço como <code>float</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Produto:
+    def __init__(self, nome, preco):
+        self.nome = nome
+        self.preco = preco
+
+    @classmethod
+    def de_csv(cls, linha):
+        nome, preco = linha.split(",")
+        return cls(nome, float(preco))
+
+p = Produto.de_csv("Pão de queijo,4.50")
+print(p.nome, p.preco)</code></pre>
+      <p class="saida">Pão de queijo 4.5</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Crie a classe <code>Data(dia, mes, ano)</code> com a fábrica <code>de_texto("25/12/2026")</code> e um método <code>mostrar</code> que imprime <code>25 do mês 12 de 2026</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Data:
+    def __init__(self, dia, mes, ano):
+        self.dia = dia
+        self.mes = mes
+        self.ano = ano
+
+    @classmethod
+    def de_texto(cls, texto):
+        dia, mes, ano = texto.split("/")
+        return cls(int(dia), int(mes), int(ano))
+
+    def mostrar(self):
+        print(f"{self.dia} do mês {self.mes} de {self.ano}")
+
+Data.de_texto("25/12/2026").mostrar()</code></pre>
+      <p class="saida">25 do mês 12 de 2026</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a classe <code>Calculadora</code> com os métodos estáticos <code>somar(a, b)</code> e <code>media(lista)</code>. Use sem criar nenhum objeto.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Calculadora:
+    @staticmethod
+    def somar(a, b):
+        return a + b
+
+    @staticmethod
+    def media(lista):
+        return sum(lista) / len(lista)
+
+print(Calculadora.somar(7, 5))
+print(Calculadora.media([6, 8, 10]))</code></pre>
+      <p class="saida">12<br>
+8.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a classe <code>Usuario</code> com um contador de classe <code>criados</code> e a fábrica <code>visitante()</code>, que cria um usuário chamado <code>visitante1</code>, <code>visitante2</code>... usando o contador.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Usuario:
+    criados = 0
+
+    def __init__(self, nome):
+        self.nome = nome
+        Usuario.criados += 1
+
+    @classmethod
+    def visitante(cls):
+        return cls(f"visitante{cls.criados + 1}")
+
+print(Usuario.visitante().nome)
+print(Usuario("Rafa").nome)
+print(Usuario.visitante().nome)</code></pre>
+      <p class="saida">visitante1<br>
+Rafa<br>
+visitante3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Para cada caso, diga se usaria método de instância, <code>@classmethod</code> ou <code>@staticmethod</code>: (a) calcular o saldo de uma conta; (b) criar uma conta a partir de um dicionário; (c) conferir se um CPF tem 11 dígitos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">(a) método de instância: precisa do saldo daquela conta (self).<br>
+(b) @classmethod: é uma fábrica, cria um objeto com cls(...).<br>
+(c) @staticmethod: só confere um texto, não precisa de objeto nem de classe.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="71-atributos-metodos.html" rel="prev">← Aula anterior</a>
+      <a href="73-property.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 194 · Telas no Qt Designer (.ui) — Curso de Python · DIGITAR</title>
+<meta name="description" content="Desenhe a tela arrastando widgets no Qt Designer e carregue o arquivo .ui no seu programa.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 10 · Interface gráfica com PySide6</p>
+    <h1>Aula 194 · Telas no Qt Designer (.ui)</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Abrir o Qt Designer que vem com o PySide6</li>
+        <li>Salvar uma tela como arquivo <code>.ui</code> e dar nomes aos widgets</li>
+        <li>Carregar o <code>.ui</code> com QUiLoader ou convertê-lo com pyside6-uic</li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Desenhar em vez de programar a tela</h2>
+    <p>O <strong>Qt Designer</strong> é um programa onde você monta a tela arrastando botões, caixas e rótulos com o mouse. Ele já vem junto com o PySide6. Com o ambiente virtual ativado, abra assim:</p>
+<pre class="codigo"><code>pyside6-designer</code></pre>
+    <p>Escolha <strong>Main Window</strong> ou <strong>Widget</strong>, arraste um <strong>Push Button</strong> e um <strong>Line Edit</strong>, e no painel <strong>Property Editor</strong> mude o <code>objectName</code> deles para <code>botao_enviar</code> e <code>campo_nome</code>. Salve como <code>tela.ui</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>objectName</code> é o nome que você vai usar no código. Nomes como <code>pushButton_3</code> ficam confusos; troque por nomes claros em <code>snake_case</code>.</div>
+
+    <h2>Jeito 1: carregar o .ui na hora</h2>
+<pre class="codigo"><code>import sys
+from PySide6.QtCore import QFile
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtWidgets import QApplication
+
+app = QApplication(sys.argv)
+arquivo = QFile("tela.ui")
+arquivo.open(QFile.OpenModeFlag.ReadOnly)
+janela = QUiLoader().load(arquivo)
+arquivo.close()
+
+janela.botao_enviar.clicked.connect(
+    lambda: print("Olá,", janela.campo_nome.text())
+)
+janela.show()
+sys.exit(app.exec())</code></pre>
+
+    <h2>Jeito 2: converter para Python</h2>
+    <p>O comando <code>pyside6-uic</code> transforma o <code>.ui</code> num arquivo <code>.py</code> com uma classe pronta:</p>
+<pre class="codigo"><code>pyside6-uic tela.ui -o ui_tela.py</code></pre>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow
+from ui_tela import Ui_MainWindow
+
+
+class Janela(QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.botao_enviar.clicked.connect(self.enviar)
+
+    def enviar(self):
+        print("Olá,", self.campo_nome.text())
+
+
+app = QApplication(sys.argv)
+janela = Janela()
+janela.show()
+sys.exit(app.exec())</code></pre>
+    <div class="dica"><strong>Dica:</strong> Nunca edite o <code>ui_tela.py</code> gerado: na próxima conversão ele é sobrescrito. Mude a tela no Designer e converta de novo.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>pyside6-uic tela.ui -o ui_tela.py</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Você mudou a tela no Designer e salvou o <code>tela.ui</code>. Usando o jeito 2, o que precisa fazer para a mudança aparecer no programa?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>pyside6-uic tela.ui -o ui_tela.py
+python main.py</code></pre>
+      <p>Converta de novo o <code>.ui</code> e rode o programa. No jeito 1 isso não é preciso, porque o <code>.ui</code> é lido toda vez que o programa abre.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Escreva o slot <code>limpar</code> para um botão <code>botao_limpar</code> que apaga o texto de <code>campo_nome</code> (classe do jeito 2).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># no __init__: self.botao_limpar.clicked.connect(self.limpar)
+
+def limpar(self):
+    self.campo_nome.clear()</code></pre>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="193-calculadora.html" rel="prev">← Aula anterior</a>
+      <a href="195-qthread.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

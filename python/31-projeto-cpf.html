@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 31 · Projeto: gerador e validador de CPF — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa passo a passo um programa que confere se um CPF é válido e gera CPFs fictícios, usando o cálculo dos dígitos verificadores.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 31 · Projeto: gerador e validador de CPF</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Entender como funcionam os <strong>dígitos verificadores</strong> do CPF</li>
+        <li>Limpar um texto digitado, deixando só os números</li>
+        <li>Calcular os dois dígitos com laços, listas e o operador <code>%</code></li>
+        <li>Gerar CPFs fictícios com o módulo <code>random</code></li>
+        <li>Juntar tudo num programa com menu</li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>O CPF tem 11 dígitos: os 9 primeiros identificam a pessoa e os 2 últimos são <strong>dígitos verificadores</strong>, calculados a partir dos 9 primeiros. Eles servem para pegar erros de digitação: se você trocar um número, a conta não fecha. Vamos fazer um programa que:</p>
+    <ul>
+      <li>valida um CPF digitado (com ou sem pontos e traço);</li>
+      <li>gera CPFs fictícios, que passam na validação.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Os CPFs deste projeto são <strong>fictícios</strong>, só para estudar. Nunca use, publique ou peça o CPF verdadeiro de outra pessoa — é um dado pessoal protegido por lei (LGPD).</div>
+
+    <h2>Passo 1: deixar só os números</h2>
+    <p>A pessoa pode digitar <code>111.444.777-35</code> ou <code>11144477735</code>. Primeiro, vamos guardar só os dígitos, percorrendo o texto com <code>for</code> e usando <code>isdigit()</code> (aula 28):</p>
+<pre class="codigo" data-executar="sim"><code>digitado = "111.444.777-35"
+cpf = ""
+for caractere in digitado:
+    if caractere.isdigit():
+        cpf += caractere
+print(cpf)
+print(len(cpf))</code></pre>
+    <p class="saida">11144477735<br>
+11</p>
+    <p>Um CPF válido precisa ter exatamente 11 dígitos. Também é regra que CPFs com todos os dígitos iguais, como <code>11111111111</code>, são inválidos — mesmo que a conta feche para eles.</p>
+<pre class="codigo" data-executar="sim"><code>cpf = "11111111111"
+print(cpf == cpf[0] * 11)</code></pre>
+    <p class="saida">True</p>
+    <p>Aqui usamos a repetição de textos: <code>cpf[0] * 11</code> monta um texto com o primeiro dígito repetido 11 vezes.</p>
+
+    <h2>Passo 2: o primeiro dígito verificador</h2>
+    <p>A conta do primeiro dígito funciona assim:</p>
+    <ul>
+      <li>multiplique os 9 primeiros dígitos pelos pesos 10, 9, 8, 7, 6, 5, 4, 3 e 2 e some tudo;</li>
+      <li>calcule o resto da divisão da soma por 11;</li>
+      <li>se o resto for menor que 2, o dígito é 0; senão, é 11 menos o resto.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>cpf = "11144477735"
+soma = 0
+peso = 10
+for digito in cpf[:9]:
+    soma += int(digito) * peso
+    peso -= 1
+resto = soma % 11
+d1 = 0 if resto &lt; 2 else 11 - resto
+print("Soma:", soma)
+print("Resto:", resto)
+print("Primeiro dígito:", d1)</code></pre>
+    <p class="saida">Soma: 162<br>
+Resto: 8<br>
+Primeiro dígito: 3</p>
+    <p>O resultado bate com o décimo dígito do CPF (<code>3</code>). Repare no ternário da aula 30 escolhendo o valor do dígito.</p>
+
+    <h2>Passo 3: o segundo dígito verificador</h2>
+    <p>O segundo dígito usa os 9 primeiros <strong>mais o primeiro dígito verificador</strong> (10 dígitos), com pesos de 11 até 2. O resto da regra é igual.</p>
+<pre class="codigo" data-executar="sim"><code>cpf = "11144477735"
+soma = 0
+peso = 11
+for digito in cpf[:10]:
+    soma += int(digito) * peso
+    peso -= 1
+resto = soma % 11
+d2 = 0 if resto &lt; 2 else 11 - resto
+print("Segundo dígito:", d2)
+print("Confere?", d2 == int(cpf[10]))</code></pre>
+    <p class="saida">Segundo dígito: 5<br>
+Confere? True</p>
+    <div class="dica"><strong>Dica:</strong> Os dois passos são quase iguais: só mudam quantos dígitos entram e o peso inicial. Na aula 40 você vai aprender a transformar isso numa <strong>função</strong> e escrever a conta uma vez só.</div>
+
+    <h2>Passo 4: validar vários CPFs</h2>
+    <p>Juntando os passos, dá para validar uma lista inteira. Para cada CPF, limpamos, conferimos o tamanho, recalculamos os dois dígitos e comparamos com os dois últimos:</p>
+<pre class="codigo" data-executar="sim"><code>lista = ["111.444.777-35", "111.444.777-36", "123.456.789-09", "000.000.000-00", "1234"]
+for digitado in lista:
+    cpf = ""
+    for caractere in digitado:
+        if caractere.isdigit():
+            cpf += caractere
+    if len(cpf) != 11 or cpf == cpf[0] * 11:
+        print(f"{digitado}: inválido")
+        continue
+    numeros = cpf[:9]
+    for peso_inicial in (10, 11):
+        soma = 0
+        peso = peso_inicial
+        for digito in numeros:
+            soma += int(digito) * peso
+            peso -= 1
+        resto = soma % 11
+        numeros += str(0 if resto &lt; 2 else 11 - resto)
+    situacao = "válido" if numeros == cpf else "inválido"
+    print(f"{digitado}: {situacao}")</code></pre>
+    <p class="saida">111.444.777-35: válido<br>
+111.444.777-36: inválido<br>
+123.456.789-09: válido<br>
+000.000.000-00: inválido<br>
+1234: inválido</p>
+    <p>O truque está no laço <code>for peso_inicial in (10, 11)</code>: na primeira volta ele calcula o primeiro dígito e o cola no fim de <code>numeros</code>; na segunda, calcula o segundo dígito usando esses 10 números. No fim, <code>numeros</code> é o CPF "correto" — se for igual ao digitado, ele é válido.</p>
+
+    <h2>Passo 5: gerar CPFs fictícios</h2>
+    <p>Para gerar, sorteamos 9 dígitos com <code>random.randint(0, 9)</code> e calculamos os dois verificadores com o mesmo laço. Com <code>random.seed(2025)</code>, o sorteio sai sempre igual, o que ajuda nos testes:</p>
+<pre class="codigo" data-executar="sim"><code>import random
+
+random.seed(2025)
+for vez in range(3):
+    numeros = ""
+    for i in range(9):
+        numeros += str(random.randint(0, 9))
+    for peso_inicial in (10, 11):
+        soma = 0
+        peso = peso_inicial
+        for digito in numeros:
+            soma += int(digito) * peso
+            peso -= 1
+        resto = soma % 11
+        numeros += str(0 if resto &lt; 2 else 11 - resto)
+    print(f"{numeros[:3]}.{numeros[3:6]}.{numeros[6:9]}-{numeros[9:]}")</code></pre>
+    <p class="saida">817.280.569-18<br>
+316.610.136-51<br>
+160.908.813-17</p>
+    <p>O fatiamento da aula 20 coloca os pontos e o traço no lugar certo.</p>
+
+    <h2>Passo 6: o programa completo</h2>
+    <p>Agora um menu com <code>while True</code> (aula 22): a pessoa escolhe validar, gerar ou sair.</p>
+<pre class="codigo"><code>import random
+
+print("=== CPF: VALIDADOR E GERADOR ===")
+while True:
+    print()
+    print("1 - Validar um CPF")
+    print("2 - Gerar um CPF fictício")
+    print("0 - Sair")
+    opcao = input("Escolha: ").strip()
+    if opcao == "0":
+        break
+    if opcao == "1":
+        digitado = input("Digite o CPF: ")
+        cpf = ""
+        for caractere in digitado:
+            if caractere.isdigit():
+                cpf += caractere
+        if len(cpf) != 11 or cpf == cpf[0] * 11:
+            print("CPF inválido.")
+            continue
+        numeros = cpf[:9]
+    elif opcao == "2":
+        numeros = ""
+        for i in range(9):
+            numeros += str(random.randint(0, 9))
+    else:
+        print("Opção inválida.")
+        continue
+    for peso_inicial in (10, 11):
+        soma = 0
+        peso = peso_inicial
+        for digito in numeros:
+            soma += int(digito) * peso
+            peso -= 1
+        resto = soma % 11
+        numeros += str(0 if resto &lt; 2 else 11 - resto)
+    formatado = f"{numeros[:3]}.{numeros[3:6]}.{numeros[6:9]}-{numeros[9:]}"
+    if opcao == "1":
+        print("CPF válido!" if numeros == cpf else "CPF inválido.")
+    else:
+        print("CPF gerado:", formatado)
+print("Até logo!")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+<em>(exemplo digitando 1, 111.444.777-35, 1, 123.456.789-00, 2, 0)</em><br>
+=== CPF: VALIDADOR E GERADOR ===<br>
+&nbsp;<br>
+1 - Validar um CPF<br>
+2 - Gerar um CPF fictício<br>
+0 - Sair<br>
+Escolha: 1<br>
+Digite o CPF: 111.444.777-35<br>
+CPF válido!<br>
+&nbsp;<br>
+1 - Validar um CPF<br>
+2 - Gerar um CPF fictício<br>
+0 - Sair<br>
+Escolha: 1<br>
+Digite o CPF: 123.456.789-00<br>
+CPF inválido.<br>
+&nbsp;<br>
+1 - Validar um CPF<br>
+2 - Gerar um CPF fictício<br>
+0 - Sair<br>
+Escolha: 2<br>
+CPF gerado: 810.257.988-99<br>
+&nbsp;<br>
+1 - Validar um CPF<br>
+2 - Gerar um CPF fictício<br>
+0 - Sair<br>
+Escolha: 0<br>
+Até logo!</p>
+    <p>O CPF gerado muda a cada execução, porque aqui não usamos <code>random.seed</code>.</p>
+
+    <h2>Como rodar no seu computador</h2>
+    <ul>
+      <li>No VS Code, crie o arquivo <code>cpf.py</code> na sua pasta <code>curso-python</code> e cole o código completo.</li>
+      <li>Salve com <code>Ctrl+S</code> e, no terminal do VS Code, rode o comando abaixo.</li>
+    </ul>
+<pre class="codigo"><code>python cpf.py</code></pre>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Mostre o CPF digitado já formatado com pontos e traço, mesmo quando ele vier só com números.</li>
+      <li>Gere de uma vez quantos CPFs a pessoa pedir.</li>
+      <li>Diga qual seria o par de dígitos correto quando o CPF for inválido.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>d1 = 0 if resto &lt; 2 else 11 - resto</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Formate o texto <code>"52998224725"</code> no padrão <code>529.982.247-25</code> usando fatiamento e uma f-string.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cpf = "52998224725"
+print(f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}")</code></pre>
+      <p class="saida">529.982.247-25</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Calcule o primeiro dígito verificador para os 9 números <code>"529982247"</code> e confira se dá 2.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numeros = "529982247"
+soma = 0
+peso = 10
+for digito in numeros:
+    soma += int(digito) * peso
+    peso -= 1
+resto = soma % 11
+d1 = 0 if resto &lt; 2 else 11 - resto
+print(d1)
+print(d1 == 2)</code></pre>
+      <p class="saida">2<br>
+True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva um trecho que diga se um CPF (já só com números) tem todos os dígitos iguais. Teste com <code>"22222222222"</code> e <code>"11144477735"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for cpf in ["22222222222", "11144477735"]:
+    if cpf == cpf[0] * 11:
+        print(cpf, "-&gt; todos iguais (inválido)")
+    else:
+        print(cpf, "-&gt; dígitos variados")</code></pre>
+      <p class="saida">22222222222 -&gt; todos iguais (inválido)<br>
+11144477735 -&gt; dígitos variados</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Com <code>random.seed(7)</code>, gere 5 CPFs fictícios válidos e mostre-os numerados, como <code>1) 123.456.789-09</code>. Use <code>enumerate</code> ou um contador.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import random
+
+random.seed(7)
+for n in range(1, 6):
+    numeros = ""
+    for i in range(9):
+        numeros += str(random.randint(0, 9))
+    for peso_inicial in (10, 11):
+        soma = 0
+        peso = peso_inicial
+        for digito in numeros:
+            soma += int(digito) * peso
+            peso -= 1
+        resto = soma % 11
+        numeros += str(0 if resto &lt; 2 else 11 - resto)
+    print(f"{n}) {numeros[:3]}.{numeros[3:6]}.{numeros[6:9]}-{numeros[9:]}")</code></pre>
+      <p class="saida">1) 526.018.159-06<br>
+2) 083.016.613-05<br>
+3) 186.091.390-34<br>
+4) 996.030.824-30<br>
+5) 628.194.821-12</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Dado o CPF inválido <code>"111.444.777-00"</code>, mostre quais deveriam ser os dois dígitos verificadores corretos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>digitado = "111.444.777-00"
+cpf = ""
+for caractere in digitado:
+    if caractere.isdigit():
+        cpf += caractere
+numeros = cpf[:9]
+for peso_inicial in (10, 11):
+    soma = 0
+    peso = peso_inicial
+    for digito in numeros:
+        soma += int(digito) * peso
+        peso -= 1
+    resto = soma % 11
+    numeros += str(0 if resto &lt; 2 else 11 - resto)
+print("Dígitos digitados:", cpf[9:])
+print("Dígitos corretos:", numeros[9:])</code></pre>
+      <p class="saida">Dígitos digitados: 00<br>
+Dígitos corretos: 35</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="30-ternario.html" rel="prev">← Aula anterior</a>
+      <a href="32-projeto-jogo-de-adivinhacao.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

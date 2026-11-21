@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 55 · Seus próprios módulos e pacotes, __init__.py, __main__ — Curso de Python · DIGITAR</title>
+<meta name="description" content="Divida o seu programa em vários arquivos criando módulos e pacotes, entenda o __init__.py e rode um pacote com python -m.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 55 · Seus próprios módulos e pacotes, __init__.py, __main__</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar o seu próprio módulo e importá-lo em outro arquivo</li>
+        <li>Agrupar módulos numa pasta: o <strong>pacote</strong> e o arquivo <code>__init__.py</code></li>
+        <li>Importar de dentro de um pacote, inclusive com import relativo</li>
+        <li>Rodar um pacote com <code>python -m</code> e o arquivo <code>__main__.py</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>Seu primeiro módulo</h2>
+    <p>Programas grandes ficam melhores divididos em arquivos. Na pasta do projeto (veja a aula 03), crie um arquivo <code>cantina.py</code>:</p>
+<pre class="codigo"><code>"""Funções da cantina da escola."""
+
+PRECOS = {"coxinha": 6.0, "suco": 5.0, "pão de queijo": 4.0}
+
+
+def preco(item):
+    return PRECOS[item]
+
+
+def total(itens):
+    return sum(preco(i) for i in itens)</code></pre>
+    <p>Na mesma pasta, crie <code>pedido.py</code> e importe pelo nome do arquivo, <strong>sem</strong> o <code>.py</code>:</p>
+<pre class="codigo"><code>import cantina
+
+pedido = ["coxinha", "suco"]
+print("Total: R$", cantina.total(pedido))
+print("Suco custa", cantina.preco("suco"))</code></pre>
+    <p class="saida">Total: R$ 11.0<br>
+Suco custa 5.0</p>
+    <p>Rode com <code>python pedido.py</code>. O Python procura <code>cantina.py</code> primeiro na pasta do programa que você mandou rodar.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>ModuleNotFoundError: No module named 'cantina'</code>, confira se os dois arquivos estão na <strong>mesma pasta</strong> e se o terminal está nela.</div>
+
+    <h2>Pacotes: módulos numa pasta</h2>
+    <p>Quando os módulos se multiplicam, agrupe-os numa pasta. Uma pasta de módulos é um <strong>pacote</strong>. Vamos montar um pacote <code>loja</code>:</p>
+    <p class="saida">projeto/<br>
+├── app.py<br>
+└── loja/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── __init__.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── precos.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── carrinho.py</p>
+    <p>Crie a pasta <code>loja</code> pelo Explorador de Arquivos, pelo terminal com <code>mkdir loja</code> ou com Python:</p>
+<pre class="codigo"><code>from pathlib import Path
+
+Path("loja").mkdir(exist_ok=True)
+print("Pasta loja pronta")</code></pre>
+    <p class="saida">Pasta loja pronta</p>
+    <p>O arquivo <code>loja/__init__.py</code> marca a pasta como pacote e roda na primeira vez que o pacote é importado. Ele pode até ficar vazio; aqui ele guarda a versão do pacote:</p>
+<pre class="codigo"><code>"""Pacote da lojinha da escola."""
+
+VERSAO = "1.0"</code></pre>
+<pre class="codigo"><code>TABELA = {"caderno": 18.90, "lápis": 1.50, "borracha": 2.00}
+
+
+def preco(produto):
+    return TABELA[produto]</code></pre>
+    <p>Dentro de um pacote, um módulo importa o vizinho com um <strong>import relativo</strong>: o ponto quer dizer "deste mesmo pacote".</p>
+<pre class="codigo"><code>from .precos import preco
+
+
+def total(itens):
+    """Soma o preço de uma lista de (produto, quantidade)."""
+    return sum(preco(p) * q for p, q in itens)</code></pre>
+
+    <h2>Importando do pacote</h2>
+    <p>No <code>app.py</code>, fora da pasta <code>loja</code>, use o nome do pacote, um ponto e o nome do módulo:</p>
+<pre class="codigo"><code>import loja
+from loja import carrinho
+from loja.precos import TABELA
+
+compra = [("caderno", 2), ("lápis", 3)]
+print("Versão da loja:", loja.VERSAO)
+print("Produtos:", ", ".join(TABELA))
+print(f"Total: R$ {carrinho.total(compra):.2f}")</code></pre>
+    <p class="saida">Versão da loja: 1.0<br>
+Produtos: caderno, lápis, borracha<br>
+Total: R$ 42.30</p>
+    <div class="dica"><strong>Dica:</strong> Na primeira importação, o Python cria a pasta <code>__pycache__</code> com versões "pré-compiladas" dos módulos, para ficar mais rápido da próxima vez. Pode ignorá-la (e colocá-la no <code>.gitignore</code>, como você vê na aula 244).</div>
+    <div class="atencao"><strong>Atenção:</strong> O import relativo (<code>from .precos import preco</code>) só funciona dentro de um pacote. Se você rodar <code>python loja/carrinho.py</code> direto, aparece <code>ImportError: attempted relative import with no known parent package</code>. Rode sempre o programa de fora, como o <code>app.py</code>, ou use <code>python -m</code>.</div>
+
+    <h2>__main__.py e python -m</h2>
+    <p>Um pacote pode ter um arquivo <code>__main__.py</code>: é o que roda quando você executa o <strong>pacote inteiro</strong> com <code>python -m nome</code>.</p>
+<pre class="codigo"><code>from . import VERSAO
+from .carrinho import total
+
+print(f"Lojinha {VERSAO}")
+print(f"Kit escolar: R$ {total([('caderno', 1), ('borracha', 2)]):.2f}")</code></pre>
+    <p>No terminal, na pasta <code>projeto</code> (a que contém <code>loja</code>):</p>
+<pre class="codigo"><code>python -m loja</code></pre>
+    <p class="saida">Lojinha 1.0<br>
+Kit escolar: R$ 22.90</p>
+    <p>O <code>-m</code> quer dizer "rode este módulo ou pacote". Você já usou isso sem perceber em <code>python -m venv</code> e <code>python -m pip</code> (aula 60). A variável <code>__name__</code>, que diz se um arquivo foi rodado ou importado, é o assunto da aula 100.</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>from loja.precos import preco</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie um módulo <code>geometria.py</code> com as funções <code>area_quadrado(lado)</code> e <code>area_triangulo(base, altura)</code>, e um programa <code>principal.py</code> que importe e use as duas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def area_quadrado(lado):
+    return lado * lado
+
+
+def area_triangulo(base, altura):
+    return base * altura / 2</code></pre>
+<pre class="codigo"><code>import geometria
+
+print(geometria.area_quadrado(5))
+print(geometria.area_triangulo(6, 4))</code></pre>
+      <p class="saida">25<br>
+12.0</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Dentro de um pacote <code>jogo</code>, o módulo <code>jogo/placar.py</code> precisa da função <code>somar</code> que está em <code>jogo/contas.py</code>. Escreva a linha de import relativo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from .contas import somar</code></pre>
+      <p>O ponto significa "do mesmo pacote". Fora do pacote, o import seria <code>from jogo.contas import somar</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Para que serve o arquivo <code>__init__.py</code>? E o <code>__main__.py</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">__init__.py: marca a pasta como pacote e roda quando o pacote é importado<br>
+(pode ficar vazio ou guardar coisas como a versão).<br>
+__main__.py: é o que roda quando você executa o pacote com python -m nome_do_pacote.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Você rodou <code>python loja/carrinho.py</code> e apareceu <code>ImportError: attempted relative import with no known parent package</code>. Por quê, e como resolver?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O carrinho.py usa import relativo (from .precos ...), que só funciona quando o arquivo<br>
+é carregado como parte do pacote. Rode um programa de fora que importe o pacote<br>
+(python app.py) ou rode como módulo: python -m loja.carrinho</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="54-modulos.html" rel="prev">← Aula anterior</a>
+      <a href="56-decoradores.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

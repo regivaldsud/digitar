@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 173 · Chaves estrangeiras e JOIN — Curso de Python · DIGITAR</title>
+<meta name="description" content="Ligue tabelas com chaves estrangeiras e junte os dados delas com JOIN.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 9 · Bancos de dados</p>
+    <h1>Aula 173 · Chaves estrangeiras e JOIN</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Por que dividir os dados em várias tabelas</li>
+        <li>O que é uma chave estrangeira</li>
+        <li>Como juntar tabelas com INNER JOIN e LEFT JOIN</li>
+      </ul>
+    </div>
+
+    <h2>Dividir para não repetir</h2>
+    <p>Se cada pedido guardasse o nome, o e-mail e o endereço do cliente, um cliente com 50 pedidos teria os dados repetidos 50 vezes, e mudar o e-mail seria um pesadelo. A solução é ter uma tabela <code>clientes</code> e, em <code>pedidos</code>, guardar só o <code>id</code> do cliente. Essa coluna que aponta para outra tabela é a <strong>chave estrangeira</strong> (<code>FOREIGN KEY</code>).</p>
+
+    <h2>Juntando com JOIN</h2>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE pedidos (
+        id INTEGER PRIMARY KEY,
+        cliente_id INTEGER REFERENCES clientes(id),
+        produto TEXT,
+        valor REAL
+    );
+    INSERT INTO clientes (nome) VALUES ('Lia'), ('Davi'), ('Rosa');
+    INSERT INTO pedidos (cliente_id, produto, valor) VALUES
+        (1, 'Fone', 89.9), (1, 'Capinha', 25.0), (2, 'Mouse', 59.0);
+""")
+sql = """
+    SELECT clientes.nome, pedidos.produto, pedidos.valor
+    FROM pedidos
+    INNER JOIN clientes ON clientes.id = pedidos.cliente_id
+    ORDER BY pedidos.id
+"""
+for linha in con.execute(sql):
+    print(linha)
+con.close()</code></pre>
+    <p class="saida">('Lia', 'Fone', 89.9)<br>
+('Lia', 'Capinha', 25.0)<br>
+('Davi', 'Mouse', 59.0)</p>
+    <p><code>executescript</code> roda vários comandos separados por <code>;</code>. O <code>INNER JOIN ... ON</code> junta cada pedido com o cliente cujo <code>id</code> é igual ao <code>cliente_id</code>.</p>
+
+    <h2>LEFT JOIN: incluindo quem não tem par</h2>
+    <p>A Rosa não fez pedidos, por isso não apareceu acima. O <code>LEFT JOIN</code> mantém todas as linhas da tabela da esquerda, mesmo sem par:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE pedidos (id INTEGER PRIMARY KEY, cliente_id INTEGER, valor REAL);
+    INSERT INTO clientes (nome) VALUES ('Lia'), ('Davi'), ('Rosa');
+    INSERT INTO pedidos (cliente_id, valor) VALUES (1, 89.9), (1, 25.0), (2, 59.0);
+""")
+sql = """
+    SELECT c.nome, COUNT(p.id), COALESCE(SUM(p.valor), 0)
+    FROM clientes AS c
+    LEFT JOIN pedidos AS p ON p.cliente_id = c.id
+    GROUP BY c.id
+    ORDER BY c.nome
+"""
+for nome, qtd, total in con.execute(sql):
+    print(f"{nome}: {qtd} pedido(s), R$ {total:.2f}")
+con.close()</code></pre>
+    <p class="saida">Davi: 1 pedido(s), R$ 59.00<br>
+Lia: 2 pedido(s), R$ 114.90<br>
+Rosa: 0 pedido(s), R$ 0.00</p>
+    <p><code>AS c</code> dá um apelido curto à tabela. <code>COALESCE(x, 0)</code> troca o vazio (<code>NULL</code>) por 0.</p>
+    <div class="atencao"><strong>Atenção:</strong> No SQLite, a checagem de chaves estrangeiras vem desligada. Para ligar, rode <code>PRAGMA foreign_keys = ON</code> logo depois de conectar.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>JOIN clientes ON clientes.id = pedidos.cliente_id</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie as tabelas <code>turmas</code> (id, nome) e <code>alunos</code> (id, nome, turma_id) e mostre cada aluno com o nome da sua turma.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE turmas (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE alunos (id INTEGER PRIMARY KEY, nome TEXT, turma_id INTEGER REFERENCES turmas(id));
+    INSERT INTO turmas (nome) VALUES ('7º A'), ('8º B');
+    INSERT INTO alunos (nome, turma_id) VALUES ('Ana', 1), ('Caio', 2), ('Duda', 1);
+""")
+sql = """
+    SELECT alunos.nome, turmas.nome FROM alunos
+    JOIN turmas ON turmas.id = alunos.turma_id
+    ORDER BY alunos.nome
+"""
+for aluno, turma in con.execute(sql):
+    print(aluno, "-", turma)
+con.close()</code></pre>
+      <p class="saida">Ana - 7º A<br>
+Caio - 8º B<br>
+Duda - 7º A</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Com <code>PRAGMA foreign_keys = ON</code>, o que acontece ao inserir um pedido com <code>cliente_id</code> 99, que não existe? Teste.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("PRAGMA foreign_keys = ON")
+con.execute("CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT)")
+con.execute("CREATE TABLE pedidos (id INTEGER PRIMARY KEY, cliente_id INTEGER REFERENCES clientes(id))")
+try:
+    con.execute("INSERT INTO pedidos (cliente_id) VALUES (99)")
+except sqlite3.IntegrityError as e:
+    print("Erro:", e)
+con.close()</code></pre>
+      <p class="saida">Erro: FOREIGN KEY constraint failed</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="172-sql-filtros.html" rel="prev">← Aula anterior</a>
+      <a href="174-sqlite3.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

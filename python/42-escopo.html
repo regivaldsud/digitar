@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 42 · Escopo: local, global, nonlocal — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda onde cada variável existe: dentro da função, no arquivo todo ou na função de fora, e quando usar global e nonlocal.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 42 · Escopo: local, global, nonlocal</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é escopo de uma variável</li>
+        <li>A diferença entre variável local e variável global</li>
+        <li>Por que alterar uma global dentro da função dá <code>UnboundLocalError</code></li>
+        <li>O que fazem <code>global</code> e <code>nonlocal</code> e por que é melhor usá-los pouco</li>
+      </ul>
+    </div>
+
+    <h2>Cada função tem a sua "sala"</h2>
+    <p>Pense numa escola: o que é escrito no quadro de uma sala só existe naquela sala. As variáveis criadas dentro de uma função são <strong>locais</strong>: existem só enquanto a função está rodando, e só lá dentro. O "lugar onde a variável existe" se chama <strong>escopo</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>def calcular():
+    total = 10 + 5
+    print("Dentro:", total)
+
+calcular()
+print("Fora:", total)</code></pre>
+    <p class="saida">Dentro: 15<br>
+NameError: name 'total' is not defined</p>
+    <p>A função mostrou <code>Dentro: 15</code>, mas fora dela <code>total</code> não existe mais. Se você precisa do valor fora, use <code>return</code>.</p>
+
+    <h2>Variáveis globais</h2>
+    <p>Uma variável criada fora de qualquer função é <strong>global</strong>: ela pode ser <strong>lida</strong> de dentro das funções. Mas, se a função cria uma variável com o mesmo nome, são duas variáveis diferentes:</p>
+<pre class="codigo" data-executar="sim"><code>escola = "E.E. Monteiro Lobato"
+cor = "azul"
+
+def mostrar():
+    cor = "vermelho"
+    print("Estudo na", escola)
+    print("Dentro da função:", cor)
+
+mostrar()
+print("Fora da função:", cor)</code></pre>
+    <p class="saida">Estudo na E.E. Monteiro Lobato<br>
+Dentro da função: vermelho<br>
+Fora da função: azul</p>
+
+    <h2>Tentando alterar uma global</h2>
+    <p>E se a função tentar <strong>mudar</strong> uma global, como um contador de pontos?</p>
+<pre class="codigo" data-executar="sim"><code>pontos = 0
+
+def marcar_ponto():
+    pontos = pontos + 1
+
+marcar_ponto()</code></pre>
+    <p class="saida">UnboundLocalError: cannot access local variable 'pontos' where it is not associated with a value</p>
+    <p>Como existe uma atribuição (<code>pontos = ...</code>) dentro da função, o Python decide que <code>pontos</code> é local. Aí ele tenta ler <code>pontos</code> antes de ela ter valor, e dá <code>UnboundLocalError</code>. A palavra <code>global</code> avisa que você quer usar a variável de fora:</p>
+<pre class="codigo" data-executar="sim"><code>pontos = 0
+
+def marcar_ponto():
+    global pontos
+    pontos = pontos + 1
+
+marcar_ponto()
+marcar_ponto()
+print("Pontos:", pontos)</code></pre>
+    <p class="saida">Pontos: 2</p>
+
+    <h2>Prefira parâmetros e return</h2>
+    <p>Funciona, mas <code>global</code> deixa o programa difícil de entender: qualquer função pode mudar a variável a qualquer momento, e achar o culpado de um bug vira caça ao tesouro. O jeito recomendado é receber o valor por parâmetro e devolver o novo valor:</p>
+<pre class="codigo" data-executar="sim"><code>def marcar_ponto(pontos):
+    return pontos + 1
+
+placar = 0
+placar = marcar_ponto(placar)
+placar = marcar_ponto(placar)
+print("Pontos:", placar)</code></pre>
+    <p class="saida">Pontos: 2</p>
+    <div class="dica"><strong>Dica:</strong> Uma boa função é como uma máquina de suco: entra fruta (parâmetros), sai suco (<code>return</code>). Ela não mexe em nada que está fora dela.</div>
+
+    <h2>nonlocal: a variável da função de fora</h2>
+    <p>Uma função pode ser criada <strong>dentro</strong> de outra. A de dentro consegue ler as variáveis da de fora; para <strong>alterá-las</strong>, use <code>nonlocal</code> (o <code>global</code> não serve aqui, porque a variável não é global):</p>
+<pre class="codigo" data-executar="sim"><code>def criar_contador():
+    contagem = 0
+
+    def contar():
+        nonlocal contagem
+        contagem += 1
+        return contagem
+
+    return contar
+
+catraca = criar_contador()
+print(catraca())
+print(catraca())
+print(catraca())</code></pre>
+    <p class="saida">1<br>
+2<br>
+3</p>
+    <p>Cada chamada de <code>catraca()</code> lembra o valor anterior de <code>contagem</code>. Esse truque de "função que lembra" se chama <strong>closure</strong> e vai aparecer de novo na aula 45.</p>
+    <div class="atencao"><strong>Atenção:</strong> O Python procura um nome nesta ordem: primeiro no escopo <strong>local</strong>, depois nas funções de fora, depois no <strong>global</strong> e por fim nas funções prontas (como <code>print</code>). Por isso, se você criar uma variável chamada <code>print</code> ou <code>list</code>, a função pronta fica escondida!</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>def marcar_ponto(pontos): return pontos + 1</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> O que este código mostra? <code>x = 5</code>, uma função <code>muda()</code> que faz <code>x = 99</code> e mostra <code>x</code>, e depois <code>muda()</code> e <code>print(x)</code>. Explique.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>x = 5
+
+def muda():
+    x = 99
+    print(x)
+
+muda()
+print(x)</code></pre>
+      <p class="saida">99<br>
+5</p>
+      <p>Dentro da função, <code>x = 99</code> cria uma variável local. A global continua valendo 5.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Reescreva sem <code>global</code>: um contador de moedas começa em 0 e a função <code>pegar_moeda</code> soma 10. Chame três vezes e mostre o total.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def pegar_moeda(moedas):
+    return moedas + 10
+
+moedas = 0
+moedas = pegar_moeda(moedas)
+moedas = pegar_moeda(moedas)
+moedas = pegar_moeda(moedas)
+print("Moedas:", moedas)</code></pre>
+      <p class="saida">Moedas: 30</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que este código dá erro e como corrigir com <code>global</code>? <code>vidas = 3</code>, e a função <code>perder_vida()</code> faz <code>vidas = vidas - 1</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>vidas = 3
+
+def perder_vida():
+    global vidas
+    vidas = vidas - 1
+
+perder_vida()
+print("Vidas:", vidas)</code></pre>
+      <p class="saida">Vidas: 2</p>
+      <p>Sem <code>global</code>, a atribuição faz o Python tratar <code>vidas</code> como local, e ela é lida antes de ter valor (<code>UnboundLocalError</code>). Com <code>global vidas</code> funciona, mas a versão com parâmetro e <code>return</code> é melhor.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie <code>criar_cofrinho()</code>, que devolve uma função <code>depositar(valor)</code>. Cada depósito soma ao saldo guardado e devolve o saldo atual. Deposite 5, 10 e 2.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def criar_cofrinho():
+    saldo = 0
+
+    def depositar(valor):
+        nonlocal saldo
+        saldo += valor
+        return saldo
+
+    return depositar
+
+cofrinho = criar_cofrinho()
+print(cofrinho(5))
+print(cofrinho(10))
+print(cofrinho(2))</code></pre>
+      <p class="saida">5<br>
+15<br>
+17</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="41-argumentos.html" rel="prev">← Aula anterior</a>
+      <a href="43-args-kwargs.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

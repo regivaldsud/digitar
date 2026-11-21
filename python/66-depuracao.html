@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 66 · Depuração: print, breakpoint e traceback — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a encontrar e corrigir bugs lendo o traceback, usando print, assert, breakpoint e o depurador do VS Code.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 66 · Depuração: print, breakpoint e traceback</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Ler um traceback com várias chamadas de função, de baixo para cima</li>
+        <li>Usar <code>print</code> de depuração para ver o que está acontecendo</li>
+        <li>Conferir suposições com <code>assert</code></li>
+        <li>Pausar o programa com <code>breakpoint()</code> e usar os comandos do pdb</li>
+        <li>Usar pontos de parada no depurador do VS Code</li>
+      </ul>
+    </div>
+
+    <h2>O que é um bug</h2>
+    <p>Um <strong>bug</strong> é um erro no programa. Às vezes ele causa uma exceção e o programa para; outras vezes, pior, o programa roda mas dá o resultado errado. <strong>Depurar</strong> (em inglês, *debug*) é o trabalho de detetive de achar e corrigir esse erro.</p>
+    <p>O segredo é não chutar: observe o que o programa realmente faz, compare com o que você esperava e descubra em que linha os dois se separam.</p>
+
+    <h2>Lendo um traceback de várias chamadas</h2>
+    <p>Na aula 06 você aprendeu a ler uma mensagem de erro simples. Quando uma função chama outra, e o erro acontece lá no fundo, o Python mostra o caminho todo. Isso se chama <strong>traceback</strong> ("rastro de volta").</p>
+<pre class="codigo" data-executar="sim"><code>def preco_com_desconto(preco, desconto):
+    return preco - preco * desconto / 100
+
+def total_carrinho(itens):
+    total = 0
+    for preco, desconto in itens:
+        total += preco_com_desconto(preco, desconto)
+    return total
+
+carrinho = [(50, 10), (30, "5")]
+print(total_carrinho(carrinho))</code></pre>
+    <p class="saida">TypeError: unsupported operand type(s) for /: 'str' and 'int'</p>
+    <p>No seu computador, a mensagem completa fica parecida com esta:</p>
+    <p class="saida">Traceback (most recent call last):<br>
+&nbsp;&nbsp;File "loja.py", line 11, in &lt;module&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(total_carrinho(carrinho))<br>
+&nbsp;&nbsp;File "loja.py", line 7, in total_carrinho<br>
+&nbsp;&nbsp;&nbsp;&nbsp;total += preco_com_desconto(preco, desconto)<br>
+&nbsp;&nbsp;File "loja.py", line 2, in preco_com_desconto<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return preco - preco * desconto / 100<br>
+TypeError: unsupported operand type(s) for /: 'str' and 'int'</p>
+    <p>Como ler:</p>
+    <ul>
+      <li>comece pela <strong>última linha</strong>: ela diz o tipo do erro e o motivo — aqui, tentaram dividir um texto (<code>str</code>) por um número;</li>
+      <li>suba uma linha: ela mostra <strong>onde</strong> o erro aconteceu (arquivo, número da linha e o código);</li>
+      <li>continue subindo para ver <strong>quem chamou</strong> quem, até chegar ao começo do programa (<code>&lt;module&gt;</code>).</li>
+    </ul>
+    <p>O erro estourou na linha 2, mas a causa está na linha 10: o desconto <code>"5"</code> foi escrito entre aspas.</p>
+
+    <h2>print de depuração</h2>
+    <p>A ferramenta mais simples é colocar <code>print</code> no meio do código para ver os valores das variáveis. Veja este programa que deveria calcular a média, mas dá um resultado estranho:</p>
+<pre class="codigo" data-executar="sim"><code>notas = [8, 6, 10]
+soma = 0
+for nota in notas:
+    soma = nota
+    print(f"[depuração] nota={nota} soma={soma}")
+media = soma / len(notas)
+print("Média:", media)</code></pre>
+    <p class="saida">[depuração] nota=8 soma=8<br>
+[depuração] nota=6 soma=6<br>
+[depuração] nota=10 soma=10<br>
+Média: 3.3333333333333335</p>
+    <p>Os prints mostram que <code>soma</code> não acumula: ela só guarda a última nota. O certo é <code>soma += nota</code>. Depois de corrigir, apague os prints de depuração.</p>
+    <div class="dica"><strong>Dica:</strong> Coloque uma marca como <code>[depuração]</code> nos seus prints. Fica fácil achar e apagar todos depois.</div>
+
+    <h2>Mostrando o tipo e o valor exato</h2>
+    <p>Muitos bugs vêm de um valor que <strong>parece</strong> um número mas é um texto. O <code>print</code> comum esconde isso; <code>type()</code> e <code>repr()</code> mostram a verdade. Na f-string, <code>{variavel=}</code> mostra o nome e o valor de uma vez:</p>
+<pre class="codigo" data-executar="sim"><code>idade = "13"
+anos_ate_maioridade = "5"
+print(idade + anos_ate_maioridade)
+print(f"{idade=} {type(idade)=}")
+print(repr(" Ana "), repr("13"), repr(13))</code></pre>
+    <p class="saida">135<br>
+idade='13' type(idade)=&lt;class 'str'&gt;<br>
+' Ana ' '13' 13</p>
+    <p>O resultado <code>135</code> parecia mágica, mas o <code>type</code> revela: são dois textos, e <code>+</code> com textos junta, não soma. O <code>repr</code> também mostra os espaços escondidos em <code>" Ana "</code>, outro bug muito comum ao ler dados digitados.</p>
+
+    <h2>assert: conferindo suposições</h2>
+    <p>O <code>assert</code> verifica se algo é verdade. Se for, nada acontece; se não for, o programa para com <code>AssertionError</code> e a mensagem que você escolheu. É um jeito de pegar o bug cedo, perto de onde ele nasce.</p>
+<pre class="codigo" data-executar="sim"><code>def porcentagem(acertos, total):
+    resultado = acertos / total * 100
+    assert 0 &lt;= resultado &lt;= 100, f"porcentagem impossível: {resultado}"
+    return resultado
+
+print(porcentagem(45, 50))
+print(porcentagem(50, 45))</code></pre>
+    <p class="saida">90.0<br>
+AssertionError: porcentagem impossível: 111.11111111111111</p>
+    <div class="atencao"><strong>Atenção:</strong> Use <code>assert</code> para conferir erros de programação, não para validar o que o usuário digita. Para isso, use <code>if</code> e <code>raise</code> (ou <code>try</code>), como na aula 53.</div>
+
+    <h2>breakpoint(): pausando o programa</h2>
+    <p>O <code>breakpoint()</code> pausa o programa naquela linha e abre o <strong>pdb</strong>, o depurador que vem com o Python. Ele funciona no terminal do seu computador (aqui no navegador, não).</p>
+<pre class="codigo"><code>def contar_vogais(palavra):
+    total = 0
+    for letra in palavra:
+        breakpoint()
+        if letra in "aeiou":
+            total += 1
+    return total
+
+print(contar_vogais("Amapá"))</code></pre>
+    <p>Rode no terminal com <code>python vogais.py</code>. O programa para e mostra o prompt <code>(Pdb)</code>, onde você digita comandos:</p>
+    <p class="saida">&gt; vogais.py(5)contar_vogais()<br>
+-&gt; if letra in "aeiou":<br>
+(Pdb) p letra<br>
+'A'<br>
+(Pdb) p total<br>
+0<br>
+(Pdb) n<br>
+&gt; vogais.py(3)contar_vogais()<br>
+-&gt; for letra in palavra:<br>
+(Pdb) c</p>
+    <p>Os comandos principais:</p>
+    <ul>
+      <li><code>p variavel</code>: mostra o valor (de *print*);</li>
+      <li><code>n</code>: executa a próxima linha (de *next*);</li>
+      <li><code>s</code>: entra dentro da função chamada nessa linha (de *step*);</li>
+      <li><code>c</code>: continua até o próximo <code>breakpoint</code> (de *continue*);</li>
+      <li><code>q</code>: sai do depurador e encerra o programa (de *quit*).</li>
+    </ul>
+    <p>Com <code>p letra</code> você descobre o bug: a letra é <code>'A'</code> maiúscula e <code>'á'</code> tem acento, por isso não são contadas. Uma correção é <code>if letra.lower() in "aeiouáéíóúâêôãõ":</code>.</p>
+
+    <h2>O depurador do VS Code</h2>
+    <p>O VS Code faz o mesmo com cliques:</p>
+    <ul>
+      <li>clique à esquerda do número da linha: aparece uma bolinha vermelha, o <strong>ponto de parada</strong>;</li>
+      <li>aperte <strong>F5</strong> e escolha "Python File" (ou o ícone de inseto ao lado do ▶);</li>
+      <li>o programa para na bolinha, e o painel <strong>Variáveis</strong> mostra todos os valores;</li>
+      <li><strong>F10</strong> executa a próxima linha, <strong>F11</strong> entra na função e <strong>F5</strong> continua.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Depurar é uma habilidade que se treina. Toda vez que algo der errado, antes de mudar o código, pergunte: "o que eu esperava ver?" e "o que apareceu de verdade?".</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>assert total &gt;= 0, "o total não pode ser negativo"</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Um programa deveria mostrar o maior número de <code>numeros = [-8, -3, -15]</code>. Ele começa com <code>maior = 0</code> e, num <code>for</code>, troca <code>maior</code> sempre que <code>n &gt; maior</code>. Mas mostra <code>Maior: 0</code>. Use um print de depuração para entender e corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>numeros = [-8, -3, -15]
+maior = numeros[0]
+for n in numeros:
+    if n &gt; maior:
+        maior = n
+print("Maior:", maior)</code></pre>
+      <p class="saida">Maior: -3</p>
+      <p>O bug era começar com <code>maior = 0</code>: nenhum número negativo é maior que zero. Começar com o primeiro elemento da lista resolve.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Leia o traceback abaixo e responda: qual é o tipo do erro, em que linha ele aconteceu e em que linha está a chamada que levou até ele?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Traceback (most recent call last):<br>
+&nbsp;&nbsp;File "boletim.py", line 8, in &lt;module&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mostrar("Rafa", notas)<br>
+&nbsp;&nbsp;File "boletim.py", line 4, in mostrar<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(nome, notas[nome])<br>
+KeyError: 'Rafa'</p>
+      <p>O tipo é <code>KeyError</code>: a chave <code>'Rafa'</code> não existe no dicionário <code>notas</code>. O erro aconteceu na linha 4, dentro da função <code>mostrar</code>, que foi chamada na linha 8.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva a função <code>dobro(n)</code> e use <code>assert</code> para conferir que <code>dobro(4)</code> é 8 e <code>dobro(0)</code> é 0. Se tudo estiver certo, mostre <code>Testes ok</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def dobro(n):
+    return n * 2
+
+assert dobro(4) == 8, "dobro(4) deveria ser 8"
+assert dobro(0) == 0, "dobro(0) deveria ser 0"
+print("Testes ok")</code></pre>
+      <p class="saida">Testes ok</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> No pdb, qual comando você usa para: ver o valor da variável <code>total</code>; executar a próxima linha; continuar até o fim; sair?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">p total &nbsp;&nbsp;-&gt; mostra o valor de total<br>
+n &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; executa a próxima linha<br>
+c &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; continua até o próximo breakpoint (ou até o fim)<br>
+q &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; sai do depurador</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Um colega quer contar quantas palavras de <code>["sol", "cachoeira", "mar", "montanha", "praia"]</code> têm mais de 4 letras. Dentro do <code>for p in palavras:</code> ele escreveu <code>contador = 0</code> e depois <code>if len(p) &gt; 4: contador += 1</code>. O programa sempre mostra 1. Descubra o bug e corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>palavras = ["sol", "cachoeira", "mar", "montanha", "praia"]
+contador = 0
+for p in palavras:
+    if len(p) &gt; 4:
+        contador += 1
+print(contador)</code></pre>
+      <p class="saida">3</p>
+      <p>Na versão com bug, a linha <code>contador = 0</code> estava <strong>dentro</strong> do <code>for</code>, zerando o contador a cada palavra. Um print de <code>contador</code> dentro do laço mostra isso na hora.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="65-organizacao-de-projeto.html" rel="prev">← Aula anterior</a>
+      <a href="67-projeto-analisador-de-texto.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

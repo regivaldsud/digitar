@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 67 · Projeto: analisador de texto — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa um programa que conta palavras e mostra as palavras e letras mais frequentes de qualquer texto.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 3 · Python intermediário</p>
+    <h1>Aula 67 · Projeto: analisador de texto</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Limpar um texto: minúsculas, sem pontuação e sem acentos</li>
+        <li>Remover acentos com o módulo <code>unicodedata</code></li>
+        <li>Contar palavras e letras com <code>collections.Counter</code></li>
+        <li>Mostrar o "top 5" e um gráfico de barras feito com caracteres</li>
+        <li>Ler o texto digitado ou de um arquivo <code>.txt</code></li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>Que palavra aparece mais num texto? Qual letra você mais digita? Essas perguntas são importantes até para quem cria teclados e cursos de digitação: as letras mais usadas do português (como <strong>a</strong>, <strong>e</strong> e <strong>o</strong>) ficam em posições fáceis de alcançar.</p>
+    <p>Nosso analisador vai receber um texto e mostrar: total de palavras, palavras diferentes, as 5 palavras mais frequentes e as 5 letras mais frequentes.</p>
+
+    <h2>Passo 1: separar as palavras</h2>
+    <p>O método <code>split()</code> corta o texto nos espaços (e nas quebras de linha):</p>
+<pre class="codigo" data-executar="sim"><code>texto = "O rato roeu a roupa do rei de Roma."
+palavras = texto.split()
+print(palavras)
+print("Total de palavras:", len(palavras))</code></pre>
+    <p class="saida">['O', 'rato', 'roeu', 'a', 'roupa', 'do', 'rei', 'de', 'Roma.']<br>
+Total de palavras: 9</p>
+    <p>Repare no problema: a última palavra veio como <code>'Roma.'</code>, com o ponto grudado. E <code>"O"</code> e <code>"o"</code> seriam contadas como palavras diferentes. Precisamos limpar o texto antes.</p>
+
+    <h2>Passo 2: minúsculas e sem pontuação</h2>
+    <p>O módulo <code>string</code> tem uma lista pronta de sinais de pontuação. Com <code>str.maketrans</code> montamos uma "tabela" que apaga esses sinais, e <code>translate</code> aplica a tabela:</p>
+<pre class="codigo" data-executar="sim"><code>import string
+
+print(string.punctuation)
+
+texto = "Olá! Tudo bem? Tudo ótimo, e você?"
+tabela = str.maketrans("", "", string.punctuation)
+limpo = texto.lower().translate(tabela)
+print(limpo)
+print(limpo.split())</code></pre>
+    <p class="saida">!"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~<br>
+olá tudo bem tudo ótimo e você<br>
+['olá', 'tudo', 'bem', 'tudo', 'ótimo', 'e', 'você']</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>string.punctuation</code> só tem os sinais do teclado americano. Travessão (—), reticências (…) e aspas curvas (“ ”) não estão lá. Por isso, no programa final, vamos somar esses sinais à lista.</div>
+
+    <h2>Passo 3: tirar os acentos</h2>
+    <p>Para o computador, "você" e "voce" são palavras diferentes. Para contar letras, também queremos que "á", "ã" e "a" contem como <strong>a</strong>. O módulo <code>unicodedata</code> resolve: a forma <code>"NFD"</code> separa cada letra do seu acento, e depois jogamos fora os acentos (a categoria <code>"Mn"</code> é a das marcas que ficam "em cima" das letras):</p>
+<pre class="codigo" data-executar="sim"><code>import unicodedata
+
+
+def sem_acentos(texto):
+    decomposto = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
+
+
+print(sem_acentos("Ação, coração, pão e café"))
+print(len("ã"), len(unicodedata.normalize("NFD", "ã")))</code></pre>
+    <p class="saida">Acao, coracao, pao e cafe<br>
+1 2</p>
+    <p>O "ã" tem 1 caractere, mas na forma NFD vira 2: a letra "a" e o til. O "ç" também vira "c" + cedilha.</p>
+
+    <h2>Passo 4: contar com Counter</h2>
+    <p>Contar coisas é tão comum que o Python tem uma ferramenta pronta: <code>Counter</code>, do módulo <code>collections</code>. Ele funciona como um dicionário em que cada item aponta para quantas vezes apareceu:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import Counter
+
+palavras = "o rato roeu a roupa do rei de roma o rato".split()
+contagem = Counter(palavras)
+print(contagem["rato"])
+print(contagem["gato"])
+print(contagem.most_common(3))</code></pre>
+    <p class="saida">2<br>
+0<br>
+[('o', 2), ('rato', 2), ('roeu', 1)]</p>
+    <ul>
+      <li><code>contagem["gato"]</code> dá <code>0</code> em vez de erro, porque o <code>Counter</code> sabe que algo que nunca apareceu tem contagem zero.</li>
+      <li><code>most_common(3)</code> devolve os 3 mais frequentes, do maior para o menor. Em caso de empate, vem primeiro quem apareceu primeiro.</li>
+    </ul>
+
+    <h2>Passo 5: contar letras</h2>
+    <p>Um texto também é uma sequência de caracteres. Basta ficar só com as letras usando <code>isalpha()</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import Counter
+
+texto = "Abacaxi, banana e maracujá"
+letras = Counter(c for c in texto.lower() if c.isalpha())
+print(letras.most_common(3))</code></pre>
+    <p class="saida">[('a', 8), ('b', 2), ('c', 2)]</p>
+    <p>Repare que o "á" de maracujá ficou separado do "a". No programa final, tiramos os acentos antes de contar.</p>
+
+    <h2>Passo 6: juntar tudo numa função</h2>
+    <p>Vamos criar <code>analisar(texto)</code>, que devolve um dicionário com os resultados, e <code>relatorio(dados)</code>, que mostra tudo bonito, com barras de <code>#</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import string
+import unicodedata
+from collections import Counter
+
+PONTUACAO = string.punctuation + "—–“”‘’…«»"
+
+
+def sem_acentos(texto):
+    decomposto = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
+
+
+def limpar(texto):
+    texto = sem_acentos(texto.lower())
+    return texto.translate(str.maketrans("", "", PONTUACAO))
+
+
+def analisar(texto):
+    palavras = limpar(texto).split()
+    letras = [c for c in "".join(palavras) if c.isalpha()]
+    return {
+        "total_palavras": len(palavras),
+        "palavras_diferentes": len(set(palavras)),
+        "top_palavras": Counter(palavras).most_common(5),
+        "top_letras": Counter(letras).most_common(5),
+    }
+
+
+def relatorio(dados):
+    print("Total de palavras:", dados["total_palavras"])
+    print("Palavras diferentes:", dados["palavras_diferentes"])
+    print("Palavras mais frequentes:")
+    for palavra, vezes in dados["top_palavras"]:
+        print(f"  {palavra:&lt;10} {'#' * vezes} {vezes}")
+    print("Letras mais frequentes:")
+    for letra, vezes in dados["top_letras"]:
+        print(f"  {letra}  {'#' * vezes} {vezes}")
+
+
+texto = """O Brasil tem praias lindas e florestas enormes.
+No Brasil, o futebol é paixão — e a comida também:
+feijoada, acarajé, pão de queijo e açaí!"""
+relatorio(analisar(texto))</code></pre>
+    <p class="saida">Total de palavras: 25<br>
+Palavras diferentes: 20<br>
+Palavras mais frequentes:<br>
+&nbsp;&nbsp;e &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#### 4<br>
+&nbsp;&nbsp;o &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;## 2<br>
+&nbsp;&nbsp;brasil &nbsp;&nbsp;&nbsp;&nbsp;## 2<br>
+&nbsp;&nbsp;tem &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 1<br>
+&nbsp;&nbsp;praias &nbsp;&nbsp;&nbsp;&nbsp;# 1<br>
+Letras mais frequentes:<br>
+&nbsp;&nbsp;a &nbsp;################### 19<br>
+&nbsp;&nbsp;e &nbsp;############## 14<br>
+&nbsp;&nbsp;o &nbsp;########### 11<br>
+&nbsp;&nbsp;i &nbsp;######### 9<br>
+&nbsp;&nbsp;s &nbsp;####### 7</p>
+    <p>Repare que "é" virou "e" depois de tirar os acentos, e por isso o "e" apareceu 4 vezes. Para contar letras isso é ótimo; para palavras, às vezes junta coisas diferentes. Todo programa tem escolhas assim, e tudo bem.</p>
+    <p>O <code>{palavra:&lt;10}</code> dentro da f-string alinha a palavra à esquerda num espaço de 10 caracteres, para as barras ficarem uma embaixo da outra no terminal.</p>
+
+    <h2>Passo 7: o programa completo</h2>
+    <p>A versão final pergunta o texto. Se o que você digitar terminar em <code>.txt</code>, o programa tenta abrir esse arquivo — assim dá para analisar uma redação inteira ou um livro baixado em texto puro.</p>
+<pre class="codigo"><code>import string
+import unicodedata
+from collections import Counter
+
+PONTUACAO = string.punctuation + "—–“”‘’…«»"
+
+
+def sem_acentos(texto):
+    decomposto = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
+
+
+def limpar(texto):
+    texto = sem_acentos(texto.lower())
+    return texto.translate(str.maketrans("", "", PONTUACAO))
+
+
+def analisar(texto):
+    palavras = limpar(texto).split()
+    letras = [c for c in "".join(palavras) if c.isalpha()]
+    return {
+        "total_palavras": len(palavras),
+        "palavras_diferentes": len(set(palavras)),
+        "top_palavras": Counter(palavras).most_common(5),
+        "top_letras": Counter(letras).most_common(5),
+    }
+
+
+def relatorio(dados):
+    print()
+    print("Total de palavras:", dados["total_palavras"])
+    print("Palavras diferentes:", dados["palavras_diferentes"])
+    print("Palavras mais frequentes:")
+    for palavra, vezes in dados["top_palavras"]:
+        print(f"  {palavra:&lt;10} {'#' * vezes} {vezes}")
+    print("Letras mais frequentes:")
+    for letra, vezes in dados["top_letras"]:
+        print(f"  {letra}  {'#' * vezes} {vezes}")
+
+
+def ler_texto():
+    entrada = input("Digite um texto ou o nome de um arquivo .txt: ").strip()
+    if entrada.endswith(".txt"):
+        try:
+            with open(entrada, encoding="utf-8") as arquivo:
+                return arquivo.read()
+        except FileNotFoundError:
+            print(f"Não achei o arquivo {entrada}. Vou analisar o próprio nome.")
+    return entrada
+
+
+def main():
+    print("=== ANALISADOR DE TEXTO ===")
+    texto = ler_texto()
+    if not texto.strip():
+        print("Texto vazio. Nada para analisar.")
+        return
+    relatorio(analisar(texto))
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p class="saida"><em>(exemplo digitando O rato roeu a roupa do rei de Roma. A rainha ficou brava com o rato!)</em><br>
+=== ANALISADOR DE TEXTO ===<br>
+Digite um texto ou o nome de um arquivo .txt: O rato roeu a roupa do rei de Roma. A rainha ficou brava com o rato!<br>
+&nbsp;<br>
+Total de palavras: 16<br>
+Palavras diferentes: 13<br>
+Palavras mais frequentes:<br>
+&nbsp;&nbsp;o &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;## 2<br>
+&nbsp;&nbsp;rato &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;## 2<br>
+&nbsp;&nbsp;a &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;## 2<br>
+&nbsp;&nbsp;roeu &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 1<br>
+&nbsp;&nbsp;roupa &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 1<br>
+Letras mais frequentes:<br>
+&nbsp;&nbsp;o &nbsp;########## 10<br>
+&nbsp;&nbsp;a &nbsp;########## 10<br>
+&nbsp;&nbsp;r &nbsp;######## 8<br>
+&nbsp;&nbsp;e &nbsp;### 3<br>
+&nbsp;&nbsp;u &nbsp;### 3</p>
+
+    <h2>Como rodar no seu computador</h2>
+    <ul>
+      <li>Salve o código como <code>analisador.py</code>.</li>
+      <li>Na mesma pasta, crie um arquivo <code>redacao.txt</code> e cole nele um texto seu (uma redação da escola, a letra de um poema que você escreveu...).</li>
+      <li>Rode <code>python analisador.py</code> e, quando ele perguntar, digite <code>redacao.txt</code>.</li>
+    </ul>
+<pre class="codigo"><code>python analisador.py</code></pre>
+    <div class="dica"><strong>Dica:</strong> Quer ver se as letras mais frequentes do português são mesmo <strong>a</strong>, <strong>e</strong> e <strong>o</strong>? Analise um texto grande, com várias páginas. Quanto maior o texto, mais confiável a estatística.</div>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Ignore palavras muito comuns (como "o", "a", "de", "e") na lista de mais frequentes.</li>
+      <li>Mostre a palavra mais longa do texto.</li>
+      <li>Conte quantas frases o texto tem.</li>
+      <li>Compare as letras mais frequentes de dois textos diferentes.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>contagem = Counter(palavras).most_common(5)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva <code>palavra_mais_longa(texto)</code>, que devolve a maior palavra do texto (sem pontuação). Dica: <code>max</code> aceita <code>key=len</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import string
+
+
+def palavra_mais_longa(texto):
+    limpo = texto.translate(str.maketrans("", "", string.punctuation))
+    return max(limpo.split(), key=len)
+
+
+print(palavra_mais_longa("Paralelepípedo é uma palavra difícil de digitar!"))</code></pre>
+      <p class="saida">Paralelepípedo</p>
+      <p>Em caso de empate, <code>max</code> devolve a primeira palavra mais longa que encontrar.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça o analisador ignorar palavras comuns. Crie um conjunto <code>PALAVRAS_VAZIAS = {"o", "a", "os", "as", "de", "do", "da", "e", "um", "uma"}</code> e mostre o top 3 sem elas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import Counter
+
+PALAVRAS_VAZIAS = {"o", "a", "os", "as", "de", "do", "da", "e", "um", "uma"}
+
+texto = "o gato e o cachorro brincam no quintal e o gato dorme no sofá do quintal"
+palavras = [p for p in texto.split() if p not in PALAVRAS_VAZIAS]
+print(Counter(palavras).most_common(3))</code></pre>
+      <p class="saida">[('gato', 2), ('no', 2), ('quintal', 2)]</p>
+      <p>Usamos um conjunto (<code>set</code>) porque conferir se algo está dentro dele com <code>in</code> é muito rápido, mesmo com milhares de palavras.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Conte as vogais e as consoantes de um texto, tratando "á", "ã" e "â" como "a". Use a função <code>sem_acentos</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import unicodedata
+
+
+def sem_acentos(texto):
+    decomposto = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
+
+
+texto = sem_acentos("Programação é coisa séria e divertida").lower()
+vogais = sum(1 for c in texto if c in "aeiou")
+consoantes = sum(1 for c in texto if c.isalpha() and c not in "aeiou")
+print("Vogais:", vogais)
+print("Consoantes:", consoantes)</code></pre>
+      <p class="saida">Vogais: 17<br>
+Consoantes: 15</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Calcule a média de letras por palavra de um texto, com uma casa decimal.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import string
+
+texto = "Quem digita bem programa mais rápido."
+palavras = texto.translate(str.maketrans("", "", string.punctuation)).split()
+media = sum(len(p) for p in palavras) / len(palavras)
+print(f"{len(palavras)} palavras, média de {media:.1f} letras por palavra")</code></pre>
+      <p class="saida">6 palavras, média de 5.2 letras por palavra</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Conte quantas frases há num texto, considerando que uma frase termina em <code>.</code>, <code>!</code> ou <code>?</code>. Cuidado: reticências (<code>...</code>) não devem contar como três frases.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Hoje tem jogo! Você vai assistir? Eu acho que sim... Vamos torcer."
+frases = [f.strip() for f in re.split(r"[.!?]+", texto) if f.strip()]
+print("Frases:", len(frases))
+print(frases)</code></pre>
+      <p class="saida">Frases: 4<br>
+['Hoje tem jogo', 'Você vai assistir', 'Eu acho que sim', 'Vamos torcer']</p>
+      <p>O módulo <code>re</code> (expressões regulares) aparece com calma na aula 140. Aqui, o <code>re.split</code> com <code>[.!?]+</code> corta o texto em qualquer sequência de um ou mais desses sinais, então <code>...</code> conta como um corte só.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="66-depuracao.html" rel="prev">← Aula anterior</a>
+      <a href="68-projeto-treino-de-digitacao.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

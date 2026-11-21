@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 86 · help, dir e docstrings em funções e classes — Curso de Python · DIGITAR</title>
+<meta name="description" content="Aprenda a documentar classes e métodos com docstrings e a explorar qualquer objeto do Python com help e dir.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 4 · Programação orientada a objetos</p>
+    <h1>Aula 86 · help, dir e docstrings em funções e classes</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Como escrever docstrings em classes e métodos</li>
+        <li>Como ler a documentação de qualquer objeto com <code>help()</code> e <code>__doc__</code></li>
+        <li>Como descobrir os atributos e métodos de um objeto com <code>dir()</code></li>
+        <li>Como usar <code>inspect</code> para ler docstrings bem formatadas</li>
+      </ul>
+    </div>
+
+    <h2>Documentação mora dentro do código</h2>
+    <p>Na aula 04 você conheceu as docstrings: o texto entre três aspas logo na primeira linha de uma função. Elas também valem para <strong>classes</strong> e <strong>métodos</strong>. Assim, quem usa a sua classe descobre como ela funciona sem precisar ler o código inteiro.</p>
+<pre class="codigo" data-executar="sim"><code>class Cofrinho:
+    """Guarda moedas e informa o total economizado."""
+
+    def __init__(self):
+        """Cria um cofrinho vazio."""
+        self.total = 0.0
+
+    def depositar(self, valor):
+        """Soma o valor ao total e devolve o novo total."""
+        self.total += valor
+        return self.total
+
+print(Cofrinho.__doc__)
+print(Cofrinho.depositar.__doc__)</code></pre>
+    <p class="saida">Guarda moedas e informa o total economizado.<br>
+Soma o valor ao total e devolve o novo total.</p>
+
+    <h2>help(): o manual completo</h2>
+    <p>A função <code>help()</code> junta todas as docstrings da classe num manual organizado, com os métodos e o que cada um faz:</p>
+<pre class="codigo" data-executar="sim"><code>class Termometro:
+    """Converte temperaturas entre Celsius e Fahrenheit."""
+
+    def para_fahrenheit(self, celsius):
+        """Converte graus Celsius para Fahrenheit."""
+        return celsius * 9 / 5 + 32
+
+help(Termometro.para_fahrenheit)</code></pre>
+    <p class="saida">Help on function para_fahrenheit in module __main__:<br>
+&nbsp;<br>
+para_fahrenheit(self, celsius)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Converte graus Celsius para Fahrenheit.</p>
+    <p>Experimente também <code>help(Termometro)</code> e <code>help(str.upper)</code>: funciona com as suas classes e com as do Python.</p>
+    <div class="dica"><strong>Dica:</strong> No VS Code, passe o mouse sobre o nome de uma classe ou método para ver a docstring. Bem documentado, o seu código "conversa" com o editor.</div>
+
+    <h2>Docstrings de várias linhas em classes</h2>
+    <p>Para classes maiores, use a mesma convenção das funções: uma linha de resumo, uma linha em branco e os detalhes. Na classe, é comum listar os atributos:</p>
+<pre class="codigo" data-executar="sim"><code>class Aluno:
+    """Representa um aluno de uma turma.
+
+    Atributos:
+        nome: o nome completo do aluno.
+        notas: lista com as notas das provas (0 a 10).
+    """
+
+    def __init__(self, nome):
+        self.nome = nome
+        self.notas = []
+
+    def media(self):
+        """Devolve a média das notas, ou 0 se não houver notas."""
+        if not self.notas:
+            return 0
+        return sum(self.notas) / len(self.notas)
+
+resumo = Aluno.__doc__.splitlines()[0]
+print(resumo)</code></pre>
+    <p class="saida">Representa um aluno de uma turma.</p>
+    <p>O módulo <code>inspect</code> tem a função <code>getdoc</code>, que tira o recuo das linhas e deixa a docstring limpa para mostrar:</p>
+<pre class="codigo" data-executar="sim"><code>import inspect
+
+class Pedido:
+    """Pedido de uma lanchonete.
+
+    Guarda os itens e calcula o total com a taxa de entrega.
+    """
+
+print(inspect.getdoc(Pedido))</code></pre>
+    <p class="saida">Pedido de uma lanchonete.<br>
+&nbsp;<br>
+Guarda os itens e calcula o total com a taxa de entrega.</p>
+
+    <h2>dir(): o que tem dentro?</h2>
+    <p>A função <code>dir()</code> lista os nomes de tudo o que um objeto tem: atributos e métodos. Ela mostra também muitos nomes especiais, que começam com dois sublinhados. Para ver só os "normais", filtre:</p>
+<pre class="codigo" data-executar="sim"><code>class Celular:
+    def __init__(self):
+        self.bateria = 100
+
+    def ligar(self):
+        pass
+
+    def tirar_foto(self):
+        pass
+
+meu = Celular()
+nomes = [n for n in dir(meu) if not n.startswith("_")]
+print(nomes)</code></pre>
+    <p class="saida">['bateria', 'ligar', 'tirar_foto']</p>
+    <p><code>dir</code> é ótimo para explorar algo que você não conhece. Por exemplo, quais métodos de texto existem que começam com <code>is</code>?</p>
+<pre class="codigo" data-executar="sim"><code>print([n for n in dir(str) if n.startswith("is")])</code></pre>
+    <p class="saida">['isalnum', 'isalpha', 'isascii', 'isdecimal', 'isdigit', 'isidentifier', 'islower', 'isnumeric', 'isprintable', 'isspace', 'istitle', 'isupper']</p>
+    <div class="atencao"><strong>Atenção:</strong> A docstring precisa ser a <strong>primeira</strong> linha dentro da classe ou do método. Se vier depois de um atributo ou de outra linha, ela vira um texto solto e <code>__doc__</code> fica <code>None</code>.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>"""Representa um aluno de uma turma."""</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a classe <code>Lampada</code> com docstring na classe e nos métodos <code>acender</code> e <code>apagar</code>. Mostre a docstring da classe e a do método <code>acender</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Lampada:
+    """Uma lâmpada que pode ser acesa e apagada."""
+
+    def __init__(self):
+        self.acesa = False
+
+    def acender(self):
+        """Acende a lâmpada."""
+        self.acesa = True
+
+    def apagar(self):
+        """Apaga a lâmpada."""
+        self.acesa = False
+
+print(Lampada.__doc__)
+print(Lampada.acender.__doc__)</code></pre>
+      <p class="saida">Uma lâmpada que pode ser acesa e apagada.<br>
+Acende a lâmpada.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Use <code>dir()</code> para listar os métodos de lista (<code>list</code>) que não começam com sublinhado. Quantos são?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>metodos = [n for n in dir(list) if not n.startswith("_")]
+print(metodos)
+print(len(metodos))</code></pre>
+      <p class="saida">['append', 'clear', 'copy', 'count', 'extend', 'index', 'insert', 'pop', 'remove', 'reverse', 'sort']<br>
+11</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>help()</code> para ler a documentação do método <code>count</code> dos textos. Depois use-o para contar quantas letras "a" existem em "banana".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>help(str.count)
+print("banana".count("a"))</code></pre>
+      <p class="saida">Help on method_descriptor:<br>
+&nbsp;<br>
+count(...) unbound builtins.str method<br>
+&nbsp;&nbsp;&nbsp;&nbsp;S.count(sub[, start[, end]]) -&gt; int<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Return the number of non-overlapping occurrences of substring sub in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;string S[start:end]. &nbsp;Optional arguments start and end are<br>
+&nbsp;&nbsp;&nbsp;&nbsp;interpreted as in slice notation.<br>
+&nbsp;<br>
+3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva uma função <code>resumo(objeto)</code> que devolve só a primeira linha da docstring de qualquer objeto, ou <code>"(sem documentação)"</code> se ele não tiver docstring. Teste com uma classe documentada e outra sem docstring.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def resumo(objeto):
+    doc = objeto.__doc__
+    if not doc:
+        return "(sem documentação)"
+    return doc.strip().splitlines()[0]
+
+class Bicicleta:
+    """Bicicleta com marchas.
+
+    Tem 21 marchas e freio a disco.
+    """
+
+class Patinete:
+    pass
+
+print(resumo(Bicicleta))
+print(resumo(Patinete))</code></pre>
+      <p class="saida">Bicicleta com marchas.<br>
+(sem documentação)</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="85-metaclasses.html" rel="prev">← Aula anterior</a>
+      <a href="87-enum.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

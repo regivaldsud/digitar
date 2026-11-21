@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 142 · Grupos, grupos nomeados e retrovisores — Curso de Python · DIGITAR</title>
+<meta name="description" content="Use parênteses para separar partes do que a regex encontrou, dar nomes a essas partes e reaproveitá-las na troca.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 7 · Expressões regulares</p>
+    <h1>Aula 142 · Grupos, grupos nomeados e retrovisores</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Capturar partes do texto com grupos <code>( )</code></li>
+        <li>Dar nomes aos grupos com <code>(?P&lt;nome&gt;...)</code> e usar <code>groupdict</code></li>
+        <li>Entender o <code>findall</code> com grupos e os grupos sem captura <code>(?:...)</code></li>
+        <li>Usar retrovisores (<code>\1</code>) para achar repetições e reorganizar textos com <code>re.sub</code></li>
+      </ul>
+    </div>
+
+    <h2>Grupos: partes do que foi achado</h2>
+    <p>Parênteses numa regex criam um <strong>grupo</strong>. Depois, <code>group(1)</code> devolve o que o primeiro grupo pegou, <code>group(2)</code> o segundo, e assim por diante. <code>group(0)</code> (ou só <code>group()</code>) é o trecho inteiro.</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+data = re.search(r"(\d{2})/(\d{2})/(\d{4})", "Nasci em 07/09/2012, num feriado.")
+print(data.group())
+print(data.group(1), data.group(2), data.group(3))
+print(data.groups())
+dia, mes, ano = data.groups()
+print(f"Ano {ano}, mês {mes}, dia {dia}")</code></pre>
+    <p class="saida">07/09/2012<br>
+07 09 2012<br>
+('07', '09', '2012')<br>
+Ano 2012, mês 09, dia 07</p>
+    <p>O <code>groups()</code> devolve uma tupla, que você pode desempacotar como na aula 27.</p>
+
+    <h2>Grupos com nome</h2>
+    <p>Contar grupos fica confuso. Dê nomes a eles com <code>(?P&lt;nome&gt;...)</code> e pegue por nome. O <code>groupdict()</code> devolve tudo num dicionário:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+placa = re.search(r"(?P&lt;letras&gt;[A-Z]{3})-?(?P&lt;numeros&gt;\d[A-Z0-9]\d{2})", "Carro placa BRA2E19 estacionado")
+print(placa.group("letras"))
+print(placa.group("numeros"))
+print(placa.groupdict())</code></pre>
+    <p class="saida">BRA<br>
+2E19<br>
+{'letras': 'BRA', 'numeros': '2E19'}</p>
+
+    <h2>findall com grupos</h2>
+    <p>Atenção: quando o padrão tem grupos, o <code>findall</code> devolve <strong>só os grupos</strong>, não o trecho inteiro. Com dois ou mais grupos, cada item vira uma tupla:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+notas = "Ana: 9, Beto: 7, Carla: 10"
+print(re.findall(r"(\w+): (\d+)", notas))
+for nome, nota in re.findall(r"(\w+): (\d+)", notas):
+    print(nome, "tirou", nota)</code></pre>
+    <p class="saida">[('Ana', '9'), ('Beto', '7'), ('Carla', '10')]<br>
+Ana tirou 9<br>
+Beto tirou 7<br>
+Carla tirou 10</p>
+    <p>Se você precisa de parênteses só para agrupar (por exemplo, para repetir um pedaço) mas <strong>não</strong> quer capturar, use <code>(?:...)</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+risadas = "kkk hahaha hehe haha"
+print(re.findall(r"(ha)+", risadas))
+print(re.findall(r"(?:ha)+", risadas))</code></pre>
+    <p class="saida">['ha', 'ha']<br>
+['hahaha', 'haha']</p>
+    <div class="atencao"><strong>Atenção:</strong> O primeiro <code>findall</code> devolveu só <code>'ha'</code> e não <code>'hahaha'</code>: com um grupo de captura, ele mostra o conteúdo do grupo (a última repetição). Use <code>(?:...)</code> quando o grupo é só para organizar.</div>
+
+    <h2>Retrovisores: reaproveitando o grupo</h2>
+    <p>Dentro do próprio padrão, <code>\1</code> quer dizer "o mesmo texto que o grupo 1 pegou". Isso acha palavras repetidas sem querer, um erro comum de digitação:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "Eu fui fui na padaria e comprei pão pão de queijo."
+print(re.findall(r"\b(\w+) \1\b", texto))
+print(re.sub(r"\b(\w+) \1\b", r"\1", texto))</code></pre>
+    <p class="saida">['fui', 'pão']<br>
+Eu fui na padaria e comprei pão de queijo.</p>
+    <p>O <code>\b</code> marca a borda de uma palavra (você vai ver na aula 143).</p>
+    <p>Na troca do <code>re.sub</code>, <code>\1</code> (ou <code>\g&lt;nome&gt;</code> para grupos com nome) coloca o grupo de volta no texto. Assim dá para reorganizar uma data do formato americano para o brasileiro:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+log = "Backup em 2025-03-15 e em 2025-04-01"
+print(re.sub(r"(\d{4})-(\d{2})-(\d{2})", r"\3/\2/\1", log))
+print(re.sub(r"(?P&lt;a&gt;\d{4})-(?P&lt;m&gt;\d{2})-(?P&lt;d&gt;\d{2})", r"\g&lt;d&gt;/\g&lt;m&gt;/\g&lt;a&gt;", log))</code></pre>
+    <p class="saida">Backup em 15/03/2025 e em 01/04/2025<br>
+Backup em 15/03/2025 e em 01/04/2025</p>
+    <div class="dica"><strong>Dica:</strong> Na troca, use sempre string crua (<code>r"\1"</code>). Sem o <code>r</code>, <code>"\1"</code> vira um caractere invisível e a troca sai estranha.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>re.sub(r"(\d{4})-(\d{2})-(\d{2})", r"\3/\2/\1", data)</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Separe o DDD e o número de <code>"Fone: (81) 99876-5432"</code> usando dois grupos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+achado = re.search(r"\((\d{2})\) (\d{4,5}-\d{4})", "Fone: (81) 99876-5432")
+ddd, numero = achado.groups()
+print("DDD:", ddd)
+print("Número:", numero)</code></pre>
+      <p class="saida">DDD: 81<br>
+Número: 99876-5432</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Use grupos com nome para pegar usuário e domínio do e-mail <code>"bia.souza@escola.com.br"</code> e mostre o <code>groupdict()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+achado = re.search(r"(?P&lt;usuario&gt;[\w.]+)@(?P&lt;dominio&gt;[\w.]+)", "bia.souza@escola.com.br")
+print(achado.groupdict())</code></pre>
+      <p class="saida">{'usuario': 'bia.souza', 'dominio': 'escola.com.br'}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Transforme a lista <code>"Silva, João; Souza, Maria"</code> em <code>"João Silva; Maria Souza"</code> com <code>re.sub</code> e grupos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+nomes = "Silva, João; Souza, Maria"
+print(re.sub(r"(\w+), (\w+)", r"\2 \1", nomes))</code></pre>
+      <p class="saida">João Silva; Maria Souza</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Monte um dicionário <code>{produto: preço}</code> a partir de <code>"arroz=25, feijão=9, café=18"</code> usando <code>findall</code> com dois grupos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import re
+
+texto = "arroz=25, feijão=9, café=18"
+precos = {produto: int(valor) for produto, valor in re.findall(r"(\w+)=(\d+)", texto)}
+print(precos)</code></pre>
+      <p class="saida">{'arroz': 25, 'feijão': 9, 'café': 18}</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="141-regex-meta.html" rel="prev">← Aula anterior</a>
+      <a href="143-regex-ancoras-flags.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

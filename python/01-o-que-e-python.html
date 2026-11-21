@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 01 · O que é Python e como este curso funciona — Curso de Python · DIGITAR</title>
+<meta name="description" content="Entenda o que é programar, o que é o Python e como usar as aulas, os exemplos e os exercícios deste curso.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 1 · Primeiros passos</p>
+    <h1>Aula 01 · O que é Python e como este curso funciona</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>O que é um programa e o que significa programar</li>
+        <li>O que é o Python e onde ele é usado</li>
+        <li>Como o computador executa as instruções, uma por uma, de cima para baixo</li>
+        <li>Como funcionam as aulas: botão Executar, saída esperada, caixas de dica e exercícios</li>
+      </ul>
+    </div>
+
+    <h2>Programar é dar instruções</h2>
+    <p>Um <strong>programa</strong> é uma lista de instruções que o computador segue à risca. Pense numa receita de bolo: "misture os ovos", "adicione a farinha", "asse por 40 minutos". Se a receita estiver clara, qualquer pessoa chega ao mesmo bolo.</p>
+    <p>O computador é esse cozinheiro: muito rápido, mas sem nenhuma imaginação. Ele faz exatamente o que está escrito, nem mais, nem menos.</p>
+    <p><strong>Programar</strong> é escrever essas instruções numa linguagem que o computador entende. Você já sabe digitar; agora vai usar o teclado para conversar com a máquina.</p>
+
+    <h2>O que é o Python</h2>
+    <p>Python é uma <strong>linguagem de programação</strong> criada em 1991 pelo holandês Guido van Rossum. Ela é famosa por ser fácil de ler: muitas vezes o código parece quase uma frase em inglês. Por isso é uma das linguagens mais usadas no mundo para ensinar programação.</p>
+    <p>E não é só para iniciantes. Python é usado em:</p>
+    <ul>
+      <li>sites e aplicativos (o Instagram usa Python no servidor);</li>
+      <li>ciência de dados e inteligência artificial;</li>
+      <li>automação de tarefas chatas, como renomear centenas de arquivos;</li>
+      <li>jogos, robótica e até no controle de telescópios.</li>
+    </ul>
+
+    <h2>Seu primeiro programa</h2>
+    <p>Aperte o botão <strong>Executar</strong> no código abaixo. Ele está sendo rodado de verdade, aqui no seu navegador.</p>
+<pre class="codigo" data-executar="sim"><code>print("Olá, mundo!")</code></pre>
+    <p class="saida">Olá, mundo!</p>
+    <p><code>print</code> é uma <strong>função</strong>: um comando com nome que faz uma tarefa. A tarefa do <code>print</code> é mostrar na tela o que estiver entre os parênteses. O texto vai entre aspas para o Python saber que é um texto, e não um comando.</p>
+
+    <h2>Uma instrução por linha, de cima para baixo</h2>
+    <p>O Python lê o programa de cima para baixo e executa uma linha de cada vez. Veja:</p>
+<pre class="codigo" data-executar="sim"><code>print("Primeiro, acordo.")
+print("Depois, tomo café com pão de queijo.")
+print("Por fim, vou para a escola.")</code></pre>
+    <p class="saida">Primeiro, acordo.<br>
+Depois, tomo café com pão de queijo.<br>
+Por fim, vou para a escola.</p>
+    <p>Troque a ordem das linhas e a ordem do que aparece na tela também muda. A ordem importa!</p>
+    <p>Sem aspas, o Python entende números e faz contas:</p>
+<pre class="codigo" data-executar="sim"><code>print(2 + 3)
+print(10 * 4)
+print("2 + 3")</code></pre>
+    <p class="saida">5<br>
+40<br>
+2 + 3</p>
+    <p>Repare na diferença: <code>2 + 3</code> sem aspas é uma conta e dá <code>5</code>; <code>"2 + 3"</code> com aspas é só um texto e aparece do jeito que foi escrito.</p>
+    <div class="atencao"><strong>Atenção:</strong> O Python diferencia letras maiúsculas e minúsculas. <code>print</code> funciona, mas <code>Print</code> ou <code>PRINT</code> dão erro.</div>
+
+    <h2>Como este curso funciona</h2>
+    <p>Cada aula tem a mesma estrutura, para você saber sempre onde procurar:</p>
+    <ul>
+      <li><strong>Objetivos</strong> no topo: o que você vai aprender.</li>
+      <li><strong>Exemplos de código</strong> com o botão <strong>Executar</strong>. Você pode mudar o código antes de executar — mexer é o melhor jeito de aprender.</li>
+      <li>Logo abaixo de cada exemplo, a <strong>saída esperada</strong>: o que deve aparecer na tela.</li>
+      <li>Caixas de <strong>Dica</strong> (atalhos e boas ideias) e de <strong>Atenção</strong> (erros comuns que vale evitar).</li>
+      <li>A caixa <strong>Pratique no DIGITAR</strong>: um trecho para digitar no modo *Programar* do app, treinando os símbolos que programadores mais usam.</li>
+      <li><strong>Exercícios</strong> no final, com a resposta escondida em "Ver resposta". Tente sozinho antes de abrir!</li>
+    </ul>
+    <p>Algumas aulas são marcadas como <strong>no computador</strong>: o assunto delas (instalar programas, usar o terminal, criar janelas) não roda no navegador, e a aula mostra o passo a passo para fazer no seu computador.</p>
+    <p>Experimente agora: troque o texto do exemplo abaixo pelo seu nome e execute.</p>
+<pre class="codigo" data-executar="sim"><code>print("Estou pronto para aprender Python!")</code></pre>
+    <p class="saida">Estou pronto para aprender Python!</p>
+    <div class="dica"><strong>Dica:</strong> Errar faz parte. Programadores experientes erram o tempo todo — a diferença é que eles leem a mensagem de erro com calma e corrigem. Na aula 06 você vai aprender a fazer isso.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>print("Olá, mundo!")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Faça um programa que mostre na tela o seu nome.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Ana Beatriz")</code></pre>
+      <p class="saida">Ana Beatriz</p>
+      <p>Qualquer nome entre aspas serve. O importante é usar <code>print</code> com parênteses e aspas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça um programa que mostre três linhas: o nome da sua cidade, o seu estado e o seu país.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Recife")
+print("Pernambuco")
+print("Brasil")</code></pre>
+      <p class="saida">Recife<br>
+Pernambuco<br>
+Brasil</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use o Python para calcular quantas horas tem uma semana (7 dias de 24 horas).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(7 * 24)</code></pre>
+      <p class="saida">168</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Qual é a diferença entre <code>print(5 + 5)</code> e <code>print("5 + 5")</code>? Rode os dois e explique.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print(5 + 5)
+print("5 + 5")</code></pre>
+      <p class="saida">10<br>
+5 + 5</p>
+      <p>Sem aspas o Python faz a conta e mostra <code>10</code>. Com aspas, <code>"5 + 5"</code> é um texto e aparece exatamente como foi escrito.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva um programa com três linhas que conte, na ordem certa, como você prepara um misto-quente.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>print("Pego duas fatias de pão, queijo e presunto.")
+print("Monto o sanduíche.")
+print("Esquento na sanduicheira por 3 minutos.")</code></pre>
+      <p class="saida">Pego duas fatias de pão, queijo e presunto.<br>
+Monto o sanduíche.<br>
+Esquento na sanduicheira por 3 minutos.</p>
+      <p>Se você trocar a ordem dos <code>print</code>, a receita fica fora de ordem: o computador obedece a ordem em que as linhas foram escritas.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="index.html" rel="prev">← Início do curso</a>
+      <a href="02-instalando-python.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

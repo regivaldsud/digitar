@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 32 · Projeto: jogo de adivinhação — Curso de Python · DIGITAR</title>
+<meta name="description" content="Construa passo a passo um jogo em que o computador sorteia um número e você tenta adivinhar com dicas de maior ou menor.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 2 · Lógica de programação</p>
+    <h1>Aula 32 · Projeto: jogo de adivinhação</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Sortear números com o módulo <code>random</code></li>
+        <li>Repetir perguntas com <code>while</code> e <code>for</code> até o jogador acertar ou as tentativas acabarem</li>
+        <li>Validar o que o jogador digita antes de converter para número</li>
+        <li>Montar o jogo completo com placar e "jogar de novo"</li>
+      </ul>
+    </div>
+
+    <h2>O que vamos construir</h2>
+    <p>Neste projeto você junta quase tudo o que aprendeu no módulo: variáveis, <code>input</code>, conversão, <code>if</code>, laços, <code>break</code> e um módulo da biblioteca padrão. O jogo funciona assim:</p>
+    <ul>
+      <li>o computador pensa em um número de 1 a 100;</li>
+      <li>você chuta um número e ele responde "É maior!" ou "É menor!";</li>
+      <li>você tem 7 tentativas;</li>
+      <li>no fim, ele mostra o placar e pergunta se você quer jogar de novo.</li>
+    </ul>
+    <p>Vamos construir uma peça de cada vez e testar cada peça antes de juntar tudo. É assim que programadores de verdade trabalham: pedaços pequenos que funcionam são mais fáceis de juntar do que um programão cheio de erros.</p>
+
+    <h2>Passo 1: sortear o número secreto</h2>
+    <p>O módulo <code>random</code> tem a função <code>randint(a, b)</code>, que sorteia um número inteiro entre <code>a</code> e <code>b</code>, <strong>incluindo</strong> os dois extremos. Para usá-lo, escrevemos <code>import random</code> no começo do programa (a aula 54 explica o <code>import</code> em detalhes). Rode várias vezes e veja o número mudar:</p>
+<pre class="codigo" data-executar="sim"><code>import random
+
+secreto = random.randint(1, 100)
+print("Número sorteado:", secreto)</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+Número sorteado: 4</p>
+    <div class="dica"><strong>Dica:</strong> Enquanto você está testando, pode usar <code>random.seed(10)</code> antes do sorteio. Com a mesma "semente", o sorteio dá sempre o mesmo número, o que facilita encontrar erros. Lembre-se de tirar a linha quando o jogo estiver pronto!</div>
+
+    <h2>Passo 2: a dica de maior ou menor</h2>
+    <p>A parte mais importante do jogo é comparar o palpite com o número secreto. Vamos testar os três casos possíveis — abaixo, acima e igual — com palpites já prontos, sem precisar do teclado:</p>
+<pre class="codigo" data-executar="sim"><code>secreto = 42
+for palpite in [30, 50, 42]:
+    if palpite &lt; secreto:
+        print(palpite, "-&gt; É maior!")
+    elif palpite &gt; secreto:
+        print(palpite, "-&gt; É menor!")
+    else:
+        print(palpite, "-&gt; Acertou!")</code></pre>
+    <p class="saida">30 -&gt; É maior!<br>
+50 -&gt; É menor!<br>
+42 -&gt; Acertou!</p>
+    <p>Sempre teste todos os caminhos de um <code>if</code>: um erro escondido num <code>elif</code> só aparece quando aquele caminho é usado.</p>
+
+    <h2>Passo 3: o laço de tentativas</h2>
+    <p>Agora simulamos uma partida inteira, contando as tentativas e parando com <code>break</code> quando o palpite acerta:</p>
+<pre class="codigo" data-executar="sim"><code>secreto = 42
+palpites = [50, 25, 37, 43, 40, 42, 99]
+tentativas = 0
+for palpite in palpites:
+    tentativas += 1
+    if palpite == secreto:
+        print(f"Tentativa {tentativas}: {palpite} -&gt; Acertou!")
+        break
+    dica = "É maior!" if palpite &lt; secreto else "É menor!"
+    print(f"Tentativa {tentativas}: {palpite} -&gt; {dica}")
+print("Precisou de", tentativas, "tentativas")</code></pre>
+    <p class="saida">Tentativa 1: 50 -&gt; É menor!<br>
+Tentativa 2: 25 -&gt; É maior!<br>
+Tentativa 3: 37 -&gt; É maior!<br>
+Tentativa 4: 43 -&gt; É menor!<br>
+Tentativa 5: 40 -&gt; É maior!<br>
+Tentativa 6: 42 -&gt; Acertou!<br>
+Precisou de 6 tentativas</p>
+    <p>O <code>break</code> para o laço assim que o palpite acerta — por isso o <code>99</code> nem chega a ser usado.</p>
+
+    <h2>Passo 4: ler o palpite sem quebrar o programa</h2>
+    <p>Se o jogador digitar "dez" em vez de "10", <code>int("dez")</code> dá erro e o jogo fecha. Vamos perguntar de novo, com <code>while True</code>, até receber um número válido:</p>
+<pre class="codigo" data-executar="sim"><code>while True:
+    texto = input("Seu palpite (1 a 100): ").strip()
+    if texto.isdigit() and 1 &lt;= int(texto) &lt;= 100:
+        break
+    print("Digite um número inteiro de 1 a 100.")
+palpite = int(texto)
+print("Você chutou", palpite)</code></pre>
+    <p class="saida"><em>(exemplo digitando dez, 150, 42)</em><br>
+Seu palpite (1 a 100): dez<br>
+Digite um número inteiro de 1 a 100.<br>
+Seu palpite (1 a 100): 150<br>
+Digite um número inteiro de 1 a 100.<br>
+Seu palpite (1 a 100): 42<br>
+Você chutou 42</p>
+    <p>O <code>and</code> só testa <code>int(texto)</code> se <code>texto.isdigit()</code> for verdadeiro. Assim, o <code>int</code> nunca recebe um texto que não é número.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>"-5".isdigit()</code> dá <code>False</code>, porque o sinal de menos não é um dígito. Para este jogo isso é ótimo, já que só aceitamos de 1 a 100.</div>
+
+    <h2>Passo 5: por que 7 tentativas?</h2>
+    <p>Existe uma estratégia que <strong>sempre</strong> acerta em até 7 chutes: chutar o meio do intervalo que sobrou. Comece em 50; se for maior, chute 75; se for menor, 25; e assim por diante. Cada chute corta as possibilidades pela metade: 100, 50, 25, 13, 7, 4, 2, 1. Esse truque se chama <strong>busca binária</strong> e é usado em computação o tempo todo.</p>
+
+    <h2>Passo 6: o programa completo</h2>
+    <p>Agora juntamos as peças. O laço de fora (<code>while True</code>) controla as partidas e o placar; o de dentro (<code>for</code>) controla as tentativas de uma partida; e o <code>while True</code> mais interno valida cada palpite.</p>
+<pre class="codigo"><code>import random
+
+MAX_TENTATIVAS = 7
+partidas = 0
+vitorias = 0
+print("=== JOGO DE ADIVINHAÇÃO ===")
+while True:
+    partidas += 1
+    secreto = random.randint(1, 100)
+    print()
+    print("Pensei em um número de 1 a 100.")
+    print(f"Você tem {MAX_TENTATIVAS} tentativas. Boa sorte!")
+    acertou = False
+    for tentativa in range(1, MAX_TENTATIVAS + 1):
+        while True:
+            texto = input("Seu palpite (1 a 100): ").strip()
+            if texto.isdigit() and 1 &lt;= int(texto) &lt;= 100:
+                break
+            print("Digite um número inteiro de 1 a 100.")
+        palpite = int(texto)
+        if palpite == secreto:
+            print(f"Acertou em {tentativa} tentativa(s)!")
+            acertou = True
+            break
+        restam = MAX_TENTATIVAS - tentativa
+        dica = "É maior!" if palpite &lt; secreto else "É menor!"
+        print(f"{dica} Restam {restam}.")
+    if acertou:
+        vitorias += 1
+    else:
+        print(f"Suas tentativas acabaram. O número era {secreto}.")
+    print(f"Placar: {vitorias} vitória(s) em {partidas} partida(s).")
+    resposta = input("Jogar de novo? (s/n) ").strip().lower()
+    if resposta != "s":
+        break
+print("Valeu por jogar! Até a próxima.")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+<em>(exemplo digitando 50, 25, 37, 43, 40, 42, 41, n)</em><br>
+=== JOGO DE ADIVINHAÇÃO ===<br>
+&nbsp;<br>
+Pensei em um número de 1 a 100.<br>
+Você tem 7 tentativas. Boa sorte!<br>
+Seu palpite (1 a 100): 50<br>
+É maior! Restam 6.<br>
+Seu palpite (1 a 100): 25<br>
+É maior! Restam 5.<br>
+Seu palpite (1 a 100): 37<br>
+É maior! Restam 4.<br>
+Seu palpite (1 a 100): 43<br>
+É maior! Restam 3.<br>
+Seu palpite (1 a 100): 40<br>
+É maior! Restam 2.<br>
+Seu palpite (1 a 100): 42<br>
+É maior! Restam 1.<br>
+Seu palpite (1 a 100): 41<br>
+É maior! Restam 0.<br>
+Suas tentativas acabaram. O número era 61.<br>
+Placar: 0 vitória(s) em 1 partida(s).<br>
+Jogar de novo? (s/n) n<br>
+Valeu por jogar! Até a próxima.</p>
+    <p>A variável <code>acertou</code> começa <code>False</code> e vira <code>True</code> só quando o jogador acerta. Depois do <code>for</code>, ela diz se a partida foi vitória ou derrota. (O <code>else</code> do <code>for</code>, que você viu nas aulas 22 e 24, também resolveria isso.)</p>
+    <div class="dica"><strong>Dica:</strong> O nome <code>MAX_TENTATIVAS</code> está em maiúsculas para avisar que é uma <strong>constante</strong>: um valor que não muda durante o programa. Se quiser um jogo mais difícil, basta mudar esse número em um lugar só.</div>
+
+    <h2>Como rodar no seu computador</h2>
+    <p>Este jogo conversa com você várias vezes pelo teclado, então ele fica mais divertido no terminal:</p>
+    <ul>
+      <li>no VS Code, crie o arquivo <code>jogo.py</code> dentro da sua pasta <code>curso-python</code> e cole o código completo;</li>
+      <li>salve com <code>Ctrl+S</code>;</li>
+      <li>no terminal do VS Code, digite o comando abaixo e jogue!</li>
+    </ul>
+<pre class="codigo"><code>python jogo.py</code></pre>
+    <p>No módulo 3 você vai reorganizar este jogo em <strong>funções</strong> (aula 40), deixando cada parte com um nome e fácil de reaproveitar.</p>
+
+    <h2>Desafios extras</h2>
+    <ul>
+      <li>Mostre todos os palpites já feitos na partida, para o jogador não repetir.</li>
+      <li>Avise quando o jogador chutar um número que já tinha chutado (sem gastar tentativa).</li>
+      <li>Crie níveis: fácil (1 a 10), médio (1 a 100) e difícil (1 a 1000).</li>
+      <li>Guarde o recorde (menor número de tentativas) entre as partidas.</li>
+    </ul>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>palpite = int(input("Seu palpite: "))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Crie a escolha de nível: para cada texto da lista <code>["facil", "medio", "dificil", "outro"]</code>, defina <code>maximo</code> e <code>tentativas</code> assim: "facil" dá 10 e 4, "medio" dá 100 e 7, "dificil" dá 1000 e 10. Qualquer outro texto cai no nível médio.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>for nivel in ["facil", "medio", "dificil", "outro"]:
+    if nivel == "facil":
+        maximo, tentativas = 10, 4
+    elif nivel == "dificil":
+        maximo, tentativas = 1000, 10
+    else:
+        maximo, tentativas = 100, 7
+    print(f"{nivel}: 1 a {maximo}, {tentativas} tentativas")</code></pre>
+      <p class="saida">facil: 1 a 10, 4 tentativas<br>
+medio: 1 a 100, 7 tentativas<br>
+dificil: 1 a 1000, 10 tentativas<br>
+outro: 1 a 100, 7 tentativas</p>
+      <p>O <code>else</code> pega tanto "medio" quanto qualquer texto desconhecido, então não é preciso um <code>elif</code> só para o médio.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Faça o computador jogar sozinho com a busca binária: para <code>secreto = 42</code>, chute sempre o meio do intervalo que sobrou e mostre cada chute e quantas tentativas foram necessárias.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>secreto = 42
+minimo = 1
+maximo = 100
+tentativas = 0
+while True:
+    tentativas += 1
+    chute = (minimo + maximo) // 2
+    print("Chute:", chute)
+    if chute == secreto:
+        break
+    if chute &lt; secreto:
+        minimo = chute + 1
+    else:
+        maximo = chute - 1
+print("Acertou em", tentativas, "tentativas")</code></pre>
+      <p class="saida">Chute: 50<br>
+Chute: 25<br>
+Chute: 37<br>
+Chute: 43<br>
+Chute: 40<br>
+Chute: 41<br>
+Chute: 42<br>
+Acertou em 7 tentativas</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie a dica de temperatura: se a diferença entre o palpite e o secreto for de até 5, mostre "Está quente!"; até 15, "Está morno."; acima disso, "Está frio...". Teste com o secreto 42 e os palpites 40, 30 e 90. Dica: <code>abs()</code> dá a diferença sem sinal.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>secreto = 42
+for palpite in [40, 30, 90]:
+    diferenca = abs(palpite - secreto)
+    if diferenca &lt;= 5:
+        dica = "Está quente!"
+    elif diferenca &lt;= 15:
+        dica = "Está morno."
+    else:
+        dica = "Está frio..."
+    print(palpite, dica)</code></pre>
+      <p class="saida">40 Está quente!<br>
+30 Está morno.<br>
+90 Está frio...</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Guarde o recorde (o menor número de tentativas) de várias partidas. Comece com <code>recorde = None</code>, percorra os resultados <code>[6, 4, 5, 3]</code> e avise sempre que houver um novo recorde.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>recorde = None
+for tentativas in [6, 4, 5, 3]:
+    if recorde is None or tentativas &lt; recorde:
+        recorde = tentativas
+        print(f"Novo recorde: {tentativas} tentativa(s)!")
+print("Recorde final:", recorde)</code></pre>
+      <p class="saida">Novo recorde: 6 tentativa(s)!<br>
+Novo recorde: 4 tentativa(s)!<br>
+Novo recorde: 3 tentativa(s)!<br>
+Recorde final: 3</p>
+      <p>O <code>None</code>, que você viu na aula 21, indica que ainda não existe recorde. Por isso o primeiro resultado sempre vira recorde.</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="31-projeto-cpf.html" rel="prev">← Aula anterior</a>
+      <a href="40-funcoes.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

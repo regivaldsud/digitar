@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 205 · Formulários, ModelForm, validação e csrf_token — Curso de Python · DIGITAR</title>
+<meta name="description" content="Receba dados do usuário com segurança usando formulários do Django, ModelForm e validação.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 205 · Formulários, ModelForm, validação e csrf_token</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar um <code>ModelForm</code> a partir de um model</li>
+        <li>Tratar GET e POST na mesma view e validar com <code>is_valid()</code></li>
+        <li>Escrever validações próprias e entender o <code>csrf_token</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>ModelForm</h2>
+    <p>Um <strong>ModelForm</strong> cria o formulário a partir do model: os campos, os tipos e as validações básicas vêm prontos.</p>
+<pre class="codigo"><code># contatos/forms.py
+from django import forms
+from .models import Contato
+
+
+class ContatoForm(forms.ModelForm):
+    class Meta:
+        model = Contato
+        fields = ["nome", "telefone", "email", "favorito"]
+
+    def clean_telefone(self):
+        telefone = self.cleaned_data["telefone"]
+        digitos = "".join(c for c in telefone if c.isdigit())
+        if len(digitos) &lt; 10:
+            raise forms.ValidationError("Informe o DDD e o número.")
+        return telefone</code></pre>
+    <p>Um método <code>clean_&lt;campo&gt;</code> valida um campo: se algo estiver errado, lance <code>ValidationError</code> com a mensagem que o usuário vai ver.</p>
+
+    <h2>A view: mostrar e receber</h2>
+<pre class="codigo"><code>from django.shortcuts import redirect, render
+from .forms import ContatoForm
+
+
+def novo(request):
+    if request.method == "POST":
+        form = ContatoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("lista")
+    else:
+        form = ContatoForm()
+    return render(request, "contatos/form.html", {"form": form})</code></pre>
+<pre class="codigo"><code>&lt;form method="post"&gt;
+  {% csrf_token %}
+  {{ form.as_p }}
+  &lt;button type="submit"&gt;Salvar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    <p>Na primeira visita (GET) o formulário aparece vazio. Ao enviar (POST), se for inválido, ele volta com os dados digitados e as mensagens de erro.</p>
+    <div class="atencao"><strong>Atenção:</strong> Sem <code>{% csrf_token %}</code> dentro do <code>&lt;form method="post"&gt;</code>, o Django recusa o envio com <strong>403 Forbidden (CSRF verification failed)</strong>. Esse código protege contra sites que tentam enviar formulários em seu nome.</div>
+    <div class="dica"><strong>Dica:</strong> Depois de salvar, sempre faça <code>redirect</code>. Assim, se a pessoa apertar F5, o navegador não reenvia o formulário e não cria um contato repetido.</div>
+
+    <h2>A regra da validação, testada à parte</h2>
+    <p>A lógica do <code>clean_telefone</code> é Python puro e dá para testar aqui:</p>
+<pre class="codigo" data-executar="sim"><code>def telefone_valido(telefone):
+    digitos = "".join(c for c in telefone if c.isdigit())
+    return len(digitos) &gt;= 10
+
+
+print(telefone_valido("(81) 99999-0000"))
+print(telefone_valido("9999-0000"))</code></pre>
+    <p class="saida">True<br>
+False</p>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>if form.is_valid():</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva <code>clean_nome</code> que recusa nomes com menos de 2 letras e devolve o nome com <code>strip()</code> e só a primeira letra de cada palavra maiúscula.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django import forms
+
+
+def clean_nome(self):
+    nome = self.cleaned_data["nome"].strip()
+    if len(nome) &lt; 2:
+        raise forms.ValidationError("O nome precisa de pelo menos 2 letras.")
+    return nome.title()</code></pre>
+      <p>Esse método vai dentro da classe <code>ContatoForm</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Teste a transformação do exercício anterior com Python comum para "  maria clara ".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>nome = "  maria clara ".strip()
+print(len(nome) &gt;= 2, nome.title())</code></pre>
+      <p class="saida">True Maria Clara</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="204-querysets.html" rel="prev">← Aula anterior</a>
+      <a href="206-usuarios-login.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

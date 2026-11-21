@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 204 · QuerySets: filter, order_by, Q, paginação — Curso de Python · DIGITAR</title>
+<meta name="description" content="Busque, filtre, ordene e pagine registros do banco usando a ORM do Django.">
+<link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/estilo.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/python.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="curso">
+  <nav class="trilha" aria-label="Aulas do curso"></nav>
+  <article class="aula">
+    <p class="modulo">Módulo 11 · Django: sites e APIs</p>
+    <h1>Aula 204 · QuerySets: filter, order_by, Q, paginação</h1>
+    <div class="objetivos">
+      <h2>Nesta aula você vai aprender</h2>
+      <ul>
+        <li>Criar, buscar, alterar e apagar registros com a ORM</li>
+        <li>Filtrar com <code>filter</code>, <code>exclude</code>, buscas como <code>__icontains</code> e <code>Q</code></li>
+        <li>Ordenar e dividir resultados em páginas com <code>Paginator</code></li>
+      </ul>
+    </div>
+    <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
+
+    <h2>A ORM no shell</h2>
+    <p>A <strong>ORM</strong> traduz código Python para SQL. Teste no shell do Django:</p>
+<pre class="codigo"><code>python manage.py shell</code></pre>
+<pre class="codigo"><code>from contatos.models import Contato
+
+Contato.objects.create(nome="Ana", telefone="81 99999-0000", favorito=True)
+Contato.objects.create(nome="Bruno", telefone="11 98888-1111")
+
+todos = Contato.objects.all()
+favoritos = Contato.objects.filter(favorito=True)
+ana = Contato.objects.get(nome="Ana")
+ana.telefone = "81 97777-2222"
+ana.save()
+print(Contato.objects.count())</code></pre>
+    <p>Um <strong>QuerySet</strong> é preguiçoso: a consulta ao banco só acontece quando você usa os resultados (num <code>for</code>, num <code>print</code>, com <code>count()</code>...).</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>get</code> devolve <strong>um</strong> registro. Se não achar nenhum, dá <code>Contato.DoesNotExist</code>; se achar mais de um, <code>MultipleObjectsReturned</code>. Para "zero ou mais", use <code>filter</code>.</div>
+
+    <h2>Filtros, Q e ordenação</h2>
+<pre class="codigo"><code>from django.db.models import Q
+from contatos.models import Contato
+
+com_a = Contato.objects.filter(nome__icontains="a")       # contém "a", sem ligar p/ maiúscula
+de_sp = Contato.objects.filter(telefone__startswith="11")
+sem_email = Contato.objects.exclude(email__contains="@")
+recife_ou_fav = Contato.objects.filter(Q(telefone__startswith="81") | Q(favorito=True))
+por_nome = Contato.objects.order_by("nome")              # A a Z
+recentes = Contato.objects.order_by("-criado_em")[:5]    # 5 mais novos</code></pre>
+    <p><code>Q</code> permite combinar condições com <code>|</code> (ou), <code>&amp;</code> (e) e <code>~</code> (não).</p>
+
+    <h2>Paginação</h2>
+    <p>Com mil contatos, ninguém quer ver todos de uma vez. O <code>Paginator</code> divide a lista:</p>
+<pre class="codigo"><code>from django.core.paginator import Paginator
+from django.shortcuts import render
+from contatos.models import Contato
+
+
+def lista(request):
+    paginador = Paginator(Contato.objects.order_by("nome"), 10)
+    pagina = paginador.get_page(request.GET.get("page"))
+    return render(request, "contatos/lista.html", {"pagina": pagina})</code></pre>
+<pre class="codigo"><code>{% for contato in pagina %}&lt;p&gt;{{ contato.nome }}&lt;/p&gt;{% endfor %}
+{% if pagina.has_next %}&lt;a href="?page={{ pagina.next_page_number }}"&gt;Próxima&lt;/a&gt;{% endif %}</code></pre>
+    <div class="dica"><strong>Dica:</strong> <code>get_page</code> é tolerante: se o número da página for inválido ou grande demais, ele devolve a primeira ou a última página em vez de dar erro.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>Contato.objects.filter(nome__icontains="a").order_by("nome")</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Escreva a consulta dos contatos favoritos cujo nome começa com "B", em ordem alfabética.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from contatos.models import Contato
+
+resultado = Contato.objects.filter(favorito=True, nome__startswith="B").order_by("nome")</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> O <code>Paginator</code> funciona até com listas comuns. Teste: divida 23 nomes em páginas de 10 — quantas páginas existem e quais nomes ficam na última? (rode no <code>python manage.py shell</code>)</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django.core.paginator import Paginator
+
+nomes = [f"Aluno {i}" for i in range(1, 24)]
+paginador = Paginator(nomes, 10)
+print(paginador.num_pages)
+print(paginador.page(3).object_list)</code></pre>
+      <p class="saida">3<br>
+['Aluno 21', 'Aluno 22', 'Aluno 23']</p>
+      </details>
+    </div>
+
+    <nav class="nav-aulas">
+      <a href="203-models-admin.html" rel="prev">← Aula anterior</a>
+      <a href="205-forms.html" rel="next">Próxima aula →</a>
+    </nav>
+  </article>
+</main>
+<div id="rodape"></div>
+</body>
+</html>
