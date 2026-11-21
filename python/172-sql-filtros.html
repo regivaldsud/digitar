@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 172 · WHERE, ORDER BY, LIMIT, LIKE, funções de agregação, GROUP BY — Curso de Python · DIGITAR</title>
-<meta name="description" content="Aprenda a filtrar, ordenar, limitar e resumir dados com SQL.">
+<meta name="description" content="Aprenda a filtrar, ordenar, limitar e resumir dados com SQL: WHERE, LIKE, ORDER BY, LIMIT, COUNT, AVG, GROUP BY e HAVING.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,14 +20,16 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Filtrar linhas com WHERE e LIKE</li>
-        <li>Ordenar e limitar resultados com ORDER BY e LIMIT</li>
-        <li>Resumir dados com COUNT, SUM, AVG, MIN, MAX e GROUP BY</li>
+        <li>Filtrar linhas com <code>WHERE</code> e os operadores <code>=</code>, <code>&lt;&gt;</code>, <code>&gt;</code>, <code>BETWEEN</code>, <code>IN</code>, <code>AND</code>, <code>OR</code> e <code>IS NULL</code></li>
+        <li>Procurar partes de textos com <code>LIKE</code>, <code>%</code> e <code>_</code></li>
+        <li>Ordenar e paginar resultados com <code>ORDER BY</code>, <code>LIMIT</code> e <code>OFFSET</code></li>
+        <li>Resumir dados com <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> e <code>MAX</code></li>
+        <li>Agrupar com <code>GROUP BY</code>, filtrar grupos com <code>HAVING</code> e dar nomes com <code>AS</code></li>
       </ul>
     </div>
 
-    <h2>Os dados da turma</h2>
-    <p>Todos os exemplos usam esta tabela de notas. Copie a parte de criação quando quiser testar suas consultas:</p>
+    <h2>A tabela de exemplo</h2>
+    <p>Como cada bloco desta aula roda sozinho, todos começam criando a mesma tabela <code>notas</code> com as notas de uma turma. A parte nova de cada exemplo está <strong>depois</strong> do <code>executemany</code>:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -36,16 +38,32 @@ con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
     ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
     ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
     ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+    ("Davi", "Matemática", 4.5), ("Davi", "História", None),
 ])
 
-print(con.execute("SELECT aluno, nota FROM notas WHERE materia = 'Matemática' AND nota &gt;= 7").fetchall())
-print(con.execute("SELECT DISTINCT aluno FROM notas WHERE aluno LIKE 'C%'").fetchall())
+for aluno, materia, nota in con.execute("SELECT * FROM notas"):
+    print(f"{aluno:&lt;6} {materia:&lt;11} {nota}")
 con.close()</code></pre>
-    <p class="saida">[('Ana', 9.0), ('Carla', 10.0)]<br>
-[('Carla',)]</p>
-    <p><code>executemany</code> insere várias linhas de uma vez (os <code>?</code> são explicados na aula 175). No <code>LIKE</code>, <code>%</code> significa "qualquer coisa" e <code>_</code> significa "exatamente um caractere". <code>DISTINCT</code> tira repetições.</p>
+    <p class="saida">Ana &nbsp;&nbsp;&nbsp;Matemática &nbsp;9.0<br>
+Ana &nbsp;&nbsp;&nbsp;História &nbsp;&nbsp;&nbsp;7.5<br>
+Bruno &nbsp;Matemática &nbsp;6.0<br>
+Bruno &nbsp;História &nbsp;&nbsp;&nbsp;7.0<br>
+Carla &nbsp;Matemática &nbsp;10.0<br>
+Carla &nbsp;História &nbsp;&nbsp;&nbsp;9.5<br>
+Davi &nbsp;&nbsp;Matemática &nbsp;4.5<br>
+Davi &nbsp;&nbsp;História &nbsp;&nbsp;&nbsp;None</p>
+    <p>O Davi ainda não fez a prova de História: a nota dele está <code>NULL</code> (no Python, <code>None</code>).</p>
+    <div class="dica"><strong>Dica:</strong> Filtrar no banco é muito mais rápido do que trazer tudo para o Python e filtrar com <code>if</code>. Com milhões de linhas, a diferença é enorme: só as linhas que interessam viajam até o seu programa.</div>
 
-    <h2>Ordenar e limitar</h2>
+    <h2>WHERE: escolhendo as linhas</h2>
+    <p>O <code>WHERE</code> funciona como um <code>if</code> para cada linha: só entram no resultado as que tornam a condição verdadeira. Os operadores são parecidos com os do Python:</p>
+    <ul>
+      <li><code>=</code> igual (um só <code>=</code>, não <code>==</code>) e <code>&lt;&gt;</code> diferente (também vale <code>!=</code>);</li>
+      <li><code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>;</li>
+      <li><code>BETWEEN a AND b</code> — entre <code>a</code> e <code>b</code>, incluindo os dois;</li>
+      <li><code>IN (x, y, z)</code> — igual a algum da lista;</li>
+      <li><code>AND</code>, <code>OR</code> e <code>NOT</code> para combinar condições.</li>
+    </ul>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -54,17 +72,60 @@ con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
     ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
     ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
     ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+    ("Davi", "Matemática", 4.5), ("Davi", "História", None),
 ])
-for linha in con.execute("SELECT aluno, materia, nota FROM notas ORDER BY nota DESC LIMIT 3"):
-    print(linha)
-con.close()</code></pre>
-    <p class="saida">('Carla', 'Matemática', 10.0)<br>
-('Carla', 'História', 9.5)<br>
-('Ana', 'Matemática', 9.0)</p>
-    <p><code>ORDER BY nota DESC</code> ordena da maior para a menor (<code>ASC</code>, o padrão, é da menor para a maior). <code>LIMIT 3</code> pega só as três primeiras: o "pódio".</p>
 
-    <h2>Resumindo com agregação</h2>
-    <p>As <strong>funções de agregação</strong> transformam muitas linhas em um número. Com <code>GROUP BY</code>, o resumo é feito por grupo:</p>
+def mostrar(titulo, sql):
+    print(titulo, con.execute(sql).fetchall())
+
+mostrar("Mat. &gt;= 7:  ", "SELECT aluno FROM notas WHERE materia = 'Matemática' AND nota &gt;= 7")
+mostrar("Entre 6 e 8:", "SELECT aluno, nota FROM notas WHERE nota BETWEEN 6 AND 8")
+mostrar("Ana ou Davi:", "SELECT materia, nota FROM notas WHERE aluno IN ('Ana', 'Davi')")
+mostrar("Não é Mat.: ", "SELECT aluno FROM notas WHERE materia &lt;&gt; 'Matemática' AND nota &gt; 9")
+mostrar("Sem nota:   ", "SELECT aluno, materia FROM notas WHERE nota IS NULL")
+con.close()</code></pre>
+    <p class="saida">Mat. &gt;= 7: &nbsp;&nbsp;[('Ana',), ('Carla',)]<br>
+Entre 6 e 8: [('Ana', 7.5), ('Bruno', 6.0), ('Bruno', 7.0)]<br>
+Ana ou Davi: [('Matemática', 9.0), ('História', 7.5), ('Matemática', 4.5), ('História', None)]<br>
+Não é Mat.: &nbsp;[('Carla',)]<br>
+Sem nota: &nbsp;&nbsp;&nbsp;[('Davi', 'História')]</p>
+    <p>Para achar valores vazios, use <code>IS NULL</code> (e <code>IS NOT NULL</code>). Repare também que, na busca "entre 6 e 8", a nota <code>NULL</code> do Davi não apareceu: comparações com <code>NULL</code> nunca são verdadeiras.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>WHERE nota = NULL</code> <strong>não funciona</strong>: não dá erro, mas nunca encontra nada, porque <code>NULL</code> quer dizer "valor desconhecido" e não é igual a nada — nem a outro <code>NULL</code>. O certo é <code>WHERE nota IS NULL</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Quando misturar <code>AND</code> e <code>OR</code>, use parênteses. <code>WHERE materia = 'História' AND nota &lt; 7 OR nota IS NULL</code> é lido como <code>(... AND ...) OR ...</code>, o que talvez não seja o que você queria.</div>
+
+    <h2>LIKE: procurando pedaços de texto</h2>
+    <p>Para buscar "nomes que começam com C" ou "e-mails do gmail", use <code>LIKE</code> com dois coringas:</p>
+    <ul>
+      <li><code>%</code> — qualquer quantidade de caracteres (inclusive nenhum);</li>
+      <li><code>_</code> — exatamente um caractere.</li>
+    </ul>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (nome TEXT, email TEXT)")
+con.executemany("INSERT INTO alunos VALUES (?, ?)", [
+    ("Carla", "carla@gmail.com"), ("Caio", "caio@escola.edu.br"),
+    ("Ana", "ana@gmail.com"), ("Luana", "lu@yahoo.com"), ("Rui", "rui@escola.edu.br"),
+])
+
+def mostrar(titulo, sql):
+    print(titulo, [linha[0] for linha in con.execute(sql)])
+
+mostrar("Começa com C:  ", "SELECT nome FROM alunos WHERE nome LIKE 'C%'")
+mostrar("Termina com a: ", "SELECT nome FROM alunos WHERE nome LIKE '%a'")
+mostrar("Tem 'ua':      ", "SELECT nome FROM alunos WHERE nome LIKE '%ua%'")
+mostrar("Três letras:   ", "SELECT nome FROM alunos WHERE nome LIKE '___'")
+mostrar("Usa gmail:     ", "SELECT nome FROM alunos WHERE email LIKE '%@gmail.com'")
+con.close()</code></pre>
+    <p class="saida">Começa com C: &nbsp;&nbsp;['Carla', 'Caio']<br>
+Termina com a: &nbsp;['Carla', 'Ana', 'Luana']<br>
+Tem 'ua': &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;['Luana']<br>
+Três letras: &nbsp;&nbsp;&nbsp;['Ana', 'Rui']<br>
+Usa gmail: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;['Carla', 'Ana']</p>
+    <p>No SQLite, o <code>LIKE</code> não diferencia maiúsculas de minúsculas para letras sem acento: <code>'c%'</code> também encontra "Carla".</p>
+
+    <h2>ORDER BY, LIMIT e OFFSET</h2>
+    <p>Sem <code>ORDER BY</code>, o banco devolve as linhas na ordem que for mais cômoda para ele. Para ordenar, diga a coluna e o sentido: <code>ASC</code> (crescente, o padrão) ou <code>DESC</code> (decrescente). <code>LIMIT n</code> pega só as <code>n</code> primeiras linhas e <code>OFFSET k</code> pula as <code>k</code> primeiras — juntos, eles fazem a <strong>paginação</strong> ("página 2 de resultados").</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -73,18 +134,109 @@ con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
     ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
     ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
     ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+    ("Davi", "Matemática", 4.5), ("Davi", "História", None),
 ])
-print(con.execute("SELECT COUNT(*), MIN(nota), MAX(nota) FROM notas").fetchone())
-for aluno, media in con.execute(
-        "SELECT aluno, AVG(nota) FROM notas GROUP BY aluno ORDER BY aluno"):
-    print(f"{aluno}: {media:.2f}")
+
+print("Pódio:")
+sql = "SELECT aluno, materia, nota FROM notas WHERE nota IS NOT NULL ORDER BY nota DESC LIMIT 3"
+for posicao, (aluno, materia, nota) in enumerate(con.execute(sql), start=1):
+    print(f"  {posicao}º {aluno} ({materia}): {nota}")
+
+print("Por matéria e depois por nome:")
+for linha in con.execute("SELECT materia, aluno FROM notas ORDER BY materia, aluno"):
+    print(" ", linha)
+
+print("Página 2 (2 por página):")
+sql = "SELECT aluno, nota FROM notas ORDER BY aluno, materia LIMIT 2 OFFSET 2"
+print(" ", con.execute(sql).fetchall())
 con.close()</code></pre>
-    <p class="saida">(6, 6.0, 10.0)<br>
-Ana: 8.25<br>
-Bruno: 6.50<br>
-Carla: 9.75</p>
-    <div class="dica"><strong>Dica:</strong> Para filtrar <strong>depois</strong> de agrupar, use <code>HAVING</code> em vez de <code>WHERE</code>: <code>GROUP BY aluno HAVING AVG(nota) &gt;= 8</code>.</div>
-    <div class="atencao"><strong>Atenção:</strong> Sem <code>ORDER BY</code>, o banco pode devolver as linhas em qualquer ordem. Se a ordem importa, peça explicitamente.</div>
+    <p class="saida">Pódio:<br>
+&nbsp;&nbsp;1º Carla (Matemática): 10.0<br>
+&nbsp;&nbsp;2º Carla (História): 9.5<br>
+&nbsp;&nbsp;3º Ana (Matemática): 9.0<br>
+Por matéria e depois por nome:<br>
+&nbsp;&nbsp;('História', 'Ana')<br>
+&nbsp;&nbsp;('História', 'Bruno')<br>
+&nbsp;&nbsp;('História', 'Carla')<br>
+&nbsp;&nbsp;('História', 'Davi')<br>
+&nbsp;&nbsp;('Matemática', 'Ana')<br>
+&nbsp;&nbsp;('Matemática', 'Bruno')<br>
+&nbsp;&nbsp;('Matemática', 'Carla')<br>
+&nbsp;&nbsp;('Matemática', 'Davi')<br>
+Página 2 (2 por página):<br>
+&nbsp;&nbsp;[('Bruno', 7.0), ('Bruno', 6.0)]</p>
+    <p><code>ORDER BY materia, aluno</code> ordena primeiro pela matéria e, em caso de empate, pelo nome. A página <code>p</code> (começando em 1), com <code>n</code> itens por página, é <code>LIMIT n OFFSET (p - 1) * n</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> A ordem das partes do comando é fixa: <code>SELECT ... FROM ... WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT ...</code>. Escrever o <code>ORDER BY</code> antes do <code>WHERE</code>, por exemplo, dá <code>syntax error</code>.</div>
+
+    <h2>Resumindo: funções de agregação</h2>
+    <p>As <strong>funções de agregação</strong> transformam muitas linhas em um único valor:</p>
+    <ul>
+      <li><code>COUNT(*)</code> conta linhas; <code>COUNT(coluna)</code> conta só os valores que não são <code>NULL</code>;</li>
+      <li><code>SUM</code> soma, <code>AVG</code> tira a média, <code>MIN</code> e <code>MAX</code> acham o menor e o maior.</li>
+    </ul>
+    <p><code>AS</code> dá um apelido para a coluna do resultado, e <code>DISTINCT</code> tira as repetições.</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+    ("Davi", "Matemática", 4.5), ("Davi", "História", None),
+])
+
+linhas, notas, media, menor, maior = con.execute(
+    "SELECT COUNT(*), COUNT(nota), AVG(nota), MIN(nota), MAX(nota) FROM notas").fetchone()
+print(f"{linhas} linhas, {notas} notas lançadas")
+print(f"média {media:.2f}, menor {menor}, maior {maior}")
+
+print(con.execute("SELECT DISTINCT aluno FROM notas ORDER BY aluno").fetchall())
+print(con.execute("SELECT COUNT(DISTINCT materia) AS total_materias FROM notas").fetchone())
+con.close()</code></pre>
+    <p class="saida">8 linhas, 7 notas lançadas<br>
+média 7.64, menor 4.5, maior 10.0<br>
+[('Ana',), ('Bruno',), ('Carla',), ('Davi',)]<br>
+(2,)</p>
+    <p>O <code>AVG</code> ignora o <code>NULL</code> do Davi: a média é das 7 notas lançadas, não das 8 linhas.</p>
+
+    <h2>GROUP BY e HAVING</h2>
+    <p>Com <code>GROUP BY</code>, a agregação é feita <strong>por grupo</strong>: uma média para cada aluno, uma contagem para cada matéria. Para filtrar os grupos depois de calculados, use <code>HAVING</code> (o <code>WHERE</code> filtra as linhas <strong>antes</strong> de agrupar).</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Ana", "História", 7.5),
+    ("Bruno", "Matemática", 6.0), ("Bruno", "História", 7.0),
+    ("Carla", "Matemática", 10.0), ("Carla", "História", 9.5),
+    ("Davi", "Matemática", 4.5), ("Davi", "História", None),
+])
+
+print("Média por aluno:")
+sql = "SELECT aluno, AVG(nota) AS media FROM notas GROUP BY aluno ORDER BY media DESC"
+for aluno, media in con.execute(sql):
+    print(f"  {aluno:&lt;6} {media:.2f}")
+
+print("Só quem tem média 8 ou mais:")
+sql = """
+    SELECT aluno, ROUND(AVG(nota), 1) AS media
+    FROM notas
+    GROUP BY aluno
+    HAVING media &gt;= 8
+    ORDER BY aluno
+"""
+print(" ", con.execute(sql).fetchall())
+con.close()</code></pre>
+    <p class="saida">Média por aluno:<br>
+&nbsp;&nbsp;Carla &nbsp;9.75<br>
+&nbsp;&nbsp;Ana &nbsp;&nbsp;&nbsp;8.25<br>
+&nbsp;&nbsp;Bruno &nbsp;6.50<br>
+&nbsp;&nbsp;Davi &nbsp;&nbsp;4.50<br>
+Só quem tem média 8 ou mais:<br>
+&nbsp;&nbsp;[('Ana', 8.3), ('Carla', 9.8)]</p>
+    <p><code>ROUND(valor, 1)</code> arredonda para uma casa decimal, como o <code>round</code> do Python. Pense no <code>GROUP BY</code> como separar as linhas em pilhas (uma pilha por aluno) e calcular a função em cada pilha.</p>
+    <div class="dica"><strong>Dica:</strong> Toda coluna do <code>SELECT</code> que não está dentro de uma função de agregação deveria estar no <code>GROUP BY</code>. O SQLite deixa passar, mas outros bancos dão erro, e o resultado pode não ser o que você imagina.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -143,6 +295,78 @@ con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
 print(con.execute("SELECT aluno FROM notas WHERE aluno LIKE '___' ORDER BY aluno").fetchall())
 con.close()</code></pre>
       <p class="saida">[('Ana',), ('Rui',)]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Numa tabela <code>vendas</code> (produto, quantidade, preco), mostre o total vendido em reais de cada produto (quantidade vezes preço, somado), do maior para o menor.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE vendas (produto TEXT, quantidade INTEGER, preco REAL)")
+con.executemany("INSERT INTO vendas VALUES (?, ?, ?)", [
+    ("Pastel", 3, 8.0), ("Caldo de cana", 2, 6.5), ("Pastel", 5, 8.0),
+    ("Coxinha", 4, 7.0), ("Caldo de cana", 6, 6.5),
+])
+sql = """
+    SELECT produto, SUM(quantidade * preco) AS total
+    FROM vendas
+    GROUP BY produto
+    ORDER BY total DESC
+"""
+for produto, total in con.execute(sql):
+    print(f"{produto:&lt;14} R$ {total:6.2f}")
+con.close()</code></pre>
+      <p class="saida">Pastel &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ &nbsp;64.00<br>
+Caldo de cana &nbsp;R$ &nbsp;52.00<br>
+Coxinha &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ &nbsp;28.00</p>
+      <p>Dentro do <code>SUM</code> pode ir uma conta: ela é feita linha a linha e depois somada.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Uma loja mostra 3 produtos por página, em ordem alfabética. Escreva uma função <code>pagina(con, numero)</code> que devolva os nomes da página pedida e mostre as páginas 1, 2 e 3.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE produtos (nome TEXT)")
+nomes = ["Lápis", "Caneta", "Borracha", "Régua", "Cola", "Tesoura", "Estojo"]
+con.executemany("INSERT INTO produtos VALUES (?)", [(n,) for n in nomes])
+
+def pagina(con, numero, por_pagina=3):
+    pulo = (numero - 1) * por_pagina
+    sql = "SELECT nome FROM produtos ORDER BY nome LIMIT ? OFFSET ?"
+    return [nome for (nome,) in con.execute(sql, (por_pagina, pulo))]
+
+for n in [1, 2, 3]:
+    print("Página", n, pagina(con, n))
+con.close()</code></pre>
+      <p class="saida">Página 1 ['Borracha', 'Caneta', 'Cola']<br>
+Página 2 ['Estojo', 'Lápis', 'Régua']<br>
+Página 3 ['Tesoura']</p>
+      <p>O <code>?</code> também funciona no <code>LIMIT</code> e no <code>OFFSET</code>. A última página veio com um item só, porque são 7 produtos.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Na tabela <code>notas</code> com a nota de História do Davi em <code>NULL</code>, conte quantas provas estão sem nota e liste quem está sem nota.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, materia TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?, ?)", [
+    ("Ana", "Matemática", 9.0), ("Davi", "Matemática", 4.5),
+    ("Davi", "História", None), ("Bruno", "História", None),
+])
+faltando = con.execute("SELECT COUNT(*) FROM notas WHERE nota IS NULL").fetchone()[0]
+print(faltando, "provas sem nota")
+for aluno, materia in con.execute("SELECT aluno, materia FROM notas WHERE nota IS NULL ORDER BY aluno"):
+    print("-", aluno, "em", materia)
+con.close()</code></pre>
+      <p class="saida">2 provas sem nota<br>
+- Bruno em História<br>
+- Davi em História</p>
+      <p>Com <code>WHERE nota = NULL</code> a contagem daria 0 — por isso se usa <code>IS NULL</code>.</p>
       </details>
     </div>
 

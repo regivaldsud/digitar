@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 118 · Planilhas do Excel com openpyxl — Curso de Python · DIGITAR</title>
-<meta name="description" content="Crie, leia e altere planilhas .xlsx do Excel pelo Python com a biblioteca openpyxl.">
+<meta name="description" content="Crie, leia e altere planilhas .xlsx do Excel pelo Python com a biblioteca openpyxl: células, fórmulas, estilos e várias abas.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,20 +20,45 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Criar uma planilha <code>.xlsx</code> com <code>openpyxl</code></li>
-        <li>Escrever valores e fórmulas nas células</li>
-        <li>Ler uma planilha existente linha por linha</li>
+        <li>Entender a diferença entre um CSV e uma planilha <code>.xlsx</code></li>
+        <li>Criar uma planilha com <code>Workbook</code>, escrever linhas com <code>append</code> e células pelo endereço</li>
+        <li>Usar fórmulas, negrito, cores e largura de coluna</li>
+        <li>Trabalhar com várias abas</li>
+        <li>Ler e alterar uma planilha existente com <code>load_workbook</code> e <code>iter_rows</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>CSV ou Excel?</h2>
-    <p>Um CSV (aula 106) é só texto: não tem cores, fórmulas nem várias abas. Quando você precisa de uma planilha de verdade do Excel (<code>.xlsx</code>), use a biblioteca <code>openpyxl</code>:</p>
-<pre class="codigo"><code>pip install openpyxl</code></pre>
+    <p>Um CSV (aula 106) é só texto: cada linha é uma linha da tabela e as colunas são separadas por vírgula ou ponto e vírgula. Ele não tem cores, fórmulas, negrito nem várias abas — mas qualquer programa abre.</p>
+    <p>Um arquivo <code>.xlsx</code> é a planilha "de verdade" do Excel (e também abre no LibreOffice e no Google Planilhas). Quando o resultado do seu programa vai ser lido por uma pessoa que quer fórmulas, títulos destacados e abas separadas, vale gerar um <code>.xlsx</code> com a biblioteca <strong>openpyxl</strong>.</p>
+    <p>Antes de instalar qualquer coisa, veja que a ideia de "tabela = lista de linhas" é a mesma nos dois. Este exemplo monta uma tabela e gera o CSV na memória com <code>io.StringIO</code>, sem criar arquivo:</p>
+<pre class="codigo" data-executar="sim"><code>import csv
+import io
+
+tabela = [
+    ["Mês", "Recebi", "Gastei"],
+    ["Janeiro", 100, 65],
+    ["Fevereiro", 100, 80],
+    ["Março", 120, 70],
+]
+
+arquivo = io.StringIO()
+csv.writer(arquivo, delimiter=";", lineterminator="\n").writerows(tabela)
+print(arquivo.getvalue())</code></pre>
+    <p class="saida">Mês;Recebi;Gastei<br>
+Janeiro;100;65<br>
+Fevereiro;100;80<br>
+Março;120;70</p>
+    <p><code>io.StringIO</code> finge ser um arquivo aberto: tudo o que seria gravado no disco fica guardado num texto. O <code>delimiter=";"</code> é o padrão que o Excel brasileiro entende, e <code>lineterminator="\n"</code> termina cada linha com uma quebra simples (o padrão do <code>csv</code> é <code>\r\n</code>, que aparece como linhas em branco ao imprimir).</p>
+
+    <h2>Instalando</h2>
+    <p>O openpyxl é um pacote de terceiros. Com o ambiente virtual ativado (aula 60):</p>
+<pre class="codigo"><code>python -m pip install openpyxl</code></pre>
+    <p>Os exemplos com openpyxl devem ser salvos em arquivos <code>.py</code> e rodados no seu computador com <code>python nome.py</code>. A planilha gerada aparece na mesma pasta; abra no Excel para conferir.</p>
 
     <h2>Criando uma planilha</h2>
 <pre class="codigo"><code>from openpyxl import Workbook
-from openpyxl.styles import Font
 
 livro = Workbook()
 aba = livro.active
@@ -45,33 +70,106 @@ aba.append(["Fevereiro", 100, 80])
 aba.append(["Março", 120, 70])
 
 aba["D1"] = "Sobrou"
-for linha in range(2, 5):
-    aba[f"D{linha}"] = f"=B{linha}-C{linha}"    # fórmula do Excel
-
-for celula in aba[1]:
-    celula.font = Font(bold=True)
+print("Célula A2:", aba["A2"].value)
+print("Linhas usadas:", aba.max_row, "| Colunas usadas:", aba.max_column)
 
 livro.save("mesada.xlsx")
 print("Planilha salva!")</code></pre>
+    <p class="saida">Célula A2: Janeiro<br>
+Linhas usadas: 4 | Colunas usadas: 4<br>
+Planilha salva!</p>
     <ul>
-      <li><code>Workbook()</code> cria o arquivo; <code>active</code> é a primeira aba;</li>
-      <li><code>append</code> escreve uma linha inteira; <code>aba["D1"]</code> acessa uma célula pelo endereço;</li>
-      <li>um texto que começa com <code>=</code> vira fórmula, calculada quando o Excel abre o arquivo.</li>
+      <li><code>Workbook()</code> cria um arquivo novo; <code>livro.active</code> é a aba que já vem pronta;</li>
+      <li><code>append</code> escreve uma linha inteira embaixo da última usada;</li>
+      <li><code>aba["D1"]</code> acessa uma célula pelo endereço (coluna em letra, linha em número); <code>.value</code> é o conteúdo;</li>
+      <li><code>max_row</code> e <code>max_column</code> dizem até onde a planilha está preenchida.</li>
     </ul>
-    <div class="atencao"><strong>Atenção:</strong> Feche a planilha no Excel antes de rodar o programa. Com o arquivo aberto, o Windows bloqueia a gravação e aparece <code>PermissionError</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Feche a planilha no Excel antes de rodar o programa. Com o arquivo aberto, o Windows bloqueia a gravação e aparece <code>PermissionError: [Errno 13] Permission denied: 'mesada.xlsx'</code>.</div>
 
-    <h2>Lendo uma planilha</h2>
+    <h2>Fórmulas e estilos</h2>
+    <p>Um texto que começa com <code>=</code> vira <strong>fórmula</strong>, calculada pelo Excel quando ele abre o arquivo. Os estilos ficam em <code>openpyxl.styles</code>:</p>
 <pre class="codigo"><code>from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill
 
 livro = load_workbook("mesada.xlsx")
 aba = livro["Mesada"]
 
-total_gasto = 0
-for mes, recebi, gastei, sobrou in aba.iter_rows(min_row=2, values_only=True):
-    print(mes, "gastou", gastei)
-    total_gasto += gastei
-print("Total gasto:", total_gasto)</code></pre>
-    <p><code>values_only=True</code> entrega só os valores. Fórmulas vêm como texto (<code>"=B2-C2"</code>), a não ser que você abra com <code>load_workbook(..., data_only=True)</code> um arquivo que já foi salvo pelo Excel.</p>
+for linha in range(2, aba.max_row + 1):
+    aba[f"D{linha}"] = f"=B{linha}-C{linha}"
+
+ultima = aba.max_row + 1
+aba[f"A{ultima}"] = "Total"
+aba[f"C{ultima}"] = f"=SUM(C2:C{ultima - 1})"
+
+amarelo = PatternFill(fill_type="solid", start_color="FFE699")
+for celula in aba[1]:                 # a linha 1 inteira
+    celula.font = Font(bold=True)
+    celula.fill = amarelo
+aba.column_dimensions["A"].width = 14
+
+livro.save("mesada.xlsx")
+print(aba["D2"].value, "|", aba[f"C{ultima}"].value)</code></pre>
+    <p class="saida">=B2-C2 | =SUM(C2:C4)</p>
+    <p>Repare que o Python mostra a fórmula como texto: quem calcula é o Excel. Use os nomes das funções em <strong>inglês</strong> (<code>SUM</code>, <code>AVERAGE</code>, <code>MAX</code>), mesmo que o seu Excel mostre <code>SOMA</code> e <code>MÉDIA</code> — o arquivo guarda sempre em inglês.</p>
+    <div class="atencao"><strong>Atenção:</strong> Escrever <code>=SOMA(C2:C4)</code> pelo openpyxl gera <code>#NOME?</code> no Excel. E separe os argumentos com vírgula (<code>=ROUND(B2,1)</code>), não com ponto e vírgula.</div>
+
+    <h2>Várias abas</h2>
+    <p>Um livro pode ter várias abas (planilhas). <code>create_sheet</code> cria uma nova, e <code>livro.sheetnames</code> lista os nomes:</p>
+<pre class="codigo"><code>from openpyxl import Workbook
+
+notas = {
+    "Matemática": [("Ana", 8.5), ("Caio", 7.0)],
+    "Português": [("Ana", 9.0), ("Caio", 6.5)],
+}
+
+livro = Workbook()
+livro.remove(livro.active)           # tira a aba vazia que vem pronta
+for materia, alunos in notas.items():
+    aba = livro.create_sheet(materia)
+    aba.append(["Aluno", "Nota"])
+    for nome, nota in alunos:
+        aba.append([nome, nota])
+
+livro.save("notas.xlsx")
+print(livro.sheetnames)
+print(livro["Português"]["B3"].value)</code></pre>
+    <p class="saida">['Matemática', 'Português']<br>
+6.5</p>
+
+    <h2>Lendo uma planilha</h2>
+    <p><code>load_workbook</code> abre um arquivo que já existe. <code>iter_rows</code> percorre as linhas; com <code>values_only=True</code>, cada linha vem como uma tupla de valores:</p>
+<pre class="codigo"><code>from openpyxl import load_workbook
+
+livro = load_workbook("notas.xlsx")
+for nome_aba in livro.sheetnames:
+    aba = livro[nome_aba]
+    soma = 0
+    for aluno, nota in aba.iter_rows(min_row=2, values_only=True):
+        soma += nota
+    media = soma / (aba.max_row - 1)
+    print(f"{nome_aba}: média {media:.2f}")</code></pre>
+    <p class="saida">Matemática: média 7.75<br>
+Português: média 7.75</p>
+    <p><code>min_row=2</code> pula a linha de títulos. Fórmulas vêm como texto (<code>"=B2-C2"</code>); se o arquivo já foi aberto e salvo pelo Excel, <code>load_workbook(nome, data_only=True)</code> entrega os resultados calculados em vez das fórmulas.</p>
+    <div class="dica"><strong>Dica:</strong> Para planilhas enormes (centenas de milhares de linhas), use <code>load_workbook(nome, read_only=True)</code>: fica bem mais rápido e gasta menos memória.</div>
+
+    <h2>Lendo CSV com cabeçalho</h2>
+    <p>Quando a planilha vem como CSV, o <code>csv.DictReader</code> entrega cada linha como um dicionário, usando a primeira linha como nomes das colunas — o mesmo trabalho do <code>iter_rows</code>, sem instalar nada:</p>
+<pre class="codigo" data-executar="sim"><code>import csv
+import io
+
+texto = """Aluno;Matemática;Português
+Ana;8,5;9,0
+Caio;7,0;6,5
+"""
+
+for linha in csv.DictReader(io.StringIO(texto), delimiter=";"):
+    mat = float(linha["Matemática"].replace(",", "."))
+    por = float(linha["Português"].replace(",", "."))
+    print(f"{linha['Aluno']}: média {(mat + por) / 2:.2f}")</code></pre>
+    <p class="saida">Ana: média 8.75<br>
+Caio: média 6.75</p>
+    <p>No CSV brasileiro, os números vêm com vírgula (<code>8,5</code>), então troque por ponto antes do <code>float</code>. No <code>.xlsx</code> isso não é preciso: o openpyxl já entrega o número como <code>float</code>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -80,20 +178,64 @@ print("Total gasto:", total_gasto)</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie uma planilha <code>tabuada.xlsx</code> com a tabuada do 7 (coluna A com o multiplicador, coluna B com o resultado).</p>
+      <p><strong>1.</strong> Crie uma planilha <code>tabuada.xlsx</code> com a tabuada do 7 (coluna A com o multiplicador, coluna B com o resultado), com o título em negrito.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from openpyxl import Workbook
+from openpyxl.styles import Font
 
 livro = Workbook()
 aba = livro.active
+aba.title = "Tabuada do 7"
 aba.append(["Multiplicador", "Resultado"])
 for i in range(1, 11):
     aba.append([i, 7 * i])
-livro.save("tabuada.xlsx")</code></pre>
+for celula in aba[1]:
+    celula.font = Font(bold=True)
+livro.save("tabuada.xlsx")
+print(aba["B11"].value)</code></pre>
+      <p>A última linha mostra <code>70</code>, o resultado de 7 × 10, guardado na célula B11.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Que erro aparece se a planilha estiver aberta no Excel enquanto o programa tenta salvar, e como resolver?</p>
+      <p><strong>2.</strong> Na planilha da mesada, a linha 5 tem os valores de março nas colunas B e C. Que fórmula você escreveria na célula D5 para calcular quanto sobrou? E para a média dos gastos de C2 até C5?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">aba["D5"] = "=B5-C5"<br>
+aba["C6"] = "=AVERAGE(C2:C5)"<br>
+(Os nomes das funções vão em inglês: AVERAGE, e não MÉDIA.)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva um programa que leia <code>notas.xlsx</code> (com as abas do exemplo) e mostre, de todas as abas, o aluno com a maior nota.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from openpyxl import load_workbook
+
+livro = load_workbook("notas.xlsx")
+melhor = ("", "", 0)
+for aba in livro.worksheets:
+    for aluno, nota in aba.iter_rows(min_row=2, values_only=True):
+        if nota &gt; melhor[2]:
+            melhor = (aluno, aba.title, nota)
+print(f"Maior nota: {melhor[0]} em {melhor[1]} ({melhor[2]})")</code></pre>
+      <p>Com os dados do exemplo, aparece <code>Maior nota: Ana em Português (9)</code>. O 9.0 volta como 9 porque o Excel guarda números inteiros sem casas decimais. <code>livro.worksheets</code> é a lista das abas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Sem openpyxl: transforme a lista <code>[["Produto", "Preço"], ["Caderno", 12.5], ["Lápis", 1.75]]</code> num texto CSV com ponto e vírgula, usando <code>csv</code> e <code>io.StringIO</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import csv
+import io
+
+tabela = [["Produto", "Preço"], ["Caderno", 12.5], ["Lápis", 1.75]]
+saida = io.StringIO()
+csv.writer(saida, delimiter=";", lineterminator="\n").writerows(tabela)
+print(saida.getvalue())</code></pre>
+      <p class="saida">Produto;Preço<br>
+Caderno;12.5<br>
+Lápis;1.75</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Que erro aparece se a planilha estiver aberta no Excel enquanto o programa tenta salvar, e como resolver?</p>
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">PermissionError: o Windows bloqueia o arquivo aberto. Feche a planilha no<br>
 Excel (ou salve com outro nome) e rode o programa de novo.</p>

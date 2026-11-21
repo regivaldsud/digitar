@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 192 · Sinais e slots — Curso de Python · DIGITAR</title>
-<meta name="description" content="Entenda como os widgets avisam que algo aconteceu (sinais) e como seu código reage (slots).">
+<meta name="description" content="Entenda como os widgets avisam que algo aconteceu (sinais), como o seu código reage (slots) e crie seus próprios sinais.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,17 +20,55 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que são sinais e slots no Qt</li>
-        <li>Ligar sinais a métodos da sua classe</li>
-        <li>Usar sinais que enviam valores, como <code>textChanged</code></li>
+        <li>Entender o que são sinais e slots e por que o Qt usa essa ideia</li>
+        <li>Ligar sinais a métodos da sua classe com <code>connect</code></li>
+        <li>Usar sinais que enviam valores, como <code>textChanged</code> e <code>valueChanged</code></li>
+        <li>Passar valores extras para o slot com <code>lambda</code> sem cair na armadilha do laço</li>
+        <li>Criar o seu próprio sinal com <code>Signal</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Sinal avisa, slot responde</h2>
-    <p>No Qt, quando algo acontece (um clique, um texto digitado, uma opção marcada), o widget <strong>emite um sinal</strong>. Um <strong>slot</strong> é a função que roda em resposta. Você liga os dois com <code>sinal.connect(funcao)</code>. É como a campainha da sua casa: o botão emite o sinal, e quem atende é o slot.</p>
+    <p>No Qt, quando algo acontece (um clique, um texto digitado, uma opção marcada), o widget <strong>emite um sinal</strong>. Um <strong>slot</strong> é a função que roda em resposta. Você liga os dois com <code>sinal.connect(funcao)</code>.</p>
+    <p>É como a campainha da sua casa: o botão da campainha não sabe quem vai atender — ele só toca. Quem atende é quem estiver "ligado" a ela. Isso deixa as peças <strong>independentes</strong>: o <code>QPushButton</code> foi escrito pelos criadores do Qt anos atrás e não sabe nada do seu programa, mas consegue chamar a sua função.</p>
+    <p>Um mesmo sinal pode ter vários slots, e um mesmo slot pode responder a vários sinais.</p>
+
+    <h2>Um sistema de sinais em Python puro</h2>
+    <p>Para entender o que acontece por dentro, veja um sinal bem simples feito só com Python. Ele guarda uma lista de funções e, ao emitir, chama todas:</p>
+<pre class="codigo" data-executar="sim"><code>class Sinal:
+    def __init__(self):
+        self._slots = []
+
+    def connect(self, funcao):
+        self._slots.append(funcao)
+
+    def emit(self, *valores):
+        for funcao in self._slots:
+            funcao(*valores)
+
+
+def tocar_musica():
+    print("Tocando a campainha: dim-dom!")
+
+
+def avisar_cachorro():
+    print("O cachorro latiu: au au!")
+
+
+campainha = Sinal()
+campainha.connect(tocar_musica)
+campainha.connect(avisar_cachorro)
+
+print("Alguém apertou a campainha...")
+campainha.emit()</code></pre>
+    <p class="saida">Alguém apertou a campainha...<br>
+Tocando a campainha: dim-dom!<br>
+O cachorro latiu: au au!</p>
+    <p>O <code>clicked</code> de um <code>QPushButton</code> funciona do mesmo jeito: o Qt guarda as funções que você passou para <code>connect</code> e chama cada uma quando o clique acontece. Por isso a função vai <strong>sem parênteses</strong> (aula 190).</p>
 
     <h2>Um contador de cliques</h2>
+    <p>Numa janela escrita como classe, o slot costuma ser um <strong>método</strong>. Assim ele pode mexer nos outros widgets, que estão guardados em atributos (<code>self.rotulo</code>):</p>
 <pre class="codigo"><code>import sys
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
                                QLabel, QPushButton)
@@ -39,6 +77,7 @@ from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
 class Contador(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Contador")
         self.cliques = 0
         self.rotulo = QLabel("Nenhum clique ainda")
         botao = QPushButton("Clique")
@@ -56,34 +95,140 @@ app = QApplication(sys.argv)
 janela = Contador()
 janela.show()
 sys.exit(app.exec())</code></pre>
-    <p>O slot aqui é o método <code>self.contar</code>. Como ele é um método, pode mexer nos atributos da janela, como <code>self.rotulo</code>.</p>
+    <p class="saida">Abre a janela "Contador" com o texto "Nenhum clique ainda" e o botão "Clique".<br>
+Depois de três cliques, o texto mostra: Cliques: 3</p>
+    <div class="atencao"><strong>Atenção:</strong> Escreva <code>connect(self.contar)</code>, com <code>self.</code>. Sem ele, o Python procura uma função solta chamada <code>contar</code> e dá <code>NameError: name 'contar' is not defined</code>.</div>
 
     <h2>Sinais que carregam valores</h2>
-    <p>Alguns sinais enviam informação para o slot. O <code>textChanged</code> do <code>QLineEdit</code> manda o texto novo a cada tecla:</p>
+    <p>Alguns sinais enviam informação para o slot. O <code>textChanged</code> do <code>QLineEdit</code> manda o texto novo a cada tecla; o <code>valueChanged</code> de um <code>QSpinBox</code> ou <code>QSlider</code> manda o número novo. O slot só precisa ter um parâmetro para receber:</p>
 <pre class="codigo"><code>import sys
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
+                               QLabel, QLineEdit, QSlider)
+from PySide6.QtCore import Qt
 
 
 class Espelho(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Espelho")
         self.entrada = QLineEdit()
-        self.rotulo = QLabel()
+        self.rotulo = QLabel("0 caracteres")
+        self.barra = QSlider(Qt.Orientation.Horizontal)
+        self.barra.setRange(8, 40)
         self.entrada.textChanged.connect(self.atualizar)
+        self.barra.valueChanged.connect(self.mudar_letra)
         layout = QVBoxLayout(self)
         layout.addWidget(self.entrada)
         layout.addWidget(self.rotulo)
+        layout.addWidget(self.barra)
 
     def atualizar(self, texto):
         self.rotulo.setText(f"{len(texto)} caracteres: {texto.upper()}")
+
+    def mudar_letra(self, tamanho):
+        self.rotulo.setStyleSheet(f"font-size: {tamanho}px")
 
 
 app = QApplication(sys.argv)
 janela = Espelho()
 janela.show()
 sys.exit(app.exec())</code></pre>
-    <div class="dica"><strong>Dica:</strong> Quer passar um valor extra para o slot? Use uma <code>lambda</code> (aula 49): <code>botao.clicked.connect(lambda: self.digitar("7"))</code>.</div>
-    <div class="atencao"><strong>Atenção:</strong> Escreva <code>connect(self.contar)</code>, com <code>self.</code>. Sem ele, o Python procura uma função solta chamada <code>contar</code> e dá <code>NameError</code>.</div>
+    <p class="saida">Abre a janela "Espelho". Ao digitar "oi", o rótulo mostra: 2 caracteres: OI<br>
+Ao arrastar a barra, as letras do rótulo crescem ou diminuem (de 8 a 40 pixels).</p>
+    <p>No nosso sinal de Python puro, isso é o <code>emit</code> com valores. Experimente:</p>
+<pre class="codigo" data-executar="sim"><code>class Sinal:
+    def __init__(self):
+        self._slots = []
+
+    def connect(self, funcao):
+        self._slots.append(funcao)
+
+    def emit(self, *valores):
+        for funcao in self._slots:
+            funcao(*valores)
+
+
+def atualizar(texto):
+    print(f"{len(texto)} caracteres: {texto.upper()}")
+
+
+text_changed = Sinal()
+text_changed.connect(atualizar)
+
+digitado = ""
+for letra in "gato":
+    digitado += letra
+    text_changed.emit(digitado)   # como o QLineEdit faz a cada tecla</code></pre>
+    <p class="saida">1 caracteres: G<br>
+2 caracteres: GA<br>
+3 caracteres: GAT<br>
+4 caracteres: GATO</p>
+
+    <h2>Valor extra com lambda e a armadilha do laço</h2>
+    <p>O <code>clicked</code> não diz <strong>qual</strong> botão foi apertado. Quando vários botões chamam o mesmo método, use uma <code>lambda</code> (aula 49) para mandar um valor junto: <code>botao.clicked.connect(lambda: self.digitar("7"))</code>.</p>
+    <p>Mas cuidado ao criar botões num <code>for</code>. Uma <code>lambda</code> não guarda o <strong>valor</strong> da variável na hora em que foi criada: ela olha a variável na hora em que <strong>roda</strong>, e aí o laço já acabou. Veja em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>errado = []
+for texto in ["7", "8", "9"]:
+    errado.append(lambda: print("apertou", texto))
+
+certo = []
+for texto in ["7", "8", "9"]:
+    certo.append(lambda t=texto: print("apertou", t))
+
+print("Errado:")
+for funcao in errado:
+    funcao()
+print("Certo:")
+for funcao in certo:
+    funcao()</code></pre>
+    <p class="saida">Errado:<br>
+apertou 9<br>
+apertou 9<br>
+apertou 9<br>
+Certo:<br>
+apertou 7<br>
+apertou 8<br>
+apertou 9</p>
+    <p>O jeito certo é o <code>t=texto</code>: um valor padrão é calculado na hora em que a <code>lambda</code> é criada, então cada botão guarda o seu texto. No Qt, como o <code>clicked</code> às vezes manda um valor (<code>checked</code>), escreva assim:</p>
+<pre class="codigo"><code># dentro do __init__ de uma janela com self.grade = QGridLayout(self)
+for i, texto in enumerate(["7", "8", "9"]):
+    botao = QPushButton(texto)
+    botao.clicked.connect(lambda _=False, t=texto: self.digitar(t))
+    self.grade.addWidget(botao, 0, i)</code></pre>
+    <div class="dica"><strong>Dica:</strong> O <code>_=False</code> recebe o valor <code>checked</code> que o <code>clicked</code> envia e o ignora. Sem ele, o <code>checked</code> (False) entraria no lugar de <code>t</code> e o botão digitaria <code>False</code>.</div>
+
+    <h2>Criando o seu próprio sinal</h2>
+    <p>Suas classes também podem emitir sinais. Declare o sinal como atributo <strong>da classe</strong> com <code>Signal(tipo)</code> e emita com <code>self.nome.emit(valor)</code>. A classe precisa herdar de <code>QObject</code> (todo <code>QWidget</code> já é um <code>QObject</code>):</p>
+<pre class="codigo"><code>from PySide6.QtCore import QObject, Signal
+
+
+class Termometro(QObject):
+    temperatura_mudou = Signal(float)
+
+    def __init__(self):
+        super().__init__()
+        self._graus = 20.0
+
+    def medir(self, graus):
+        if graus != self._graus:
+            self._graus = graus
+            self.temperatura_mudou.emit(graus)
+
+
+def mostrar(graus):
+    print(f"Agora está {graus:.1f} °C")
+
+
+termometro = Termometro()
+termometro.temperatura_mudou.connect(mostrar)
+termometro.medir(20.0)   # igual à anterior: não emite
+termometro.medir(31.5)
+termometro.medir(18.0)</code></pre>
+    <p class="saida">Agora está 31.5 °C<br>
+Agora está 18.0 °C</p>
+    <p>Esse exemplo nem abre janela: sinais servem para qualquer objeto Qt avisar outros. Na aula 195 você vai usar um sinal próprio para uma tarefa em segundo plano avisar a janela que terminou.</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>Signal</code> precisa ficar no corpo da classe, fora do <code>__init__</code>. Escrito como <code>self.temperatura_mudou = Signal(float)</code> dentro do <code>__init__</code>, ele não funciona: dá <code>AttributeError</code> ao chamar <code>connect</code> ou <code>emit</code>.</div>
+    <p>Para desligar um slot, use <code>sinal.disconnect(funcao)</code>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -94,7 +239,7 @@ sys.exit(app.exec())</code></pre>
     <div class="exercicio">
       <p><strong>1.</strong> Acrescente ao Contador um botão "Zerar" que volta a contagem para zero. Mostre só o que muda.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code># dentro do __init__:
+<pre class="codigo"><code># dentro do __init__, depois dos outros widgets:
 #     zerar = QPushButton("Zerar")
 #     zerar.clicked.connect(self.zerar)
 #     layout.addWidget(zerar)
@@ -102,10 +247,11 @@ sys.exit(app.exec())</code></pre>
 def zerar(self):
     self.cliques = 0
     self.rotulo.setText("Cliques: 0")</code></pre>
+      <p>O novo método <code>zerar</code> fica dentro da classe <code>Contador</code>, ao lado de <code>contar</code>.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> A função de slot do exemplo <code>Espelho</code> recebe o texto. Teste a mesma lógica sem janela, só com Python: qual seria o rótulo para o texto "digitar"?</p>
+      <p><strong>2.</strong> Teste a lógica do slot do <code>Espelho</code> sem janela, só com Python: qual seria o rótulo para o texto "digitar"?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>def atualizar(texto):
     return f"{len(texto)} caracteres: {texto.upper()}"
@@ -113,6 +259,79 @@ def zerar(self):
 
 print(atualizar("digitar"))</code></pre>
       <p class="saida">7 caracteres: DIGITAR</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use a classe <code>Sinal</code> de Python puro para criar um sinal <code>nota_lancada</code> que envia um número. Ligue dois slots: um que mostra "Aprovado" ou "Reprovado" (média 7) e outro que guarda a nota numa lista. Emita as notas 8, 5 e 9.5.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Sinal:
+    def __init__(self):
+        self._slots = []
+
+    def connect(self, funcao):
+        self._slots.append(funcao)
+
+    def emit(self, *valores):
+        for funcao in self._slots:
+            funcao(*valores)
+
+
+notas = []
+
+
+def situacao(nota):
+    print(nota, "-&gt;", "Aprovado" if nota &gt;= 7 else "Reprovado")
+
+
+nota_lancada = Sinal()
+nota_lancada.connect(situacao)
+nota_lancada.connect(notas.append)
+
+for nota in [8, 5, 9.5]:
+    nota_lancada.emit(nota)
+print("Guardadas:", notas)</code></pre>
+      <p class="saida">8 -&gt; Aprovado<br>
+5 -&gt; Reprovado<br>
+9.5 -&gt; Aprovado<br>
+Guardadas: [8, 5, 9.5]</p>
+      <p>Repare que <code>notas.append</code> também é uma função e pode ser um slot.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Dentro de um <code>for texto in ["7", "8", "9"]:</code>, alguém criou cada botão e ligou com <code>botao.clicked.connect(lambda: self.digitar(texto))</code>. Por que todos os botões digitam "9"? Corrija.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>for texto in ["7", "8", "9"]:
+    botao = QPushButton(texto)
+    botao.clicked.connect(lambda _=False, t=texto: self.digitar(t))</code></pre>
+      <p>A <code>lambda</code> olha a variável <code>texto</code> só quando o botão é clicado, e aí o laço já terminou com <code>texto = "9"</code>. Com <code>t=texto</code>, cada <code>lambda</code> guarda o valor da sua volta do laço.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça uma janela com um <code>QSpinBox</code> (de 0 a 100) e um <code>QLabel</code>. Quando o número mudar, o rótulo deve mostrar "Volume: N%".</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSpinBox, QLabel
+
+
+class Volume(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.caixa = QSpinBox()
+        self.caixa.setRange(0, 100)
+        self.rotulo = QLabel("Volume: 0%")
+        self.caixa.valueChanged.connect(self.mostrar)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.caixa)
+        layout.addWidget(self.rotulo)
+
+    def mostrar(self, valor):
+        self.rotulo.setText(f"Volume: {valor}%")
+
+
+app = QApplication(sys.argv)
+janela = Volume()
+janela.show()
+sys.exit(app.exec())</code></pre>
       </details>
     </div>
 

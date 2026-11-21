@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 119 · Imagens com Pillow — Curso de Python · DIGITAR</title>
-<meta name="description" content="Abra, redimensione, recorte, gire e converta imagens com a biblioteca Pillow, e crie miniaturas de uma pasta inteira de fotos.">
+<meta name="description" content="Abra, redimensione, recorte, gire e converta imagens com a biblioteca Pillow, entenda pixels e cores RGB e crie miniaturas de uma pasta inteira de fotos.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,40 +20,126 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Abrir uma imagem e ver tamanho e formato</li>
-        <li>Redimensionar, recortar, girar e converter</li>
-        <li>Processar uma pasta inteira de fotos</li>
+        <li>Entender que uma imagem é uma grade de pixels e cada cor é um trio RGB</li>
+        <li>Instalar o Pillow, abrir uma imagem e ver tamanho, formato e modo</li>
+        <li>Redimensionar com <code>resize</code> e <code>thumbnail</code>, recortar com <code>crop</code> e girar com <code>rotate</code></li>
+        <li>Converter para tons de cinza e trocar de formato (PNG, JPEG)</li>
+        <li>Processar uma pasta inteira de fotos com <code>pathlib</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Instalando</h2>
-    <p>A biblioteca se chama Pillow, mas no código o nome é <code>PIL</code>:</p>
-<pre class="codigo"><code>pip install pillow</code></pre>
-    <p>Coloque uma foto qualquer na pasta do projeto, por exemplo <code>praia.jpg</code>.</p>
+    <h2>Uma imagem é uma grade de números</h2>
+    <p>Toda foto digital é uma grade de quadradinhos chamados <strong>pixels</strong>. Uma foto de 4000 × 3000 tem 12 milhões deles. Cada pixel guarda uma cor, normalmente como três números de 0 a 255: quanto de <strong>vermelho</strong>, <strong>verde</strong> e <strong>azul</strong> (em inglês, <strong>RGB</strong>).</p>
+    <ul>
+      <li><code>(255, 0, 0)</code> é vermelho puro, <code>(0, 0, 255)</code> é azul puro;</li>
+      <li><code>(0, 0, 0)</code> é preto e <code>(255, 255, 255)</code> é branco;</li>
+      <li><code>(128, 128, 128)</code> é um cinza médio: quando os três são iguais, a cor é um tom de cinza.</li>
+    </ul>
+    <p>Dá para brincar com isso só com listas, aqui no navegador. Esta "imagem" tem 3 × 2 pixels:</p>
+<pre class="codigo" data-executar="sim"><code>imagem = [
+    [(255, 0, 0), (0, 255, 0), (0, 0, 255)],
+    [(0, 0, 0), (255, 255, 255), (255, 200, 0)],
+]
 
-    <h2>Primeiros passos</h2>
+altura = len(imagem)
+largura = len(imagem[0])
+print("Tamanho:", largura, "x", altura)
+print("Pixel do canto de cima, à esquerda:", imagem[0][0])
+print("Pixel de baixo, no meio:", imagem[1][1])</code></pre>
+    <p class="saida">Tamanho: 3 x 2<br>
+Pixel do canto de cima, à esquerda: (255, 0, 0)<br>
+Pixel de baixo, no meio: (255, 255, 255)</p>
+    <p>Repare que a ordem é <code>imagem[linha][coluna]</code>, ou seja, primeiro o <strong>y</strong> (de cima para baixo) e depois o <strong>x</strong>. O Pillow, que você verá a seguir, usa <code>(x, y)</code> e diz o tamanho como <code>(largura, altura)</code>.</p>
+
+    <h2>Tons de cinza com as próprias mãos</h2>
+    <p>Para transformar uma cor em cinza, o jeito mais usado pondera cada cor pelo quanto o olho humano a percebe (o verde parece mais claro que o azul). É a mesma conta que o Pillow faz no <code>convert("L")</code>:</p>
+<pre class="codigo" data-executar="sim"><code>def para_cinza(pixel):
+    r, g, b = pixel
+    return round(0.299 * r + 0.587 * g + 0.114 * b)
+
+linha = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
+print([para_cinza(p) for p in linha])</code></pre>
+    <p class="saida">[76, 150, 29, 255]</p>
+    <p>O vermelho virou 76, o verde 150 e o azul só 29: o verde parece mais claro mesmo. Uma imagem em tons de cinza guarda <strong>um</strong> número por pixel, em vez de três.</p>
+
+    <h2>Instalando o Pillow</h2>
+    <p>A biblioteca se chama <strong>Pillow</strong>, mas no código o nome é <code>PIL</code> (o nome do projeto antigo de onde ela veio). Com o ambiente virtual ativado (aula 60):</p>
+<pre class="codigo"><code>python -m pip install pillow</code></pre>
+    <p>Coloque uma foto qualquer na pasta do projeto, por exemplo <code>praia.jpg</code>, e rode os exemplos a seguir no computador com <code>python nome.py</code>. Os tamanhos mostrados são de uma foto de exemplo; com a sua foto, os números mudam.</p>
+
+    <h2>Abrindo e conhecendo a imagem</h2>
 <pre class="codigo"><code>from PIL import Image
 
 foto = Image.open("praia.jpg")
-print(foto.size, foto.format, foto.mode)    # ex.: (4000, 3000) JPEG RGB
+print("Tamanho:", foto.size)
+print("Largura:", foto.width, "| Altura:", foto.height)
+print("Formato:", foto.format, "| Modo:", foto.mode)
+print("Pixel (0, 0):", foto.getpixel((0, 0)))</code></pre>
+    <p class="saida">Tamanho: (4000, 3000)<br>
+Largura: 4000 | Altura: 3000<br>
+Formato: JPEG | Modo: RGB<br>
+Pixel (0, 0): (135, 190, 235)</p>
+    <ul>
+      <li><code>size</code> é <code>(largura, altura)</code> em pixels;</li>
+      <li><code>format</code> é o tipo do arquivo (JPEG, PNG…); <code>mode</code> diz como as cores são guardadas: <code>"RGB"</code>, <code>"RGBA"</code> (com transparência) ou <code>"L"</code> (tons de cinza);</li>
+      <li><code>getpixel((x, y))</code> devolve a cor de um pixel — aqui, um azul de céu.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>FileNotFoundError</code>, o programa não achou a foto: ela precisa estar na pasta de onde você roda o <code>python</code>, ou use o caminho completo. E se aparecer <code>ModuleNotFoundError: No module named 'PIL'</code>, o Pillow foi instalado em outro Python: ative o venv e instale de novo.</div>
+
+    <h2>Redimensionar, recortar e girar</h2>
+<pre class="codigo"><code>from PIL import Image
+
+foto = Image.open("praia.jpg")
 
 pequena = foto.resize((800, 600))
 pequena.save("praia_800.jpg")
+print("resize:", pequena.size)
 
-recorte = foto.crop((0, 0, 1000, 1000))     # (esquerda, topo, direita, base)
+recorte = foto.crop((1000, 500, 2000, 1500))    # (esquerda, topo, direita, base)
 recorte.save("praia_recorte.png")
+print("crop:", recorte.size)
 
-foto.rotate(90, expand=True).save("praia_girada.jpg")
-foto.convert("L").save("praia_cinza.jpg")   # "L" = tons de cinza</code></pre>
+girada = foto.rotate(90, expand=True)
+girada.save("praia_girada.jpg")
+print("rotate:", girada.size)
+
+copia = foto.copy()
+copia.thumbnail((800, 800))
+print("thumbnail:", copia.size)</code></pre>
+    <p class="saida">resize: (800, 600)<br>
+crop: (1000, 1000)<br>
+rotate: (3000, 4000)<br>
+thumbnail: (800, 600)</p>
     <ul>
-      <li><code>size</code> é (largura, altura) em pixels;</li>
-      <li><code>resize</code> muda o tamanho; <code>crop</code> recorta um retângulo; <code>rotate</code> gira em graus;</li>
-      <li><code>save</code> escolhe o formato pela extensão do nome (<code>.jpg</code>, <code>.png</code>...).</li>
+      <li><code>resize</code> devolve uma imagem <strong>nova</strong> com exatamente o tamanho pedido;</li>
+      <li><code>crop</code> recorta um retângulo; a caixa é (esquerda, topo, direita, base), contada a partir do canto de cima à esquerda;</li>
+      <li><code>rotate(90, expand=True)</code> gira 90° no sentido anti-horário; o <code>expand=True</code> aumenta a tela para a imagem não ser cortada;</li>
+      <li><code>thumbnail</code> encolhe a <strong>própria</strong> imagem, mantendo a proporção, até caber no tamanho pedido (por isso usamos uma cópia).</li>
     </ul>
-    <div class="atencao"><strong>Atenção:</strong> <code>resize((800, 600))</code> pode deixar a foto achatada se a proporção for diferente. Para manter a proporção, use <code>foto.thumbnail((800, 800))</code>, que encolhe a imagem até caber nesse tamanho.</div>
+    <div class="atencao"><strong>Atenção:</strong> <code>resize((800, 800))</code> numa foto 4000 × 3000 deixa tudo achatado, porque a proporção muda. Para manter a proporção, use <code>thumbnail</code>. E lembre: <code>thumbnail</code> não devolve nada (<code>None</code>); escrever <code>nova = foto.thumbnail(...)</code> deixa <code>nova</code> vazia.</div>
+
+    <h2>Convertendo cores e formatos</h2>
+    <p><code>convert</code> muda o modo das cores e <code>save</code> escolhe o formato pela extensão do nome:</p>
+<pre class="codigo"><code>from PIL import Image
+
+foto = Image.open("praia.jpg")
+cinza = foto.convert("L")
+cinza.save("praia_cinza.jpg")
+print(cinza.mode, cinza.getpixel((0, 0)))
+
+logo = Image.open("logo.png")
+print(logo.mode)
+logo.convert("RGB").save("logo.jpg", quality=85)
+print("logo.jpg salvo")</code></pre>
+    <p class="saida">L 179<br>
+RGBA<br>
+logo.jpg salvo</p>
+    <p>O pixel <code>(135, 190, 235)</code> virou o número 179 — a mesma conta ponderada que você fez à mão lá em cima.</p>
+    <div class="dica"><strong>Dica:</strong> O JPEG não guarda transparência. Salvar uma imagem <code>"RGBA"</code> como <code>.jpg</code> dá <code>OSError: cannot write mode RGBA as JPEG</code>; converta para <code>"RGB"</code> antes. O <code>quality</code> (de 1 a 95) troca tamanho do arquivo por qualidade: 85 costuma ser um bom meio-termo.</div>
 
     <h2>Miniaturas de uma pasta inteira</h2>
+    <p>Juntando com <code>pathlib</code> (aula 103), um programa processa centenas de fotos de uma vez:</p>
 <pre class="codigo"><code>from pathlib import Path
 from PIL import Image
 
@@ -66,7 +152,11 @@ for arquivo in sorted(origem.glob("*.jpg")):
         img.thumbnail((300, 300))
         img.save(destino / arquivo.name)
         print(arquivo.name, "-&gt;", img.size)</code></pre>
-    <div class="dica"><strong>Dica:</strong> Abrir com <code>with</code> (como em arquivos, aula 61) garante que a imagem seja fechada logo, o que importa quando são centenas de fotos.</div>
+    <p class="saida">aniversario.jpg -&gt; (300, 225)<br>
+escola.jpg -&gt; (225, 300)<br>
+praia.jpg -&gt; (300, 225)</p>
+    <p>Fotos deitadas ficam com 300 de largura e fotos em pé, com 300 de altura: o <code>thumbnail</code> respeita a proporção de cada uma.</p>
+    <div class="dica"><strong>Dica:</strong> Abrir com <code>with</code> (como em arquivos, aula 61) garante que cada imagem seja fechada logo depois de usada, o que importa quando são centenas de fotos.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -88,7 +178,51 @@ with Image.open("logo.png") as img:
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">resize força exatamente 300x300 pixels, mesmo que a imagem fique achatada,<br>
 e devolve uma imagem nova. thumbnail encolhe a própria imagem mantendo a<br>
-proporção até ela caber dentro de 300x300.</p>
+proporção até ela caber dentro de 300x300, e não devolve nada.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma foto tem 1200 × 800 pixels. Escreva a caixa do <code>crop</code> que recorta o quadrado de 800 × 800 bem do meio da foto, calculando os números com Python.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>largura, altura = 1200, 800
+lado = min(largura, altura)
+esquerda = (largura - lado) // 2
+topo = (altura - lado) // 2
+caixa = (esquerda, topo, esquerda + lado, topo + lado)
+print(caixa)</code></pre>
+      <p class="saida">(200, 0, 1000, 800)</p>
+      <p>No computador, bastaria fazer <code>foto.crop(caixa)</code>. Esse cálculo funciona para qualquer foto, deitada ou em pé.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Usando a lista de pixels abaixo, crie a versão em <strong>negativo</strong> da imagem: cada cor <code>(r, g, b)</code> vira <code>(255 - r, 255 - g, 255 - b)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>imagem = [
+    [(255, 0, 0), (0, 0, 0)],
+    [(255, 255, 255), (100, 150, 200)],
+]
+
+negativo = [[(255 - r, 255 - g, 255 - b) for r, g, b in linha] for linha in imagem]
+for linha in negativo:
+    print(linha)</code></pre>
+      <p class="saida">[(0, 255, 255), (255, 255, 255)]<br>
+[(0, 0, 0), (155, 105, 55)]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva um programa que gire 180° todas as fotos <code>.png</code> da pasta <code>fotos</code> e salve com o nome terminado em <code>_girada.png</code> na mesma pasta.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from pathlib import Path
+from PIL import Image
+
+for arquivo in sorted(Path("fotos").glob("*.png")):
+    if arquivo.stem.endswith("_girada"):
+        continue
+    with Image.open(arquivo) as img:
+        nova = arquivo.with_name(arquivo.stem + "_girada.png")
+        img.rotate(180).save(nova)
+        print("salvei", nova.name)</code></pre>
+      <p>O <code>if</code> evita girar de novo uma foto que já foi girada, se você rodar o programa duas vezes.</p>
       </details>
     </div>
 

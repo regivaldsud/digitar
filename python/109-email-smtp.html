@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 109 · Enviando e-mail com smtplib — Curso de Python · DIGITAR</title>
-<meta name="description" content="Monte uma mensagem de e-mail com email.message e envie com smtplib usando uma senha de app guardada fora do código.">
+<meta name="description" content="Monte mensagens de e-mail com email.message (texto, HTML e anexos) e envie com smtplib usando uma senha de app guardada fora do código.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,16 +20,27 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Montar uma mensagem com <code>email.message.EmailMessage</code></li>
-        <li>Enviar com <code>smtplib</code> usando SSL</li>
-        <li>Usar senha de app e variáveis de ambiente em vez da senha real</li>
+        <li>Entender como um e-mail viaja: remetente, servidor SMTP e destinatário</li>
+        <li>Montar uma mensagem com <code>email.message.EmailMessage</code>: assunto, remetente, destinatários e texto</li>
+        <li>Acrescentar uma versão em HTML e anexos à mensagem</li>
+        <li>Enviar com <code>smtplib</code> usando conexão segura e uma senha de app</li>
+        <li>Guardar a senha fora do código e enviar vários e-mails sem virar spam</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Montando a mensagem</h2>
-    <p>O Python separa duas tarefas: o módulo <code>email</code> <strong>monta</strong> a mensagem e o <code>smtplib</code> <strong>envia</strong>. Montar não precisa de internet, então dá para testar primeiro:</p>
-<pre class="codigo"><code>from email.message import EmailMessage
+    <h2>Como um e-mail viaja</h2>
+    <p>Quando você aperta "Enviar", o programa de e-mail entrega a mensagem a um <strong>servidor SMTP</strong> (SMTP é o protocolo, o "idioma", usado para mandar e-mails). Esse servidor passa a mensagem adiante até o servidor do destinatário, que a guarda na caixa de entrada.</p>
+    <p>O Python separa o trabalho em duas partes:</p>
+    <ul>
+      <li>o módulo <code>email</code> <strong>monta</strong> a mensagem (assunto, remetente, texto, anexos);</li>
+      <li>o módulo <code>smtplib</code> <strong>envia</strong>, conversando com o servidor SMTP.</li>
+    </ul>
+    <p>Montar não precisa de internet nem de conta, então os exemplos com o botão Executar montam e mostram mensagens. Só o envio de verdade fica para o seu computador.</p>
+
+    <h2>Montando a primeira mensagem</h2>
+    <p>Uma <code>EmailMessage</code> funciona parecido com um dicionário: os <strong>cabeçalhos</strong> (<code>Subject</code>, <code>From</code>, <code>To</code>) são colocados com colchetes, e o texto do corpo com <code>set_content</code>.</p>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
 
 msg = EmailMessage()
 msg["Subject"] = "Lembrete: entrega do trabalho"
@@ -37,13 +48,74 @@ msg["From"] = "turma7b@exemplo.com"
 msg["To"] = "aluno@exemplo.com"
 msg.set_content("Oi! O trabalho de ciências deve ser entregue na sexta.")
 
-print(msg["Subject"])
-print(msg.get_content())</code></pre>
-    <p class="saida">Lembrete: entrega do trabalho<br>
-Oi! O trabalho de ciências deve ser entregue na sexta.</p>
+print("Assunto:", msg["Subject"])
+print("Para:", msg["To"])
+print("Texto:", msg.get_content())</code></pre>
+    <p class="saida">Assunto: Lembrete: entrega do trabalho<br>
+Para: aluno@exemplo.com<br>
+Texto: Oi! O trabalho de ciências deve ser entregue na sexta.</p>
+    <p><code>get_content()</code> devolve o texto do corpo. Repare que ele termina com uma quebra de linha: o padrão dos e-mails exige isso, e o Python acrescenta sozinho.</p>
+    <div class="atencao"><strong>Atenção:</strong> Cada cabeçalho só pode ser colocado <strong>uma vez</strong>. Se você fizer <code>msg["To"] = ...</code> de novo, dá <code>ValueError</code>. Para trocar, apague antes com <code>del msg["To"]</code>; para vários destinatários, escreva todos no mesmo texto, separados por vírgula.</div>
+
+    <h2>O que vai de verdade pela internet</h2>
+    <p>Por dentro, um e-mail é só texto: uma lista de cabeçalhos, uma linha em branco e o corpo. Além dos cabeçalhos que você colocou, o <code>set_content</code> preenche alguns sozinho. Dá para ver todos com <code>items()</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
+
+msg = EmailMessage()
+msg["Subject"] = "Reunião de pais"
+msg["From"] = "escola@exemplo.com"
+msg["To"] = "familia.silva@exemplo.com, familia.souza@exemplo.com"
+msg["Cc"] = "coordenacao@exemplo.com"
+msg.set_content("A reunião será no sábado, às 9h.")
+
+for chave, valor in msg.items():
+    print(f"{chave}: {valor}")</code></pre>
+    <p class="saida">Subject: Reunião de pais<br>
+From: escola@exemplo.com<br>
+To: familia.silva@exemplo.com, familia.souza@exemplo.com<br>
+Cc: coordenacao@exemplo.com<br>
+Content-Type: text/plain; charset="utf-8"<br>
+Content-Transfer-Encoding: 8bit<br>
+MIME-Version: 1.0</p>
+    <ul>
+      <li><code>Cc</code> (cópia) manda para mais pessoas, e todos veem quem recebeu;</li>
+      <li><code>Content-Type: text/plain; charset="utf-8"</code> avisa que o corpo é texto simples, com acentos em UTF-8;</li>
+      <li><code>Content-Transfer-Encoding</code> diz como o corpo foi codificado para viajar. Os servidores de e-mail antigos só entendem letras sem acento, então o Python transforma o texto com acentos em códigos (e o programa de quem recebe desfaz isso). Se quiser ver o texto cru, use <code>print(msg.as_string())</code>.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Para mandar para muita gente sem que um veja o e-mail do outro, use o cabeçalho <code>Bcc</code> (cópia oculta). O <code>send_message</code> do <code>smtplib</code> entrega para quem está no <code>Bcc</code> e tira esse cabeçalho antes de enviar.</div>
+
+    <h2>Versão em HTML e anexos</h2>
+    <p>Um e-mail pode ter duas versões do mesmo texto: simples e em HTML (com negrito, cores e links). O programa de e-mail do destinatário mostra a melhor que conseguir. Com <code>add_alternative</code> você acrescenta a versão HTML; com <code>add_attachment</code>, um arquivo anexo.</p>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
+
+msg = EmailMessage()
+msg["Subject"] = "Boletim do 3º bimestre"
+msg["From"] = "secretaria@exemplo.com"
+msg["To"] = "familia@exemplo.com"
+msg.set_content("Olá! Segue o boletim em anexo.")
+msg.add_alternative("&lt;p&gt;Olá! Segue o &lt;b&gt;boletim&lt;/b&gt; em anexo.&lt;/p&gt;", subtype="html")
+
+planilha = "materia;nota\nPortuguês;8.5\nMatemática;9.0\n".encode("utf-8")
+msg.add_attachment(planilha, maintype="text", subtype="csv", filename="boletim.csv")
+
+print("Tipo da mensagem:", msg.get_content_type())
+for parte in msg.walk():
+    print("-", parte.get_content_type(), parte.get_filename() or "")
+for anexo in msg.iter_attachments():
+    print("Anexo:", anexo.get_filename(), len(anexo.get_content()), "caracteres")</code></pre>
+    <p class="saida">Tipo da mensagem: multipart/mixed<br>
+- multipart/mixed <br>
+- multipart/alternative <br>
+- text/plain <br>
+- text/html <br>
+- text/csv boletim.csv<br>
+Anexo: boletim.csv 44 caracteres</p>
+    <p>A mensagem virou <code>multipart/mixed</code>: um "envelope" com várias partes dentro. <code>walk()</code> percorre todas elas, e <code>iter_attachments()</code> só os anexos.</p>
+    <p>Para anexar um arquivo do computador, leia os bytes dele: <code>Path("foto.jpg").read_bytes()</code>, com <code>maintype="image"</code> e <code>subtype="jpeg"</code>. Se não souber o tipo, o módulo <code>mimetypes</code> descobre pela extensão: <code>mimetypes.guess_type("foto.jpg")</code> devolve <code>('image/jpeg', None)</code>.</p>
 
     <h2>Enviando com smtplib</h2>
-    <p>Para enviar, o programa conversa com um <strong>servidor SMTP</strong> do seu provedor de e-mail. No Gmail, o servidor é <code>smtp.gmail.com</code>, porta 465. Este código só funciona no seu computador, com internet e uma conta configurada:</p>
+    <p>Para enviar, o programa abre uma conexão com o servidor SMTP do seu provedor, faz login e entrega a mensagem. No Gmail, o servidor é <code>smtp.gmail.com</code>, na porta 465, com conexão segura (SSL). Outros provedores usam a porta 587 com <code>starttls()</code>; a página de ajuda do provedor informa os dados.</p>
+    <p>Este código só funciona no seu computador, com internet e uma conta configurada. Salve como <code>enviar.py</code>:</p>
 <pre class="codigo"><code>import os
 import smtplib
 from email.message import EmailMessage
@@ -61,8 +133,53 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465) as servidor:
     servidor.login(remetente, senha)
     servidor.send_message(msg)
 print("Enviado!")</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> Nunca escreva sua senha dentro do código e nunca use a senha principal da conta. Provedores como o Gmail exigem uma <strong>senha de app</strong> (criada nas configurações de segurança da conta, com verificação em duas etapas ligada). Guarde-a numa variável de ambiente ou num <code>.env</code> (aula 108). Se você tem menos de 18 anos, peça ajuda a um responsável para configurar a conta.</div>
-    <div class="dica"><strong>Dica:</strong> Para treinar sem e-mail de verdade, mande as mensagens só para você mesmo. Um programa com erro num laço pode disparar dezenas de e-mails sem querer.</div>
+    <p class="saida">Enviado!</p>
+    <p>Antes de rodar, crie as variáveis de ambiente no mesmo terminal (no Windows, PowerShell; no Linux ou macOS, troque a primeira forma por <code>export EMAIL_USUARIO="voce@gmail.com"</code>):</p>
+<pre class="codigo"><code>$env:EMAIL_USUARIO = "voce@gmail.com"
+$env:EMAIL_SENHA_APP = "abcd efgh ijkl mnop"
+py enviar.py</code></pre>
+    <p>Se der certo, aparece <code>Enviado!</code> e o e-mail chega na sua caixa de entrada em alguns segundos. O <code>with</code> fecha a conexão sozinho no fim, mesmo se acontecer um erro.</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca escreva sua senha dentro do código e nunca use a senha principal da conta. Provedores como o Gmail exigem uma <strong>senha de app</strong> (criada nas configurações de segurança da conta, com a verificação em duas etapas ligada). Guarde-a numa variável de ambiente ou num <code>.env</code> (aula 108). Se você tem menos de 18 anos, peça ajuda a um responsável para configurar a conta.</div>
+    <div class="atencao"><strong>Atenção:</strong> Erros comuns: <code>SMTPAuthenticationError</code> quer dizer usuário ou senha de app errados; <code>KeyError: 'EMAIL_SENHA_APP'</code> quer dizer que a variável de ambiente não foi criada nesse terminal; <code>TimeoutError</code> ou <code>ConnectionRefusedError</code> costumam ser servidor ou porta errados, ou uma rede que bloqueia e-mail.</div>
+
+    <h2>Separando montar de enviar</h2>
+    <p>Um truque de programador: escreva uma função que <strong>monta</strong> a mensagem e outra que <strong>envia</strong>. Assim você testa a montagem sem internet e só troca o "carteiro" na hora de enviar de verdade. Aqui o carteiro é de mentira — ele só mostra o que enviaria:</p>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
+
+def montar_aviso(nome, email, nota):
+    msg = EmailMessage()
+    msg["Subject"] = f"Sua nota, {nome}"
+    msg["From"] = "professora@exemplo.com"
+    msg["To"] = email
+    situacao = "aprovado(a)" if nota &gt;= 6 else "em recuperação"
+    msg.set_content(f"Olá, {nome}! Sua nota foi {nota}. Você está {situacao}.")
+    return msg
+
+class CarteiroDeTeste:
+    def send_message(self, msg):
+        print(f"[para {msg['To']}] {msg.get_content().strip()}")
+
+turma = [("Ana", "ana@exemplo.com", 8.5), ("Caio", "caio@exemplo.com", 5.0)]
+carteiro = CarteiroDeTeste()
+for nome, email, nota in turma:
+    carteiro.send_message(montar_aviso(nome, email, nota))</code></pre>
+    <p class="saida">[para ana@exemplo.com] Olá, Ana! Sua nota foi 8.5. Você está aprovado(a).<br>
+[para caio@exemplo.com] Olá, Caio! Sua nota foi 5.0. Você está em recuperação.</p>
+    <p>No computador, o carteiro de verdade é o objeto <code>servidor</code> do <code>with smtplib.SMTP_SSL(...)</code>: ele também tem o método <code>send_message</code>. Você monta a lista de mensagens, confere com o carteiro de teste e só então envia:</p>
+<pre class="codigo"><code># continuação: montar_aviso e turma são os mesmos do exemplo acima
+import os
+import smtplib
+import time
+
+with smtplib.SMTP_SSL("smtp.gmail.com", 465) as servidor:
+    servidor.login(os.environ["EMAIL_USUARIO"], os.environ["EMAIL_SENHA_APP"])
+    for nome, email, nota in turma:
+        servidor.send_message(montar_aviso(nome, email, nota))
+        print("Enviado para", email)
+        time.sleep(2)   # uma pausa entre e-mails</code></pre>
+    <p class="saida">Enviado para ana@exemplo.com<br>
+Enviado para caio@exemplo.com</p>
+    <div class="dica"><strong>Dica:</strong> Para treinar, mande as mensagens só para você mesmo. Um programa com erro num laço pode disparar dezenas de e-mails sem querer, e os provedores bloqueiam contas que mandam muitos e-mails de uma vez. A pausa com <code>time.sleep</code> ajuda a não parecer spam.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -71,9 +188,9 @@ print("Enviado!")</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Monte (sem enviar) um e-mail com assunto <code>Notas do bimestre</code> cujo texto liste três matérias e notas, uma por linha.</p>
+      <p><strong>1.</strong> Monte (sem enviar) um e-mail com assunto <code>Notas do bimestre</code> cujo texto liste três matérias e notas, uma por linha. Mostre o texto.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>from email.message import EmailMessage
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
 
 notas = {"Português": 8.5, "Matemática": 7.0, "Ciências": 9.0}
 texto = "\n".join(f"{materia}: {nota}" for materia, nota in notas.items())
@@ -93,6 +210,79 @@ Ciências: 9.0</p>
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">Para a senha não ficar no arquivo .py. Assim você pode mostrar ou publicar<br>
 o código sem expor a senha, e cada pessoa usa a própria conta.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Monte um convite de aniversário com versão em texto e em HTML (o nome da festa em negrito) e mostre os tipos de todas as partes da mensagem.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
+
+msg = EmailMessage()
+msg["Subject"] = "Convite: aniversário da Bia"
+msg["From"] = "bia@exemplo.com"
+msg["To"] = "amigos@exemplo.com"
+msg.set_content("Venha para o aniversário da Bia, sábado às 15h!")
+msg.add_alternative("&lt;p&gt;Venha para o &lt;b&gt;aniversário da Bia&lt;/b&gt;, sábado às 15h!&lt;/p&gt;", subtype="html")
+
+for parte in msg.walk():
+    print(parte.get_content_type())</code></pre>
+      <p class="saida">multipart/alternative<br>
+text/plain<br>
+text/html</p>
+      <p>O "envelope" <code>multipart/alternative</code> quer dizer: "as partes de dentro são o mesmo conteúdo, escolha a melhor".</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Anexe à mensagem um arquivo de texto <code>lista.txt</code> com três itens de material escolar (crie os bytes com <code>.encode("utf-8")</code>) e mostre o nome e o conteúdo do anexo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
+
+msg = EmailMessage()
+msg["Subject"] = "Lista de material"
+msg.set_content("A lista está em anexo.")
+conteudo = "caderno\nlápis\nborracha\n".encode("utf-8")
+msg.add_attachment(conteudo, maintype="text", subtype="plain", filename="lista.txt")
+
+for anexo in msg.iter_attachments():
+    print(anexo.get_filename())
+    print(anexo.get_content())</code></pre>
+      <p class="saida">lista.txt<br>
+caderno<br>
+l��pis<br>
+borracha</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva a função <code>montar_boas_vindas(nome, email)</code> que devolve uma <code>EmailMessage</code> com o assunto <code>Bem-vindo(a), NOME!</code> e use-a com o carteiro de teste para "enviar" para três pessoas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from email.message import EmailMessage
+
+def montar_boas_vindas(nome, email):
+    msg = EmailMessage()
+    msg["Subject"] = f"Bem-vindo(a), {nome}!"
+    msg["From"] = "clube@exemplo.com"
+    msg["To"] = email
+    msg.set_content(f"Oi, {nome}! Que bom ter você no clube de leitura.")
+    return msg
+
+class CarteiroDeTeste:
+    def send_message(self, msg):
+        print(msg["To"], "-&gt;", msg["Subject"])
+
+carteiro = CarteiroDeTeste()
+for nome, email in [("Ana", "ana@exemplo.com"), ("Rui", "rui@exemplo.com"), ("Lia", "lia@exemplo.com")]:
+    carteiro.send_message(montar_boas_vindas(nome, email))</code></pre>
+      <p class="saida">ana@exemplo.com -&gt; Bem-vindo(a), Ana!<br>
+rui@exemplo.com -&gt; Bem-vindo(a), Rui!<br>
+lia@exemplo.com -&gt; Bem-vindo(a), Lia!</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Seu programa deu <code>smtplib.SMTPAuthenticationError</code> ao chamar <code>servidor.login</code>. Cite duas causas prováveis.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">1. A senha está errada ou é a senha normal da conta, e não uma senha de app.<br>
+2. A verificação em duas etapas não está ligada, então o provedor não deixa<br>
+&nbsp;&nbsp;&nbsp;criar ou usar senhas de app. (Também pode ser o usuário/e-mail digitado errado.)</p>
       </details>
     </div>
 

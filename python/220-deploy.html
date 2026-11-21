@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 220 · Publicando: servidor Linux, PostgreSQL, Gunicorn, Nginx e HTTPS — Curso de Python · DIGITAR</title>
-<meta name="description" content="Conheça as peças para colocar um site Django no ar num servidor Linux, com segurança e HTTPS.">
+<meta name="description" content="Coloque um site Django no ar num servidor Linux, passo a passo: settings de produção, PostgreSQL, Gunicorn com systemd, Nginx, HTTPS com Certbot e a conferência final de segurança.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,54 +20,294 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>As peças de um site publicado: Gunicorn, Nginx, PostgreSQL e HTTPS</li>
-        <li>Ajustar o <code>settings.py</code> para produção</li>
-        <li>Preparar o servidor com os comandos principais</li>
+        <li>Entender o caminho de um pedido em produção: Nginx, Gunicorn, Django e PostgreSQL</li>
+        <li>Preparar o <code>settings.py</code> para produção, lendo os segredos de variáveis de ambiente</li>
+        <li>Preparar um servidor Linux: usuário, SSH, firewall e PostgreSQL</li>
+        <li>Rodar o Gunicorn como serviço do systemd e o Nginx na frente dele</li>
+        <li>Ativar o HTTPS com Certbot e conferir a segurança com <code>check --deploy</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>O caminho de um pedido em produção</h2>
-    <p>O <code>runserver</code> é só para desenvolvimento: lento e sem segurança. Num servidor de verdade (uma máquina Linux alugada, como uma VPS), o caminho fica assim:</p>
+    <h2>Por que não publicar com o runserver</h2>
+    <p>O <code>python manage.py runserver</code> foi feito para você programar: ele atende um pedido por vez, recarrega quando o código muda e mostra páginas de erro detalhadas. Na internet, isso seria lento e perigoso. Um site publicado ("em <strong>produção</strong>") usa várias peças, cada uma boa no seu trabalho:</p>
     <p class="saida">Navegador --HTTPS--&gt; Nginx --&gt; Gunicorn --&gt; Django --&gt; PostgreSQL<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+--&gt; arquivos estáticos e de mídia</p>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+--&gt; /static/ e /media/ (entregues direto do disco)</p>
     <ul>
-      <li><strong>Nginx</strong> recebe os pedidos da internet, cuida do HTTPS e entrega CSS e imagens direto;</li>
-      <li><strong>Gunicorn</strong> roda o Django com vários processos;</li>
-      <li><strong>PostgreSQL</strong> é o banco de dados, mais robusto que o SQLite para muitos usuários.</li>
+      <li><strong>Nginx</strong> fica na porta da frente: recebe os pedidos da internet, cuida do HTTPS e entrega CSS, imagens e arquivos enviados direto do disco, sem incomodar o Python;</li>
+      <li><strong>Gunicorn</strong> roda o seu Django com vários processos ao mesmo tempo, para atender muita gente;</li>
+      <li><strong>PostgreSQL</strong> é o banco de dados, mais robusto que o SQLite quando muitas pessoas escrevem ao mesmo tempo;</li>
+      <li><strong>systemd</strong> é o "gerente" do Linux: liga o Gunicorn quando o servidor inicia e o religa se ele cair.</li>
     </ul>
+    <p>O servidor costuma ser uma <strong>VPS</strong>: um computador Linux (aqui, Ubuntu) alugado num serviço de nuvem, que você controla pelo terminal. Você também vai precisar de um <strong>domínio</strong> (como <code>meusite.com.br</code>) apontando para o endereço IP do servidor.</p>
+    <div class="dica"><strong>Dica:</strong> Para o primeiro site, uma plataforma que publica direto do GitHub faz a maior parte destes passos por você. Montar o servidor na mão, como nesta aula, é ótimo para entender o que essas plataformas fazem por baixo.</div>
 
-    <h2>O settings.py de produção</h2>
-<pre class="codigo"><code>import os
+    <h2>Passo 1: o settings.py de produção</h2>
+    <p>Em produção, três coisas mudam: <code>DEBUG</code> fica desligado, só os seus domínios são aceitos e os <strong>segredos</strong> (a <code>SECRET_KEY</code>, a senha do banco) saem do código e vêm de variáveis de ambiente (aulas 108 e 177). Assim o mesmo código roda no seu computador e no servidor, e nenhuma senha vai para o GitHub.</p>
+    <p>Primeiro, veja como ler e converter configurações do ambiente. Variáveis de ambiente são <strong>sempre texto</strong>, então <code>"False"</code> precisa virar <code>False</code> e <code>"a.com,b.com"</code> precisa virar uma lista:</p>
+<pre class="codigo" data-executar="sim"><code>import os
+
+
+def ler_bool(nome, padrao=False):
+    valor = os.environ.get(nome)
+    if valor is None:
+        return padrao
+    return valor.strip().lower() in ("1", "true", "sim", "yes")
+
+
+def ler_lista(nome):
+    valor = os.environ.get(nome, "")
+    return [item.strip() for item in valor.split(",") if item.strip()]
+
+
+# no servidor, quem define estas variáveis é o arquivo de ambiente (Passo 4)
+os.environ["DJANGO_DEBUG"] = "False"
+os.environ["DJANGO_ALLOWED_HOSTS"] = "meusite.com.br, www.meusite.com.br"
+
+print("DEBUG:", ler_bool("DJANGO_DEBUG"))
+print("ALLOWED_HOSTS:", ler_lista("DJANGO_ALLOWED_HOSTS"))
+print("Variável que não existe:", ler_bool("NAO_EXISTE"), ler_lista("NAO_EXISTE"))</code></pre>
+    <p class="saida">DEBUG: False<br>
+ALLOWED_HOSTS: ['meusite.com.br', 'www.meusite.com.br']<br>
+Variável que não existe: False []</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>bool("False")</code> dá <code>True</code>! Qualquer texto que não seja vazio é verdadeiro (aula 51). É por isso que existe a função <code>ler_bool</code>: um <code>DEBUG = bool(os.environ["DJANGO_DEBUG"])</code> deixaria o modo de depuração <strong>ligado</strong> em produção.</div>
+    <p>Agora o trecho do <code>config/settings.py</code> que muda. Troque as linhas de <code>SECRET_KEY</code>, <code>DEBUG</code>, <code>ALLOWED_HOSTS</code> e <code>DATABASES</code> geradas pelo <code>startproject</code> por estas:</p>
+<pre class="codigo"><code># config/settings.py (trecho)
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEBUG = False
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
-ALLOWED_HOSTS = ["meusite.com.br", "www.meusite.com.br"]
-CSRF_TRUSTED_ORIGINS = ["https://meusite.com.br", "https://www.meusite.com.br"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> Nunca publique com <code>DEBUG = True</code>: as páginas de erro mostram partes do seu código e das configurações para qualquer pessoa. E a <code>SECRET_KEY</code> vem de uma variável de ambiente (aula 177), nunca escrita no código que vai para o GitHub.</div>
-    <p>Antes de publicar, rode <code>python manage.py check --deploy</code>: ele lista as configurações de segurança que faltam.</p>
 
-    <h2>No servidor (Ubuntu)</h2>
-<pre class="codigo"><code>sudo apt update
-sudo apt install python3-venv postgresql nginx certbot python3-certbot-nginx
-git clone https://github.com/seu-usuario/agenda.git
-cd agenda
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS]
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME", "meusite"),
+        "USER": os.environ.get("DB_USER", "meusite"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
+    }
+}
+
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# segurança extra quando o site estiver com HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = 0 if DEBUG else 3600</code></pre>
+    <p class="saida">(sem saída: com DJANGO_DEBUG=True e um banco local, o mesmo arquivo serve no seu computador)</p>
+    <ul>
+      <li><code>os.environ["DJANGO_SECRET_KEY"]</code> (com colchetes) <strong>dá erro</strong> se a variável faltar. Isso é bom: melhor o site nem ligar do que ligar com uma chave errada.</li>
+      <li><code>STATIC_ROOT</code> é a pasta para onde o <code>collectstatic</code> copia o CSS e o JavaScript de todos os apps (inclusive os do admin), para o Nginx entregar.</li>
+      <li><code>SECURE_PROXY_SSL_HEADER</code> avisa o Django de que o Nginx, na frente, já cuidou do HTTPS.</li>
+      <li><code>SECURE_HSTS_SECONDS</code> pede ao navegador que só use HTTPS no seu site. Comece com um valor pequeno (1 hora) e aumente quando tudo estiver estável.</li>
+    </ul>
+    <p>A <code>SECRET_KEY</code> assina as sessões e os tokens CSRF: quem a conhece pode se passar por qualquer usuário. Gere uma nova, forte, com o módulo <code>secrets</code> (aula 107):</p>
+<pre class="codigo" data-executar="sim"><code>import secrets
+
+chave = secrets.token_urlsafe(50)
+print("DJANGO_SECRET_KEY=" + chave)
+print("Tamanho:", len(chave), "caracteres")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+DJANGO_SECRET_KEY=-cLJx5OypV1HdT_tXtEpDTMwux7o0pTCJXcppay-Dmo8rvi1d2Bus7PLTKd7UPRxI7o<br>
+Tamanho: 67 caracteres</p>
+    <p>Por fim, liste os pacotes do projeto. O <code>psycopg</code> é o "tradutor" entre o Django e o PostgreSQL, e o <code>gunicorn</code> é o servidor:</p>
+<pre class="codigo"><code>pip install "psycopg[binary]" gunicorn
+pip freeze &gt; requirements.txt
+git add .
+git commit -m "Configurações de produção"
+git push</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Confira que o <code>.gitignore</code> (aula 244) tem as linhas <code>.env</code>, <code>.venv/</code>, <code>db.sqlite3</code>, <code>media/</code> e <code>staticfiles/</code>. Segredos e arquivos gerados não vão para o GitHub.</div>
+
+    <h2>Passo 2: o servidor, o usuário e o firewall</h2>
+    <p>O serviço de nuvem entrega o IP do servidor e o acesso como <code>root</code>, o usuário que pode tudo. Entre pelo <strong>SSH</strong> (o terminal remoto) e crie um usuário comum para o site, que só vira administrador com <code>sudo</code> quando precisa:</p>
+<pre class="codigo"><code>ssh root@203.0.113.10
+adduser deploy
+usermod -aG sudo deploy
+exit
+ssh deploy@203.0.113.10</code></pre>
+    <p>Atualize o sistema, instale as peças e ligue o <strong>firewall</strong> <code>ufw</code>, deixando entrar só o SSH e o Nginx (portas 80 e 443):</p>
+<pre class="codigo"><code>sudo apt update &amp;&amp; sudo apt upgrade -y
+sudo apt install -y python3-venv python3-pip git postgresql nginx certbot python3-certbot-nginx
+sudo ufw allow OpenSSH
+sudo ufw allow "Nginx Full"
+sudo ufw enable
+sudo ufw status</code></pre>
+    <p class="saida">Status: active<br>
+&nbsp;<br>
+To &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Action &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From<br>
+-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;------ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;----<br>
+OpenSSH &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALLOW &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anywhere<br>
+Nginx Full &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALLOW &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anywhere</p>
+    <div class="atencao"><strong>Atenção:</strong> Libere o <code>OpenSSH</code> <strong>antes</strong> do <code>ufw enable</code>. Se ligar o firewall sem ele, a sua própria conexão SSH é bloqueada e você fica trancado do lado de fora do servidor.</div>
+
+    <h2>Passo 3: o banco PostgreSQL</h2>
+    <p>O PostgreSQL tem os próprios usuários. Entre no console dele como o administrador <code>postgres</code> e crie um usuário e um banco para o site (troque a senha por uma forte, gerada com <code>secrets</code>):</p>
+<pre class="codigo"><code>sudo -u postgres psql
+CREATE USER meusite WITH PASSWORD 'troque-por-uma-senha-forte';
+CREATE DATABASE meusite OWNER meusite;
+\q</code></pre>
+    <p>O banco só aceita conexões do próprio servidor (<code>localhost</code>) por padrão — exatamente o que queremos: o Django, rodando ali, conecta; a internet, não.</p>
+
+    <h2>Passo 4: o código e as variáveis de ambiente</h2>
+    <p>Baixe o projeto do GitHub, crie o ambiente virtual e instale os pacotes:</p>
+<pre class="codigo"><code>cd /home/deploy
+git clone https://github.com/seu-usuario/meusite.git
+cd meusite
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt gunicorn
+pip install -r requirements.txt</code></pre>
+    <p>Os segredos ficam num arquivo que <strong>só existe no servidor</strong>. Crie <code>/home/deploy/meusite/.env</code> (com <code>nano .env</code>) e depois deixe-o legível só pelo dono:</p>
+<pre class="codigo"><code>DJANGO_SECRET_KEY=cole-aqui-a-chave-gerada-no-passo-1
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=meusite.com.br,www.meusite.com.br
+DB_NAME=meusite
+DB_USER=meusite
+DB_PASSWORD=troque-por-uma-senha-forte
+DB_HOST=localhost
+DB_PORT=5432</code></pre>
+<pre class="codigo"><code>chmod 600 .env
+set -a; source .env; set +a
 python manage.py migrate
-python manage.py collectstatic
-gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3</code></pre>
-    <p>Depois, configure o Nginx para repassar os pedidos ao Gunicorn, crie um serviço do <code>systemd</code> para o Gunicorn ligar sozinho e gere o certificado HTTPS gratuito com o <strong>Let's Encrypt</strong>:</p>
-<pre class="codigo"><code>sudo certbot --nginx -d meusite.com.br -d www.meusite.com.br</code></pre>
-    <div class="dica"><strong>Dica:</strong> Comece por uma plataforma que faz a maior parte disso por você (vários serviços de hospedagem aceitam Django direto do GitHub). Montar o servidor na mão é ótimo para aprender, mas tem mais passos.</div>
+python manage.py collectstatic --noinput
+python manage.py createsuperuser</code></pre>
+    <p>O <code>set -a; source .env; set +a</code> carrega as variáveis do arquivo no terminal atual, para os comandos do <code>manage.py</code> enxergarem os segredos. O <code>collectstatic</code> copia todos os arquivos estáticos para a pasta <code>staticfiles/</code>.</p>
+
+    <h2>Passo 5: o Gunicorn como serviço</h2>
+    <p>Teste primeiro na mão. O <code>config.wsgi:application</code> é o "ponto de entrada" que o <code>startproject</code> criou em <code>config/wsgi.py</code>:</p>
+<pre class="codigo"><code>gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3</code></pre>
+    <p class="saida">[INFO] Starting gunicorn 23.0.0<br>
+[INFO] Listening at: http://127.0.0.1:8000<br>
+[INFO] Booting worker with pid: 4321</p>
+    <p>Funcionou? Aperte Ctrl+C. Agora peça ao <strong>systemd</strong> para cuidar dele. Crie o arquivo <code>/etc/systemd/system/meusite.service</code> (com <code>sudo nano</code>):</p>
+<pre class="codigo"><code>[Unit]
+Description=Gunicorn do meusite
+After=network.target
+
+[Service]
+User=deploy
+Group=www-data
+WorkingDirectory=/home/deploy/meusite
+EnvironmentFile=/home/deploy/meusite/.env
+ExecStart=/home/deploy/meusite/.venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3
+Restart=always
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+<pre class="codigo"><code>sudo systemctl daemon-reload
+sudo systemctl enable --now meusite
+sudo systemctl status meusite</code></pre>
+    <p class="saida">● meusite.service - Gunicorn do meusite<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Active: active (running)</p>
+    <p><code>EnvironmentFile</code> entrega as variáveis do <code>.env</code> ao Gunicorn; <code>Restart=always</code> religa o site se ele cair; <code>enable</code> faz ele ligar junto com o servidor. Se algo der errado, o diário do serviço mostra o erro: <code>sudo journalctl -u meusite -n 50</code>.</p>
+
+    <h2>Passo 6: o Nginx na porta da frente</h2>
+    <p>O Gunicorn escuta só em <code>127.0.0.1</code> (dentro do servidor). Quem atende a internet é o Nginx, que entrega os arquivos estáticos e de mídia direto do disco e repassa o resto ao Gunicorn — por isso ele é chamado de <strong>proxy reverso</strong>. Crie <code>/etc/nginx/sites-available/meusite</code>:</p>
+<pre class="codigo"><code>server {
+    listen 80;
+    server_name meusite.com.br www.meusite.com.br;
+
+    client_max_body_size 10M;
+
+    location /static/ {
+        alias /home/deploy/meusite/staticfiles/;
+    }
+
+    location /media/ {
+        alias /home/deploy/meusite/media/;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</code></pre>
+    <p>Ative o site, teste a configuração e recarregue o Nginx:</p>
+<pre class="codigo"><code>sudo ln -s /etc/nginx/sites-available/meusite /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx</code></pre>
+    <p class="saida">nginx: the configuration file /etc/nginx/nginx.conf syntax is ok<br>
+nginx: configuration file /etc/nginx/nginx.conf test is successful</p>
+    <ul>
+      <li><code>alias</code> aponta a pasta do disco; a barra no fim dos dois lados (<code>/static/</code> e <code>staticfiles/</code>) é obrigatória.</li>
+      <li><code>client_max_body_size 10M</code> permite enviar imagens de até 10 MB (o padrão do Nginx é só 1 MB).</li>
+      <li>As linhas <code>proxy_set_header</code> contam ao Django o domínio pedido e se a conexão era HTTPS.</li>
+    </ul>
+    <p>Por causa do <code>SECURE_SSL_REDIRECT</code> do Passo 1, até terminar o Passo 7 o Django manda todo visitante para o endereço <code>https://</code>, que ainda não existe. É normal o site "não abrir" agora; se quiser testar antes, ponha <code>DJANGO_DEBUG=True</code> no <code>.env</code> por alguns minutos e reinicie o serviço.</p>
+    <div class="dica"><strong>Dica:</strong> Se o Nginx não conseguir ler os arquivos estáticos (erro 403), dê permissão de passagem às pastas: <code>chmod 755 /home/deploy</code>.</div>
+
+    <h2>Passo 7: HTTPS de graça com Certbot</h2>
+    <p>O <strong>HTTPS</strong> criptografa a conversa entre o navegador e o servidor: sem ele, senhas e cookies passam "abertos" pela rede, e o navegador marca o site como "Não seguro". O Let's Encrypt dá certificados gratuitos, e o Certbot pede e instala o certificado no Nginx sozinho:</p>
+<pre class="codigo"><code>sudo certbot --nginx -d meusite.com.br -d www.meusite.com.br
+sudo certbot renew --dry-run</code></pre>
+    <p class="saida">Successfully deployed certificate for meusite.com.br<br>
+Congratulations! You have successfully enabled HTTPS on https://meusite.com.br</p>
+    <p>O certificado vale 90 dias, e o Certbot já deixa a renovação automática agendada; o <code>--dry-run</code> só testa se ela vai funcionar. O domínio precisa estar apontando para o IP do servidor <strong>antes</strong> deste passo.</p>
+
+    <h2>Passo 8: a conferência final e as atualizações</h2>
+    <p>O próprio Django tem uma lista de conferência de segurança. Rode no servidor, com as variáveis carregadas:</p>
+<pre class="codigo"><code>set -a; source .env; set +a
+python manage.py check --deploy</code></pre>
+    <p class="saida">WARNINGS:<br>
+?: (security.W005) You have not set the SECURE_HSTS_INCLUDE_SUBDOMAINS setting to True. ...<br>
+?: (security.W021) You have not set the SECURE_HSTS_PRELOAD setting to True. ...<br>
+&nbsp;<br>
+System check identified 2 issues (0 silenced).</p>
+    <p>Cada aviso tem um código. Os dois acima não são falhas: eles perguntam se o HTTPS obrigatório deve valer também para os <strong>subdomínios</strong> e se o site deve entrar na lista de "só HTTPS" dos navegadores. Só ligue essas opções quando tiver certeza, porque desfazer leva meses. Já avisos como <code>security.W018</code> (DEBUG ligado), <code>security.W009</code> (SECRET_KEY fraca) ou <code>security.W020</code> (ALLOWED_HOSTS vazio) precisam ser corrigidos antes de publicar.</p>
+    <div class="atencao"><strong>Atenção:</strong> Nas versões mais novas do Django (6.1 em diante), o <code>check --deploy</code> também dá <strong>erro</strong> (<code>mail.E001</code>) se o envio de e-mail ainda estiver no modo de teste, que só escreve no terminal. Configure o envio por SMTP, como na aula 109, ou, se o site não manda e-mails, siga a dica que o próprio erro mostra.</div>
+    <p>A mesma ideia de "lista de conferência", em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>def conferir(config):
+    problemas = []
+    if config.get("DEBUG"):
+        problemas.append("DEBUG está ligado: as páginas de erro mostram o seu código")
+    if not config.get("ALLOWED_HOSTS"):
+        problemas.append("ALLOWED_HOSTS vazio: o site responde 400 a todos")
+    if len(config.get("SECRET_KEY", "")) &lt; 50:
+        problemas.append("SECRET_KEY curta ou ausente: gere uma com secrets")
+    if not config.get("SESSION_COOKIE_SECURE"):
+        problemas.append("cookie de sessão pode viajar sem HTTPS")
+    return problemas
+
+
+meu_computador = {"DEBUG": True, "ALLOWED_HOSTS": [], "SECRET_KEY": "django-insecure-abc"}
+servidor = {"DEBUG": False, "ALLOWED_HOSTS": ["meusite.com.br"],
+            "SECRET_KEY": "x" * 60, "SESSION_COOKIE_SECURE": True}
+
+for nome, config in [("Meu computador", meu_computador), ("Servidor", servidor)]:
+    problemas = conferir(config)
+    print(f"{nome}: {len(problemas)} problema(s)")
+    for p in problemas:
+        print("  -", p)</code></pre>
+    <p class="saida">Meu computador: 4 problema(s)<br>
+&nbsp;&nbsp;- DEBUG está ligado: as páginas de erro mostram o seu código<br>
+&nbsp;&nbsp;- ALLOWED_HOSTS vazio: o site responde 400 a todos<br>
+&nbsp;&nbsp;- SECRET_KEY curta ou ausente: gere uma com secrets<br>
+&nbsp;&nbsp;- cookie de sessão pode viajar sem HTTPS<br>
+Servidor: 0 problema(s)</p>
+    <p>Cada vez que você mudar o código no seu computador e der <code>git push</code>, atualize o servidor com esta sequência:</p>
+<pre class="codigo"><code>cd /home/deploy/meusite
+git pull
+source .venv/bin/activate
+pip install -r requirements.txt
+set -a; source .env; set +a
+python manage.py migrate
+python manage.py collectstatic --noinput
+sudo systemctl restart meusite</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Faça cópia do banco antes de migrações grandes: <code>pg_dump -U meusite -h localhost meusite &gt; copia.sql</code>. Uma migração errada em produção mexe nos dados reais dos seus usuários.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -76,21 +316,64 @@ gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Você publicou com <code>DEBUG = False</code> e o site responde <strong>400 Bad Request</strong>. Qual configuração provavelmente está faltando?</p>
+      <p><strong>1.</strong> Você publicou com <code>DEBUG = False</code> e todo o site responde <strong>400 Bad Request</strong>. Qual configuração provavelmente está faltando, e como ela é preenchida no nosso settings?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>ALLOWED_HOSTS = ["meusite.com.br", "www.meusite.com.br"]</code></pre>
-      <p>Com <code>DEBUG = False</code>, o Django só atende os domínios listados em <code>ALLOWED_HOSTS</code>.</p>
+      <p class="saida">ALLOWED_HOSTS. Com DEBUG = False, o Django só atende os domínios dessa lista<br>
+e responde 400 a qualquer outro nome. No nosso settings ela vem da variável<br>
+DJANGO_ALLOWED_HOSTS do arquivo .env, por exemplo:<br>
+DJANGO_ALLOWED_HOSTS=meusite.com.br,www.meusite.com.br<br>
+Depois de corrigir: sudo systemctl restart meusite</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Gere uma <code>SECRET_KEY</code> nova e forte com a biblioteca padrão do Python.</p>
+      <p><strong>2.</strong> Escreva a função <code>ler_inteiro(nome, padrao)</code> que lê uma variável de ambiente e converte para <code>int</code>, devolvendo o padrão quando ela não existe. Teste com <code>DB_PORT</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import os
+
+
+def ler_inteiro(nome, padrao):
+    valor = os.environ.get(nome)
+    if valor is None or not valor.strip():
+        return padrao
+    return int(valor)
+
+
+print(ler_inteiro("DB_PORT", 5432))
+os.environ["DB_PORT"] = "6543"
+print(ler_inteiro("DB_PORT", 5432))</code></pre>
+      <p class="saida">5432<br>
+6543</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O site está no ar, mas sem nenhum CSS, e o admin aparece "pelado". O que você esqueceu de fazer ou de configurar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Os arquivos estáticos. Confira três coisas:<br>
+1. STATIC_ROOT no settings.py (BASE_DIR / "staticfiles");<br>
+2. rodar python manage.py collectstatic --noinput no servidor;<br>
+3. o bloco "location /static/ { alias /home/deploy/meusite/staticfiles/; }" no Nginx.<br>
+Com DEBUG = False o Django não serve mais o CSS: quem entrega é o Nginx.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O navegador mostra <strong>502 Bad Gateway</strong>. O que isso significa e quais comandos ajudam a descobrir a causa?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>sudo systemctl status meusite
+sudo journalctl -u meusite -n 50</code></pre>
+      <p>502 quer dizer que o Nginx está funcionando, mas não conseguiu falar com o Gunicorn atrás dele. Normalmente o Gunicorn não ligou por causa de um erro no código ou de uma variável faltando no <code>.env</code> (um <code>KeyError: 'DJANGO_SECRET_KEY'</code>, por exemplo). O <code>journalctl</code> mostra o traceback.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Gere de uma vez, com Python, uma <code>SECRET_KEY</code> e uma senha de banco fortes, já no formato das linhas do arquivo <code>.env</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>import secrets
 
-print(secrets.token_urlsafe(50))</code></pre>
+print("DJANGO_SECRET_KEY=" + secrets.token_urlsafe(50))
+print("DB_PASSWORD=" + secrets.token_urlsafe(24))</code></pre>
       <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
-BNNmx1s5VjLpBo5T9tpK_sh1I3JTYZVcctag8_TLCqRZc8WaE4aff_hgc2RDbfTmCN4</p>
-      <p>Guarde o valor numa variável de ambiente do servidor, não no código.</p>
+DJANGO_SECRET_KEY=ogHYkcnEQ3_VX6EiwbsbE5ixK84I72idrBVHsO44jhJn_PoFYZLgr7D697gX0P0jT-8<br>
+DB_PASSWORD=WAxFN7kmLCi7_i_KPomFJFUhxIpimPI-</p>
+      <p>Rode no seu computador e cole as linhas no <code>.env</code> do servidor. Nunca reaproveite a chave do seu computador, nem coloque esses valores no GitHub.</p>
       </details>
     </div>
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 194 · Telas no Qt Designer (.ui) — Curso de Python · DIGITAR</title>
-<meta name="description" content="Desenhe a tela arrastando widgets no Qt Designer e carregue o arquivo .ui no seu programa.">
+<meta name="description" content="Desenhe a tela arrastando widgets no Qt Designer, entenda o que há dentro do arquivo .ui e use-o no seu programa com QUiLoader ou pyside6-uic.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,60 +20,160 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Abrir o Qt Designer que vem com o PySide6</li>
-        <li>Salvar uma tela como arquivo <code>.ui</code> e dar nomes aos widgets</li>
-        <li>Carregar o <code>.ui</code> com QUiLoader ou convertê-lo com pyside6-uic</li>
+        <li>Saber quando vale a pena desenhar a tela em vez de programá-la</li>
+        <li>Abrir o Qt Designer que vem com o PySide6 e montar uma tela com layout</li>
+        <li>Dar bons nomes aos widgets com o <code>objectName</code></li>
+        <li>Entender que o arquivo <code>.ui</code> é um texto em XML</li>
+        <li>Carregar o <code>.ui</code> com <code>QUiLoader</code> ou convertê-lo em Python com <code>pyside6-uic</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Desenhar em vez de programar a tela</h2>
-    <p>O <strong>Qt Designer</strong> é um programa onde você monta a tela arrastando botões, caixas e rótulos com o mouse. Ele já vem junto com o PySide6. Com o ambiente virtual ativado, abra assim:</p>
-<pre class="codigo"><code>pyside6-designer</code></pre>
-    <p>Escolha <strong>Main Window</strong> ou <strong>Widget</strong>, arraste um <strong>Push Button</strong> e um <strong>Line Edit</strong>, e no painel <strong>Property Editor</strong> mude o <code>objectName</code> deles para <code>botao_enviar</code> e <code>campo_nome</code>. Salve como <code>tela.ui</code>.</p>
-    <div class="atencao"><strong>Atenção:</strong> O <code>objectName</code> é o nome que você vai usar no código. Nomes como <code>pushButton_3</code> ficam confusos; troque por nomes claros em <code>snake_case</code>.</div>
+    <p>Nas aulas 190 a 193 você criou cada botão e cada layout escrevendo código. Isso funciona, mas numa tela com 30 campos o código fica enorme, e para mudar um botão de lugar você precisa rodar o programa várias vezes até acertar.</p>
+    <p>O <strong>Qt Designer</strong> é um programa onde você monta a tela arrastando botões, caixas de texto e rótulos com o mouse, e vê o resultado na hora. Ele salva a tela num arquivo com a extensão <code>.ui</code>. O seu código Python continua fazendo a parte importante: <strong>o que acontece</strong> quando o usuário clica.</p>
+    <p>Essa separação é boa: o "desenho" fica num arquivo e o "comportamento" fica em outro. Dá até para uma pessoa cuidar da tela e outra do código.</p>
 
-    <h2>Jeito 1: carregar o .ui na hora</h2>
+    <h2>Abrindo o Qt Designer</h2>
+    <p>O Designer já vem junto com o PySide6. Com o ambiente virtual do projeto ativado (aula 60), instale o PySide6 (se ainda não tiver) e abra o Designer:</p>
+<pre class="codigo"><code>pip install pyside6
+pyside6-designer</code></pre>
+    <p>Na janela <strong>New Form</strong>, escolha <strong>Widget</strong> e clique em <strong>Create</strong>. Depois:</p>
+    <ul>
+      <li>arraste da caixa <strong>Widget Box</strong> (à esquerda) um <strong>Label</strong>, um <strong>Line Edit</strong> e um <strong>Push Button</strong> para dentro do formulário;</li>
+      <li>dê dois cliques no Label e escreva <code>Digite seu nome:</code>; faça o mesmo no botão e escreva <code>Enviar</code>;</li>
+      <li>clique com o botão direito num espaço vazio do formulário e escolha <strong>Lay out → Lay Out Vertically</strong>: os widgets se alinham e passam a acompanhar o tamanho da janela;</li>
+      <li>salve com <strong>Ctrl+S</strong> como <code>tela.ui</code>, na pasta do seu projeto.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Use <strong>Ctrl+R</strong> no Designer para ver uma prévia da tela funcionando, sem escrever nenhuma linha de código.</div>
+
+    <h2>Nomes que fazem sentido: objectName</h2>
+    <p>Cada widget tem uma propriedade chamada <code>objectName</code>. É por esse nome que o seu código vai encontrar o widget. O Designer inventa nomes como <code>pushButton</code>, <code>lineEdit_2</code> e <code>label_3</code>, que não dizem nada.</p>
+    <p>Clique em cada widget e, no painel <strong>Property Editor</strong> (à direita), troque o <code>objectName</code>: <code>titulo</code> para o Label, <code>campo_nome</code> para o Line Edit e <code>botao_enviar</code> para o botão. Use o mesmo estilo <code>snake_case</code> dos nomes de variáveis (aula 14).</p>
+    <div class="atencao"><strong>Atenção:</strong> Se você esquecer de pôr o widget num layout, ele fica "solto" numa posição fixa: ao aumentar a janela, tudo continua espremido num canto. O ícone de um círculo vermelho ao lado do formulário, no <strong>Object Inspector</strong>, avisa que falta layout.</div>
+
+    <h2>Por dentro de um .ui: é só XML</h2>
+    <p>Abra o <code>tela.ui</code> no VS Code e você vai ver que ele é um <strong>texto</strong> no formato <strong>XML</strong>: etiquetas como <code>&lt;widget&gt;</code> dentro de outras etiquetas, parecido com HTML. Cada widget aparece com a sua classe e o seu <code>objectName</code>.</p>
+    <p>Como é texto, o Python consegue ler o arquivo com o módulo <code>xml.etree.ElementTree</code> da biblioteca padrão. Este exemplo roda aqui no navegador e lista os widgets da tela:</p>
+<pre class="codigo" data-executar="sim"><code>import xml.etree.ElementTree as ET
+
+tela_ui = """&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;ui version="4.0"&gt;
+ &lt;class&gt;Form&lt;/class&gt;
+ &lt;widget class="QWidget" name="Form"&gt;
+  &lt;property name="windowTitle"&gt;&lt;string&gt;Cadastro&lt;/string&gt;&lt;/property&gt;
+  &lt;layout class="QVBoxLayout" name="layout_principal"&gt;
+   &lt;item&gt;&lt;widget class="QLabel" name="titulo"&gt;
+    &lt;property name="text"&gt;&lt;string&gt;Digite seu nome:&lt;/string&gt;&lt;/property&gt;
+   &lt;/widget&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QLineEdit" name="campo_nome"/&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QPushButton" name="botao_enviar"&gt;
+    &lt;property name="text"&gt;&lt;string&gt;Enviar&lt;/string&gt;&lt;/property&gt;
+   &lt;/widget&gt;&lt;/item&gt;
+  &lt;/layout&gt;
+ &lt;/widget&gt;
+&lt;/ui&gt;"""
+
+raiz = ET.fromstring(tela_ui)
+for widget in raiz.iter("widget"):
+    print(f"{widget.get('class'):&lt;12} objectName = {widget.get('name')}")</code></pre>
+    <p class="saida">QWidget &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;objectName = Form<br>
+QLabel &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;objectName = titulo<br>
+QLineEdit &nbsp;&nbsp;&nbsp;objectName = campo_nome<br>
+QPushButton &nbsp;objectName = botao_enviar</p>
+    <p>O <code>iter("widget")</code> passa por todas as etiquetas <code>&lt;widget&gt;</code>, mesmo as que estão dentro de layouts. O <code>get("name")</code> lê o atributo <code>name</code>, que é justamente o <code>objectName</code> que você escolheu no Designer.</p>
+    <p>Também dá para ler as <strong>propriedades</strong>, como o texto de cada widget e o título da janela:</p>
+<pre class="codigo" data-executar="sim"><code>import xml.etree.ElementTree as ET
+
+tela_ui = """&lt;ui version="4.0"&gt;
+ &lt;widget class="QWidget" name="Form"&gt;
+  &lt;property name="windowTitle"&gt;&lt;string&gt;Cadastro&lt;/string&gt;&lt;/property&gt;
+  &lt;layout class="QVBoxLayout" name="layout_principal"&gt;
+   &lt;item&gt;&lt;widget class="QLabel" name="titulo"&gt;
+    &lt;property name="text"&gt;&lt;string&gt;Digite seu nome:&lt;/string&gt;&lt;/property&gt;
+   &lt;/widget&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QPushButton" name="botao_enviar"&gt;
+    &lt;property name="text"&gt;&lt;string&gt;Enviar&lt;/string&gt;&lt;/property&gt;
+   &lt;/widget&gt;&lt;/item&gt;
+  &lt;/layout&gt;
+ &lt;/widget&gt;
+&lt;/ui&gt;"""
+
+raiz = ET.fromstring(tela_ui)
+janela = raiz.find("widget")
+print("Título da janela:", janela.find("property/string").text)
+print("Layout:", raiz.find(".//layout").get("class"))
+for widget in raiz.iter("widget"):
+    texto = widget.find("property[@name='text']/string")
+    if texto is not None:
+        print(widget.get("name"), "-&gt;", texto.text)</code></pre>
+    <p class="saida">Título da janela: Cadastro<br>
+Layout: QVBoxLayout<br>
+titulo -&gt; Digite seu nome:<br>
+botao_enviar -&gt; Enviar</p>
+    <p>Você não precisa escrever XML à mão: quem escreve é o Designer. Mas saber que é texto ajuda a entender os erros e a ver as mudanças no Git (aula 244).</p>
+
+    <h2>Jeito 1: carregar o .ui quando o programa abre</h2>
+    <p>O <code>QUiLoader</code> lê o <code>.ui</code> e monta a tela na hora em que o programa roda. Salve este código como <code>main.py</code>, na mesma pasta do <code>tela.ui</code>:</p>
 <pre class="codigo"><code>import sys
-from PySide6.QtCore import QFile
-from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication
+from PySide6.QtUiTools import QUiLoader
 
 app = QApplication(sys.argv)
-arquivo = QFile("tela.ui")
-arquivo.open(QFile.OpenModeFlag.ReadOnly)
-janela = QUiLoader().load(arquivo)
-arquivo.close()
+janela = QUiLoader().load("tela.ui")
 
-janela.botao_enviar.clicked.connect(
-    lambda: print("Olá,", janela.campo_nome.text())
-)
+
+def enviar():
+    nome = janela.campo_nome.text()
+    janela.titulo.setText(f"Olá, {nome}!")
+    print("Botão clicado por", nome)
+
+
+janela.botao_enviar.clicked.connect(enviar)
 janela.show()
 sys.exit(app.exec())</code></pre>
+<pre class="codigo"><code>python main.py</code></pre>
+    <p class="saida">(abre a janela "Cadastro" com o rótulo, a caixa de texto e o botão Enviar)<br>
+Botão clicado por Ana</p>
+    <p>Depois de escrever <code>Ana</code> e clicar em <strong>Enviar</strong>, o rótulo muda para "Olá, Ana!" e o terminal mostra a linha acima. Repare que <code>janela.campo_nome</code> e <code>janela.botao_enviar</code> existem porque esses são os <code>objectName</code> que você deu no Designer.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>AttributeError: 'QWidget' object has no attribute 'botao_enviar'</code>, o nome no código não é igual ao <code>objectName</code> do Designer. Confira letra por letra, inclusive maiúsculas.</div>
 
-    <h2>Jeito 2: converter para Python</h2>
-    <p>O comando <code>pyside6-uic</code> transforma o <code>.ui</code> num arquivo <code>.py</code> com uma classe pronta:</p>
+    <h2>Jeito 2: converter o .ui em Python</h2>
+    <p>O comando <code>pyside6-uic</code> transforma o <code>.ui</code> num arquivo <code>.py</code> com uma classe pronta, chamada <code>Ui_</code> mais o nome do formulário:</p>
 <pre class="codigo"><code>pyside6-uic tela.ui -o ui_tela.py</code></pre>
+    <p>Agora a sua janela <strong>herda</strong> dessa classe (aula 76) e chama <code>setupUi</code>, que cria todos os widgets:</p>
 <pre class="codigo"><code>import sys
-from PySide6.QtWidgets import QApplication, QMainWindow
-from ui_tela import Ui_MainWindow
+from PySide6.QtWidgets import QApplication, QWidget
+from ui_tela import Ui_Form
 
 
-class Janela(QMainWindow, Ui_MainWindow):
+class Janela(QWidget, Ui_Form):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.botao_enviar.clicked.connect(self.enviar)
 
     def enviar(self):
-        print("Olá,", self.campo_nome.text())
+        nome = self.campo_nome.text()
+        self.titulo.setText(f"Olá, {nome}!")
+        print("Botão clicado por", nome)
 
 
 app = QApplication(sys.argv)
 janela = Janela()
 janela.show()
 sys.exit(app.exec())</code></pre>
-    <div class="dica"><strong>Dica:</strong> Nunca edite o <code>ui_tela.py</code> gerado: na próxima conversão ele é sobrescrito. Mude a tela no Designer e converta de novo.</div>
+    <p class="saida">(abre a mesma janela "Cadastro"; ao clicar em Enviar com "Ana" na caixa:)<br>
+Botão clicado por Ana</p>
+    <p>Se no Designer você escolheu <strong>Main Window</strong> em vez de <strong>Widget</strong>, a classe gerada se chama <code>Ui_MainWindow</code> e a sua janela deve herdar de <code>QMainWindow</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Nunca edite o <code>ui_tela.py</code> gerado: na próxima conversão ele é apagado e escrito de novo. Mude a tela no Designer, converta outra vez e deixe o seu código em outro arquivo.</div>
+
+    <h2>Qual jeito escolher</h2>
+    <ul>
+      <li><strong>QUiLoader (jeito 1):</strong> mais simples para começar; salvou no Designer, é só rodar de novo. Mas o editor não sabe quais widgets existem, então não completa os nomes enquanto você digita.</li>
+      <li><strong>pyside6-uic (jeito 2):</strong> dá um pouquinho mais de trabalho (converter a cada mudança), mas o VS Code passa a completar <code>self.campo_nome</code> e avisa erros de digitação. É o jeito mais usado em projetos maiores.</li>
+    </ul>
+    <p>Os dois usam o mesmo <code>.ui</code>, então você pode começar com um e trocar depois.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -82,20 +182,85 @@ sys.exit(app.exec())</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Você mudou a tela no Designer e salvou o <code>tela.ui</code>. Usando o jeito 2, o que precisa fazer para a mudança aparecer no programa?</p>
+      <p><strong>1.</strong> Usando o <code>tela_ui</code> do exemplo (copie o texto para o seu código), conte quantos widgets de cada classe existem na tela. Dica: <code>collections.Counter</code> (aula 46).</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>pyside6-uic tela.ui -o ui_tela.py
-python main.py</code></pre>
-      <p>Converta de novo o <code>.ui</code> e rode o programa. No jeito 1 isso não é preciso, porque o <code>.ui</code> é lido toda vez que o programa abre.</p>
+<pre class="codigo" data-executar="sim"><code>import xml.etree.ElementTree as ET
+from collections import Counter
+
+tela_ui = """&lt;ui version="4.0"&gt;
+ &lt;widget class="QWidget" name="Form"&gt;
+  &lt;layout class="QVBoxLayout" name="layout_principal"&gt;
+   &lt;item&gt;&lt;widget class="QLabel" name="titulo"/&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QLineEdit" name="campo_nome"/&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QPushButton" name="botao_enviar"/&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QPushButton" name="botao_limpar"/&gt;&lt;/item&gt;
+  &lt;/layout&gt;
+ &lt;/widget&gt;
+&lt;/ui&gt;"""
+
+raiz = ET.fromstring(tela_ui)
+contagem = Counter(w.get("class") for w in raiz.iter("widget"))
+for classe, quantos in contagem.items():
+    print(classe, quantos)</code></pre>
+      <p class="saida">QWidget 1<br>
+QLabel 1<br>
+QLineEdit 1<br>
+QPushButton 2</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva o slot <code>limpar</code> para um botão <code>botao_limpar</code> que apaga o texto de <code>campo_nome</code> (classe do jeito 2).</p>
+      <p><strong>2.</strong> Escreva uma função <code>nomes_ruins(tela_ui)</code> que devolve os <code>objectName</code> que ainda têm o nome automático do Designer (começam com <code>pushButton</code>, <code>lineEdit</code> ou <code>label</code>).</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code># no __init__: self.botao_limpar.clicked.connect(self.limpar)
+<pre class="codigo" data-executar="sim"><code>import xml.etree.ElementTree as ET
+
+tela_ui = """&lt;ui version="4.0"&gt;
+ &lt;widget class="QWidget" name="Form"&gt;
+  &lt;layout class="QVBoxLayout" name="verticalLayout"&gt;
+   &lt;item&gt;&lt;widget class="QLabel" name="label_3"/&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QLineEdit" name="campo_nome"/&gt;&lt;/item&gt;
+   &lt;item&gt;&lt;widget class="QPushButton" name="pushButton"/&gt;&lt;/item&gt;
+  &lt;/layout&gt;
+ &lt;/widget&gt;
+&lt;/ui&gt;"""
+
+
+def nomes_ruins(texto):
+    automaticos = ("pushButton", "lineEdit", "label")
+    raiz = ET.fromstring(texto)
+    return [w.get("name") for w in raiz.iter("widget")
+            if w.get("name").startswith(automaticos)]
+
+
+print(nomes_ruins(tela_ui))</code></pre>
+      <p class="saida">['label_3', 'pushButton']</p>
+      <p><code>startswith</code> aceita uma tupla e responde <code>True</code> se o texto começar com qualquer um dos itens.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Na classe do jeito 2, escreva o slot <code>limpar</code> para um botão <code>botao_limpar</code> que apaga o texto de <code>campo_nome</code> e volta o rótulo <code>titulo</code> para "Digite seu nome:". Mostre também a linha do <code>__init__</code> que liga o botão.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># no __init__, depois do setupUi:
+#     self.botao_limpar.clicked.connect(self.limpar)
 
 def limpar(self):
-    self.campo_nome.clear()</code></pre>
+    self.campo_nome.clear()
+    self.titulo.setText("Digite seu nome:")</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Você mudou a tela no Designer e salvou o <code>tela.ui</code>. No jeito 2, o que precisa fazer para a mudança aparecer? E no jeito 1?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>pyside6-uic tela.ui -o ui_tela.py
+python main.py</code></pre>
+      <p>No jeito 2 é preciso converter de novo o <code>.ui</code> antes de rodar. No jeito 1 basta rodar o programa, porque o <code>QUiLoader</code> lê o <code>.ui</code> toda vez que o programa abre.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Ao rodar o programa apareceu <code>AttributeError: 'QWidget' object has no attribute 'botaoEnviar'</code>. O que provavelmente aconteceu?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O código usa o nome botaoEnviar, mas no Designer o objectName do botão é outro<br>
+(por exemplo, botao_enviar). Abra o .ui no Designer, confira o objectName no<br>
+Property Editor e use exatamente o mesmo nome no código.</p>
       </details>
     </div>
 

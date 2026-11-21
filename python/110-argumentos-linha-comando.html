@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 110 · sys.argv e argparse — Curso de Python · DIGITAR</title>
-<meta name="description" content="Receba informações pelo terminal com sys.argv e crie programas de linha de comando com opções e ajuda automática usando argparse.">
+<meta name="description" content="Receba informações pelo terminal com sys.argv e crie programas de linha de comando com opções, validação e ajuda automática usando argparse.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,64 +20,183 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
+        <li>Entender o que são argumentos de linha de comando e para que servem</li>
         <li>Ler os argumentos do terminal com <code>sys.argv</code></li>
-        <li>Criar opções e ajuda automática com <code>argparse</code></li>
-        <li>Converter e validar argumentos com <code>type</code> e <code>choices</code></li>
+        <li>Criar argumentos posicionais e opcionais com <code>argparse</code></li>
+        <li>Converter e validar com <code>type</code>, <code>choices</code>, <code>nargs</code> e <code>action="store_true"</code></li>
+        <li>Usar a ajuda automática <code>--help</code> e entender as mensagens de erro</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>sys.argv</h2>
-    <p>Quando você roda <code>python saudar.py Ana Bia</code>, as palavras depois do nome do arquivo chegam ao programa na lista <code>sys.argv</code>. A posição 0 é o nome do próprio arquivo:</p>
+    <h2>Para que servem argumentos</h2>
+    <p>Até agora seus programas perguntavam as coisas com <code>input()</code>. Programas de terminal costumam receber as informações já na hora de rodar, escritas depois do nome do arquivo:</p>
+<pre class="codigo"><code>py tabuada.py 7
+py renomear.py fotos --prefixo ferias</code></pre>
+    <p>Isso tem vantagens: dá para repetir o comando sem digitar tudo de novo (seta para cima no terminal), dá para usar o programa dentro de outros programas e dá para agendar o programa para rodar sozinho. Cada palavra depois do nome do arquivo é um <strong>argumento</strong>.</p>
+    <p>Esta aula é para o computador porque os argumentos vêm do terminal. Mas os exemplos com o botão Executar <strong>simulam</strong> o terminal, passando a lista de argumentos direto para o programa.</p>
+
+    <h2>sys.argv: a lista crua</h2>
+    <p>Quando você roda <code>py saudar.py Ana Bia</code>, as palavras chegam ao programa na lista <code>sys.argv</code>. A posição 0 é o nome do próprio arquivo; os argumentos começam na posição 1. Aqui simulamos o terminal colocando a lista à mão:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+
+sys.argv = ["saudar.py", "Ana", "Bia"]   # simula: py saudar.py Ana Bia
+
+print("Argumentos:", sys.argv)
+print("Nome do programa:", sys.argv[0])
+for nome in sys.argv[1:]:
+    print(f"Olá, {nome}!")</code></pre>
+    <p class="saida">Argumentos: ['saudar.py', 'Ana', 'Bia']<br>
+Nome do programa: saudar.py<br>
+Olá, Ana!<br>
+Olá, Bia!</p>
+    <p>No seu computador, apague a linha que simula e rode de verdade:</p>
 <pre class="codigo"><code># saudar.py
 import sys
 
-print("Argumentos:", sys.argv)
 for nome in sys.argv[1:]:
     print(f"Olá, {nome}!")</code></pre>
-<pre class="codigo"><code>python saudar.py Ana Bia</code></pre>
-    <p class="saida">Argumentos: ['saudar.py', 'Ana', 'Bia']<br>
-Olá, Ana!<br>
+<pre class="codigo"><code>py saudar.py Ana Bia</code></pre>
+    <p class="saida">Olá, Ana!<br>
 Olá, Bia!</p>
-    <div class="atencao"><strong>Atenção:</strong> Tudo em <code>sys.argv</code> é texto. Para somar números recebidos assim, converta com <code>int()</code> ou <code>float()</code>. E se o usuário não passar nada, <code>sys.argv[1]</code> dá <code>IndexError</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Tudo em <code>sys.argv</code> é <strong>texto</strong>. Para somar números recebidos assim, converta com <code>int()</code> ou <code>float()</code>. E se o usuário não passar nada, <code>sys.argv[1]</code> dá <code>IndexError</code>: confira antes com <code>len(sys.argv)</code>.</div>
+    <div class="dica"><strong>Dica:</strong> Um argumento com espaço vai entre aspas: <code>py saudar.py "Ana Clara" Bia</code> entrega dois argumentos, <code>"Ana Clara"</code> e <code>"Bia"</code>.</div>
+
+    <h2>sys.argv com verificação</h2>
+    <p>Com <code>sys.argv</code> você mesmo precisa conferir tudo: se veio a quantidade certa de argumentos e se eles são números. O programa abaixo calcula a média e avisa como usar quando algo está errado:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+
+def principal(argv):
+    if len(argv) &lt; 2:
+        print("Uso: py media.py NOTA1 NOTA2 ...")
+        return
+    try:
+        notas = [float(x) for x in argv[1:]]
+    except ValueError:
+        print("Erro: todas as notas precisam ser números.")
+        return
+    print(f"Média de {len(notas)} notas: {sum(notas) / len(notas):.1f}")
+
+principal(["media.py", "7", "8.5", "10"])
+principal(["media.py"])
+principal(["media.py", "7", "dez"])</code></pre>
+    <p class="saida">Média de 3 notas: 8.5<br>
+Uso: py media.py NOTA1 NOTA2 ...<br>
+Erro: todas as notas precisam ser números.</p>
+    <p>No programa de verdade, a última linha seria só <code>principal(sys.argv)</code>. Funciona, mas dá trabalho: imagine conferir opções, valores padrão e escrever a ajuda à mão. É para isso que existe o <code>argparse</code>.</p>
 
     <h2>argparse: um programa de verdade</h2>
-    <p>O <code>argparse</code> faz o trabalho chato: lê os argumentos, converte tipos, mostra erros claros e cria a ajuda <code>--help</code> sozinho. Para testar sem terminal, dá para passar a lista de argumentos direto para <code>parse_args</code>:</p>
-<pre class="codigo"><code>import argparse
+    <p>O <code>argparse</code> lê os argumentos, converte os tipos, mostra erros claros e cria a ajuda <code>--help</code> sozinho. Você descreve o que o programa aceita e ele faz o resto. Para testar sem terminal, passe a lista de argumentos (sem o nome do arquivo) para <code>parse_args</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import argparse
 
-parser = argparse.ArgumentParser(description="Mostra a tabuada de um número.")
+parser = argparse.ArgumentParser(prog="tabuada.py", description="Mostra a tabuada de um número.")
 parser.add_argument("numero", type=int, help="o número da tabuada")
 parser.add_argument("--ate", type=int, default=10, help="até onde ir (padrão: 10)")
 
 args = parser.parse_args(["7", "--ate", "3"])   # no terminal: parser.parse_args()
+print(args)
 
 for i in range(1, args.ate + 1):
     print(f"{args.numero} x {i} = {args.numero * i}")</code></pre>
-    <p class="saida">7 x 1 = 7<br>
+    <p class="saida">Namespace(numero=7, ate=3)<br>
+7 x 1 = 7<br>
 7 x 2 = 14<br>
 7 x 3 = 21</p>
-    <p>No programa de verdade, use <code>parser.parse_args()</code> sem lista e rode:</p>
-<pre class="codigo"><code>python tabuada.py 7 --ate 3
-python tabuada.py --help</code></pre>
     <ul>
-      <li>argumentos <strong>posicionais</strong> (<code>numero</code>) são obrigatórios;</li>
-      <li>argumentos com <code>--</code> (<code>--ate</code>) são <strong>opcionais</strong> e podem ter <code>default</code>;</li>
-      <li><code>type=int</code> converte o texto para número e dá uma mensagem de erro se não der.</li>
+      <li>argumentos <strong>posicionais</strong> (<code>numero</code>) são obrigatórios e a ordem importa;</li>
+      <li>argumentos com <code>--</code> (<code>--ate</code>) são <strong>opcionais</strong>, podem vir em qualquer ordem e têm um <code>default</code>;</li>
+      <li><code>type=int</code> converte o texto para número — dentro do programa, <code>args.numero</code> já é um <code>int</code>;</li>
+      <li>o resultado é um objeto <code>Namespace</code>, e cada argumento vira um atributo: <code>args.numero</code>, <code>args.ate</code>.</li>
     </ul>
+    <p>No seu computador, troque a lista por <code>parser.parse_args()</code> e rode:</p>
+<pre class="codigo"><code>py tabuada.py 7 --ate 3
+py tabuada.py --help</code></pre>
 
-    <h2>Escolhas e chaves liga/desliga</h2>
-<pre class="codigo"><code>import argparse
+    <h2>Ajuda automática e mensagens de erro</h2>
+    <p>O <code>--help</code> (ou <code>-h</code>) aparece sem você escrever nada, usando os textos de <code>description</code> e <code>help</code>. Aqui mostramos a ajuda com <code>print_help()</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import argparse
 
-parser = argparse.ArgumentParser(description="Pedido de pizza")
+parser = argparse.ArgumentParser(prog="tabuada.py", description="Mostra a tabuada de um número.")
+parser.add_argument("numero", type=int, help="o número da tabuada")
+parser.add_argument("-a", "--ate", type=int, default=10, help="até onde ir (padrão: 10)")
+parser.print_help()</code></pre>
+    <p class="saida">usage: tabuada.py [-h] [-a ATE] numero<br>
+&nbsp;<br>
+Mostra a tabuada de um número.<br>
+&nbsp;<br>
+positional arguments:<br>
+&nbsp;&nbsp;numero &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;o número da tabuada<br>
+&nbsp;<br>
+options:<br>
+&nbsp;&nbsp;-h, --help &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show this help message and exit<br>
+&nbsp;&nbsp;-a ATE, --ate ATE &nbsp;até onde ir (padrão: 10)</p>
+    <p>Repare que <code>-a</code> virou um atalho para <code>--ate</code>. Quando o usuário erra, o <code>argparse</code> mostra o uso certo e encerra o programa. No terminal, <code>py tabuada.py sete</code> mostra:</p>
+    <p class="saida">usage: tabuada.py [-h] [-a ATE] numero<br>
+tabuada.py: error: argument numero: invalid int value: 'sete'</p>
+    <p>Para ver esse erro aqui no navegador sem encerrar o bloco, crie o parser com <code>exit_on_error=False</code>: em vez de encerrar, ele lança uma exceção que você pode tratar com <code>try</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import argparse
+
+parser = argparse.ArgumentParser(prog="tabuada.py", exit_on_error=False)
+parser.add_argument("numero", type=int)
+
+try:
+    parser.parse_args(["sete"])
+except argparse.ArgumentError as erro:
+    print("Erro:", erro)</code></pre>
+    <p class="saida">Erro: argument numero: invalid int value: 'sete'</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>argparse</code> encerra o programa (com <code>SystemExit</code>) quando mostra a ajuda ou um erro. Isso é o certo num programa de terminal, mas pode assustar quando você testa num editor ou aqui no site. Não confunda: não é o seu programa que quebrou, é o <code>argparse</code> avisando que os argumentos estavam errados.</div>
+
+    <h2>Escolhas, chaves liga/desliga e listas</h2>
+<pre class="codigo" data-executar="sim"><code>import argparse
+
+parser = argparse.ArgumentParser(prog="pizza.py", description="Pedido de pizza")
 parser.add_argument("sabor", choices=["calabresa", "mussarela", "portuguesa"])
 parser.add_argument("--borda", action="store_true", help="com borda recheada")
+parser.add_argument("--extras", nargs="*", default=[], help="ingredientes extras")
+parser.add_argument("-q", "--quantidade", type=int, default=1)
 
-args = parser.parse_args(["calabresa", "--borda"])
+args = parser.parse_args(["calabresa", "--borda", "--extras", "milho", "azeitona", "-q", "2"])
 print("Sabor:", args.sabor)
-print("Borda recheada:", args.borda)</code></pre>
+print("Borda recheada:", args.borda)
+print("Extras:", args.extras)
+print("Quantidade:", args.quantidade)
+
+sem_nada = parser.parse_args(["mussarela"])
+print(sem_nada.borda, sem_nada.extras, sem_nada.quantidade)</code></pre>
     <p class="saida">Sabor: calabresa<br>
-Borda recheada: True</p>
-    <p><code>choices</code> só aceita os valores da lista, e <code>action="store_true"</code> cria uma opção que vale <code>True</code> quando aparece e <code>False</code> quando não aparece.</p>
+Borda recheada: True<br>
+Extras: ['milho', 'azeitona']<br>
+Quantidade: 2<br>
+False [] 1</p>
+    <ul>
+      <li><code>choices</code> só aceita os valores da lista;</li>
+      <li><code>action="store_true"</code> cria uma opção que vale <code>True</code> quando aparece e <code>False</code> quando não aparece;</li>
+      <li><code>nargs="*"</code> junta zero ou mais valores numa lista; <code>nargs="+"</code> exige pelo menos um.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Ao escrever o nome de uma opção com hífen, como <code>--sem-som</code>, o atributo troca o hífen por sublinhado: <code>args.sem_som</code>.</div>
+
+    <h2>No seu computador: um programa completo</h2>
+    <p>Junte tudo num programa que conta palavras de um texto. Salve como <code>contar.py</code> e rode no terminal:</p>
+<pre class="codigo"><code>import argparse
+
+def principal():
+    parser = argparse.ArgumentParser(description="Conta as palavras de um texto.")
+    parser.add_argument("palavras", nargs="+", help="o texto a contar")
+    parser.add_argument("--maiusculas", action="store_true", help="mostra o texto em maiúsculas")
+    args = parser.parse_args()
+
+    texto = " ".join(args.palavras)
+    if args.maiusculas:
+        texto = texto.upper()
+    print(texto)
+    print("Palavras:", len(args.palavras))
+
+if __name__ == "__main__":
+    principal()</code></pre>
+<pre class="codigo"><code>py contar.py o sol nasceu no mar --maiusculas</code></pre>
+    <p class="saida">O SOL NASCEU NO MAR<br>
+Palavras: 5</p>
+    <p>O <code>if __name__ == "__main__":</code> (aula 100) faz o programa rodar quando é chamado pelo terminal, mas deixa você importar a função <code>principal</code> em outro arquivo sem rodar nada.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -86,29 +205,97 @@ Borda recheada: True</p>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva um programa com <code>sys.argv</code> que soma todos os números passados no terminal (<code>python somar.py 4 5 10</code> mostra <code>19</code>).</p>
+      <p><strong>1.</strong> Escreva um programa com <code>sys.argv</code> que soma todos os números passados no terminal (<code>py somar.py 4 5 10</code> mostra <code>19.0</code>). Simule o terminal com a lista <code>["somar.py", "4", "5", "10"]</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>import sys
+<pre class="codigo" data-executar="sim"><code>import sys
+
+sys.argv = ["somar.py", "4", "5", "10"]   # no terminal, apague esta linha
 
 numeros = [float(x) for x in sys.argv[1:]]
 print(sum(numeros))</code></pre>
+      <p class="saida">19.0</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Com <code>argparse</code>, crie um programa <code>conversor.py</code> que recebe uma temperatura em Celsius e a opção <code>--kelvin</code>. Sem a opção, mostra em Fahrenheit; com ela, em Kelvin. Teste com a lista <code>["30", "--kelvin"]</code>.</p>
+      <p><strong>2.</strong> Com <code>argparse</code>, crie um programa <code>conversor.py</code> que recebe uma temperatura em Celsius e a opção <code>--kelvin</code>. Sem a opção, mostra em Fahrenheit; com ela, em Kelvin. Teste com a lista <code>["30", "--kelvin"]</code> e depois com <code>["30"]</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>import argparse
+<pre class="codigo" data-executar="sim"><code>import argparse
 
-parser = argparse.ArgumentParser(description="Converte temperaturas")
+parser = argparse.ArgumentParser(prog="conversor.py", description="Converte temperaturas")
 parser.add_argument("celsius", type=float)
 parser.add_argument("--kelvin", action="store_true")
-args = parser.parse_args(["30", "--kelvin"])
 
-if args.kelvin:
-    print(args.celsius + 273.15, "K")
-else:
-    print(args.celsius * 9 / 5 + 32, "°F")</code></pre>
-      <p class="saida">303.15 K</p>
+for lista in (["30", "--kelvin"], ["30"]):
+    args = parser.parse_args(lista)
+    if args.kelvin:
+        print(args.celsius + 273.15, "K")
+    else:
+        print(args.celsius * 9 / 5 + 32, "°F")</code></pre>
+      <p class="saida">303.15 K<br>
+86.0 °F</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie um programa <code>dado.py</code> com a opção <code>--faces</code> (só aceita 4, 6, 12 ou 20; padrão 6) e <code>--vezes</code> (padrão 1). Sorteie com <code>random</code> usando <code>random.seed(1)</code> para o resultado ser sempre igual. Teste com <code>["--faces", "20", "--vezes", "3"]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import argparse
+import random
+
+parser = argparse.ArgumentParser(prog="dado.py", description="Joga dados")
+parser.add_argument("--faces", type=int, choices=[4, 6, 12, 20], default=6)
+parser.add_argument("--vezes", type=int, default=1)
+args = parser.parse_args(["--faces", "20", "--vezes", "3"])
+
+random.seed(1)
+for _ in range(args.vezes):
+    print(random.randint(1, args.faces))</code></pre>
+      <p class="saida">5<br>
+19<br>
+3</p>
+      <p>Repare que <code>type=int</code> vem antes de <code>choices</code>: primeiro o texto <code>"20"</code> vira o número <code>20</code>, depois o <code>argparse</code> confere se ele está na lista.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que acontece em cada caso, com o parser do exercício anterior? a) <code>py dado.py --faces 7</code>  b) <code>py dado.py --lados 6</code>  c) <code>py dado.py -h</code></p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">a) Erro: 7 não está nas escolhas. Mostra "invalid choice: '7' (choose from 4, 6, 12, 20)"<br>
+&nbsp;&nbsp;&nbsp;e encerra o programa.<br>
+b) Erro: "unrecognized arguments: --lados 6", porque essa opção não existe.<br>
+c) Mostra a ajuda automática (usage, a descrição e as opções) e encerra.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça um programa <code>lista.py</code> que recebe um ou mais nomes (<code>nargs="+"</code>) e a opção <code>--ordenar</code>. Mostre os nomes numerados, em ordem alfabética quando a opção for usada. Teste com <code>["Rui", "Ana", "Lia", "--ordenar"]</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import argparse
+
+parser = argparse.ArgumentParser(prog="lista.py")
+parser.add_argument("nomes", nargs="+")
+parser.add_argument("--ordenar", action="store_true")
+args = parser.parse_args(["Rui", "Ana", "Lia", "--ordenar"])
+
+nomes = sorted(args.nomes) if args.ordenar else args.nomes
+for numero, nome in enumerate(nomes, start=1):
+    print(f"{numero}. {nome}")</code></pre>
+      <p class="saida">1. Ana<br>
+2. Lia<br>
+3. Rui</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Usando <code>exit_on_error=False</code>, mostre a mensagem de erro que o <code>argparse</code> gera quando a idade não é um número inteiro (lista <code>["doze"]</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import argparse
+
+parser = argparse.ArgumentParser(prog="idade.py", exit_on_error=False)
+parser.add_argument("idade", type=int)
+
+try:
+    args = parser.parse_args(["doze"])
+    print("Idade:", args.idade)
+except argparse.ArgumentError as erro:
+    print("Não deu:", erro)</code></pre>
+      <p class="saida">Não deu: argument idade: invalid int value: 'doze'</p>
       </details>
     </div>
 

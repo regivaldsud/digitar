@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 114 · Rodando programas externos com subprocess — Curso de Python · DIGITAR</title>
-<meta name="description" content="Rode outros programas e comandos do sistema a partir do Python com subprocess.run e capture a saída deles.">
+<meta name="description" content="Rode outros programas e comandos do sistema a partir do Python com subprocess.run, capture a saída, trate erros e tempo esgotado sem os perigos do shell=True.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,15 +20,22 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Rodar um programa externo com <code>subprocess.run</code></li>
-        <li>Capturar a saída com <code>capture_output</code> e <code>text</code></li>
-        <li>Conferir se o programa deu certo pelo código de retorno</li>
+        <li>Rodar um programa externo com <code>subprocess.run</code> passando o comando como lista</li>
+        <li>Capturar a saída e os erros com <code>capture_output=True</code> e <code>text=True</code></li>
+        <li>Conferir se deu certo pelo <code>returncode</code> e com <code>check=True</code></li>
+        <li>Limitar o tempo de espera com <code>timeout</code></li>
+        <li>Entender por que evitar <code>shell=True</code> com textos que vêm de fora</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Chamando outros programas</h2>
-    <p>O Python pode rodar qualquer programa do computador, como se você digitasse no terminal. O jeito recomendado é <code>subprocess.run</code>, com o comando em forma de <strong>lista</strong>: primeiro o programa, depois os argumentos.</p>
+    <h2>Por que chamar outros programas</h2>
+    <p>Muita coisa útil já existe pronta como programa: o Git (aula 244), o compactador de arquivos, o conversor de vídeos, o próprio Python. Em vez de reescrever tudo, o seu script pode <strong>mandar esses programas trabalharem</strong> e depois ler o que eles responderam. É assim que se automatiza tarefas como "atualizar todos os repositórios" ou "converter todas as músicas de uma pasta".</p>
+    <p>O módulo <code>subprocess</code> (subprocesso = um programa rodando "debaixo" do seu) faz essa ponte. A função principal é <code>subprocess.run</code>.</p>
+    <p>Esta aula é para o computador: no navegador não existe "outro programa" para chamar. Copie os exemplos para um arquivo <code>.py</code> e rode com <code>python nome.py</code>.</p>
+
+    <h2>O comando como lista</h2>
+    <p>Você passa o comando em forma de <strong>lista</strong>: o primeiro item é o programa, os outros são os argumentos — exatamente as palavras que você digitaria no terminal, cada uma num item.</p>
 <pre class="codigo"><code>import subprocess
 import sys
 
@@ -42,27 +49,105 @@ print("Saída:", resultado.stdout.strip())</code></pre>
     <p class="saida">Código de retorno: 0<br>
 Saída: Oi, eu sou outro programa!</p>
     <ul>
-      <li><code>sys.executable</code> é o caminho do próprio Python, então o exemplo funciona em qualquer computador;</li>
-      <li><code>capture_output=True</code> guarda a saída em vez de mostrar na tela; <code>text=True</code> entrega como texto;</li>
-      <li><code>returncode</code> 0 quer dizer "deu certo"; outro número quer dizer erro.</li>
+      <li><code>sys.executable</code> é o caminho do próprio Python que está rodando; assim o exemplo funciona em Windows, Linux e macOS;</li>
+      <li><code>-c</code> manda o Python rodar o texto seguinte como código;</li>
+      <li><code>run</code> <strong>espera</strong> o outro programa terminar e devolve um objeto <code>CompletedProcess</code> com o resultado.</li>
     </ul>
+    <div class="dica"><strong>Dica:</strong> Se você quisesse rodar no terminal <code>python -c "print(2 + 3)"</code>, a lista seria <code>["python", "-c", "print(2 + 3)"]</code>. Repare que as aspas do terminal somem: cada item da lista já é uma "palavra" inteira, com espaços e tudo.</div>
 
-    <h2>Quando o programa falha</h2>
+    <h2>Capturando a saída</h2>
+    <p>Sem opções, o que o outro programa imprime vai direto para a tela, e o seu código não consegue ler. Com <code>capture_output=True</code>, a saída fica guardada em dois lugares:</p>
+    <ul>
+      <li><code>stdout</code> (saída padrão): o que foi impresso normalmente;</li>
+      <li><code>stderr</code> (saída de erros): as mensagens de erro e avisos.</li>
+    </ul>
+    <p>Com <code>text=True</code> elas chegam como <code>str</code>; sem ele, chegam como <code>bytes</code> (um texto com <code>b</code> na frente).</p>
+<pre class="codigo"><code>import subprocess
+import sys
+
+codigo = "print('linha 1'); print('linha 2'); print('linha 3')"
+r = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True)
+
+linhas = r.stdout.splitlines()
+print("Recebi", len(linhas), "linhas")
+for numero, linha in enumerate(linhas, start=1):
+    print(numero, "-&gt;", linha)
+
+sem_text = subprocess.run([sys.executable, "-c", "print('oi')"], capture_output=True)
+print(type(sem_text.stdout).__name__, sem_text.stdout.strip())</code></pre>
+    <p class="saida">Recebi 3 linhas<br>
+1 -&gt; linha 1<br>
+2 -&gt; linha 2<br>
+3 -&gt; linha 3<br>
+bytes b'oi'</p>
+    <p>Como a saída virou um texto comum, você usa tudo o que já sabe: <code>splitlines</code>, <code>split</code>, <code>in</code>, <code>int()</code>… É assim que um script "lê" a resposta de outro programa.</p>
+
+    <h2>Deu certo ou deu erro?</h2>
+    <p>Todo programa, ao terminar, devolve um número: o <strong>código de retorno</strong>. Por convenção, <code>0</code> quer dizer sucesso e qualquer outro número quer dizer que algo falhou.</p>
 <pre class="codigo"><code>import subprocess
 import sys
 
 resultado = subprocess.run([sys.executable, "-c", "1 / 0"], capture_output=True, text=True)
 print("Código de retorno:", resultado.returncode)
-print("Última linha do erro:", resultado.stderr.strip().splitlines()[-1])</code></pre>
+print("Saída normal vazia?", resultado.stdout == "")
+print("Última linha do erro:", resultado.stderr.strip().splitlines()[-1])
+
+ok = subprocess.run([sys.executable, "-c", "import sys; sys.exit(0)"])
+print("Programa que terminou bem:", ok.returncode)</code></pre>
     <p class="saida">Código de retorno: 1<br>
-Última linha do erro: ZeroDivisionError: division by zero</p>
-    <p>Com <code>check=True</code>, o <code>run</code> gera a exceção <code>subprocess.CalledProcessError</code> sozinho quando o programa falha — prático dentro de um <code>try</code> (aula 53).</p>
-    <p>Um uso comum é chamar o Git (aula 244) de dentro de um script:</p>
+Saída normal vazia? True<br>
+Última linha do erro: ZeroDivisionError: division by zero<br>
+Programa que terminou bem: 0</p>
+    <p>Repare que a falha do outro programa <strong>não</strong> derruba o seu: o <code>run</code> só conta o que aconteceu. Se você esquecer de olhar o <code>returncode</code>, o erro passa despercebido.</p>
+    <div class="atencao"><strong>Atenção:</strong> Um erro comum é achar que o <code>run</code> avisa sozinho quando o programa falha. Sem <code>check=True</code>, ele não avisa: você precisa conferir <code>resultado.returncode</code> (ou usar <code>check=True</code>, a seguir).</div>
+
+    <h2>check=True e timeout</h2>
+    <p>Com <code>check=True</code>, o <code>run</code> gera a exceção <code>subprocess.CalledProcessError</code> quando o código de retorno não é 0. Com <code>timeout=segundos</code>, ele desiste de esperar e gera <code>subprocess.TimeoutExpired</code> — útil para um programa que travou não travar o seu junto. Os dois combinam com <code>try</code>/<code>except</code> (aula 53):</p>
+<pre class="codigo"><code>import subprocess
+import sys
+
+def rodar(codigo, limite=5):
+    try:
+        r = subprocess.run([sys.executable, "-c", codigo], capture_output=True,
+                           text=True, check=True, timeout=limite)
+        return "ok: " + r.stdout.strip()
+    except subprocess.CalledProcessError as erro:
+        return f"falhou com código {erro.returncode}"
+    except subprocess.TimeoutExpired:
+        return f"demorou mais de {limite} s e foi interrompido"
+
+print(rodar("print(10 * 3)"))
+print(rodar("import sys; sys.exit(3)"))
+print(rodar("import time; time.sleep(10)", limite=1))</code></pre>
+    <p class="saida">ok: 30<br>
+falhou com código 3<br>
+demorou mais de 1 s e foi interrompido</p>
+    <p>Quando o tempo esgota, o <code>run</code> encerra o programa filho antes de gerar a exceção, então nada fica rodando escondido.</p>
+
+    <h2>Comandos do dia a dia</h2>
+    <p>Fora o Python, você pode chamar qualquer programa instalado. Um uso comum é o Git (aula 244) — este exemplo só funciona numa pasta que é um repositório Git:</p>
 <pre class="codigo"><code>import subprocess
 
-saida = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, check=True)
-print(saida.stdout or "Nada mudou.")</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> Evite <code>shell=True</code> com textos digitados pelo usuário: alguém pode digitar <code>; del *.*</code> e o comando extra roda junto. Passe o comando como lista, sem shell.</div>
+r = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, check=True)
+mudados = r.stdout.splitlines()
+print(len(mudados), "arquivo(s) mudado(s)")
+for linha in mudados:
+    print(linha)</code></pre>
+    <p class="saida">2 arquivo(s) mudado(s)<br>
+&nbsp;M notas.py<br>
+?? rascunho.txt</p>
+    <p>Se o programa não estiver instalado (ou o nome estiver errado), o erro é outro: <code>FileNotFoundError</code>, antes mesmo de o programa começar.</p>
+    <div class="atencao"><strong>Atenção:</strong> No Windows, comandos como <code>dir</code>, <code>copy</code> e <code>del</code> não são programas: eles fazem parte do Prompt de Comando. Por isso <code>subprocess.run(["dir"])</code> dá <code>FileNotFoundError</code>. Para listar e copiar arquivos, prefira <code>pathlib</code> e <code>shutil</code> (aulas 103 e 104), que funcionam em qualquer sistema.</div>
+
+    <h2>Por que evitar shell=True</h2>
+    <p>Existe a opção <code>shell=True</code>, que manda o comando inteiro, como um texto só, para o terminal do sistema interpretar. Parece prático, mas é perigoso quando parte do texto vem de fora (do usuário, de um arquivo, da internet):</p>
+<pre class="codigo"><code>import subprocess
+
+nome = input("Nome do arquivo: ")       # e se digitarem: x.txt &amp; del /q *.*
+subprocess.run("type " + nome, shell=True)                      # PERIGOSO
+subprocess.run(["python", "contar.py", nome], check=True)       # seguro</code></pre>
+    <p class="saida">(com shell=True, o terminal entende o &amp; e roda o segundo comando também)</p>
+    <p>No terminal, símbolos como <code>&amp;</code>, <code>;</code> e <code>|</code> separam comandos. Com <code>shell=True</code>, quem digitar <code>x.txt &amp; del /q *.*</code> faz o computador apagar arquivos. Com a lista e sem shell, o texto inteiro vira <strong>um único argumento</strong> e nada extra é executado. Esse tipo de ataque se chama <strong>injeção de comandos</strong>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -71,7 +156,7 @@ print(saida.stdout or "Nada mudou.")</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Rode, com <code>subprocess.run</code>, o Python mostrando a própria versão (<code>-V</code>) e imprima o resultado.</p>
+      <p><strong>1.</strong> Rode, com <code>subprocess.run</code>, o Python mostrando a própria versão (<code>-V</code>) e imprima só a primeira palavra do resultado.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>import subprocess
 import sys
@@ -79,14 +164,52 @@ import sys
 r = subprocess.run([sys.executable, "-V"], capture_output=True, text=True)
 print((r.stdout or r.stderr).split()[0])</code></pre>
       <p class="saida">Python</p>
-      <p>O comando <code>python -V</code> mostra algo como <code>Python 3.12.7</code>; aqui imprimimos só a primeira palavra para a saída ser a mesma em qualquer versão.</p>
+      <p>O comando <code>python -V</code> mostra algo como <code>Python 3.12.7</code>; imprimindo só a primeira palavra, a saída é a mesma em qualquer versão.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> O que significa <code>returncode</code> igual a 1?</p>
+      <p><strong>2.</strong> Rode um programa Python que imprime os números de 1 a 5 (um por linha), capture a saída e mostre a soma deles.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Que o programa terminou com erro. Por convenção, 0 é sucesso e qualquer<br>
-outro número indica algum tipo de falha.</p>
+<pre class="codigo"><code>import subprocess
+import sys
+
+r = subprocess.run([sys.executable, "-c", "for i in range(1, 6): print(i)"],
+                   capture_output=True, text=True, check=True)
+numeros = [int(linha) for linha in r.stdout.split()]
+print("Soma:", sum(numeros))</code></pre>
+      <p class="saida">Soma: 15</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva uma função <code>deu_certo(codigo)</code> que roda o texto <code>codigo</code> com o Python e devolve <code>True</code> se o programa terminou sem erro. Teste com <code>"print(1)"</code> e com <code>"x = 1 +"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import subprocess
+import sys
+
+def deu_certo(codigo):
+    r = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True)
+    return r.returncode == 0
+
+print(deu_certo("print(1)"))
+print(deu_certo("x = 1 +"))</code></pre>
+      <p class="saida">True<br>
+False</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> O que significa <code>returncode</code> igual a 1? E qual exceção aparece quando o programa não termina dentro do <code>timeout</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">returncode 1 quer dizer que o programa terminou com erro (por convenção,<br>
+0 é sucesso e qualquer outro número indica falha).<br>
+Quando o tempo acaba, o run encerra o programa e gera subprocess.TimeoutExpired.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que <code>subprocess.run(["python", "contar.py", nome])</code> é mais seguro que <code>subprocess.run("python contar.py " + nome, shell=True)</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Na lista, o nome inteiro vira um único argumento e nada mais é executado.<br>
+Com shell=True, o terminal interpreta o texto: se o nome tiver &amp;, ; ou |,<br>
+um segundo comando (que pode apagar arquivos) roda junto. Isso é injeção de comandos.</p>
       </details>
     </div>
 

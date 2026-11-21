@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 242 · CSS3: seletores, caixa, flexbox e grid — Curso de Python · DIGITAR</title>
-<meta name="description" content="Dê cores, espaços e layout às páginas com CSS3: seletores, modelo de caixa, flexbox e grid.">
+<meta name="description" content="Dê cores, espaços e layout às páginas com CSS3: seletores, especificidade, modelo de caixa, flexbox, grid e páginas que se adaptam ao celular.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -21,16 +21,20 @@
       <h2>Nesta aula você vai aprender</h2>
       <ul>
         <li>Ligar um arquivo CSS a uma página HTML</li>
-        <li>Usar seletores de tag, de classe e de id</li>
-        <li>Entender o modelo de caixa (margin, border, padding)</li>
+        <li>Usar seletores de tag, de classe e de id e entender quem "ganha" (especificidade)</li>
+        <li>Calcular o tamanho de uma caixa (width, padding, border, margin) e usar <code>box-sizing</code></li>
         <li>Organizar elementos lado a lado com flexbox e em grade com grid</li>
+        <li>Adaptar a página ao celular com media queries</li>
+        <li>Gerar CSS com Python a partir de um dicionário de cores</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que é CSS</h2>
-    <p>Se o HTML diz <strong>o que</strong> é cada parte da página, o <strong>CSS</strong> diz <strong>como</strong> ela aparece: cores, fontes, tamanhos, espaços e posição. O CSS fica num arquivo separado, <code>estilo.css</code>, ligado à página por uma linha dentro do <code>&lt;head&gt;</code>:</p>
+    <p>Se o HTML diz <strong>o que</strong> é cada parte da página, o <strong>CSS</strong> diz <strong>como</strong> ela aparece: cores, fontes, tamanhos, espaços e posição. Separar os dois é uma ótima ideia: para mudar a cor do site inteiro, você mexe num arquivo só.</p>
+    <p>O CSS fica num arquivo separado, <code>estilo.css</code>, ligado à página por uma linha dentro do <code>&lt;head&gt;</code>:</p>
 <pre class="codigo"><code>&lt;link rel="stylesheet" href="estilo.css"&gt;</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Se o CSS "não pega", quase sempre o caminho no <code>href</code> está errado ou o arquivo tem outro nome. O <code>estilo.css</code> precisa estar na mesma pasta do HTML (ou o <code>href</code> tem de apontar para a pasta certa). Aperte Ctrl + F5 para o navegador recarregar sem usar a cópia antiga.</div>
 
     <h2>Seletores e propriedades</h2>
     <p>Uma regra de CSS tem um <strong>seletor</strong> (quem vai mudar) e, entre chaves, <strong>propriedades</strong> com valores:</p>
@@ -42,25 +46,83 @@
 
 h1 { color: #0b6e4f; }            /* todas as tags h1 */
 .destaque { font-weight: bold; }   /* elementos com class="destaque" */
-#topo { padding: 16px; }           /* o elemento com id="topo" */</code></pre>
+#topo { padding: 16px; }           /* o elemento com id="topo" */
+nav a { text-decoration: none; }   /* links que estão dentro de nav */
+a:hover { color: tomato; }         /* link com o mouse em cima */</code></pre>
     <p>No HTML, a classe vai assim: <code>&lt;p class="destaque"&gt;Promoção!&lt;/p&gt;</code>. Uma classe pode ser usada em vários elementos; um id deve ser único na página.</p>
+    <p>As cores podem ser nomes (<code>tomato</code>), códigos <code>#rrggbb</code> (vermelho, verde e azul em hexadecimal, de <code>00</code> a <code>ff</code>) ou <code>rgb(255, 99, 71)</code>. O Python converte uma na outra facilmente:</p>
+<pre class="codigo" data-executar="sim"><code>def hex_para_rgb(cor):
+    cor = cor.lstrip("#")
+    return tuple(int(cor[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def rgb_para_hex(r, g, b):
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+print(hex_para_rgb("#0b6e4f"))
+print(rgb_para_hex(255, 99, 71))</code></pre>
+    <p class="saida">(11, 110, 79)<br>
+#ff6347</p>
     <div class="atencao"><strong>Atenção:</strong> Cada propriedade termina com ponto e vírgula. Esquecer o <code>;</code> faz o navegador ignorar a propriedade seguinte, sem mostrar erro nenhum. Os comentários do CSS são <code>/* assim */</code>, não <code>#</code>.</div>
+
+    <h2>Quem ganha? A especificidade</h2>
+    <p>Quando duas regras mudam a mesma propriedade do mesmo elemento, vence a mais <strong>específica</strong>. Uma conta simples ajuda: cada id vale 100 pontos, cada classe (ou <code>:hover</code>) vale 10 e cada tag vale 1. Empatou? Vence a regra que aparece por último no arquivo.</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+
+def pontos(seletor):
+    ids = len(re.findall(r"#[\w-]+", seletor))
+    classes = len(re.findall(r"[.:][\w-]+", seletor))
+    sem_ids_classes = re.sub(r"[#.:][\w-]+", " ", seletor)
+    tags = len(re.findall(r"[a-zA-Z][\w-]*", sem_ids_classes))
+    return ids * 100 + classes * 10 + tags
+
+
+regras = {"p": "preto", ".aviso": "laranja", "p.aviso": "vermelho", "#topo p": "azul"}
+for seletor, cor in regras.items():
+    print(f"{seletor:10} {pontos(seletor):3} pontos -&gt; {cor}")
+
+vencedora = max(regras, key=pontos)
+print("Um &lt;p class='aviso'&gt; dentro de #topo fica", regras[vencedora])</code></pre>
+    <p class="saida">p &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 pontos -&gt; preto<br>
+.aviso &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10 pontos -&gt; laranja<br>
+p.aviso &nbsp;&nbsp;&nbsp;&nbsp;11 pontos -&gt; vermelho<br>
+#topo p &nbsp;&nbsp;&nbsp;101 pontos -&gt; azul<br>
+Um &lt;p class='aviso'&gt; dentro de #topo fica azul</p>
+    <p>(É uma conta simplificada, mas vale para a grande maioria dos casos.)</p>
 
     <h2>O modelo de caixa</h2>
     <p>Todo elemento é uma caixa. De dentro para fora: o <strong>conteúdo</strong>, o <strong>padding</strong> (espaço interno), a <strong>border</strong> (borda) e a <strong>margin</strong> (espaço externo, que afasta das outras caixas).</p>
 <pre class="codigo"><code>.cartao {
+  width: 300px;
   padding: 16px;
   border: 2px solid #0b6e4f;
   border-radius: 8px;
   margin: 12px;
 }</code></pre>
+    <p>Uma surpresa comum: o <code>width</code> vale só para o conteúdo. O padding e a borda são somados <strong>dos dois lados</strong>. Com <code>box-sizing: border-box</code>, o <code>width</code> passa a incluir padding e borda — bem mais fácil de planejar:</p>
+<pre class="codigo" data-executar="sim"><code>def largura_na_tela(width, padding, border, box_sizing="content-box"):
+    if box_sizing == "border-box":
+        return width
+    return width + 2 * padding + 2 * border
+
+
+print("content-box:", largura_na_tela(300, 16, 2), "px")
+print("border-box: ", largura_na_tela(300, 16, 2, "border-box"), "px")
+print("Espaço ocupado com margin de 12px:", largura_na_tela(300, 16, 2) + 2 * 12, "px")</code></pre>
+    <p class="saida">content-box: 336 px<br>
+border-box: &nbsp;300 px<br>
+Espaço ocupado com margin de 12px: 360 px</p>
+    <div class="dica"><strong>Dica:</strong> Muitos sites começam o CSS com <code>* { box-sizing: border-box; }</code>, que vale para todos os elementos. Assim um cartão de <code>width: 300px</code> ocupa 300px mesmo, sem contas.</div>
 
     <h2>Flexbox e grid</h2>
-    <p>O <strong>flexbox</strong> coloca itens em linha (ou coluna) e distribui o espaço. O <strong>grid</strong> monta uma grade com linhas e colunas:</p>
+    <p>O <strong>flexbox</strong> coloca itens em linha (ou coluna) e distribui o espaço entre eles — ótimo para menus e fileiras de cartões. O <strong>grid</strong> monta uma grade com linhas e colunas — ótimo para galerias e para o esqueleto da página:</p>
 <pre class="codigo"><code>.menu {
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  gap: 12px;                       /* espaço entre os itens */
+  justify-content: space-between;  /* espalha na horizontal */
+  align-items: center;             /* centraliza na vertical */
 }
 
 .galeria {
@@ -68,29 +130,53 @@ h1 { color: #0b6e4f; }            /* todas as tags h1 */
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }</code></pre>
-    <p><code>1fr</code> quer dizer "uma fração do espaço livre": com <code>repeat(3, 1fr)</code>, a galeria fica com três colunas iguais.</p>
-    <div class="dica"><strong>Dica:</strong> Aperte F12 no navegador para abrir as <strong>Ferramentas do desenvolvedor</strong>. Lá você clica num elemento, vê o CSS dele e testa mudanças na hora, sem salvar nada.</div>
+    <p><code>1fr</code> quer dizer "uma fração do espaço livre". A conta que o navegador faz é esta:</p>
+<pre class="codigo" data-executar="sim"><code>def colunas_grid(largura, fracoes, gap):
+    livre = largura - gap * (len(fracoes) - 1)
+    total = sum(fracoes)
+    return [round(livre * f / total, 1) for f in fracoes]
+
+
+print("repeat(3, 1fr) em 600px:", colunas_grid(600, [1, 1, 1], 8))
+print("2fr 1fr em 600px:       ", colunas_grid(600, [2, 1], 8))</code></pre>
+    <p class="saida">repeat(3, 1fr) em 600px: [194.7, 194.7, 194.7]<br>
+2fr 1fr em 600px: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[394.7, 197.3]</p>
+    <div class="dica"><strong>Dica:</strong> Aperte F12 no navegador para abrir as <strong>Ferramentas do desenvolvedor</strong>. Lá você clica num elemento, vê o CSS dele, a caixa com margin e padding desenhados, e testa mudanças na hora, sem salvar nada.</div>
+
+    <h2>Página que se adapta ao celular</h2>
+    <p>Uma <strong>media query</strong> aplica regras só quando a tela tem certo tamanho. Assim a galeria tem 3 colunas no computador e 1 no celular:</p>
+<pre class="codigo"><code>.galeria { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 600px) {
+  .galeria { grid-template-columns: 1fr; }
+}</code></pre>
+    <p>Não esqueça a linha <code>&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;</code> no HTML (aula 241); sem ela, o celular finge ser uma tela larga e a media query não funciona.</p>
 
     <h2>Gerando o CSS com Python</h2>
-    <p>Um programa Python pode escrever o CSS também. Este cria um tema com as cores guardadas num dicionário:</p>
-<pre class="codigo"><code>from pathlib import Path
+    <p>Um programa Python pode escrever o CSS também. Guardando as cores num dicionário, dá para criar um tema claro e um escuro com o mesmo código:</p>
+<pre class="codigo" data-executar="sim"><code>temas = {
+    "claro": {"fundo": "#f4f7fb", "texto": "#222222", "destaque": "#0b6e4f"},
+    "escuro": {"fundo": "#121212", "texto": "#eeeeee", "destaque": "#4cd3a5"},
+}
 
-cores = {"fundo": "#f4f7fb", "texto": "#222222", "destaque": "#0b6e4f"}
 
-css = f"""body {{
+def gerar_css(cores):
+    return f"""body {{
   background: {cores["fundo"]};
   color: {cores["texto"]};
 }}
-h1 {{ color: {cores["destaque"]}; }}
-"""
-Path("estilo.css").write_text(css, encoding="utf-8")
-print(css)</code></pre>
-    <p class="saida">body {<br>
-&nbsp;&nbsp;background: #f4f7fb;<br>
-&nbsp;&nbsp;color: #222222;<br>
+h1 {{ color: {cores["destaque"]}; }}"""
+
+
+print("/* tema escuro */")
+print(gerar_css(temas["escuro"]))</code></pre>
+    <p class="saida">/* tema escuro */<br>
+body {<br>
+&nbsp;&nbsp;background: #121212;<br>
+&nbsp;&nbsp;color: #eeeeee;<br>
 }<br>
-h1 { color: #0b6e4f; }</p>
-    <p>Repare que, dentro de uma f-string, as chaves do CSS precisam ser dobradas (<code>{{</code> e <code>}}</code>); as chaves simples são do Python.</p>
+h1 { color: #4cd3a5; }</p>
+    <p>Repare que, dentro de uma f-string, as chaves do CSS precisam ser dobradas (<code>{{</code> e <code>}}</code>); as chaves simples são do Python. No seu computador, grave com <code>Path("estilo.css").write_text(css, encoding="utf-8")</code>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -108,25 +194,47 @@ h1 { color: #0b6e4f; }</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva o CSS de uma classe <code>.grade</code> que mostre os itens em 4 colunas iguais, com 10px de espaço entre eles.</p>
+      <p><strong>2.</strong> Escreva o CSS de uma classe <code>.grade</code> que mostre os itens em 4 colunas iguais, com 10px de espaço entre eles, e que vire 2 colunas em telas de até 700px.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>.grade {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .grade { grid-template-columns: repeat(2, 1fr); }
 }</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>3.</strong> Faça um programa Python que gere uma regra CSS <code>.botao-N</code> com uma cor diferente para cada cor da lista <code>["red", "green", "blue"]</code>, numerando de 1 a 3.</p>
+      <p><strong>3.</strong> Uma caixa tem <code>width: 200px</code>, <code>padding: 10px</code> e <code>border: 5px</code>. Quanto ela ocupa na tela com <code>content-box</code> e com <code>border-box</code>? Calcule com Python.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>cores = ["red", "green", "blue"]
+<pre class="codigo" data-executar="sim"><code>width, padding, border = 200, 10, 5
+
+print("content-box:", width + 2 * padding + 2 * border, "px")
+print("border-box:", width, "px (o conteúdo fica com", width - 2 * padding - 2 * border, "px)")</code></pre>
+      <p class="saida">content-box: 230 px<br>
+border-box: 200 px (o conteúdo fica com 170 px)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça um programa Python que gere uma regra CSS <code>.botao-N</code> com uma cor diferente para cada cor da lista <code>["red", "green", "blue"]</code>, numerando de 1 a 3.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cores = ["red", "green", "blue"]
 
 for numero, cor in enumerate(cores, start=1):
     print(f".botao-{numero} {{ background: {cor}; }}")</code></pre>
       <p class="saida">.botao-1 { background: red; }<br>
 .botao-2 { background: green; }<br>
 .botao-3 { background: blue; }</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Um <code>&lt;p id="aviso" class="alerta"&gt;</code> recebe <code>p { color: black }</code>, <code>.alerta { color: orange }</code> e <code>#aviso { color: red }</code>. De que cor ele fica, e por quê?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Vermelho. O seletor de id (#aviso) vale 100 pontos, mais que a classe (.alerta, 10)<br>
+e que a tag (p, 1). A ordem das regras no arquivo só desempata quando os pontos são iguais.</p>
       </details>
     </div>
 

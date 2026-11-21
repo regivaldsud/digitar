@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 196 · Empacotando o programa com PyInstaller — Curso de Python · DIGITAR</title>
-<meta name="description" content="Transforme seu programa PySide6 num executável .exe que roda em computadores sem Python.">
+<meta name="description" content="Transforme seu programa PySide6 num executável .exe que roda em computadores sem Python, com ícone, arquivos extras e sem a janela do terminal.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,44 +20,156 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Instalar e usar o PyInstaller</li>
-        <li>Gerar um executável com janela, sem terminal, e com ícone</li>
-        <li>Achar o resultado na pasta <code>dist</code> e resolver problemas comuns</li>
+        <li>Entender o que o PyInstaller faz e quando usá-lo</li>
+        <li>Gerar um executável com janela, sem terminal, com nome e ícone</li>
+        <li>Conhecer as pastas <code>build</code> e <code>dist</code> e o arquivo <code>.spec</code></li>
+        <li>Levar arquivos extras (como um <code>.ui</code>) e achá-los com <code>sys._MEIPASS</code></li>
+        <li>Descobrir e resolver os problemas mais comuns</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Para que serve</h2>
-    <p>Para usar seu programa, um amigo precisaria instalar Python e PySide6. O <strong>PyInstaller</strong> junta seu código, o Python e as bibliotecas num pacote que roda sozinho. No Windows, o resultado é um <code>.exe</code>.</p>
+    <p>Para usar a sua calculadora da aula 193, um amigo precisaria instalar o Python, criar um ambiente virtual e instalar o PySide6. Quase ninguém vai fazer isso.</p>
+    <p>O <strong>PyInstaller</strong> junta o seu código, o próprio Python e as bibliotecas que você usou num pacote que roda sozinho. No Windows, o resultado é um <code>.exe</code>: a pessoa dá dois cliques e o programa abre.</p>
+    <p>O PyInstaller não "traduz" o Python para outra linguagem. Ele empacota o interpretador junto com o seu código; por isso até um programa pequeno vira um arquivo de dezenas de megabytes.</p>
 
-    <h2>Gerando o executável</h2>
-    <p>No ambiente virtual do projeto:</p>
+    <h2>Instalando e gerando o executável</h2>
+    <p>No ambiente virtual do projeto (o mesmo em que o PySide6 está instalado):</p>
 <pre class="codigo"><code>pip install pyinstaller
 pyinstaller --onefile --windowed --name Calculadora --icon icone.ico calculadora.py</code></pre>
     <ul>
-      <li><code>--onefile</code> gera um único arquivo <code>.exe</code> (sem ela, sai uma pasta com vários arquivos, que abre mais rápido);</li>
-      <li><code>--windowed</code> não abre a janela preta do terminal junto;</li>
-      <li><code>--name</code> dá o nome do executável e <code>--icon</code> usa um ícone <code>.ico</code>.</li>
+      <li><code>--onefile</code> gera um único arquivo <code>.exe</code>; sem ela, sai uma pasta com o <code>.exe</code> e vários arquivos ao lado, que abre mais rápido;</li>
+      <li><code>--windowed</code> (ou <code>--noconsole</code>) não abre a janela preta do terminal junto com o programa;</li>
+      <li><code>--name</code> escolhe o nome do executável;</li>
+      <li><code>--icon</code> usa um ícone no formato <code>.ico</code> (o PyInstaller converte um <code>.png</code> se o pacote <code>Pillow</code> estiver instalado).</li>
     </ul>
-    <p class="saida">...<br>
-INFO: Building EXE from EXE-00.toc completed successfully.</p>
-    <p>O executável fica em <code>dist\Calculadora.exe</code>. As pastas <code>build</code> e o arquivo <code>Calculadora.spec</code> são de trabalho do PyInstaller.</p>
+    <p class="saida">INFO: PyInstaller: 6.x<br>
+INFO: Python: 3.12.x<br>
+...<br>
+INFO: Building EXE from EXE-00.toc completed successfully.<br>
+INFO: Build complete! The results are available in: C:\Users\ana\calculadora\dist</p>
+    <p>A primeira vez demora um ou dois minutos. As próximas são mais rápidas.</p>
+    <div class="dica"><strong>Dica:</strong> Antes de empacotar, rode o programa normalmente com <code>python calculadora.py</code> e confira que tudo funciona. O PyInstaller não conserta erros: ele empacota o erro junto.</div>
 
-    <h2>Arquivos extras, como o .ui</h2>
-    <p>Se o programa lê arquivos (um <code>.ui</code>, imagens), eles precisam ir junto. Use <code>--add-data "origem;destino"</code> e encontre o caminho certo no código:</p>
-<pre class="codigo"><code>pyinstaller --onefile --windowed --add-data "tela.ui;." main.py</code></pre>
+    <h2>O que aparece nas pastas</h2>
+    <p class="saida">calculadora/<br>
+├── calculadora.py<br>
+├── icone.ico<br>
+├── Calculadora.spec &nbsp;&nbsp;&lt;- a "receita" do empacotamento<br>
+├── build/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- rascunhos do PyInstaller (pode apagar)<br>
+└── dist/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── Calculadora.exe &nbsp;&nbsp;&lt;- é este que você entrega</p>
+    <p>Só o conteúdo de <code>dist</code> vai para o seu amigo. As pastas <code>build</code> e <code>dist</code> devem ir para o <code>.gitignore</code> (aula 244), porque são geradas de novo a cada empacotamento.</p>
+    <p>O <code>Calculadora.spec</code> é um arquivo Python que guarda todas as opções que você passou. Depois da primeira vez, você pode empacotar só com <code>pyinstaller Calculadora.spec</code>. Um trecho dele:</p>
+<pre class="codigo"><code># Calculadora.spec (trecho; gerado pelo PyInstaller)
+a = Analysis(
+    ["calculadora.py"],
+    datas=[("tela.ui", ".")],
+    hiddenimports=[],
+)
+exe = EXE(
+    pyz,
+    a.scripts,
+    name="Calculadora",
+    console=False,
+    icon=["icone.ico"],
+)</code></pre>
+    <p class="saida">(este arquivo não roda sozinho: é o PyInstaller que lê as suas opções)</p>
+    <p><code>console=False</code> é o mesmo que <code>--windowed</code>, e <code>datas</code> é a lista de arquivos extras, que você vai ver agora.</p>
+
+    <h2>Arquivos extras e o sys._MEIPASS</h2>
+    <p>Se o programa lê arquivos (um <code>.ui</code>, imagens, sons), eles precisam ir dentro do pacote. No Windows, use <code>--add-data "origem;destino"</code> (no Linux e no macOS o separador é <code>:</code>):</p>
+<pre class="codigo"><code>pyinstaller --onefile --windowed --add-data "tela.ui;." --add-data "imagens;imagens" main.py</code></pre>
+    <p>Aqui aparece uma pegadinha. Quando o <code>.exe</code> <code>--onefile</code> abre, ele descompacta tudo numa pasta temporária com um nome como <code>_MEI48213</code>, e o caminho dessa pasta fica em <code>sys._MEIPASS</code>. Além disso, o PyInstaller cria <code>sys.frozen = True</code> ("congelado"). Rodando como script normal, essas duas coisas não existem:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+
+print("Estou dentro de um executável?", getattr(sys, "frozen", False))
+print("Existe sys._MEIPASS?", hasattr(sys, "_MEIPASS"))</code></pre>
+    <p class="saida">Estou dentro de um executável? False<br>
+Existe sys._MEIPASS? False</p>
+    <p><code>getattr(objeto, "nome", padrao)</code> (aula 51) lê o atributo se ele existir, e devolve o padrão se não existir, sem dar erro.</p>
+    <p>Por isso, todo programa empacotado costuma ter uma função que monta o caminho certo nos dois casos. Esta simulação roda aqui e finge as duas situações:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+from pathlib import PureWindowsPath
+
+
+def caminho_recurso(nome, pasta_do_script):
+    if getattr(sys, "frozen", False):
+        base = PureWindowsPath(sys._MEIPASS)
+    else:
+        base = PureWindowsPath(pasta_do_script)
+    return base / nome
+
+
+script = r"C:\Users\ana\calculadora"
+print("Como script:   ", caminho_recurso("tela.ui", script))
+
+# fingindo que estamos dentro do .exe:
+sys.frozen = True
+sys._MEIPASS = r"C:\Users\ana\AppData\Local\Temp\_MEI48213"
+print("Como executável:", caminho_recurso("tela.ui", script))
+del sys.frozen, sys._MEIPASS</code></pre>
+    <p class="saida">Como script: &nbsp;&nbsp;&nbsp;C:\Users\ana\calculadora\tela.ui<br>
+Como executável: C:\Users\ana\AppData\Local\Temp\_MEI48213\tela.ui</p>
+    <p>No programa de verdade, a pasta do script vem de <code>__file__</code> (o caminho do próprio arquivo <code>.py</code>):</p>
 <pre class="codigo"><code>import sys
 from pathlib import Path
 
 
 def caminho_recurso(nome):
-    base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+    if getattr(sys, "frozen", False):
+        base = Path(sys._MEIPASS)
+    else:
+        base = Path(__file__).resolve().parent
     return base / nome
 
 
 print(caminho_recurso("tela.ui"))</code></pre>
-    <p>Dentro do executável <code>--onefile</code>, os arquivos são descompactados numa pasta temporária guardada em <code>sys._MEIPASS</code>.</p>
-    <div class="atencao"><strong>Atenção:</strong> O executável só roda no sistema em que foi gerado: um <code>.exe</code> feito no Windows não roda no Linux nem no macOS. E alguns antivírus desconfiam de executáveis novos; isso é comum e não quer dizer que seu programa tem vírus.</div>
+    <p class="saida">C:\Users\ana\calculadora\tela.ui</p>
+    <p>Rodando com <code>python main.py</code>, aparece a pasta do projeto. Dentro do <code>.exe</code>, aparece a pasta <code>_MEI...</code>. Use sempre <code>caminho_recurso("tela.ui")</code> no lugar de só <code>"tela.ui"</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Um caminho como <code>"tela.ui"</code>, sem pasta, é procurado na pasta <strong>de onde o programa foi aberto</strong>, que muda conforme o atalho. É por isso que tantos executáveis funcionam no seu computador e falham no do amigo.</div>
+
+    <h2>Empacotando com um script Python</h2>
+    <p>Em vez de decorar o comando, dá para guardar as opções num arquivo <code>empacotar.py</code> e chamar o PyInstaller pelo próprio Python:</p>
+<pre class="codigo"><code>import PyInstaller.__main__
+
+PyInstaller.__main__.run([
+    "calculadora.py",
+    "--onefile",
+    "--windowed",
+    "--name=Calculadora",
+    "--icon=icone.ico",
+    "--add-data=tela.ui;.",
+])</code></pre>
+<pre class="codigo"><code>python empacotar.py</code></pre>
+    <p class="saida">(mesmas mensagens INFO do comando; no fim aparece dist\Calculadora.exe)</p>
+    <p>Montar a lista de opções a partir de um dicionário ajuda a não esquecer nada. Este trecho só monta e mostra o comando, e roda aqui:</p>
+<pre class="codigo" data-executar="sim"><code>opcoes = {
+    "onefile": True,
+    "windowed": True,
+    "name": "Calculadora",
+    "icon": "icone.ico",
+}
+
+partes = ["pyinstaller"]
+for chave, valor in opcoes.items():
+    if valor is True:
+        partes.append(f"--{chave}")
+    else:
+        partes.append(f"--{chave} {valor}")
+partes.append("calculadora.py")
+print(" ".join(partes))</code></pre>
+    <p class="saida">pyinstaller --onefile --windowed --name Calculadora --icon icone.ico calculadora.py</p>
+
+    <h2>Problemas comuns</h2>
+    <ul>
+      <li><strong>O .exe abre e fecha na hora:</strong> gere de novo sem <code>--windowed</code> e rode o <code>.exe</code> pelo terminal; a mensagem de erro aparece lá.</li>
+      <li>**<code>FileNotFoundError</code> de um arquivo seu:** faltou <code>--add-data</code> ou faltou usar <code>caminho_recurso</code>.</li>
+      <li>**<code>ModuleNotFoundError</code> dentro do .exe:** algum módulo é importado de um jeito que o PyInstaller não percebeu; acrescente <code>--hidden-import nome_do_modulo</code>.</li>
+      <li><strong>O antivírus reclama:</strong> executáveis novos e sem assinatura digital costumam ser desconfiados; isso não quer dizer que o seu programa tem vírus.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> O executável só roda no sistema em que foi gerado: um <code>.exe</code> feito no Windows não roda no Linux nem no macOS. Para cada sistema, empacote nele mesmo.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -77,6 +189,49 @@ print(caminho_recurso("tela.ui"))</code></pre>
       <p class="saida">Gere de novo SEM a opção --windowed e rode o .exe pelo terminal (cmd).<br>
 Assim a mensagem de erro (o traceback) aparece no terminal. Um erro comum<br>
 é um arquivo extra (como tela.ui) que não foi incluído com --add-data.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O programa usa a pasta <code>sons</code> com vários <code>.wav</code>. Escreva o comando que leva a pasta inteira para dentro do executável, no Windows e no Linux.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>pyinstaller --onefile --windowed --add-data "sons;sons" jogo.py
+pyinstaller --onefile --windowed --add-data "sons:sons" jogo.py</code></pre>
+      <p>A primeira linha é para o Windows (separador <code>;</code>) e a segunda para Linux e macOS (separador <code>:</code>). No código, abra os arquivos com <code>caminho_recurso("sons/ponto.wav")</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Usando a simulação da aula, escreva <code>caminho_recurso</code> e mostre o caminho de <code>imagens/logo.png</code> como script (pasta <code>C:\jogo</code>) e como executável (<code>sys._MEIPASS</code> igual a <code>C:\Temp\_MEI777</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sys
+from pathlib import PureWindowsPath
+
+
+def caminho_recurso(nome, pasta_do_script):
+    if getattr(sys, "frozen", False):
+        base = PureWindowsPath(sys._MEIPASS)
+    else:
+        base = PureWindowsPath(pasta_do_script)
+    return base / nome
+
+
+print(caminho_recurso("imagens/logo.png", r"C:\jogo"))
+sys.frozen = True
+sys._MEIPASS = r"C:\Temp\_MEI777"
+print(caminho_recurso("imagens/logo.png", r"C:\jogo"))
+del sys.frozen, sys._MEIPASS</code></pre>
+      <p class="saida">C:\jogo\imagens\logo.png<br>
+C:\Temp\_MEI777\imagens\logo.png</p>
+      <p>O <code>PureWindowsPath</code> troca a barra <code>/</code> pela barra invertida do Windows sozinho.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Qual é a diferença entre gerar com <code>--onefile</code> e sem ela? Quando cada uma é melhor?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Com --onefile sai um único .exe: é fácil de mandar para alguém, mas demora um<br>
+pouco mais para abrir, porque descompacta tudo numa pasta temporária a cada vez.<br>
+Sem --onefile sai uma pasta (dist\Calculadora) com o .exe e vários arquivos:<br>
+abre mais rápido, mas você precisa entregar a pasta inteira (por exemplo,<br>
+compactada num .zip ou dentro de um instalador).</p>
       </details>
     </div>
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 152 · Estruturais: Adapter, Composite, Decorator, Facade, Proxy, Flyweight, Bridge — Curso de Python · DIGITAR</title>
-<meta name="description" content="Padrões que combinam objetos e classes em estruturas maiores, explicados com exemplos curtos.">
+<meta name="description" content="Padrões que encaixam objetos e classes em estruturas maiores — Adapter, Composite, Decorator, Facade, Proxy, Flyweight e Bridge — com exemplos executáveis em Python.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,181 +20,462 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Como adaptar um objeto a outra interface (Adapter)</li>
-        <li>Como tratar um grupo como se fosse um item só (Composite)</li>
-        <li>Como esconder um sistema complicado atrás de uma fachada (Facade)</li>
-        <li>A ideia de Decorator, Proxy, Flyweight e Bridge</li>
+        <li>Entender o que os padrões estruturais resolvem</li>
+        <li>Encaixar uma classe com formato diferente usando Adapter</li>
+        <li>Tratar uma coisa e um grupo de coisas do mesmo jeito com Composite</li>
+        <li>Acrescentar funções a um objeto sem mudar a classe com o padrão Decorator</li>
+        <li>Simplificar sistemas complicados com Facade e controlar o acesso com Proxy</li>
+        <li>Economizar memória com Flyweight e separar duas variações com Bridge</li>
       </ul>
     </div>
 
-    <h2>Adapter: o "benjamim" do código</h2>
-    <p>Sabe o adaptador de tomada de três pinos? O <strong>Adapter</strong> faz o mesmo com objetos: um termômetro antigo só fala em Fahrenheit, mas o seu programa espera Celsius.</p>
-<pre class="codigo" data-executar="sim"><code>class TermometroAmericano:
+    <h2>Para que servem os padrões estruturais</h2>
+    <p>Os padrões criacionais (aula 151) cuidam de <strong>criar</strong> objetos. Os estruturais cuidam de <strong>encaixá-los</strong>: como fazer peças que não foram pensadas juntas funcionarem juntas, como montar estruturas grandes a partir de peças pequenas e como colocar uma "camada" entre quem usa e quem faz o trabalho.</p>
+    <p>Quase todos usam a mesma ferramenta: um objeto que <strong>guarda outro</strong> dentro de si (composição, aula 75) e repassa os pedidos para ele, às vezes mudando alguma coisa no caminho.</p>
+
+    <h2>Adapter: o adaptador de tomada</h2>
+    <p>Problema: seu programa espera objetos com um certo método, mas você recebe uma classe pronta (de uma biblioteca, de um colega) com outro formato. Como um carregador de três pinos numa tomada de dois, você precisa de um <strong>adaptador</strong>.</p>
+<pre class="codigo" data-executar="sim"><code>class TocadorMP3:
+    def tocar(self, musica):
+        print(f"MP3 tocando {musica}")
+
+
+class ServicoDeStreaming:            # biblioteca pronta: não podemos mudar
+    def reproduzir_faixa(self, faixa_id, qualidade):
+        print(f"Streaming: faixa {faixa_id} em {qualidade}")
+
+
+class AdaptadorStreaming:
+    def __init__(self, servico):
+        self.servico = servico
+
+    def tocar(self, musica):          # o formato que o programa espera
+        self.servico.reproduzir_faixa(musica.lower().replace(" ", "-"), "alta")
+
+
+def tocar_playlist(tocador, musicas):
+    for m in musicas:
+        tocador.tocar(m)
+
+
+tocar_playlist(TocadorMP3(), ["Asa Branca"])
+tocar_playlist(AdaptadorStreaming(ServicoDeStreaming()), ["Asa Branca", "Garota de Ipanema"])</code></pre>
+    <p class="saida">MP3 tocando Asa Branca<br>
+Streaming: faixa asa-branca em alta<br>
+Streaming: faixa garota-de-ipanema em alta</p>
+    <p><code>tocar_playlist</code> não precisou mudar; o adaptador traduz <code>tocar(musica)</code> para <code>reproduzir_faixa(id, qualidade)</code>.</p>
+
+    <h2>Composite: um e muitos do mesmo jeito</h2>
+    <p>Problema: algumas coisas formam árvores — pastas com arquivos e outras pastas, um cardápio com seções e pratos, uma equipe com subequipes. Você quer perguntar "qual o tamanho?" sem se importar se é um item ou um grupo.</p>
+    <p>No Composite, o item simples e o grupo têm o <strong>mesmo método</strong>; o grupo só repassa a pergunta para os filhos e soma:</p>
+<pre class="codigo" data-executar="sim"><code>class Arquivo:
+    def __init__(self, nome, tamanho):
+        self.nome = nome
+        self.tamanho_kb = tamanho
+
+    def tamanho(self):
+        return self.tamanho_kb
+
+    def mostrar(self, nivel=0):
+        print("  " * nivel + f"{self.nome} ({self.tamanho()} KB)")
+
+
+class Pasta:
+    def __init__(self, nome, *itens):
+        self.nome = nome
+        self.itens = list(itens)
+
+    def tamanho(self):
+        return sum(item.tamanho() for item in self.itens)
+
+    def mostrar(self, nivel=0):
+        print("  " * nivel + f"{self.nome}/ ({self.tamanho()} KB)")
+        for item in self.itens:
+            item.mostrar(nivel + 1)
+
+
+escola = Pasta("escola",
+               Arquivo("horario.pdf", 120),
+               Pasta("matematica", Arquivo("lista1.pdf", 300), Arquivo("lista2.pdf", 250)),
+               Pasta("artes", Pasta("fotos", Arquivo("quadro.jpg", 900))))
+escola.mostrar()</code></pre>
+    <p class="saida">escola/ (1570 KB)<br>
+&nbsp;&nbsp;horario.pdf (120 KB)<br>
+&nbsp;&nbsp;matematica/ (550 KB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lista1.pdf (300 KB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lista2.pdf (250 KB)<br>
+&nbsp;&nbsp;artes/ (900 KB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fotos/ (900 KB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;quadro.jpg (900 KB)</p>
+    <p>Repare na recursão (aula 59): <code>Pasta.tamanho</code> chama <code>tamanho</code> dos filhos, que podem ser outras pastas.</p>
+
+    <h2>Decorator (o padrão): embrulhar para acrescentar</h2>
+    <p>Problema: você quer acrescentar extras a um objeto — leite e chantili no café, borda na pizza, registro de log numa mensagem — em qualquer combinação. Criar uma classe para cada combinação (<code>CafeComLeite</code>, <code>CafeComLeiteEChantili</code>…) explodiria.</p>
+    <p>O padrão Decorator <strong>embrulha</strong> o objeto num outro que tem os mesmos métodos, faz o seu extra e repassa o resto. Dá para embrulhar várias vezes:</p>
+<pre class="codigo" data-executar="sim"><code>class Cafe:
+    def preco(self):
+        return 5.00
+
+    def descricao(self):
+        return "café"
+
+
+class ComLeite:
+    def __init__(self, bebida):
+        self.bebida = bebida
+
+    def preco(self):
+        return self.bebida.preco() + 1.50
+
+    def descricao(self):
+        return self.bebida.descricao() + " + leite"
+
+
+class ComChantili:
+    def __init__(self, bebida):
+        self.bebida = bebida
+
+    def preco(self):
+        return self.bebida.preco() + 2.00
+
+    def descricao(self):
+        return self.bebida.descricao() + " + chantili"
+
+
+pedidos = [Cafe(), ComLeite(Cafe()), ComChantili(ComLeite(Cafe())), ComChantili(ComChantili(Cafe()))]
+for p in pedidos:
+    print(f"{p.descricao():&lt;32} R$ {p.preco():.2f}")</code></pre>
+    <p class="saida">café &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ 5.00<br>
+café + leite &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ 6.50<br>
+café + leite + chantili &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ 8.50<br>
+café + chantili + chantili &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ 9.00</p>
+    <div class="dica"><strong>Dica:</strong> O <code>@decorador</code> da aula 56 é a mesma ideia aplicada a <strong>funções</strong>: ele embrulha uma função numa outra que faz algo a mais e chama a original. O padrão Decorator faz isso com <strong>objetos</strong>, enquanto o programa roda.</div>
+<pre class="codigo" data-executar="sim"><code>import functools
+
+
+def com_aviso(funcao):
+    @functools.wraps(funcao)
+    def embrulho(*args):
+        print(f"[chamando {funcao.__name__}{args}]")
+        return funcao(*args)
+    return embrulho
+
+
+@com_aviso
+def somar(a, b):
+    return a + b
+
+
+print(somar(2, 3))</code></pre>
+    <p class="saida">[chamando somar(2, 3)]<br>
+5</p>
+
+    <h2>Facade: uma porta da frente simples</h2>
+    <p>Problema: para fazer uma tarefa, você precisa chamar várias partes de um sistema na ordem certa. Ligar o "modo cinema" em casa exige apagar luzes, ligar a TV, ligar o som, escolher a entrada… Quem usa não quer saber de nada disso.</p>
+    <p>A <strong>fachada</strong> é uma classe com poucos métodos simples que coordena tudo por trás:</p>
+<pre class="codigo" data-executar="sim"><code>class Luzes:
+    def apagar(self):
+        print("Luzes apagadas")
+
+
+class TV:
+    def ligar(self):
+        print("TV ligada")
+
+    def entrada(self, nome):
+        print(f"TV na entrada {nome}")
+
+
+class Som:
+    def ligar(self):
+        print("Som ligado")
+
+    def volume(self, valor):
+        print(f"Volume em {valor}")
+
+
+class CasaInteligente:
+    def __init__(self):
+        self.luzes, self.tv, self.som = Luzes(), TV(), Som()
+
+    def modo_cinema(self):
+        self.luzes.apagar()
+        self.tv.ligar()
+        self.tv.entrada("HDMI 1")
+        self.som.ligar()
+        self.som.volume(30)
+
+
+CasaInteligente().modo_cinema()</code></pre>
+    <p class="saida">Luzes apagadas<br>
+TV ligada<br>
+TV na entrada HDMI 1<br>
+Som ligado<br>
+Volume em 30</p>
+    <p>As partes continuam existindo para quem precisar delas; a fachada só oferece um caminho curto para o uso mais comum.</p>
+
+    <h2>Proxy: um intermediário que controla o acesso</h2>
+    <p>Problema: o objeto de verdade é caro de criar (uma imagem enorme), lento (busca na internet) ou precisa de proteção (só o professor pode ver as notas). O <strong>Proxy</strong> fica no lugar dele, com os mesmos métodos, e decide quando e se repassa o pedido.</p>
+<pre class="codigo" data-executar="sim"><code>class BoletimReal:
+    def __init__(self):
+        print("(carregando boletim do banco de dados...)")
+        self.notas = {"Ana": 9.0, "Caio": 6.5}
+
+    def nota(self, aluno):
+        return self.notas[aluno]
+
+
+class BoletimProtegido:
+    def __init__(self, usuario):
+        self.usuario = usuario
+        self._real = None                 # só cria quando precisar
+
+    def nota(self, aluno):
+        if self.usuario != "professora" and self.usuario != aluno:
+            return "acesso negado"
+        if self._real is None:
+            self._real = BoletimReal()
+        return self._real.nota(aluno)
+
+
+print("Caio vê a nota da Ana:", BoletimProtegido("Caio").nota("Ana"))
+prof = BoletimProtegido("professora")
+print("Professora vê a da Ana:", prof.nota("Ana"))
+print("Professora vê a do Caio:", prof.nota("Caio"))</code></pre>
+    <p class="saida">Caio vê a nota da Ana: acesso negado<br>
+(carregando boletim do banco de dados...)<br>
+Professora vê a da Ana: 9.0<br>
+Professora vê a do Caio: 6.5</p>
+    <p>Esse proxy faz duas coisas: protege (nega acesso) e adia a criação (o boletim só é carregado uma vez, no primeiro pedido permitido). Um proxy que guarda resultados para não repetir buscas lentas se chama <strong>cache</strong>; em Python, <code>functools.lru_cache</code> faz isso para funções.</p>
+
+    <h2>Flyweight: compartilhar o que é igual</h2>
+    <p>Problema: um jogo tem 10 000 árvores na floresta. Se cada árvore guardar sua própria cópia da textura, da cor e do nome da espécie, a memória acaba. Mas só a <strong>posição</strong> muda de uma árvore para outra!</p>
+    <p>O Flyweight ("peso-mosca") separa a parte que se repete (guardada uma vez e compartilhada) da parte que muda (guardada em cada objeto):</p>
+<pre class="codigo" data-executar="sim"><code>class Especie:
+    def __init__(self, nome, cor):
+        self.nome = nome
+        self.cor = cor
+
+
+class FabricaDeEspecies:
+    def __init__(self):
+        self._cache = {}
+
+    def pegar(self, nome, cor):
+        chave = (nome, cor)
+        if chave not in self._cache:
+            self._cache[chave] = Especie(nome, cor)
+        return self._cache[chave]
+
+
+class Arvore:
+    __slots__ = ("x", "y", "especie")   # cada árvore guarda só isto
+
+    def __init__(self, x, y, especie):
+        self.x, self.y, self.especie = x, y, especie
+
+
+fabrica = FabricaDeEspecies()
+floresta = []
+for i in range(10_000):
+    nome = ["ipê", "jatobá", "pau-brasil"][i % 3]
+    floresta.append(Arvore(i % 100, i // 100, fabrica.pegar(nome, "verde")))
+
+print("Árvores:", len(floresta))
+print("Espécies guardadas na memória:", len(fabrica._cache))
+print("Mesma espécie compartilhada?", floresta[0].especie is floresta[3].especie)</code></pre>
+    <p class="saida">Árvores: 10000<br>
+Espécies guardadas na memória: 3<br>
+Mesma espécie compartilhada? True</p>
+    <p>O Python faz algo parecido sozinho com textos curtos e números pequenos, que ele reaproveita em vez de criar de novo (por isso <code>is</code> às vezes dá <code>True</code> com eles, como viu na aula 21).</p>
+
+    <h2>Bridge: duas variações separadas</h2>
+    <p>Problema: você tem duas coisas que variam ao mesmo tempo. Controles remotos (simples, avançado) e aparelhos (TV, rádio). Com herança, seriam quatro classes: <code>ControleSimplesTV</code>, <code>ControleSimplesRadio</code>, <code>ControleAvancadoTV</code>… Com três aparelhos e três controles, nove!</p>
+    <p>O Bridge ("ponte") separa as duas hierarquias: o controle <strong>guarda</strong> um aparelho e conversa com ele por métodos simples. Qualquer controle funciona com qualquer aparelho:</p>
+<pre class="codigo" data-executar="sim"><code>class TV:
+    def __init__(self):
+        self.volume = 10
+
+    def nome(self):
+        return "TV"
+
+
+class Radio:
+    def __init__(self):
+        self.volume = 5
+
+    def nome(self):
+        return "Rádio"
+
+
+class ControleSimples:
+    def __init__(self, aparelho):
+        self.aparelho = aparelho          # a "ponte"
+
+    def mais_volume(self):
+        self.aparelho.volume += 1
+        print(f"{self.aparelho.nome()}: volume {self.aparelho.volume}")
+
+
+class ControleAvancado(ControleSimples):
+    def mudo(self):
+        self.aparelho.volume = 0
+        print(f"{self.aparelho.nome()}: mudo")
+
+
+ControleSimples(TV()).mais_volume()
+ControleSimples(Radio()).mais_volume()
+avancado = ControleAvancado(Radio())
+avancado.mais_volume()
+avancado.mudo()</code></pre>
+    <p class="saida">TV: volume 11<br>
+Rádio: volume 6<br>
+Rádio: volume 6<br>
+Rádio: mudo</p>
+    <p>Agora são 2 controles + 2 aparelhos = 4 classes, e cada novo aparelho funciona com todos os controles.</p>
+
+    <h2>Parecidos, mas diferentes</h2>
+    <p>Adapter, Decorator, Proxy e Facade "embrulham" um objeto. A diferença está na intenção:</p>
+    <ul>
+      <li><strong>Adapter</strong> muda o <strong>formato</strong> (os nomes dos métodos) para encaixar.</li>
+      <li><strong>Decorator</strong> mantém o formato e <strong>acrescenta</strong> comportamento; pode embrulhar várias vezes.</li>
+      <li><strong>Proxy</strong> mantém o formato e <strong>controla o acesso</strong> (protege, adia, guarda em cache).</li>
+      <li><strong>Facade</strong> cria uma porta <strong>nova e mais simples</strong> para um conjunto de objetos.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Não crie camadas "por precaução". Cada embrulho é mais um lugar para o leitor seguir. Use esses padrões quando o problema aparecer: uma biblioteca com formato diferente, combinações que explodem, acesso que precisa de controle.</div>
+
+    <div class="digite">
+      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
+<pre class="codigo"><code>pedido = ComChantili(ComLeite(Cafe()))</code></pre>
+    </div>
+
+    <h2>Exercícios</h2>
+    <div class="exercicio">
+      <p><strong>1.</strong> Você tem uma função <code>mostrar_temperatura(sensor)</code> que chama <code>sensor.celsius()</code>. Um sensor importado só tem o método <code>fahrenheit()</code>. Escreva um adaptador para usá-lo sem mudar a função. (Fórmula: C = (F − 32) × 5 / 9.)</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class SensorAmericano:
     def fahrenheit(self):
         return 86.0
 
 
 class AdaptadorCelsius:
-    def __init__(self, termometro):
-        self.termometro = termometro
+    def __init__(self, sensor):
+        self.sensor = sensor
 
     def celsius(self):
-        return (self.termometro.fahrenheit() - 32) * 5 / 9
+        return (self.sensor.fahrenheit() - 32) * 5 / 9
 
 
-t = AdaptadorCelsius(TermometroAmericano())
-print(f"{t.celsius():.1f} °C")</code></pre>
-    <p class="saida">30.0 °C</p>
-
-    <h2>Composite: grupo que se comporta como item</h2>
-    <p>Uma pasta pode ter arquivos e outras pastas. Com o <strong>Composite</strong>, pasta e arquivo têm o mesmo método <code>tamanho</code>, e a pasta soma os tamanhos dos filhos:</p>
-<pre class="codigo" data-executar="sim"><code>class Arquivo:
-    def __init__(self, nome, kb):
-        self.nome = nome
-        self.kb = kb
-
-    def tamanho(self):
-        return self.kb
+def mostrar_temperatura(sensor):
+    print(f"Temperatura: {sensor.celsius():.1f} °C")
 
 
-class Pasta:
-    def __init__(self, nome):
-        self.nome = nome
-        self.itens = []
-
-    def adicionar(self, item):
-        self.itens.append(item)
-
-    def tamanho(self):
-        return sum(item.tamanho() for item in self.itens)
-
-
-fotos = Pasta("fotos")
-fotos.adicionar(Arquivo("praia.jpg", 300))
-fotos.adicionar(Arquivo("festa.jpg", 450))
-escola = Pasta("escola")
-escola.adicionar(Arquivo("redacao.txt", 4))
-escola.adicionar(fotos)
-print(escola.tamanho(), "KB")</code></pre>
-    <p class="saida">754 KB</p>
-
-    <h2>Facade: um botão para tudo</h2>
-    <p>A <strong>Facade</strong> (fachada) oferece um método simples que chama várias partes complicadas por trás:</p>
-<pre class="codigo" data-executar="sim"><code>class Estoque:
-    def reservar(self, item):
-        print(f"Estoque: {item} reservado")
-
-
-class Pagamento:
-    def cobrar(self, valor):
-        print(f"Pagamento: R$ {valor:.2f} cobrado")
-
-
-class Entrega:
-    def agendar(self, cep):
-        print(f"Entrega: agendada para o CEP {cep}")
-
-
-class LojaFacade:
-    def comprar(self, item, valor, cep):
-        Estoque().reservar(item)
-        Pagamento().cobrar(valor)
-        Entrega().agendar(cep)
-
-
-LojaFacade().comprar("tênis", 199.9, "01310-100")</code></pre>
-    <p class="saida">Estoque: tênis reservado<br>
-Pagamento: R$ 199.90 cobrado<br>
-Entrega: agendada para o CEP 01310-100</p>
-
-    <h2>Decorator, Proxy, Flyweight e Bridge</h2>
-    <ul>
-      <li><strong>Decorator</strong>: embrulha um objeto para acrescentar comportamento sem mudar a classe. Os decoradores do Python (<code>@</code>, aula 56) seguem essa ideia com funções.</li>
-      <li><strong>Proxy</strong>: um "representante" que fica no lugar do objeto real, por exemplo para só carregar uma imagem pesada quando ela for usada, ou para checar permissão.</li>
-      <li><strong>Flyweight</strong>: compartilha partes iguais entre muitos objetos para economizar memória (as letras de um editor de texto, por exemplo).</li>
-      <li><strong>Bridge</strong>: separa duas dimensões que variam, como "tipo de controle remoto" e "aparelho", para combinar qualquer um com qualquer outro.</li>
-    </ul>
-    <p>Um Proxy simples que carrega o dado só na primeira vez:</p>
-<pre class="codigo" data-executar="sim"><code>class ImagemPesada:
-    def __init__(self, nome):
-        print("Carregando", nome, "...")
-        self.nome = nome
-
-
-class ProxyImagem:
-    def __init__(self, nome):
-        self.nome = nome
-        self._real = None
-
-    def mostrar(self):
-        if self._real is None:
-            self._real = ImagemPesada(self.nome)
-        print("Mostrando", self.nome)
-
-
-foto = ProxyImagem("mapa.png")
-foto.mostrar()
-foto.mostrar()</code></pre>
-    <p class="saida">Carregando mapa.png ...<br>
-Mostrando mapa.png<br>
-Mostrando mapa.png</p>
-    <div class="dica"><strong>Dica:</strong> Não decore os nomes dos padrões. Entenda o problema que cada um resolve; o nome vem com o uso.</div>
-
-    <div class="digite">
-      <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
-<pre class="codigo"><code>return sum(item.tamanho() for item in self.itens)</code></pre>
-    </div>
-
-    <h2>Exercícios</h2>
-    <div class="exercicio">
-      <p><strong>1.</strong> Crie um adaptador <code>AdaptadorKm</code> para um objeto <code>GpsAmericano</code> cujo método <code>milhas()</code> devolve 10. O adaptador deve ter o método <code>km()</code> (1 milha = 1,609 km).</p>
-      <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class GpsAmericano:
-    def milhas(self):
-        return 10
-
-
-class AdaptadorKm:
-    def __init__(self, gps):
-        self.gps = gps
-
-    def km(self):
-        return self.gps.milhas() * 1.609
-
-
-print(f"{AdaptadorKm(GpsAmericano()).km():.2f} km")</code></pre>
-      <p class="saida">16.09 km</p>
+mostrar_temperatura(AdaptadorCelsius(SensorAmericano()))</code></pre>
+      <p class="saida">Temperatura: 30.0 °C</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Usando as classes <code>Arquivo</code> e <code>Pasta</code> do exemplo, monte uma pasta <code>musicas</code> com dois arquivos de 3000 KB e 4500 KB e mostre o tamanho total.</p>
+      <p><strong>2.</strong> Use Composite para um cardápio: <code>Prato(nome, preco)</code> e <code>Combo(nome, *itens)</code>, ambos com <code>preco()</code>. O combo custa a soma dos itens com 10% de desconto. Mostre o preço de um combo com hambúrguer (R$ 25), batata (R$ 12) e um combo interno de refri (R$ 8) e sorvete (R$ 10).</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class Arquivo:
-    def __init__(self, nome, kb):
+<pre class="codigo" data-executar="sim"><code>class Prato:
+    def __init__(self, nome, preco):
         self.nome = nome
-        self.kb = kb
+        self._preco = preco
 
-    def tamanho(self):
-        return self.kb
+    def preco(self):
+        return self._preco
 
 
-class Pasta:
-    def __init__(self, nome):
+class Combo:
+    def __init__(self, nome, *itens):
         self.nome = nome
-        self.itens = []
+        self.itens = itens
 
-    def adicionar(self, item):
-        self.itens.append(item)
-
-    def tamanho(self):
-        return sum(item.tamanho() for item in self.itens)
+    def preco(self):
+        return sum(i.preco() for i in self.itens) * 0.9
 
 
-musicas = Pasta("musicas")
-musicas.adicionar(Arquivo("samba.mp3", 3000))
-musicas.adicionar(Arquivo("forro.mp3", 4500))
-print(musicas.tamanho(), "KB")</code></pre>
-      <p class="saida">7500 KB</p>
+sobremesa = Combo("Refri e sorvete", Prato("Refri", 8), Prato("Sorvete", 10))
+grande = Combo("Combo grande", Prato("Hambúrguer", 25), Prato("Batata", 12), sobremesa)
+print(f"{grande.nome}: R$ {grande.preco():.2f}")</code></pre>
+      <p class="saida">Combo grande: R$ 47.88</p>
+      <p>O combo interno já tem desconto e, dentro do combo grande, recebe mais 10%.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie decoradores (o padrão) para mensagens: <code>Mensagem(texto)</code> com o método <code>mostrar()</code>, e os embrulhos <code>EmMaiusculas</code> e <code>ComEmoji</code> (acrescenta <code>" :)"</code> no fim). Mostre <code>ComEmoji(EmMaiusculas(Mensagem("bom dia")))</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Mensagem:
+    def __init__(self, texto):
+        self.texto = texto
+
+    def mostrar(self):
+        return self.texto
+
+
+class EmMaiusculas:
+    def __init__(self, msg):
+        self.msg = msg
+
+    def mostrar(self):
+        return self.msg.mostrar().upper()
+
+
+class ComEmoji:
+    def __init__(self, msg):
+        self.msg = msg
+
+    def mostrar(self):
+        return self.msg.mostrar() + " :)"
+
+
+print(ComEmoji(EmMaiusculas(Mensagem("bom dia"))).mostrar())
+print(EmMaiusculas(ComEmoji(Mensagem("bom dia"))).mostrar())</code></pre>
+      <p class="saida">BOM DIA :)<br>
+BOM DIA :)</p>
+      <p>A ordem dos embrulhos pode mudar o resultado — igual à ordem dos <code>@decoradores</code> da aula 56.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva um proxy de cache para uma busca lenta: <code>BuscaDeCep</code> conta quantas vezes foi chamada; <code>BuscaComCache</code> guarda os resultados num dicionário. Busque o mesmo CEP três vezes e mostre que a busca real só aconteceu uma vez.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class BuscaDeCep:
+    def __init__(self):
+        self.chamadas = 0
+
+    def cidade(self, cep):
+        self.chamadas += 1
+        return {"40000-000": "Salvador", "69000-000": "Manaus"}.get(cep, "?")
+
+
+class BuscaComCache:
+    def __init__(self, real):
+        self.real = real
+        self.cache = {}
+
+    def cidade(self, cep):
+        if cep not in self.cache:
+            self.cache[cep] = self.real.cidade(cep)
+        return self.cache[cep]
+
+
+real = BuscaDeCep()
+busca = BuscaComCache(real)
+for _ in range(3):
+    print(busca.cidade("40000-000"))
+print("Buscas reais:", real.chamadas)</code></pre>
+      <p class="saida">Salvador<br>
+Salvador<br>
+Salvador<br>
+Buscas reais: 1</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Qual é a diferença de intenção entre Adapter, Decorator e Facade?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Adapter: troca o formato de um objeto para ele encaixar onde se espera outro formato.<br>
+Decorator: mantém o mesmo formato e acrescenta comportamento, podendo embrulhar várias vezes.<br>
+Facade: oferece uma porta nova e simples para usar várias partes de um sistema de uma vez.</p>
       </details>
     </div>
 

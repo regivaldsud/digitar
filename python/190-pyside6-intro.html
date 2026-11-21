@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 190 · Instalação, QApplication, QWidget, QPushButton — Curso de Python · DIGITAR</title>
-<meta name="description" content="Instale o PySide6 e abra sua primeira janela com um botão, rodando o Python no seu computador.">
+<meta name="description" content="Instale o PySide6, entenda o laço de eventos e abra sua primeira janela com um botão que responde ao clique.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,41 +20,105 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Instalar o PySide6 dentro de um ambiente virtual</li>
-        <li>Entender o papel de QApplication, QWidget e QPushButton</li>
-        <li>Abrir uma janela e entender o laço de eventos com <code>app.exec()</code></li>
+        <li>Saber o que é o PySide6 e por que programas com janela funcionam de outro jeito</li>
+        <li>Instalar o PySide6 dentro de um ambiente virtual e rodar um programa com janela</li>
+        <li>Entender o papel de <code>QApplication</code>, <code>QWidget</code> e <code>QPushButton</code></li>
+        <li>Entender o <strong>laço de eventos</strong> iniciado por <code>app.exec()</code></li>
+        <li>Ligar o clique de um botão a uma função com <code>clicked.connect</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que é o PySide6</h2>
-    <p>Até agora, seus programas conversavam com você pelo terminal. O <strong>PySide6</strong> é uma biblioteca que permite criar programas com <strong>janelas, botões e caixas de texto</strong>, como os aplicativos que você usa no dia a dia. Ele é a versão oficial para Python do <strong>Qt 6</strong>, um conjunto de ferramentas usado em programas famosos.</p>
-    <p>Janelas não funcionam no navegador, por isso esta aula (e todo este módulo) é feita no seu computador.</p>
+    <p>Até agora, seus programas conversavam com você pelo terminal: escreviam com <code>print</code> e liam com <code>input</code>. Os aplicativos que você usa no dia a dia têm <strong>janelas, botões e caixas de texto</strong>. O <strong>PySide6</strong> é a biblioteca que deixa o Python criar esse tipo de programa.</p>
+    <p>Ele é a versão oficial para Python do <strong>Qt 6</strong>, um conjunto de ferramentas usado em programas famosos (o VLC, partes do KDE no Linux e muitos programas de engenharia). O mesmo código roda no Windows, no Linux e no macOS.</p>
+    <p>Janelas de verdade não abrem dentro do navegador, por isso todo este módulo é feito no seu computador. Mesmo assim, a aula tem exemplos com o botão Executar que mostram, só com Python puro, as ideias que o Qt usa por baixo.</p>
 
     <h2>Instalando</h2>
-    <p>Crie uma pasta para o projeto, ative um ambiente virtual (aula 60) e instale o pacote:</p>
+    <p>Crie uma pasta para o projeto, crie e ative um ambiente virtual (aula 60) e instale o pacote. No Windows:</p>
 <pre class="codigo"><code>mkdir janelas
 cd janelas
-python -m venv .venv
+py -m venv .venv
 .venv\Scripts\activate
-pip install pyside6</code></pre>
-    <div class="dica"><strong>Dica:</strong> No Linux e no macOS, o comando de ativação é <code>source .venv/bin/activate</code>.</div>
+py -m pip install pyside6</code></pre>
+    <p>No Linux e no macOS:</p>
+<pre class="codigo"><code>mkdir janelas
+cd janelas
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install pyside6</code></pre>
+    <p>O download tem algumas centenas de megabytes, porque traz o Qt inteiro junto. Para conferir se deu certo:</p>
+<pre class="codigo"><code>python -c "import PySide6; print(PySide6.__version__)"</code></pre>
+    <div class="dica"><strong>Dica:</strong> No VS Code, escolha o Python do <code>.venv</code> (canto inferior direito, ou <strong>Ctrl+Shift+P → Python: Select Interpreter</strong>). Se o editor sublinhar <code>PySide6</code> em vermelho, quase sempre é porque ele está usando outro Python.</div>
+
+    <h2>Programa de terminal x programa de eventos</h2>
+    <p>Um programa de terminal segue uma receita de cima para baixo e termina. Um programa com janela é diferente: ele mostra a tela e fica <strong>esperando</strong> você fazer alguma coisa — clicar, digitar, arrastar, fechar. Cada uma dessas ações é um <strong>evento</strong>.</p>
+    <p>Quem fica esperando e distribuindo os eventos é o <strong>laço de eventos</strong> (*event loop*). Veja uma simulação, em Python puro, de como ele funciona por dentro:</p>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+# os eventos que o usuário "fez", na ordem
+fila = deque(["clique no botão", "tecla A", "clique no botão", "fechar janela"])
+
+cliques = 0
+while fila:
+    evento = fila.popleft()
+    print("Evento recebido:", evento)
+    if evento == "clique no botão":
+        cliques += 1
+        print("  -&gt; respondendo ao clique número", cliques)
+    elif evento == "fechar janela":
+        print("  -&gt; fim do laço, o programa termina")
+        break</code></pre>
+    <p class="saida">Evento recebido: clique no botão<br>
+&nbsp;&nbsp;-&gt; respondendo ao clique número 1<br>
+Evento recebido: tecla A<br>
+Evento recebido: clique no botão<br>
+&nbsp;&nbsp;-&gt; respondendo ao clique número 2<br>
+Evento recebido: fechar janela<br>
+&nbsp;&nbsp;-&gt; fim do laço, o programa termina</p>
+    <p>No Qt, você não escreve esse <code>while</code>: ele já vem pronto dentro de <code>app.exec()</code>. A sua parte é dizer <strong>o que fazer</strong> quando cada evento acontecer.</p>
 
     <h2>Sua primeira janela</h2>
-    <p>Todo programa Qt precisa de exatamente um objeto <strong>QApplication</strong>. Ele cuida do teclado, do mouse e da conversa com o sistema operacional. Um <strong>QWidget</strong> é qualquer pedaço de tela; sozinho, ele já é uma janela vazia.</p>
+    <p>Todo programa Qt precisa de <strong>exatamente um</strong> objeto <code>QApplication</code>. Ele cuida do teclado, do mouse, do laço de eventos e da conversa com o sistema operacional. Um <code>QWidget</code> é qualquer pedaço de tela; quando ele não está dentro de nada, vira uma janela.</p>
+    <p>Salve como <code>janela.py</code> e rode com <code>python janela.py</code> (com o <code>.venv</code> ativado):</p>
 <pre class="codigo"><code>import sys
 from PySide6.QtWidgets import QApplication, QWidget
 
+app = QApplication(sys.argv)          # 1. cria o aplicativo
+janela = QWidget()                    # 2. cria um widget (sem pai = janela)
+janela.setWindowTitle("Minha primeira janela")
+janela.resize(400, 200)               # largura, altura em pixels
+janela.show()                         # 3. mostra na tela
+sys.exit(app.exec())                  # 4. começa o laço de eventos</code></pre>
+    <p class="saida">Abre uma janela vazia de 400×200 pixels com o título "Minha primeira janela".<br>
+O terminal fica parado (esperando) até você fechar a janela; aí o programa termina.</p>
+    <ul>
+      <li><code>QApplication(sys.argv)</code> recebe os argumentos da linha de comando (aula 110); o Qt usa alguns deles.</li>
+      <li><code>show()</code> só pede para mostrar; a janela aparece de verdade quando o laço de eventos começa.</li>
+      <li><code>app.exec()</code> só termina quando a última janela é fechada. <code>sys.exit(...)</code> devolve ao sistema o código de saída.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Se você esquecer o <code>app.exec()</code>, a janela pisca e some na hora: o programa chega ao fim do arquivo e termina antes de você conseguir ver qualquer coisa.</div>
+
+    <h2>Widgets dentro de widgets</h2>
+    <p>Um widget pode ficar <strong>dentro</strong> de outro. Quem fica por fora é o <strong>pai</strong> (*parent*). Quando você passa a janela como pai do botão, o botão é desenhado dentro dela:</p>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import QApplication, QWidget, QPushButton
+
 app = QApplication(sys.argv)
 janela = QWidget()
-janela.setWindowTitle("Minha primeira janela")
-janela.resize(400, 200)
+janela.setWindowTitle("Botão dentro da janela")
+janela.resize(300, 150)
+
+botao = QPushButton("Eu moro na janela", janela)   # janela é o pai
+botao.move(70, 50)                                 # posição x, y dentro do pai
+
 janela.show()
 sys.exit(app.exec())</code></pre>
-    <p>Salve como <code>janela.py</code> e rode com <code>python janela.py</code>. A linha <code>app.exec()</code> inicia o <strong>laço de eventos</strong>: o programa fica esperando você clicar, digitar ou fechar a janela. Quando você fecha, <code>exec()</code> termina e o programa acaba.</p>
+    <p class="saida">Abre uma janela de 300×150 com um botão "Eu moro na janela" perto do centro.</p>
+    <p>Na próxima aula você vai trocar o <code>move</code> por <strong>layouts</strong>, que arrumam tudo sozinhos. Por enquanto, guarde a ideia: os widgets formam uma árvore, com a janela na raiz.</p>
 
     <h2>Um botão que faz alguma coisa</h2>
-    <p>O <strong>QPushButton</strong> é um botão. Quando ele é clicado, emite o sinal <code>clicked</code>, que podemos ligar a uma função com <code>connect</code>:</p>
+    <p>Quando você clica num <code>QPushButton</code>, ele <strong>emite o sinal</strong> <code>clicked</code>. Com <code>connect</code>, você diz qual função deve rodar quando isso acontecer:</p>
 <pre class="codigo"><code>import sys
 from PySide6.QtWidgets import QApplication, QPushButton
 
@@ -65,14 +129,27 @@ def dizer_oi():
 
 app = QApplication(sys.argv)
 botao = QPushButton("Clique aqui")
-botao.clicked.connect(dizer_oi)
+botao.clicked.connect(dizer_oi)   # sem parênteses!
 botao.resize(250, 80)
 botao.show()
 sys.exit(app.exec())</code></pre>
-    <p class="saida">Oi! Você clicou no botão.<br>
+    <p class="saida">Abre uma janela que é só o botão "Clique aqui". A cada clique, aparece no terminal:<br>
 Oi! Você clicou no botão.</p>
-    <p>A mensagem aparece no terminal a cada clique.</p>
-    <div class="atencao"><strong>Atenção:</strong> Passe a função <strong>sem parênteses</strong> para o <code>connect</code>: <code>connect(dizer_oi)</code>. Com parênteses, <code>dizer_oi()</code> seria chamada na hora, uma vez só, e o botão ficaria sem ação.</div>
+    <p>Por que <strong>sem parênteses</strong>? Porque você não quer rodar a função agora: quer entregar a função para o Qt guardar e chamar depois. Veja a diferença em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>def dizer_oi():
+    print("Oi!")
+    return "pronto"
+
+guardada = dizer_oi        # guarda a função (nada é impresso)
+print(guardada)            # é um objeto função
+
+resultado = dizer_oi()     # com parênteses: roda agora
+print(resultado)           # o que fica guardado é o retorno, não a função</code></pre>
+    <p class="saida">&lt;function dizer_oi at 0x0000022902DCA3E0&gt;<br>
+Oi!<br>
+pronto</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>botao.clicked.connect(dizer_oi())</code> é um erro clássico: a função roda <strong>uma vez</strong>, na hora em que o programa abre, e o <code>connect</code> recebe o retorno dela (<code>None</code>). O PySide6 reclama na hora: <code>TypeError: Expected signal or callable, got "NoneType"</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Crie um único <code>QApplication</code> por programa. Criar um segundo dá o erro <code>RuntimeError: libshiboken: Please destroy the QApplication singleton before creating a new QApplication instance.</code></div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -92,6 +169,7 @@ janela.setWindowTitle("Lanchonete do Zé")
 janela.resize(500, 300)
 janela.show()
 sys.exit(app.exec())</code></pre>
+      <p>Ao rodar, aparece uma janela vazia de 500×300 com esse título.</p>
       </details>
     </div>
     <div class="exercicio">
@@ -106,6 +184,62 @@ botao.clicked.connect(app.quit)
 botao.show()
 sys.exit(app.exec())</code></pre>
       <p>Repare: <code>app.quit</code> vai sem parênteses, igual a qualquer função passada para <code>connect</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Coloque dois botões dentro de uma janela de 300×200: "Oi" na posição (20, 20) e "Tchau" na posição (20, 80). Cada um deve imprimir uma mensagem diferente no terminal.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import sys
+from PySide6.QtWidgets import QApplication, QWidget, QPushButton
+
+
+def oi():
+    print("Oi!")
+
+
+def tchau():
+    print("Tchau!")
+
+
+app = QApplication(sys.argv)
+janela = QWidget()
+janela.resize(300, 200)
+
+botao_oi = QPushButton("Oi", janela)
+botao_oi.move(20, 20)
+botao_oi.clicked.connect(oi)
+
+botao_tchau = QPushButton("Tchau", janela)
+botao_tchau.move(20, 80)
+botao_tchau.clicked.connect(tchau)
+
+janela.show()
+sys.exit(app.exec())</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Na simulação do laço de eventos, acrescente o evento "tecla B" e faça o programa contar quantas teclas foram apertadas (eventos que começam com "tecla").</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import deque
+
+fila = deque(["tecla A", "clique no botão", "tecla B", "fechar janela"])
+teclas = 0
+while fila:
+    evento = fila.popleft()
+    if evento.startswith("tecla"):
+        teclas += 1
+    elif evento == "fechar janela":
+        break
+print("Teclas apertadas:", teclas)</code></pre>
+      <p class="saida">Teclas apertadas: 2</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Um colega escreveu um programa que cria o <code>QApplication</code>, cria um <code>QWidget</code>, chama <code>janela.show()</code> e termina ali. Ele diz que "a janela não aparece". Qual é o problema?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Faltou iniciar o laço de eventos no final: sys.exit(app.exec()).<br>
+Sem ele, o programa chega ao fim do arquivo e termina logo depois do show(),<br>
+e a janela some antes de aparecer.</p>
       </details>
     </div>
 

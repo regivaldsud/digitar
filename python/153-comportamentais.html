@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 153 · Comportamentais: Strategy, Observer, Command, State, Template Method, Iterator, Chain of Responsibility, Mediator, Memento, Visitor — Curso de Python · DIGITAR</title>
-<meta name="description" content="Padrões que organizam como os objetos conversam e dividem tarefas, com exemplos curtos.">
+<meta name="description" content="Padrões que organizam como os objetos conversam e dividem tarefas — Strategy, Observer, Command, State, Template Method, Iterator, Chain of Responsibility, Mediator, Memento e Visitor — com exemplos executáveis.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,39 +20,53 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Trocar o algoritmo em tempo de execução (Strategy)</li>
-        <li>Avisar vários interessados quando algo muda (Observer)</li>
-        <li>Guardar ações para desfazer (Command e Memento)</li>
-        <li>Uma visão geral dos outros padrões comportamentais</li>
+        <li>Entender o que os padrões comportamentais resolvem</li>
+        <li>Trocar o jeito de fazer algo com Strategy (inclusive usando só funções)</li>
+        <li>Avisar vários interessados com Observer e guardar ações com Command, com desfazer</li>
+        <li>Mudar o comportamento conforme o estado com State e fixar o roteiro com Template Method</li>
+        <li>Percorrer, encaminhar e coordenar com Iterator, Chain of Responsibility e Mediator</li>
+        <li>Salvar e restaurar estados com Memento e separar operações com Visitor</li>
       </ul>
     </div>
 
-    <h2>Strategy: trocar a estratégia</h2>
-    <p>No Python, funções são valores (aula 45), então a <strong>Strategy</strong> fica bem simples: passe a função que faz o cálculo.</p>
-<pre class="codigo" data-executar="sim"><code>def sem_desconto(valor):
-    return valor
+    <h2>Para que servem os padrões comportamentais</h2>
+    <p>Os padrões comportamentais cuidam de <strong>quem faz o quê</strong> e de <strong>como os objetos conversam</strong>. Eles evitam dois problemas comuns: funções gigantes cheias de <code>if</code> que tentam decidir tudo, e objetos que precisam conhecer todos os outros.</p>
+    <p>São dez padrões nesta aula. Você não precisa decorar todos de uma vez: leia o problema de cada um e guarde o nome. Quando o problema aparecer no seu código, você vai lembrar que existe uma solução pronta.</p>
+
+    <h2>Strategy: trocar o algoritmo</h2>
+    <p>Problema: há vários jeitos de fazer a mesma tarefa (calcular frete, ordenar uma lista, a jogada do computador num jogo) e você quer escolher na hora, sem uma fila de <code>if</code>.</p>
+    <p>A Strategy guarda o "jeito de fazer" num objeto separado. Em Python, uma <strong>função</strong> já serve como estratégia, porque funções são valores (aula 45):</p>
+<pre class="codigo" data-executar="sim"><code>def ataque_agressivo(vida_inimigo):
+    return 30
 
 
-def black_friday(valor):
-    return valor * 0.7
+def ataque_cauteloso(vida_inimigo):
+    return 10
 
 
-def cupom_10(valor):
-    return valor - 10
+def ataque_esperto(vida_inimigo):
+    return 50 if vida_inimigo &lt;= 50 else 15
 
 
-def fechar_compra(valor, estrategia):
-    return round(estrategia(valor), 2)
+def lutar(estrategia, vida=100):
+    turnos = 0
+    while vida &gt; 0:
+        vida -= estrategia(vida)
+        turnos += 1
+    return turnos
 
 
-for estrategia in [sem_desconto, black_friday, cupom_10]:
-    print(estrategia.__name__, fechar_compra(200, estrategia))</code></pre>
-    <p class="saida">sem_desconto 200<br>
-black_friday 140.0<br>
-cupom_10 190</p>
+for estrategia in [ataque_agressivo, ataque_cauteloso, ataque_esperto]:
+    print(f"{estrategia.__name__:&lt;17} venceu em {lutar(estrategia)} turnos")</code></pre>
+    <p class="saida">ataque_agressivo &nbsp;venceu em 4 turnos<br>
+ataque_cauteloso &nbsp;venceu em 10 turnos<br>
+ataque_esperto &nbsp;&nbsp;&nbsp;venceu em 5 turnos</p>
+    <p>Você já usou Strategy sem saber: em <code>sorted(lista, key=len)</code>, a função <code>key</code> é a estratégia de ordenação (aula 49).</p>
+    <div class="dica"><strong>Dica:</strong> Use classes como estratégia só quando cada estratégia precisa guardar dados ou ter vários métodos. Para "um jeito de calcular", uma função basta.</div>
 
-    <h2>Observer: avisar quem se inscreveu</h2>
-    <p>Um canal de vídeos avisa todos os inscritos quando publica algo novo:</p>
+    <h2>Observer: avisar quem se interessa</h2>
+    <p>Problema: quando algo acontece (um vídeo novo no canal, um gol, a temperatura subir), várias partes do programa querem saber. Se o canal tivesse de conhecer cada inscrito pelo nome, adicionar um inscrito novo obrigaria a mudar o canal.</p>
+    <p>No Observer, o objeto observado guarda uma <strong>lista de interessados</strong> e avisa todos quando algo muda. Os interessados se inscrevem e saem quando quiserem:</p>
 <pre class="codigo" data-executar="sim"><code>class Canal:
     def __init__(self, nome):
         self.nome = nome
@@ -61,144 +75,592 @@ cupom_10 190</p>
     def inscrever(self, funcao):
         self.inscritos.append(funcao)
 
+    def cancelar(self, funcao):
+        self.inscritos.remove(funcao)
+
     def publicar(self, video):
+        print(f"[{self.nome}] novo vídeo: {video}")
         for avisar in self.inscritos:
             avisar(self.nome, video)
 
 
-def avisar_bia(canal, video):
-    print(f"Bia: novo vídeo em {canal}: {video}")
+def notificacao_celular(canal, video):
+    print(f"  celular: {canal} postou '{video}'")
 
 
-def avisar_leo(canal, video):
-    print(f"Leo: {canal} postou {video}!")
+def email(canal, video):
+    print(f"  e-mail: assista '{video}'")
 
 
-canal = Canal("Ciência Fácil")
-canal.inscrever(avisar_bia)
-canal.inscrever(avisar_leo)
-canal.publicar("Por que o céu é azul?")</code></pre>
-    <p class="saida">Bia: novo vídeo em Ciência Fácil: Por que o céu é azul?<br>
-Leo: Ciência Fácil postou Por que o céu é azul?!</p>
+canal = Canal("Ciência Divertida")
+canal.inscrever(notificacao_celular)
+canal.inscrever(email)
+canal.publicar("Vulcão de bicarbonato")
+canal.cancelar(email)
+canal.publicar("Foguete de garrafa PET")</code></pre>
+    <p class="saida">[Ciência Divertida] novo vídeo: Vulcão de bicarbonato<br>
+&nbsp;&nbsp;celular: Ciência Divertida postou 'Vulcão de bicarbonato'<br>
+&nbsp;&nbsp;e-mail: assista 'Vulcão de bicarbonato'<br>
+[Ciência Divertida] novo vídeo: Foguete de garrafa PET<br>
+&nbsp;&nbsp;celular: Ciência Divertida postou 'Foguete de garrafa PET'</p>
+    <p>Os botões das janelas (aula 192, sinais e slots) funcionam assim: o botão avisa todas as funções ligadas ao <code>clicked</code>.</p>
 
-    <h2>Command e Memento: desfazer</h2>
-    <p>O <strong>Command</strong> transforma uma ação em objeto, que pode ser guardado numa lista e desfeito depois. O <strong>Memento</strong> guarda uma "foto" do estado para voltar a ela. Um editor bem simples com <code>Ctrl+Z</code>:</p>
+    <h2>Command: a ação vira objeto (e dá para desfazer)</h2>
+    <p>Problema: você quer guardar ações para fazer depois, repetir ou <strong>desfazer</strong> (o famoso Ctrl+Z). Se a ação for só uma linha de código executada na hora, ela some.</p>
+    <p>No Command, cada ação vira um objeto com <code>executar()</code> e <code>desfazer()</code>. O programa guarda uma pilha com as ações feitas:</p>
 <pre class="codigo" data-executar="sim"><code>class Editor:
     def __init__(self):
         self.texto = ""
-        self.historico = []
 
-    def escrever(self, trecho):
-        self.historico.append(self.texto)
-        self.texto += trecho
+
+class Escrever:
+    def __init__(self, editor, trecho):
+        self.editor = editor
+        self.trecho = trecho
+
+    def executar(self):
+        self.editor.texto += self.trecho
 
     def desfazer(self):
-        if self.historico:
-            self.texto = self.historico.pop()
+        self.editor.texto = self.editor.texto[:-len(self.trecho)]
+
+
+class Historico:
+    def __init__(self):
+        self.feitos = []
+
+    def fazer(self, comando):
+        comando.executar()
+        self.feitos.append(comando)
+
+    def desfazer(self):
+        if self.feitos:
+            self.feitos.pop().desfazer()
 
 
 ed = Editor()
-ed.escrever("Olá")
-ed.escrever(", mundo")
-ed.escrever("!!!")
-print(ed.texto)
-ed.desfazer()
-print(ed.texto)
-ed.desfazer()
-print(ed.texto)</code></pre>
-    <p class="saida">Olá, mundo!!!<br>
-Olá, mundo<br>
-Olá</p>
+h = Historico()
+h.fazer(Escrever(ed, "Olá"))
+h.fazer(Escrever(ed, ", mundo"))
+h.fazer(Escrever(ed, "!!!"))
+print(repr(ed.texto))
+h.desfazer()
+print(repr(ed.texto))
+h.desfazer()
+print(repr(ed.texto))</code></pre>
+    <p class="saida">'Olá, mundo!!!'<br>
+'Olá, mundo'<br>
+'Olá'</p>
+    <p>A lista <code>feitos</code> funciona como uma <strong>pilha</strong>: o último a entrar é o primeiro a sair (aula 117).</p>
 
-    <h2>Os outros, em uma frase</h2>
-    <ul>
-      <li><strong>State</strong>: o objeto muda de comportamento conforme o estado (semáforo verde, amarelo, vermelho).</li>
-      <li><strong>Template Method</strong>: a classe-mãe define os passos; as filhas preenchem alguns deles.</li>
-      <li><strong>Iterator</strong>: percorre uma coleção sem mostrar como ela é guardada por dentro (aula 52 e aula 90).</li>
-      <li><strong>Chain of Responsibility</strong>: um pedido passa por uma corrente de "atendentes" até alguém resolver.</li>
-      <li><strong>Mediator</strong>: um objeto central coordena a conversa entre os outros, como a torre de controle de um aeroporto.</li>
-      <li><strong>Visitor</strong>: acrescenta operações novas a uma estrutura de objetos sem mudar as classes deles.</li>
-    </ul>
-    <p>Um exemplo de State com o semáforo:</p>
-<pre class="codigo" data-executar="sim"><code>proximo = {"verde": "amarelo", "amarelo": "vermelho", "vermelho": "verde"}
-estado = "verde"
+    <h2>State: o comportamento muda com o estado</h2>
+    <p>Problema: um objeto age diferente conforme a situação. Um semáforo verde, amarelo e vermelho; um personagem andando, pulando ou caído. Com <code>if estado == ...</code> espalhados por todos os métodos, o código vira uma bagunça.</p>
+    <p>No State, cada estado é um objeto que sabe o que fazer e qual é o <strong>próximo</strong> estado:</p>
+<pre class="codigo" data-executar="sim"><code>class Verde:
+    def proximo(self):
+        return Amarelo()
+
+    def pode_passar(self):
+        return True
+
+
+class Amarelo:
+    def proximo(self):
+        return Vermelho()
+
+    def pode_passar(self):
+        return False
+
+
+class Vermelho:
+    def proximo(self):
+        return Verde()
+
+    def pode_passar(self):
+        return False
+
+
+class Semaforo:
+    def __init__(self):
+        self.estado = Vermelho()
+
+    def trocar(self):
+        self.estado = self.estado.proximo()
+
+
+s = Semaforo()
 for _ in range(4):
-    print(estado)
-    estado = proximo[estado]</code></pre>
-    <p class="saida">verde<br>
-amarelo<br>
-vermelho<br>
-verde</p>
-    <div class="atencao"><strong>Atenção:</strong> No <code>Observer</code>, passe a função <strong>sem</strong> parênteses: <code>inscrever(avisar_bia)</code>. Com parênteses, você chamaria a função na hora e guardaria o resultado (<code>None</code>).</div>
+    s.trocar()
+    nome = type(s.estado).__name__
+    print(f"{nome:&lt;8} pode passar? {s.estado.pode_passar()}")</code></pre>
+    <p class="saida">Verde &nbsp;&nbsp;&nbsp;pode passar? True<br>
+Amarelo &nbsp;pode passar? False<br>
+Vermelho pode passar? False<br>
+Verde &nbsp;&nbsp;&nbsp;pode passar? True</p>
+    <p>Para criar um estado novo (pisca-alerta), você escreve uma classe e muda só quem aponta para ela.</p>
+
+    <h2>Template Method: o roteiro fixo</h2>
+    <p>Problema: várias tarefas seguem o <strong>mesmo roteiro</strong>, mudando só alguns passos. Toda receita de bolo é: preparar a massa, assar, decorar. Copiar o roteiro em cada classe espalha a mesma lógica em vários lugares.</p>
+    <p>No Template Method, a classe mãe define o roteiro e as filhas preenchem os passos que mudam:</p>
+<pre class="codigo" data-executar="sim"><code>class Bolo:
+    def fazer(self):                     # o "método modelo"
+        print(f"--- {type(self).__name__} ---")
+        self.massa()
+        print("Assar por 40 minutos")
+        self.cobertura()
+
+    def massa(self):
+        print("Massa básica: farinha, ovos, leite")
+
+    def cobertura(self):
+        print("Sem cobertura")
+
+
+class BoloDeCenoura(Bolo):
+    def massa(self):
+        print("Massa com cenoura batida")
+
+    def cobertura(self):
+        print("Cobertura de chocolate")
+
+
+class BoloSimples(Bolo):
+    pass
+
+
+BoloDeCenoura().fazer()
+BoloSimples().fazer()</code></pre>
+    <p class="saida">--- BoloDeCenoura ---<br>
+Massa com cenoura batida<br>
+Assar por 40 minutos<br>
+Cobertura de chocolate<br>
+--- BoloSimples ---<br>
+Massa básica: farinha, ovos, leite<br>
+Assar por 40 minutos<br>
+Sem cobertura</p>
+    <p>O <code>unittest</code> (aula 131) usa esse padrão: ele chama <code>setUp</code>, depois o teste, depois <code>tearDown</code>; você só preenche os passos.</p>
+
+    <h2>Iterator: percorrer sem expor o miolo</h2>
+    <p>Problema: você quer percorrer uma coleção com <code>for</code> sem que quem usa precise saber como ela é guardada por dentro (lista, árvore, páginas de um livro).</p>
+    <p>O Iterator já faz parte do Python: todo objeto com <code>__iter__</code> funciona no <code>for</code> (aulas 52 e 90). Um gerador com <code>yield</code> é o jeito mais curto de escrever um:</p>
+<pre class="codigo" data-executar="sim"><code>class Playlist:
+    def __init__(self, *musicas):
+        self._musicas = list(musicas)
+
+    def __iter__(self):
+        yield from self._musicas
+
+    def embaralhada(self, semente):
+        import random
+        ordem = self._musicas[:]
+        random.Random(semente).shuffle(ordem)
+        yield from ordem
+
+
+p = Playlist("Aquarela", "Trem das Onze", "País Tropical", "Sina")
+for m in p:
+    print("tocando:", m)
+print(list(p.embaralhada(semente=7)))</code></pre>
+    <p class="saida">tocando: Aquarela<br>
+tocando: Trem das Onze<br>
+tocando: País Tropical<br>
+tocando: Sina<br>
+['Sina', 'Trem das Onze', 'Aquarela', 'País Tropical']</p>
+    <p>Repare que a mesma playlist oferece dois jeitos de percorrer, e a lista <code>_musicas</code> continua escondida.</p>
+
+    <h2>Chain of Responsibility: passar adiante</h2>
+    <p>Problema: um pedido pode ser tratado por várias pessoas em sequência, e cada uma decide se resolve ou passa para a próxima. No suporte de um jogo: o robô responde dúvidas simples, o atendente resolve problemas de conta e o gerente cuida de reembolsos.</p>
+    <p>Cada "elo" da corrente tenta tratar o pedido; se não for com ele, repassa:</p>
+<pre class="codigo" data-executar="sim"><code>class Atendente:
+    def __init__(self, proximo=None):
+        self.proximo = proximo
+
+    def tratar(self, pedido):
+        if self.consegue(pedido):
+            return f"{type(self).__name__} resolveu: {pedido}"
+        if self.proximo:
+            return self.proximo.tratar(pedido)
+        return f"Ninguém resolveu: {pedido}"
+
+
+class Robo(Atendente):
+    def consegue(self, pedido):
+        return "senha" in pedido
+
+
+class Suporte(Atendente):
+    def consegue(self, pedido):
+        return "conta" in pedido
+
+
+class Gerente(Atendente):
+    def consegue(self, pedido):
+        return "reembolso" in pedido
+
+
+corrente = Robo(Suporte(Gerente()))
+for pedido in ["esqueci a senha", "conta bloqueada", "quero reembolso", "jogo travou"]:
+    print(corrente.tratar(pedido))</code></pre>
+    <p class="saida">Robo resolveu: esqueci a senha<br>
+Suporte resolveu: conta bloqueada<br>
+Gerente resolveu: quero reembolso<br>
+Ninguém resolveu: jogo travou</p>
+    <p>É o mesmo jeito que funcionam os <code>except</code> em sequência (aula 53) e os "middlewares" do Django: cada um olha o pedido e decide se age.</p>
+
+    <h2>Mediator: um centro que coordena</h2>
+    <p>Problema: muitos objetos precisam conversar entre si. Se cada um conhece todos os outros, as ligações viram um emaranhado. Numa sala de bate-papo, imagine cada aluno guardando a lista de todos os colegas.</p>
+    <p>O <strong>mediador</strong> fica no meio: cada objeto conversa só com ele, e ele repassa para quem precisa — como a torre de controle de um aeroporto:</p>
+<pre class="codigo" data-executar="sim"><code>class SalaDeBatePapo:
+    def __init__(self):
+        self.membros = {}
+
+    def entrar(self, aluno):
+        self.membros[aluno.nome] = aluno
+        aluno.sala = self
+
+    def enviar(self, de, texto, para=None):
+        for nome, aluno in self.membros.items():
+            if nome != de and (para is None or nome == para):
+                aluno.receber(de, texto)
+
+
+class Aluno:
+    def __init__(self, nome):
+        self.nome = nome
+        self.sala = None
+
+    def falar(self, texto, para=None):
+        self.sala.enviar(self.nome, texto, para)
+
+    def receber(self, de, texto):
+        print(f"{self.nome} recebeu de {de}: {texto}")
+
+
+sala = SalaDeBatePapo()
+ana, bia, caio = Aluno("Ana"), Aluno("Bia"), Aluno("Caio")
+for a in (ana, bia, caio):
+    sala.entrar(a)
+ana.falar("Alguém fez a lição?")
+caio.falar("Fiz! Te mando.", para="Ana")</code></pre>
+    <p class="saida">Bia recebeu de Ana: Alguém fez a lição?<br>
+Caio recebeu de Ana: Alguém fez a lição?<br>
+Ana recebeu de Caio: Fiz! Te mando.</p>
+    <p>Nenhum aluno conhece os outros; todos conhecem só a sala.</p>
+
+    <h2>Memento: salvar e voltar</h2>
+    <p>Problema: você quer "salvar o jogo" e poder voltar para aquele ponto depois, sem deixar o resto do programa mexer nos detalhes internos do personagem.</p>
+    <p>O Memento é uma <strong>fotografia</strong> do estado. O próprio objeto cria a foto e sabe restaurá-la; quem guarda as fotos (o "zelador") não mexe nelas:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class SaveGame:                 # o memento: não pode ser alterado
+    fase: int
+    vida: int
+    itens: tuple
+
+
+class Jogador:
+    def __init__(self):
+        self.fase, self.vida, self.itens = 1, 100, []
+
+    def salvar(self):
+        return SaveGame(self.fase, self.vida, tuple(self.itens))
+
+    def carregar(self, save):
+        self.fase, self.vida, self.itens = save.fase, save.vida, list(save.itens)
+
+    def __repr__(self):
+        return f"fase {self.fase}, vida {self.vida}, itens {self.itens}"
+
+
+j = Jogador()
+j.fase, j.itens = 3, ["chave"]
+saves = [j.salvar()]                    # o zelador: só guarda
+j.vida, j.itens = 10, []                # caiu numa armadilha...
+print("Agora:", j)
+j.carregar(saves[-1])
+print("Depois de carregar:", j)</code></pre>
+    <p class="saida">Agora: fase 3, vida 10, itens []<br>
+Depois de carregar: fase 3, vida 100, itens ['chave']</p>
+    <p>Command e Memento combinam bem: um editor pode guardar um memento antes de cada comando e usá-lo para desfazer.</p>
+
+    <h2>Visitor: operações novas sem mexer nas classes</h2>
+    <p>Problema: você tem várias classes (Círculo, Retângulo, Triângulo) e quer criar <strong>operações novas</strong> sobre elas — calcular área, desenhar, exportar — sem encher cada classe de métodos.</p>
+    <p>No Visitor, cada operação vira um objeto "visitante" com um método para cada tipo. As formas só sabem "receber a visita":</p>
+<pre class="codigo" data-executar="sim"><code>class Circulo:
+    def __init__(self, raio):
+        self.raio = raio
+
+    def aceitar(self, visitante):
+        return visitante.visitar_circulo(self)
+
+
+class Retangulo:
+    def __init__(self, largura, altura):
+        self.largura, self.altura = largura, altura
+
+    def aceitar(self, visitante):
+        return visitante.visitar_retangulo(self)
+
+
+class CalculaArea:
+    def visitar_circulo(self, c):
+        return round(3.14159 * c.raio ** 2, 2)
+
+    def visitar_retangulo(self, r):
+        return r.largura * r.altura
+
+
+class Descreve:
+    def visitar_circulo(self, c):
+        return f"círculo de raio {c.raio}"
+
+    def visitar_retangulo(self, r):
+        return f"retângulo {r.largura}x{r.altura}"
+
+
+formas = [Circulo(2), Retangulo(3, 4)]
+for f in formas:
+    print(f.aceitar(Descreve()), "-&gt; área", f.aceitar(CalculaArea()))</code></pre>
+    <p class="saida">círculo de raio 2 -&gt; área 12.57<br>
+retângulo 3x4 -&gt; área 12</p>
+    <p>Em Python moderno, o <code>match/case</code> (aula 92) faz um trabalho parecido de um jeito mais curto, escolhendo o código pelo tipo do objeto:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass
+
+
+@dataclass
+class Circulo:
+    raio: float
+
+
+@dataclass
+class Retangulo:
+    largura: float
+    altura: float
+
+
+def perimetro(forma):
+    match forma:
+        case Circulo(raio=r):
+            return round(2 * 3.14159 * r, 2)
+        case Retangulo(largura=l, altura=a):
+            return 2 * (l + a)
+
+
+for f in [Circulo(1), Retangulo(3, 4)]:
+    print(f, "-&gt; perímetro", perimetro(f))</code></pre>
+    <p class="saida">Circulo(raio=1) -&gt; perímetro 6.28<br>
+Retangulo(largura=3, altura=4) -&gt; perímetro 14</p>
+
+    <h2>Resumo e cuidados</h2>
+    <ul>
+      <li><strong>Strategy</strong>: trocar o jeito de fazer (em Python, muitas vezes uma função).</li>
+      <li><strong>Observer</strong>: avisar vários interessados quando algo muda.</li>
+      <li><strong>Command</strong>: transformar ações em objetos para guardar, repetir e desfazer.</li>
+      <li><strong>State</strong>: cada estado é um objeto que sabe agir e qual é o próximo.</li>
+      <li><strong>Template Method</strong>: a mãe fixa o roteiro, as filhas preenchem os passos.</li>
+      <li><strong>Iterator</strong>: percorrer com <code>for</code> sem mostrar o miolo (<code>__iter__</code>, <code>yield</code>).</li>
+      <li><strong>Chain of Responsibility</strong>: passar o pedido adiante até alguém resolver.</li>
+      <li><strong>Mediator</strong>: um centro que coordena a conversa entre muitos objetos.</li>
+      <li><strong>Memento</strong>: fotografia do estado para voltar depois.</li>
+      <li><strong>Visitor</strong>: operações novas sobre várias classes sem mexer nelas (ou <code>match/case</code>).</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Um erro comum no Observer é esquecer de cancelar a inscrição: o objeto observado continua guardando a função e chamando-a para sempre, mesmo quando quem se inscreveu nem existe mais na tela.</div>
+    <div class="atencao"><strong>Atenção:</strong> Padrão não é enfeite. Se uma simples função com um <code>if</code> resolve e é fácil de ler, ela é a melhor solução. Os padrões valem a pena quando os casos crescem ou mudam com frequência.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
-<pre class="codigo"><code>print(fechar_compra(200, black_friday))</code></pre>
+<pre class="codigo"><code>canal.inscrever(notificacao_celular)</code></pre>
     </div>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie uma estratégia <code>frete_gratis_acima_100</code> que dá 15 reais de desconto quando o valor passa de 100 e use com <code>fechar_compra(150, ...)</code>.</p>
+      <p><strong>1.</strong> Use Strategy com funções para calcular o preço de uma corrida de aplicativo: <code>normal</code> (R$ 2 por km), <code>noturna</code> (R$ 2,50 por km) e <code>promocao</code> (R$ 2 por km com 20% de desconto). Escreva <code>preco(km, tarifa)</code> e mostre os três valores para 10 km.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>def frete_gratis_acima_100(valor):
-    if valor &gt; 100:
-        return valor - 15
-    return valor
+<pre class="codigo" data-executar="sim"><code>def normal(km):
+    return 2 * km
 
 
-def fechar_compra(valor, estrategia):
-    return round(estrategia(valor), 2)
+def noturna(km):
+    return 2.5 * km
 
 
-print(fechar_compra(150, frete_gratis_acima_100))
-print(fechar_compra(80, frete_gratis_acima_100))</code></pre>
-      <p class="saida">135<br>
-80</p>
+def promocao(km):
+    return 2 * km * 0.8
+
+
+def preco(km, tarifa):
+    return f"{tarifa.__name__}: R$ {tarifa(km):.2f}"
+
+
+for tarifa in [normal, noturna, promocao]:
+    print(preco(10, tarifa))</code></pre>
+      <p class="saida">normal: R$ 20.00<br>
+noturna: R$ 25.00<br>
+promocao: R$ 16.00</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Inscreva no <code>Canal</code> uma terceira função que apenas conta quantos vídeos foram publicados, usando uma lista <code>contagem</code> de fora.</p>
+      <p><strong>2.</strong> Crie um Observer de placar: a classe <code>Partida</code> tem <code>gol(time)</code> e avisa todos os inscritos. Inscreva uma função que mostra o placar e outra que conta o total de gols.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class Canal:
-    def __init__(self, nome):
-        self.nome = nome
+<pre class="codigo" data-executar="sim"><code>class Partida:
+    def __init__(self):
+        self.placar = {"Bahia": 0, "Vitória": 0}
         self.inscritos = []
 
     def inscrever(self, funcao):
         self.inscritos.append(funcao)
 
-    def publicar(self, video):
+    def gol(self, time):
+        self.placar[time] += 1
         for avisar in self.inscritos:
-            avisar(self.nome, video)
+            avisar(time, self.placar)
 
 
-contagem = []
+total = [0]
 
 
-def contar(canal, video):
-    contagem.append(video)
+def telao(time, placar):
+    print(f"GOL do {time}! {placar}")
 
 
-canal = Canal("Ciência Fácil")
-canal.inscrever(contar)
-canal.publicar("Vulcões")
-canal.publicar("Eclipses")
-print(len(contagem), "vídeos publicados")</code></pre>
-      <p class="saida">2 vídeos publicados</p>
+def contador(time, placar):
+    total[0] += 1
+
+
+p = Partida()
+p.inscrever(telao)
+p.inscrever(contador)
+p.gol("Bahia")
+p.gol("Vitória")
+p.gol("Bahia")
+print("Total de gols:", total[0])</code></pre>
+      <p class="saida">GOL do Bahia! {'Bahia': 1, 'Vitória': 0}<br>
+GOL do Vitória! {'Bahia': 1, 'Vitória': 1}<br>
+GOL do Bahia! {'Bahia': 2, 'Vitória': 1}<br>
+Total de gols: 3</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>3.</strong> Acrescente ao semáforo um estado de "piscando" que sempre continua em "piscando", e mostre 3 passos a partir dele.</p>
+      <p><strong>3.</strong> Com o padrão Command, faça uma lista de compras com os comandos <code>Adicionar(lista, item)</code> (desfazer remove o item) e um histórico com <code>fazer</code> e <code>desfazer</code>. Adicione três itens, desfaça duas vezes e mostre a lista.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>proximo = {"verde": "amarelo", "amarelo": "vermelho", "vermelho": "verde",
-           "piscando": "piscando"}
-estado = "piscando"
-for _ in range(3):
-    print(estado)
-    estado = proximo[estado]</code></pre>
-      <p class="saida">piscando<br>
-piscando<br>
-piscando</p>
+<pre class="codigo" data-executar="sim"><code>class Adicionar:
+    def __init__(self, lista, item):
+        self.lista = lista
+        self.item = item
+
+    def executar(self):
+        self.lista.append(self.item)
+
+    def desfazer(self):
+        self.lista.remove(self.item)
+
+
+class Historico:
+    def __init__(self):
+        self.feitos = []
+
+    def fazer(self, cmd):
+        cmd.executar()
+        self.feitos.append(cmd)
+
+    def desfazer(self):
+        if self.feitos:
+            self.feitos.pop().desfazer()
+
+
+compras = []
+h = Historico()
+for item in ["arroz", "feijão", "farinha"]:
+    h.fazer(Adicionar(compras, item))
+h.desfazer()
+h.desfazer()
+print(compras)</code></pre>
+      <p class="saida">['arroz']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use Chain of Responsibility para validar uma senha: os elos <code>Tamanho</code> (pelo menos 8 caracteres), <code>TemNumero</code> e <code>TemMaiuscula</code>. Cada elo devolve a mensagem de erro ou passa adiante; no fim da corrente, a senha está aprovada. Teste com <code>"abc"</code>, <code>"abcdefgh"</code>, <code>"abcdefg1"</code> e <code>"Abcdefg1"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Regra:
+    def __init__(self, proximo=None):
+        self.proximo = proximo
+
+    def checar(self, senha):
+        erro = self.erro(senha)
+        if erro:
+            return erro
+        return self.proximo.checar(senha) if self.proximo else "senha aprovada"
+
+
+class Tamanho(Regra):
+    def erro(self, senha):
+        return "curta demais" if len(senha) &lt; 8 else None
+
+
+class TemNumero(Regra):
+    def erro(self, senha):
+        return None if any(c.isdigit() for c in senha) else "falta um número"
+
+
+class TemMaiuscula(Regra):
+    def erro(self, senha):
+        return None if any(c.isupper() for c in senha) else "falta uma maiúscula"
+
+
+validador = Tamanho(TemNumero(TemMaiuscula()))
+for s in ["abc", "abcdefgh", "abcdefg1", "Abcdefg1"]:
+    print(f"{s:&lt;9} -&gt; {validador.checar(s)}")</code></pre>
+      <p class="saida">abc &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; curta demais<br>
+abcdefgh &nbsp;-&gt; falta um número<br>
+abcdefg1 &nbsp;-&gt; falta uma maiúscula<br>
+Abcdefg1 &nbsp;-&gt; senha aprovada</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Use State para um personagem com os estados <code>Parado</code>, <code>Correndo</code> e <code>Cansado</code>: o método <code>apertar_corrida()</code> de cada estado devolve o próximo (Parado → Correndo, Correndo → Cansado, Cansado → Parado). Mostre o estado depois de quatro apertos.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Parado:
+    def apertar_corrida(self):
+        return Correndo()
+
+
+class Correndo:
+    def apertar_corrida(self):
+        return Cansado()
+
+
+class Cansado:
+    def apertar_corrida(self):
+        return Parado()
+
+
+class Personagem:
+    def __init__(self):
+        self.estado = Parado()
+
+    def apertar_corrida(self):
+        self.estado = self.estado.apertar_corrida()
+        print("Agora:", type(self.estado).__name__)
+
+
+heroi = Personagem()
+for _ in range(4):
+    heroi.apertar_corrida()</code></pre>
+      <p class="saida">Agora: Correndo<br>
+Agora: Cansado<br>
+Agora: Parado<br>
+Agora: Correndo</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Qual padrão você usaria em cada caso? (a) botão "desfazer" num programa de desenho; (b) avisar o app e o relógio quando chega mensagem; (c) escolher entre ordenar por nome ou por nota; (d) salvar o progresso de um jogo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">(a) Command (cada traço é um objeto com executar e desfazer), às vezes junto com Memento.<br>
+(b) Observer (o app e o relógio se inscrevem para receber o aviso).<br>
+(c) Strategy (em Python, passar uma função key diferente para sorted).<br>
+(d) Memento (uma "fotografia" do estado do jogo, que depois pode ser carregada).</p>
       </details>
     </div>
 

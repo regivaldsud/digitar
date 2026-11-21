@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 241 · HTML5 para quem programa em Python — Curso de Python · DIGITAR</title>
-<meta name="description" content="O básico do HTML5 — tags, títulos, parágrafos, listas, links e imagens — e como gerar páginas HTML com Python.">
+<meta name="description" content="O básico do HTML5 — tags, títulos, parágrafos, listas, links, imagens e tabelas — e como gerar páginas HTML com Python de forma segura.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,16 +20,19 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Entender o que é HTML e como uma página é montada com tags</li>
-        <li>Escrever uma página simples com títulos, parágrafos, listas, links e imagens</li>
-        <li>Gerar um arquivo HTML a partir de um programa Python</li>
+        <li>Entender o que é HTML e como uma página é montada com tags e atributos</li>
+        <li>Escrever uma página com títulos, parágrafos, listas, links, imagens e tabelas</li>
+        <li>Usar as tags de estrutura do HTML5: <code>header</code>, <code>main</code>, <code>section</code> e <code>footer</code></li>
+        <li>Gerar HTML com Python a partir de listas e dicionários</li>
+        <li>Proteger a página com <code>html.escape</code> e conferir a estrutura com <code>html.parser</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que é HTML</h2>
     <p>Toda página da internet é um arquivo de texto escrito em <strong>HTML</strong>. Ele não é uma linguagem de programação: não tem <code>if</code> nem laços. É uma linguagem de <strong>marcação</strong>, que diz ao navegador o que é cada pedaço — isto é um título, isto é um parágrafo, isto é um link.</p>
-    <p>Cada pedaço fica entre <strong>tags</strong>: uma de abertura, como <code>&lt;p&gt;</code>, e uma de fechamento, como <code>&lt;/p&gt;</code>. Quem programa em Python precisa de HTML para fazer sites com Django (módulo 11) e para gerar relatórios bonitos.</p>
+    <p>Cada pedaço fica entre <strong>tags</strong>: uma de abertura, como <code>&lt;p&gt;</code>, e uma de fechamento, como <code>&lt;/p&gt;</code>. Tudo junto (abertura, conteúdo e fechamento) se chama <strong>elemento</strong>. Quem programa em Python precisa de HTML para fazer sites com Django (módulo 11), para raspar páginas (aula 112) e para gerar relatórios bonitos.</p>
+    <p>Algumas tags têm <strong>atributos</strong>, informações extras escritas na abertura: em <code>&lt;a href="https://python.org"&gt;</code>, o atributo <code>href</code> diz para onde o link leva.</p>
 
     <h2>Uma página completa</h2>
     <p>Crie no VS Code um arquivo <code>index.html</code> com este conteúdo e abra-o com dois cliques (ele abre no navegador):</p>
@@ -37,11 +40,12 @@
 &lt;html lang="pt-BR"&gt;
 &lt;head&gt;
   &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
   &lt;title&gt;Minha página&lt;/title&gt;
 &lt;/head&gt;
 &lt;body&gt;
   &lt;h1&gt;Olá, eu sou a Bia!&lt;/h1&gt;
-  &lt;p&gt;Estou aprendendo &lt;strong&gt;Python&lt;/strong&gt; e HTML.&lt;/p&gt;
+  &lt;p&gt;Estou aprendendo &lt;strong&gt;Python&lt;/strong&gt; e &lt;em&gt;HTML&lt;/em&gt;.&lt;/p&gt;
   &lt;h2&gt;Minhas comidas favoritas&lt;/h2&gt;
   &lt;ul&gt;
     &lt;li&gt;Coxinha&lt;/li&gt;
@@ -53,40 +57,110 @@
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
     <ul>
+      <li><code>&lt;!doctype html&gt;</code> avisa que é HTML5; <code>&lt;html lang="pt-BR"&gt;</code> diz o idioma (ajuda o tradutor e o leitor de tela).</li>
       <li><code>&lt;head&gt;</code> guarda informações sobre a página (como o título da aba); <code>&lt;body&gt;</code> guarda o que aparece na tela.</li>
-      <li><code>&lt;h1&gt;</code> a <code>&lt;h6&gt;</code> são títulos, do maior ao menor; <code>&lt;p&gt;</code> é parágrafo; <code>&lt;strong&gt;</code> é destaque.</li>
+      <li><code>&lt;h1&gt;</code> a <code>&lt;h6&gt;</code> são títulos, do maior ao menor; <code>&lt;p&gt;</code> é parágrafo; <code>&lt;strong&gt;</code> é destaque forte e <code>&lt;em&gt;</code>, ênfase (itálico).</li>
       <li><code>&lt;ul&gt;</code> é uma lista com marcadores e cada item é um <code>&lt;li&gt;</code>; <code>&lt;ol&gt;</code> faz uma lista numerada.</li>
-      <li><code>&lt;a href="..."&gt;</code> é um link e <code>&lt;img src="..." alt="..."&gt;</code> é uma imagem. O <code>alt</code> descreve a imagem para quem não pode vê-la.</li>
+      <li><code>&lt;a href="..."&gt;</code> é um link e <code>&lt;img src="..." alt="..."&gt;</code> é uma imagem. A <code>&lt;img&gt;</code> não tem tag de fechamento.</li>
     </ul>
-    <div class="atencao"><strong>Atenção:</strong> Esquecer de fechar uma tag (escrever <code>&lt;p&gt;</code> e não pôr <code>&lt;/p&gt;</code>) ou fechar na ordem errada bagunça a página. Feche sempre na ordem inversa da abertura: <code>&lt;p&gt;&lt;strong&gt;oi&lt;/strong&gt;&lt;/p&gt;</code>.</div>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer de fechar uma tag (escrever <code>&lt;p&gt;</code> e não pôr <code>&lt;/p&gt;</code>) ou fechar na ordem errada bagunça a página. Feche sempre na ordem inversa da abertura: <code>&lt;p&gt;&lt;strong&gt;oi&lt;/strong&gt;&lt;/p&gt;</code>, e não <code>&lt;p&gt;&lt;strong&gt;oi&lt;/p&gt;&lt;/strong&gt;</code>.</div>
     <div class="dica"><strong>Dica:</strong> <code>&lt;meta charset="utf-8"&gt;</code> faz os acentos e o ç aparecerem certos. Sem ele, "Açaí" pode virar letras estranhas.</div>
 
+    <h2>Estrutura do HTML5 e tabelas</h2>
+    <p>O HTML5 trouxe tags que dizem o papel de cada região: <code>&lt;header&gt;</code> (cabeçalho), <code>&lt;nav&gt;</code> (menu), <code>&lt;main&gt;</code> (conteúdo principal), <code>&lt;section&gt;</code> (uma seção), <code>&lt;footer&gt;</code> (rodapé). Visualmente elas não mudam nada, mas ajudam o Google e os leitores de tela a entender a página.</p>
+    <p>Tabelas usam <code>&lt;table&gt;</code>; cada linha é um <code>&lt;tr&gt;</code>, cada título de coluna um <code>&lt;th&gt;</code> e cada célula um <code>&lt;td&gt;</code>:</p>
+<pre class="codigo"><code>&lt;main&gt;
+  &lt;section&gt;
+    &lt;h2&gt;Notas do bimestre&lt;/h2&gt;
+    &lt;table&gt;
+      &lt;tr&gt;&lt;th&gt;Matéria&lt;/th&gt;&lt;th&gt;Nota&lt;/th&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Matemática&lt;/td&gt;&lt;td&gt;8,5&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Português&lt;/td&gt;&lt;td&gt;9,0&lt;/td&gt;&lt;/tr&gt;
+    &lt;/table&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+&lt;footer&gt;Feito pela Bia em 2026&lt;/footer&gt;</code></pre>
+
     <h2>Gerando HTML com Python</h2>
-    <p>Como o HTML é só texto, o Python consegue escrever páginas sozinho. Este programa monta uma lista a partir de uma lista do Python e salva o arquivo <code>comidas.html</code>:</p>
-<pre class="codigo"><code>from pathlib import Path
+    <p>Como o HTML é só texto, o Python consegue escrever páginas sozinho. Basta montar o texto com f-strings e <code>join</code>:</p>
+<pre class="codigo" data-executar="sim"><code>comidas = ["Coxinha", "Açaí", "Pão de queijo"]
+itens = "\n".join(f"  &lt;li&gt;{comida}&lt;/li&gt;" for comida in comidas)
 
-comidas = ["Coxinha", "Açaí", "Pão de queijo"]
-itens = "\n".join(f"    &lt;li&gt;{comida}&lt;/li&gt;" for comida in comidas)
+lista_html = f"&lt;ul&gt;\n{itens}\n&lt;/ul&gt;"
+print(lista_html)</code></pre>
+    <p class="saida">&lt;ul&gt;<br>
+&nbsp;&nbsp;&lt;li&gt;Coxinha&lt;/li&gt;<br>
+&nbsp;&nbsp;&lt;li&gt;Açaí&lt;/li&gt;<br>
+&nbsp;&nbsp;&lt;li&gt;Pão de queijo&lt;/li&gt;<br>
+&lt;/ul&gt;</p>
+    <p>Com uma lista de dicionários, dá para montar uma tabela inteira. Mude os dados, rode de novo, e a tabela muda junto:</p>
+<pre class="codigo" data-executar="sim"><code>notas = [
+    {"materia": "Matemática", "nota": 8.5},
+    {"materia": "Português", "nota": 9.0},
+    {"materia": "Ciências", "nota": 7.0},
+]
 
-pagina = f"""&lt;!doctype html&gt;
-&lt;html lang="pt-BR"&gt;
-&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;title&gt;Comidas&lt;/title&gt;&lt;/head&gt;
-&lt;body&gt;
-  &lt;h1&gt;Comidas favoritas&lt;/h1&gt;
-  &lt;ul&gt;
-{itens}
-  &lt;/ul&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-"""
-Path("comidas.html").write_text(pagina, encoding="utf-8")
-print(itens)
-print("Página salva em comidas.html")</code></pre>
-    <p class="saida">&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Coxinha&lt;/li&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Açaí&lt;/li&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Pão de queijo&lt;/li&gt;<br>
-Página salva em comidas.html</p>
-    <p>Abra <code>comidas.html</code> no navegador para ver o resultado. Mude a lista no Python, rode de novo e a página muda junto.</p>
+linhas = ["&lt;table&gt;", "  &lt;tr&gt;&lt;th&gt;Matéria&lt;/th&gt;&lt;th&gt;Nota&lt;/th&gt;&lt;/tr&gt;"]
+for n in notas:
+    nota = f"{n['nota']:.1f}".replace(".", ",")
+    linhas.append(f"  &lt;tr&gt;&lt;td&gt;{n['materia']}&lt;/td&gt;&lt;td&gt;{nota}&lt;/td&gt;&lt;/tr&gt;")
+linhas.append("&lt;/table&gt;")
+
+print("\n".join(linhas))</code></pre>
+    <p class="saida">&lt;table&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;th&gt;Matéria&lt;/th&gt;&lt;th&gt;Nota&lt;/th&gt;&lt;/tr&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;Matemática&lt;/td&gt;&lt;td&gt;8,5&lt;/td&gt;&lt;/tr&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;Português&lt;/td&gt;&lt;td&gt;9,0&lt;/td&gt;&lt;/tr&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;Ciências&lt;/td&gt;&lt;td&gt;7,0&lt;/td&gt;&lt;/tr&gt;<br>
+&lt;/table&gt;</p>
+    <p>No seu computador, salve o resultado num arquivo com <code>Path("notas.html").write_text(pagina, encoding="utf-8")</code> e abra o arquivo no navegador.</p>
+
+    <h2>Cuidado com o que vem de fora: html.escape</h2>
+    <p>Os caracteres <code>&lt;</code>, <code>&gt;</code> e <code>&amp;</code> têm significado especial no HTML. Se um texto digitado por alguém tiver <code>&lt;</code>, o navegador acha que é uma tag. Isso pode só quebrar a página... ou deixar alguém colocar um programa malicioso nela (um ataque chamado <strong>XSS</strong>).</p>
+    <p>A solução é <strong>escapar</strong> o texto com <code>html.escape</code>, que troca esses caracteres por códigos seguros, como <code>&amp;lt;</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import html
+
+comentario = 'Adorei! &lt;script&gt;alert("hackeado")&lt;/script&gt; 5 &lt; 10 &amp; 2 &gt; 1'
+
+print("Perigoso:", f"&lt;p&gt;{comentario}&lt;/p&gt;")
+print("Seguro:  ", f"&lt;p&gt;{html.escape(comentario)}&lt;/p&gt;")</code></pre>
+    <p class="saida">Perigoso: &lt;p&gt;Adorei! &lt;script&gt;alert("hackeado")&lt;/script&gt; 5 &lt; 10 &amp; 2 &gt; 1&lt;/p&gt;<br>
+Seguro: &nbsp;&nbsp;&lt;p&gt;Adorei! &amp;lt;script&amp;gt;alert(&amp;quot;hackeado&amp;quot;)&amp;lt;/script&amp;gt; 5 &amp;lt; 10 &amp;amp; 2 &amp;gt; 1&lt;/p&gt;</p>
+    <p>O navegador mostra o texto seguro exatamente como a pessoa digitou, mas não executa nada.</p>
+    <div class="atencao"><strong>Atenção:</strong> Escape sempre os dados que vêm do usuário, de arquivos ou da internet antes de colocá-los no HTML. O Django (aula 202) faz isso sozinho nos templates; quando você monta HTML com f-string, a responsabilidade é sua.</div>
+
+    <h2>Conferindo a estrutura com html.parser</h2>
+    <p>O Python tem um leitor de HTML na biblioteca padrão, o <code>html.parser</code>. Criando uma classe filha de <code>HTMLParser</code>, você é avisado de cada tag aberta e fechada — dá para contar tags, listar links ou achar tags esquecidas abertas:</p>
+<pre class="codigo" data-executar="sim"><code>from html.parser import HTMLParser
+
+
+class Conferidor(HTMLParser):
+    VAZIAS = {"img", "br", "meta", "link", "input", "hr"}
+
+    def __init__(self):
+        super().__init__()
+        self.abertas = []
+        self.links = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self.links.append(dict(attrs).get("href"))
+        if tag not in self.VAZIAS:
+            self.abertas.append(tag)
+
+    def handle_endtag(self, tag):
+        if self.abertas and self.abertas[-1] == tag:
+            self.abertas.pop()
+        else:
+            print(f"Problema: fechou &lt;/{tag}&gt; mas a última aberta era &lt;{self.abertas[-1]}&gt;")
+
+
+pagina = '&lt;p&gt;Veja o &lt;a href="https://python.org"&gt;site&lt;/a&gt; &lt;strong&gt;agora&lt;/p&gt;&lt;/strong&gt;'
+c = Conferidor()
+c.feed(pagina)
+print("Links:", c.links)</code></pre>
+    <p class="saida">Problema: fechou &lt;/p&gt; mas a última aberta era &lt;strong&gt;<br>
+Links: ['https://python.org']</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -105,21 +179,63 @@ Página salva em comidas.html</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Faça um programa Python que receba um dicionário de contatos (nome e telefone) e gere as linhas de uma tabela HTML, uma <code>&lt;tr&gt;</code> por contato, mostrando o resultado com <code>print</code>.</p>
+      <p><strong>2.</strong> Faça um programa Python que receba um dicionário de contatos (nome e telefone) e gere uma tabela HTML completa, com uma linha de títulos e uma <code>&lt;tr&gt;</code> por contato.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>contatos = {"Mãe": "(11) 99999-1234", "Pai": "(11) 98888-4321"}
+<pre class="codigo" data-executar="sim"><code>contatos = {"Mãe": "(11) 99999-1234", "Pai": "(11) 98888-4321"}
 
+print("&lt;table&gt;")
+print("  &lt;tr&gt;&lt;th&gt;Nome&lt;/th&gt;&lt;th&gt;Telefone&lt;/th&gt;&lt;/tr&gt;")
 for nome, telefone in contatos.items():
-    print(f"&lt;tr&gt;&lt;td&gt;{nome}&lt;/td&gt;&lt;td&gt;{telefone}&lt;/td&gt;&lt;/tr&gt;")</code></pre>
-      <p class="saida">&lt;tr&gt;&lt;td&gt;Mãe&lt;/td&gt;&lt;td&gt;(11) 99999-1234&lt;/td&gt;&lt;/tr&gt;<br>
-&lt;tr&gt;&lt;td&gt;Pai&lt;/td&gt;&lt;td&gt;(11) 98888-4321&lt;/td&gt;&lt;/tr&gt;</p>
+    print(f"  &lt;tr&gt;&lt;td&gt;{nome}&lt;/td&gt;&lt;td&gt;{telefone}&lt;/td&gt;&lt;/tr&gt;")
+print("&lt;/table&gt;")</code></pre>
+      <p class="saida">&lt;table&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;th&gt;Nome&lt;/th&gt;&lt;th&gt;Telefone&lt;/th&gt;&lt;/tr&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;Mãe&lt;/td&gt;&lt;td&gt;(11) 99999-1234&lt;/td&gt;&lt;/tr&gt;<br>
+&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;Pai&lt;/td&gt;&lt;td&gt;(11) 98888-4321&lt;/td&gt;&lt;/tr&gt;<br>
+&lt;/table&gt;</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>3.</strong> Para que serve o atributo <code>alt</code> em <code>&lt;img src="gato.jpg" alt="Gato dormindo no sofá"&gt;</code>?</p>
+      <p><strong>3.</strong> Escreva uma função <code>link(texto, endereco)</code> que devolva o HTML de um link, escapando o texto. Teste com o texto <code>Pão &amp; Cia &lt;loja&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import html
+
+
+def link(texto, endereco):
+    return f'&lt;a href="{html.escape(endereco)}"&gt;{html.escape(texto)}&lt;/a&gt;'
+
+
+print(link("Pão &amp; Cia &lt;loja&gt;", "https://example.com/pao"))</code></pre>
+      <p class="saida">&lt;a href="https://example.com/pao"&gt;Pão &amp;amp; Cia &amp;lt;loja&amp;gt;&lt;/a&gt;</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Use <code>html.parser</code> para contar quantas vezes cada tag aparece no HTML <code>&lt;ul&gt;&lt;li&gt;a&lt;/li&gt;&lt;li&gt;b&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;fim&lt;/p&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from collections import Counter
+from html.parser import HTMLParser
+
+
+class Contador(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.tags = Counter()
+
+    def handle_starttag(self, tag, attrs):
+        self.tags[tag] += 1
+
+
+c = Contador()
+c.feed("&lt;ul&gt;&lt;li&gt;a&lt;/li&gt;&lt;li&gt;b&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;fim&lt;/p&gt;")
+print(dict(c.tags))</code></pre>
+      <p class="saida">{'ul': 1, 'li': 2, 'p': 1}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Para que serve o atributo <code>alt</code> em <code>&lt;img src="gato.jpg" alt="Gato dormindo no sofá"&gt;</code>?</p>
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">O alt descreve a imagem em texto. Ele é lido por leitores de tela (usados por pessoas cegas)<br>
-e aparece no lugar da imagem quando ela não carrega.</p>
+e aparece no lugar da imagem quando ela não carrega. Também ajuda o Google a entender a imagem.</p>
       </details>
     </div>
 

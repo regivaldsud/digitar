@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 151 · Criacionais: Factory Method, Abstract Factory, Builder, Singleton, Prototype — Curso de Python · DIGITAR</title>
-<meta name="description" content="Padrões que organizam como os objetos são criados, com exemplos pequenos em Python.">
+<meta name="description" content="Padrões que organizam como os objetos são criados — Factory Method, Abstract Factory, Builder, Singleton e Prototype — com exemplos executáveis e a forma pythônica de cada um.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,194 +20,389 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Para que servem os padrões criacionais</li>
-        <li>Como criar objetos com uma fábrica (Factory Method)</li>
-        <li>Como montar objetos passo a passo (Builder) e copiar um modelo (Prototype)</li>
-        <li>Por que o Singleton deve ser usado com cuidado</li>
+        <li>Entender o que é um padrão de projeto e o que os padrões criacionais resolvem</li>
+        <li>Escolher a classe do objeto em um só lugar com Factory Method</li>
+        <li>Criar famílias de objetos que combinam com Abstract Factory</li>
+        <li>Montar objetos complicados passo a passo com Builder</li>
+        <li>Saber quando um Singleton faz sentido e por que, em Python, um módulo costuma bastar</li>
+        <li>Copiar um objeto pronto para fazer outros parecidos com Prototype</li>
       </ul>
     </div>
 
-    <h2>Padrões de projeto</h2>
-    <p>Um <strong>padrão de projeto</strong> é uma solução conhecida para um problema que aparece muitas vezes. Os 23 padrões clássicos foram reunidos em 1994 num livro de quatro autores (a "Gangue dos Quatro", GoF). Os <strong>criacionais</strong> tratam de uma pergunta: como criar objetos sem espalhar <code>if</code> e detalhes pelo programa?</p>
+    <h2>O que é um padrão de projeto</h2>
+    <p>Muitos problemas de programação se repetem em projetos diferentes. Um <strong>padrão de projeto</strong> é uma solução já testada para um desses problemas, com um nome que todo programador entende. Em 1994, quatro autores (apelidados de "Gangue dos Quatro", GoF) catalogaram 23 padrões em três grupos:</p>
+    <ul>
+      <li><strong>criacionais</strong> — como os objetos são criados (esta aula);</li>
+      <li><strong>estruturais</strong> — como os objetos se encaixam (aula 152);</li>
+      <li><strong>comportamentais</strong> — como os objetos conversam (aula 153).</li>
+    </ul>
+    <p>O livro foi escrito pensando em linguagens como C++ e Java. Em Python, vários padrões ficam bem mais curtos, porque funções, classes e módulos também são objetos. Nesta aula você vê a ideia de cada um e a versão pythônica.</p>
 
-    <h2>Factory Method e Abstract Factory</h2>
-    <p>Uma <strong>fábrica</strong> é uma função ou método que decide qual classe criar. Quem pede o objeto não precisa conhecer as classes:</p>
-<pre class="codigo" data-executar="sim"><code>class Pix:
-    def pagar(self, valor):
-        return f"Pix de R$ {valor:.2f} enviado"
-
-
-class Boleto:
-    def pagar(self, valor):
-        return f"Boleto de R$ {valor:.2f} gerado"
-
-
-def criar_pagamento(tipo):
-    tipos = {"pix": Pix, "boleto": Boleto}
-    return tipos[tipo]()
+    <h2>Factory Method: um lugar só para escolher a classe</h2>
+    <p>Problema: o programa precisa criar objetos de classes diferentes conforme uma informação (um texto do arquivo, uma opção do menu). Se cada parte do código fizer seu próprio <code>if</code> para escolher a classe, ao surgir uma classe nova você precisa caçar todos esses <code>if</code>.</p>
+    <p>A <strong>fábrica</strong> concentra essa escolha num único lugar:</p>
+<pre class="codigo" data-executar="sim"><code>class Cachorro:
+    def falar(self):
+        return "Au au"
 
 
-for tipo in ["pix", "boleto"]:
-    print(criar_pagamento(tipo).pagar(49.9))</code></pre>
-    <p class="saida">Pix de R$ 49.90 enviado<br>
-Boleto de R$ 49.90 gerado</p>
-    <p>A <strong>Abstract Factory</strong> vai um passo além: uma fábrica cria uma família inteira de objetos que combinam entre si (por exemplo, botão e janela do tema claro, ou botão e janela do tema escuro).</p>
+class Gato:
+    def falar(self):
+        return "Miau"
+
+
+class Vaca:
+    def falar(self):
+        return "Muuu"
+
+
+ANIMAIS = {"cachorro": Cachorro, "gato": Gato, "vaca": Vaca}
+
+
+def criar_animal(tipo):
+    try:
+        return ANIMAIS[tipo]()
+    except KeyError:
+        raise ValueError(f"animal desconhecido: {tipo}") from None
+
+
+for nome in ["gato", "vaca", "cachorro"]:
+    print(nome, "-&gt;", criar_animal(nome).falar())</code></pre>
+    <p class="saida">gato -&gt; Miau<br>
+vaca -&gt; Muuu<br>
+cachorro -&gt; Au au</p>
+    <p>Em Python, uma classe é um valor como outro qualquer: dá para guardá-la num dicionário e chamá-la depois. Por isso a fábrica pythônica muitas vezes é só um dicionário e uma função.</p>
+    <p>Na forma clássica do livro, o "método fábrica" fica numa classe mãe, e cada filha decide o que criar:</p>
+<pre class="codigo" data-executar="sim"><code>class Fase:
+    def criar_inimigo(self):          # o "Factory Method"
+        raise NotImplementedError
+
+    def iniciar(self):
+        inimigo = self.criar_inimigo()
+        print(f"{type(self).__name__}: apareceu um {inimigo}!")
+
+
+class FaseFloresta(Fase):
+    def criar_inimigo(self):
+        return "lobo"
+
+
+class FaseCastelo(Fase):
+    def criar_inimigo(self):
+        return "dragão"
+
+
+for fase in [FaseFloresta(), FaseCastelo()]:
+    fase.iniciar()</code></pre>
+    <p class="saida">FaseFloresta: apareceu um lobo!<br>
+FaseCastelo: apareceu um dragão!</p>
+    <p>O método <code>iniciar</code> é igual para todas as fases; só a criação do inimigo muda.</p>
+
+    <h2>Abstract Factory: famílias que combinam</h2>
+    <p>Problema: você precisa criar <strong>vários</strong> objetos que têm de combinar entre si. Num jogo com tema claro e escuro, o botão, o fundo e o texto precisam ser todos do mesmo tema. Misturar um botão escuro com um fundo claro seria um defeito.</p>
+    <p>A fábrica abstrata é um objeto que sabe criar a família inteira:</p>
 <pre class="codigo" data-executar="sim"><code>class TemaClaro:
-    def botao(self):
-        return "[botão branco]"
-
     def fundo(self):
-        return "fundo branco"
+        return "branco"
+
+    def texto(self):
+        return "preto"
+
+    def botao(self, rotulo):
+        return f"[ {rotulo} ] (cinza-claro)"
 
 
 class TemaEscuro:
-    def botao(self):
-        return "[botão preto]"
-
     def fundo(self):
-        return "fundo preto"
+        return "preto"
+
+    def texto(self):
+        return "branco"
+
+    def botao(self, rotulo):
+        return f"[ {rotulo} ] (azul-escuro)"
 
 
-def montar_tela(fabrica):
-    print(fabrica.fundo(), "com", fabrica.botao())
+def desenhar_menu(fabrica):
+    print(f"Fundo {fabrica.fundo()}, letras {fabrica.texto()}")
+    print(fabrica.botao("Jogar"), fabrica.botao("Sair"))
 
 
-montar_tela(TemaClaro())
-montar_tela(TemaEscuro())</code></pre>
-    <p class="saida">fundo branco com [botão branco]<br>
-fundo preto com [botão preto]</p>
+desenhar_menu(TemaClaro())
+desenhar_menu(TemaEscuro())</code></pre>
+    <p class="saida">Fundo branco, letras preto<br>
+[ Jogar ] (cinza-claro) [ Sair ] (cinza-claro)<br>
+Fundo preto, letras branco<br>
+[ Jogar ] (azul-escuro) [ Sair ] (azul-escuro)</p>
+    <p><code>desenhar_menu</code> nunca cita um tema. Para criar um tema "alto contraste", basta uma classe nova com os mesmos três métodos.</p>
 
-    <h2>Builder: montando passo a passo</h2>
-    <p>Quando um objeto tem muitas partes opcionais, o <strong>Builder</strong> monta aos poucos. Cada método devolve <code>self</code>, e por isso dá para encadear as chamadas:</p>
+    <h2>Builder: montar passo a passo</h2>
+    <p>Problema: alguns objetos têm muitas partes opcionais. Um <code>__init__</code> com dez parâmetros fica difícil de ler: <code>Pizza("grande", True, False, True, ...)</code> — o que é cada <code>True</code>?</p>
+    <p>O <strong>Builder</strong> monta o objeto em passos com nome. Cada método devolve o próprio construtor (<code>return self</code>), o que permite encadear as chamadas:</p>
 <pre class="codigo" data-executar="sim"><code>class Pizza:
-    def __init__(self):
-        self.sabor = "mussarela"
-        self.borda = "simples"
-        self.extras = []
+    def __init__(self, tamanho, sabores, borda):
+        self.tamanho = tamanho
+        self.sabores = sabores
+        self.borda = borda
 
     def __str__(self):
-        extras = ", ".join(self.extras) or "nenhum"
-        return f"Pizza de {self.sabor}, borda {self.borda}, extras: {extras}"
+        return f"Pizza {self.tamanho} de {' e '.join(self.sabores)}, borda {self.borda}"
 
 
 class MontadorDePizza:
     def __init__(self):
-        self.pizza = Pizza()
+        self._tamanho = "média"
+        self._sabores = []
+        self._borda = "simples"
 
-    def sabor(self, s):
-        self.pizza.sabor = s
+    def tamanho(self, valor):
+        self._tamanho = valor
         return self
 
-    def borda(self, b):
-        self.pizza.borda = b
+    def sabor(self, valor):
+        self._sabores.append(valor)
         return self
 
-    def extra(self, e):
-        self.pizza.extras.append(e)
+    def borda(self, valor):
+        self._borda = valor
         return self
 
     def pronta(self):
-        return self.pizza
+        if not self._sabores:
+            raise ValueError("escolha pelo menos um sabor")
+        return Pizza(self._tamanho, self._sabores, self._borda)
 
 
-p = MontadorDePizza().sabor("calabresa").borda("catupiry").extra("cebola").pronta()
-print(p)</code></pre>
-    <p class="saida">Pizza de calabresa, borda catupiry, extras: cebola</p>
+pedido = MontadorDePizza().tamanho("grande").sabor("calabresa").sabor("queijo").borda("catupiry").pronta()
+print(pedido)
+print(MontadorDePizza().sabor("frango").pronta())</code></pre>
+    <p class="saida">Pizza grande de calabresa e queijo, borda catupiry<br>
+Pizza média de frango, borda simples</p>
+    <p>O Builder também pode <strong>validar</strong> antes de entregar: sem sabor, <code>pronta()</code> recusa.</p>
+    <div class="dica"><strong>Dica:</strong> Em Python, argumentos nomeados com valor padrão (aula 41) resolvem a maioria dos casos que pedem Builder: <code>Pizza(tamanho="grande", borda="catupiry")</code> já é legível. Use Builder quando a montagem tem muitos passos, regras ou repetições (como vários <code>sabor(...)</code>).</div>
 
-    <h2>Singleton e Prototype</h2>
-    <p>O <strong>Singleton</strong> garante um único objeto de uma classe (por exemplo, a configuração do programa). Em Python, o jeito mais simples é usar um módulo, porque cada módulo é carregado uma vez só. Já o <strong>Prototype</strong> cria objetos novos copiando um modelo pronto, com <code>copy.deepcopy</code>:</p>
+    <h2>Singleton: um objeto só</h2>
+    <p>Problema: alguns objetos devem existir <strong>uma única vez</strong> no programa inteiro, como as configurações do jogo ou o placar global. Se cada parte criar o seu, elas discordam entre si.</p>
+    <p>A forma clássica controla a criação com <code>__new__</code> (aula 82):</p>
+<pre class="codigo" data-executar="sim"><code>class Configuracoes:
+    _instancia = None
+
+    def __new__(cls):
+        if cls._instancia is None:
+            cls._instancia = super().__new__(cls)
+            cls._instancia.volume = 50
+        return cls._instancia
+
+
+a = Configuracoes()
+b = Configuracoes()
+a.volume = 80
+print("b.volume =", b.volume)
+print("a é b?", a is b)</code></pre>
+    <p class="saida">b.volume = 80<br>
+a é b? True</p>
+    <p>Em Python há um jeito mais simples: <strong>um módulo já é um singleton</strong>. Quando você faz <code>import config</code> em vários arquivos, todos recebem o mesmo objeto módulo, carregado uma vez só. Basta colocar as variáveis em <code>config.py</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import sys
+import types
+
+# simulando um arquivo config.py (no computador, seria um arquivo de verdade)
+config = types.ModuleType("config")
+config.volume = 50
+sys.modules["config"] = config
+
+import config as em_um_arquivo
+import config as em_outro_arquivo
+
+em_um_arquivo.volume = 80
+print("Outro arquivo vê:", em_outro_arquivo.volume)
+print("Mesmo módulo?", em_um_arquivo is em_outro_arquivo)</code></pre>
+    <p class="saida">Outro arquivo vê: 80<br>
+Mesmo módulo? True</p>
+    <div class="atencao"><strong>Atenção:</strong> Singleton é o padrão mais mal usado. Ele vira uma "variável global disfarçada": qualquer parte do programa muda o objeto e fica difícil descobrir quem mudou. Também atrapalha os testes, que não conseguem começar do zero. Prefira criar o objeto uma vez e <strong>passá-lo</strong> para quem precisa (inversão de dependência, aula 150).</div>
+
+    <h2>Prototype: copiar um modelo</h2>
+    <p>Problema: criar um objeto do zero dá trabalho (muitos campos, cálculos), mas você precisa de vários quase iguais. Em vez de montar cada um, você <strong>copia</strong> um protótipo pronto e muda só o que difere.</p>
+    <p>Em Python, o módulo <code>copy</code> (aula 47) faz o serviço. Use <code>deepcopy</code> quando o objeto tem listas ou dicionários dentro:</p>
 <pre class="codigo" data-executar="sim"><code>import copy
 
 
-class Configuracao:
-    _unica = None
+class Personagem:
+    def __init__(self, nome, vida, itens):
+        self.nome = nome
+        self.vida = vida
+        self.itens = itens
 
-    def __new__(cls):
-        if cls._unica is None:
-            cls._unica = super().__new__(cls)
-            cls._unica.idioma = "pt-BR"
-        return cls._unica
+    def __repr__(self):
+        return f"{self.nome}(vida={self.vida}, itens={self.itens})"
 
 
-a = Configuracao()
-b = Configuracao()
-print(a is b)
+modelo = Personagem("Soldado", 100, ["espada", "escudo"])
 
-modelo = {"turma": "7º A", "alunos": ["Ana", "Rui"]}
-nova = copy.deepcopy(modelo)
-nova["turma"] = "7º B"
-nova["alunos"].append("Lia")
+soldado1 = copy.deepcopy(modelo)
+soldado1.nome = "Soldado 1"
+soldado2 = copy.deepcopy(modelo)
+soldado2.nome = "Soldado 2"
+soldado2.itens.append("arco")
+
 print(modelo)
-print(nova)</code></pre>
-    <p class="saida">True<br>
-{'turma': '7º A', 'alunos': ['Ana', 'Rui']}<br>
-{'turma': '7º B', 'alunos': ['Ana', 'Rui', 'Lia']}</p>
-    <div class="atencao"><strong>Atenção:</strong> O Singleton cria um "estado global" escondido, o que dificulta testes. Use só quando realmente precisar de um objeto único.</div>
+print(soldado1)
+print(soldado2)</code></pre>
+    <p class="saida">Soldado(vida=100, itens=['espada', 'escudo'])<br>
+Soldado 1(vida=100, itens=['espada', 'escudo'])<br>
+Soldado 2(vida=100, itens=['espada', 'escudo', 'arco'])</p>
+    <p>Com <code>copy.copy</code> (cópia rasa), a lista <code>itens</code> seria compartilhada: o arco do soldado 2 apareceria no modelo e no soldado 1 também.</p>
+    <p>Com <code>dataclasses</code>, a função <code>replace</code> cria uma cópia mudando alguns campos — um protótipo de uma linha:</p>
+<pre class="codigo" data-executar="sim"><code>from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class Ingresso:
+    show: str
+    setor: str
+    preco: float
+
+
+base = Ingresso("Festival de Música", "pista", 120.0)
+vip = replace(base, setor="camarote", preco=350.0)
+print(base)
+print(vip)</code></pre>
+    <p class="saida">Ingresso(show='Festival de Música', setor='pista', preco=120.0)<br>
+Ingresso(show='Festival de Música', setor='camarote', preco=350.0)</p>
+
+    <h2>Quando usar cada um</h2>
+    <ul>
+      <li><strong>Factory Method</strong>: a classe a criar depende de um dado (texto, opção) ou cada filha cria a sua versão.</li>
+      <li><strong>Abstract Factory</strong>: vários objetos precisam combinar entre si (temas, plataformas).</li>
+      <li><strong>Builder</strong>: objeto com muitas partes opcionais, passos ou validação.</li>
+      <li><strong>Singleton</strong>: um recurso único de verdade; em Python, prefira um módulo ou passar o objeto adiante.</li>
+      <li><strong>Prototype</strong>: criar do zero é caro e os objetos são parecidos; use <code>copy.deepcopy</code> ou <code>dataclasses.replace</code>.</li>
+    </ul>
+    <p>Se nenhum desses problemas aparece, um simples <code>Classe(...)</code> é a melhor escolha.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
-<pre class="codigo"><code>pagamento = criar_pagamento("pix")</code></pre>
+<pre class="codigo"><code>pedido = Montador().sabor("queijo").pronta()</code></pre>
     </div>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Acrescente à fábrica <code>criar_pagamento</code> um tipo <code>"cartao"</code> com a classe <code>Cartao</code>, cujo <code>pagar</code> devolve <code>"Cartão: R$ 10.00 aprovado"</code> para o valor 10.</p>
+      <p><strong>1.</strong> Crie uma fábrica <code>criar_forma(tipo, tamanho)</code> que devolva um <code>Quadrado</code> ou um <code>Circulo</code>, ambos com o método <code>area()</code>. Use um dicionário para escolher a classe e mostre a área de um quadrado de lado 3 e de um círculo de raio 1 (use 3.14 para pi).</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class Pix:
-    def pagar(self, valor):
-        return f"Pix de R$ {valor:.2f} enviado"
+<pre class="codigo" data-executar="sim"><code>class Quadrado:
+    def __init__(self, lado):
+        self.lado = lado
+
+    def area(self):
+        return self.lado ** 2
 
 
-class Cartao:
-    def pagar(self, valor):
-        return f"Cartão: R$ {valor:.2f} aprovado"
+class Circulo:
+    def __init__(self, raio):
+        self.raio = raio
+
+    def area(self):
+        return 3.14 * self.raio ** 2
 
 
-def criar_pagamento(tipo):
-    tipos = {"pix": Pix, "cartao": Cartao}
-    return tipos[tipo]()
+FORMAS = {"quadrado": Quadrado, "circulo": Circulo}
 
 
-print(criar_pagamento("cartao").pagar(10))</code></pre>
-      <p class="saida">Cartão: R$ 10.00 aprovado</p>
+def criar_forma(tipo, tamanho):
+    return FORMAS[tipo](tamanho)
+
+
+print(criar_forma("quadrado", 3).area())
+print(criar_forma("circulo", 1).area())</code></pre>
+      <p class="saida">9<br>
+3.14</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Use o <code>MontadorDePizza</code> para montar uma pizza de frango com borda de cheddar e os extras milho e bacon. (Copie as classes do exemplo.)</p>
+      <p><strong>2.</strong> Faça um <code>MontadorDeSanduiche</code> com os métodos <code>pao(nome)</code>, <code>recheio(nome)</code> (pode ser chamado várias vezes) e <code>pronto()</code>, que devolve um texto como <code>"Sanduíche no pão francês com queijo, presunto"</code>. Encadeie as chamadas.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class Pizza:
+<pre class="codigo" data-executar="sim"><code>class MontadorDeSanduiche:
     def __init__(self):
-        self.sabor = "mussarela"
-        self.borda = "simples"
-        self.extras = []
+        self._pao = "de forma"
+        self._recheios = []
 
-    def __str__(self):
-        extras = ", ".join(self.extras) or "nenhum"
-        return f"Pizza de {self.sabor}, borda {self.borda}, extras: {extras}"
-
-
-class MontadorDePizza:
-    def __init__(self):
-        self.pizza = Pizza()
-
-    def sabor(self, s):
-        self.pizza.sabor = s
+    def pao(self, nome):
+        self._pao = nome
         return self
 
-    def borda(self, b):
-        self.pizza.borda = b
+    def recheio(self, nome):
+        self._recheios.append(nome)
         return self
 
-    def extra(self, e):
-        self.pizza.extras.append(e)
-        return self
-
-    def pronta(self):
-        return self.pizza
+    def pronto(self):
+        return f"Sanduíche no pão {self._pao} com {', '.join(self._recheios)}"
 
 
-print(MontadorDePizza().sabor("frango").borda("cheddar").extra("milho").extra("bacon").pronta())</code></pre>
-      <p class="saida">Pizza de frango, borda cheddar, extras: milho, bacon</p>
+print(MontadorDeSanduiche().pao("francês").recheio("queijo").recheio("presunto").pronto())</code></pre>
+      <p class="saida">Sanduíche no pão francês com queijo, presunto</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Mostre o perigo do Prototype com cópia rasa: copie com <code>copy.copy</code> uma playlist que tem uma lista de músicas, acrescente uma música na cópia e mostre que a original também mudou. Depois conserte com <code>deepcopy</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import copy
+
+
+class Playlist:
+    def __init__(self, nome, musicas):
+        self.nome = nome
+        self.musicas = musicas
+
+
+original = Playlist("Estudo", ["Lo-fi 1", "Piano"])
+
+rasa = copy.copy(original)
+rasa.musicas.append("Rock pesado")
+print("Com copy:", original.musicas)
+
+original = Playlist("Estudo", ["Lo-fi 1", "Piano"])
+funda = copy.deepcopy(original)
+funda.musicas.append("Rock pesado")
+print("Com deepcopy:", original.musicas)</code></pre>
+      <p class="saida">Com copy: ['Lo-fi 1', 'Piano', 'Rock pesado']<br>
+Com deepcopy: ['Lo-fi 1', 'Piano']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie duas fábricas abstratas, <code>MobiliaModerna</code> e <code>MobiliaRustica</code>, cada uma com os métodos <code>cadeira()</code> e <code>mesa()</code> que devolvem textos. Escreva uma função <code>montar_sala(fabrica)</code> que mostre a cadeira e a mesa combinando.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class MobiliaModerna:
+    def cadeira(self):
+        return "cadeira de acrílico"
+
+    def mesa(self):
+        return "mesa de vidro"
+
+
+class MobiliaRustica:
+    def cadeira(self):
+        return "cadeira de madeira"
+
+    def mesa(self):
+        return "mesa de tronco"
+
+
+def montar_sala(fabrica):
+    print(f"Sala com {fabrica.cadeira()} e {fabrica.mesa()}")
+
+
+montar_sala(MobiliaModerna())
+montar_sala(MobiliaRustica())</code></pre>
+      <p class="saida">Sala com cadeira de acrílico e mesa de vidro<br>
+Sala com cadeira de madeira e mesa de tronco</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que, em Python, muitas vezes não é preciso escrever uma classe Singleton?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque um módulo já é carregado uma vez só: todo import do mesmo módulo<br>
+devolve o mesmo objeto. Basta guardar as configurações num arquivo como<br>
+config.py e importar onde precisar. E, quando possível, é melhor criar o<br>
+objeto uma vez e passá-lo como parâmetro, o que facilita os testes.</p>
       </details>
     </div>
 

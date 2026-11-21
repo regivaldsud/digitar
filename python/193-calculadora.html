@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 193 · Projeto: calculadora (display, grade de botões, teclado, QMessageBox) — Curso de Python · DIGITAR</title>
-<meta name="description" content="Monte uma calculadora com PySide6: display, grade de botões, atalhos de teclado e mensagens de erro.">
+<meta name="description" content="Monte, passo a passo, uma calculadora com PySide6: lógica separada da tela, display, grade de botões, atalhos de teclado e mensagens de erro.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,20 +20,61 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Separar a lógica da calculadora da parte visual</li>
-        <li>Criar uma grade de botões a partir de uma lista</li>
-        <li>Tratar o teclado e mostrar erros com QMessageBox</li>
+        <li>Separar a lógica da calculadora (sem Qt) da parte visual</li>
+        <li>Testar a lógica no navegador antes de abrir qualquer janela</li>
+        <li>Criar a grade de botões a partir de uma lista, com <code>QGridLayout</code></li>
+        <li>Ligar todos os botões a um único método com <code>lambda</code></li>
+        <li>Usar a calculadora pelo teclado com <code>keyPressEvent</code> e mostrar erros com <code>QMessageBox</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Passo 1: a lógica, sem janela</h2>
-    <p>Um bom hábito: escreva a parte que calcula separada da tela. Assim você testa sem abrir janela nenhuma. A função abaixo recebe a conta como texto e devolve o resultado.</p>
-<pre class="codigo" data-executar="sim"><code>def calcular(expressao):
-    permitido = "0123456789+-*/.() "
-    if not expressao or any(c not in permitido for c in expressao):
-        raise ValueError("Conta inválida")
-    resultado = eval(expressao, {"__builtins__": {}})
+    <h2>O plano do projeto</h2>
+    <p>Neste projeto você vai juntar tudo do módulo: layouts (aula 191), sinais e slots (aula 192) e uma classe para a janela. A calculadora vai ter:</p>
+    <ul>
+      <li>um <strong>display</strong> no alto, onde aparece a conta;</li>
+      <li>uma <strong>grade</strong> de botões com números, operações, <code>C</code> (limpar), <code>⌫</code> (apagar o último) e <code>=</code>;</li>
+      <li>uso pelo <strong>teclado</strong> (ótimo para quem treina digitação!): números, operações, Enter, Backspace e Esc;</li>
+      <li>uma caixa de aviso quando a conta for impossível, como dividir por zero.</li>
+    </ul>
+    <p>O segredo de um bom programa com janela é <strong>separar</strong> duas partes: a <strong>lógica</strong> (que faz as contas e sabe o que mostrar) e a <strong>tela</strong> (que só desenha e repassa os cliques). A lógica, escrita em Python puro, pode ser testada aqui no navegador, sem janela nenhuma. A tela fica fininha e fácil de entender.</p>
+
+    <h2>Passo 1: o desenho dos botões</h2>
+    <p>Os botões ficam numa lista de listas: cada lista de dentro é uma linha da grade. Assim, mudar a calculadora é só mudar a lista. Confira o desenho:</p>
+<pre class="codigo" data-executar="sim"><code>BOTOES = [
+    ["C", "⌫", "(", ")"],
+    ["7", "8", "9", "/"],
+    ["4", "5", "6", "*"],
+    ["1", "2", "3", "-"],
+    ["0", ".", "=", "+"],
+]
+
+for numero_linha, linha in enumerate(BOTOES, start=1):
+    for coluna, texto in enumerate(linha):
+        print(f"[{texto:^3}]", end="")
+    print(f"   &lt;- linha {numero_linha} da grade")</code></pre>
+    <p class="saida">[ C ][ ⌫ ][ ( ][ ) ] &nbsp;&nbsp;&lt;- linha 1 da grade<br>
+[ 7 ][ 8 ][ 9 ][ / ] &nbsp;&nbsp;&lt;- linha 2 da grade<br>
+[ 4 ][ 5 ][ 6 ][ * ] &nbsp;&nbsp;&lt;- linha 3 da grade<br>
+[ 1 ][ 2 ][ 3 ][ - ] &nbsp;&nbsp;&lt;- linha 4 da grade<br>
+[ 0 ][ . ][ = ][ + ] &nbsp;&nbsp;&lt;- linha 5 da grade</p>
+    <p>A contagem começa em 1 porque a linha 0 da grade vai ser ocupada pelo display.</p>
+
+    <h2>Passo 2: a função que calcula</h2>
+    <p>A função <code>calcular</code> recebe a conta como texto, por exemplo <code>"12+30"</code>, e devolve o resultado. Ela usa o <code>eval</code>, que calcula uma expressão do Python, mas antes <strong>confere</strong> cada caractere: só passam dígitos, ponto, parênteses e as quatro operações.</p>
+<pre class="codigo" data-executar="sim"><code>PERMITIDOS = set("0123456789+-*/.() ")
+
+
+def calcular(expressao):
+    if not expressao or not set(expressao) &lt;= PERMITIDOS or "**" in expressao or "//" in expressao:
+        raise ValueError("Conta inválida.")
+    try:
+        resultado = eval(expressao, {"__builtins__": {}})
+    except ZeroDivisionError:
+        raise ValueError("Não dá para dividir por zero.")
+    except SyntaxError:
+        raise ValueError("Conta incompleta.")
+    resultado = round(resultado, 10)
     if resultado == int(resultado):
         resultado = int(resultado)
     return resultado
@@ -41,91 +82,312 @@
 
 print(calcular("12+30"))
 print(calcular("7/2"))
-print(calcular("(2+3)*4"))</code></pre>
+print(calcular("(2+3)*4"))
+print(calcular("0.1+0.2"))
+for conta in ["5/0", "8+", "2**100", "abc"]:
+    try:
+        calcular(conta)
+    except ValueError as erro:
+        print(conta, "-&gt;", erro)</code></pre>
     <p class="saida">42<br>
 3.5<br>
-20</p>
-    <div class="atencao"><strong>Atenção:</strong> <code>eval</code> roda qualquer código Python, por isso é perigoso com texto vindo do usuário. Aqui só deixamos passar dígitos e operadores, e tiramos as funções embutidas. Num programa sério, use um analisador de expressões.</div>
+20<br>
+0.3<br>
+5/0 -&gt; Não dá para dividir por zero.<br>
+8+ -&gt; Conta incompleta.<br>
+2**100 -&gt; Conta inválida.<br>
+abc -&gt; Conta inválida.</p>
+    <ul>
+      <li><code>set(expressao) &lt;= PERMITIDOS</code> confere se todos os caracteres estão na lista de permitidos (aula 48).</li>
+      <li>Os erros diferentes viram sempre <code>ValueError</code> com uma mensagem amigável. Assim, a tela só precisa tratar um tipo de erro.</li>
+      <li><code>round(resultado, 10)</code> resolve a imprecisão do <code>float</code> (aula 29): sem ele, <code>0.1+0.2</code> mostraria <code>0.30000000000000004</code>.</li>
+      <li><code>int(resultado)</code> tira o <code>.0</code> de contas exatas: <code>4/2</code> mostra <code>2</code>, não <code>2.0</code>.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> O <code>eval</code> roda <strong>qualquer</strong> código Python, por isso é perigoso com texto vindo do usuário. Aqui ele só é seguro porque conferimos os caracteres antes e tiramos as funções embutidas (<code>"__builtins__": {}</code>). Nunca use <code>eval</code> com um texto que você não conferiu.</div>
 
-    <h2>Passo 2: a janela da calculadora</h2>
-<pre class="codigo"><code>import sys
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QApplication, QWidget, QGridLayout,
-                               QLineEdit, QPushButton, QMessageBox)
-
-BOTOES = [
-    ["7", "8", "9", "/"],
-    ["4", "5", "6", "*"],
-    ["1", "2", "3", "-"],
-    ["C", "0", "=", "+"],
-]
+    <h2>Passo 3: o motor da calculadora</h2>
+    <p>O "motor" é uma classe sem nada de Qt que guarda o texto do display e sabe o que fazer com cada tecla. A janela só vai chamar <code>motor.apertar(tecla)</code> e mostrar <code>motor.texto</code>.</p>
+<pre class="codigo" data-executar="sim"><code>PERMITIDOS = set("0123456789+-*/.() ")
 
 
 def calcular(expressao):
-    permitido = "0123456789+-*/.() "
-    if not expressao or any(c not in permitido for c in expressao):
-        raise ValueError("Conta inválida")
-    resultado = eval(expressao, {"__builtins__": {}})
+    if not expressao or not set(expressao) &lt;= PERMITIDOS or "**" in expressao or "//" in expressao:
+        raise ValueError("Conta inválida.")
+    try:
+        resultado = eval(expressao, {"__builtins__": {}})
+    except ZeroDivisionError:
+        raise ValueError("Não dá para dividir por zero.")
+    except SyntaxError:
+        raise ValueError("Conta incompleta.")
+    resultado = round(resultado, 10)
     if resultado == int(resultado):
         resultado = int(resultado)
     return resultado
+
+
+class Motor:
+    def __init__(self):
+        self.texto = ""
+
+    def apertar(self, tecla):
+        if tecla == "C":
+            self.texto = ""
+        elif tecla == "⌫":
+            self.texto = self.texto[:-1]
+        elif tecla == "=":
+            try:
+                self.texto = str(calcular(self.texto))
+            except ValueError:
+                self.texto = ""
+                raise              # avisa quem chamou (a janela)
+        else:
+            self.texto += tecla
+        return self.texto
+
+
+motor = Motor()
+for tecla in "12+30":
+    motor.apertar(tecla)
+print("Display:", motor.texto)
+print("Depois do =:", motor.apertar("="))
+print("Mais uma conta:", motor.apertar("*"), "-&gt;", motor.apertar("2"), "-&gt;", motor.apertar("="))
+print("Apagando:", motor.apertar("⌫"))</code></pre>
+    <p class="saida">Display: 12+30<br>
+Depois do =: 42<br>
+Mais uma conta: 42* -&gt; 42*2 -&gt; 84<br>
+Apagando: 8</p>
+    <div class="dica"><strong>Dica:</strong> Repare que o motor não sabe nada de botões nem de janelas. Se um dia você quiser fazer a calculadora no terminal, num site ou com outra biblioteca de janelas, o motor continua igual.</div>
+
+    <h2>Passo 4: testando o motor como um usuário</h2>
+    <p>Antes de abrir a janela, simule um usuário apertando teclas, inclusive as que dão erro. Se tudo sair certo aqui, a janela vai funcionar:</p>
+<pre class="codigo" data-executar="sim"><code>PERMITIDOS = set("0123456789+-*/.() ")
+
+
+def calcular(expressao):
+    if not expressao or not set(expressao) &lt;= PERMITIDOS or "**" in expressao or "//" in expressao:
+        raise ValueError("Conta inválida.")
+    try:
+        resultado = eval(expressao, {"__builtins__": {}})
+    except ZeroDivisionError:
+        raise ValueError("Não dá para dividir por zero.")
+    except SyntaxError:
+        raise ValueError("Conta incompleta.")
+    resultado = round(resultado, 10)
+    if resultado == int(resultado):
+        resultado = int(resultado)
+    return resultado
+
+
+class Motor:
+    def __init__(self):
+        self.texto = ""
+
+    def apertar(self, tecla):
+        if tecla == "C":
+            self.texto = ""
+        elif tecla == "⌫":
+            self.texto = self.texto[:-1]
+        elif tecla == "=":
+            try:
+                self.texto = str(calcular(self.texto))
+            except ValueError:
+                self.texto = ""
+                raise
+        else:
+            self.texto += tecla
+        return self.texto
+
+
+def simular(teclas):
+    motor = Motor()
+    for tecla in teclas:
+        try:
+            motor.apertar(tecla)
+        except ValueError as erro:
+            print(f"  (caixa de aviso: {erro})")
+    return motor.texto
+
+
+testes = [
+    (["1", "0", "-", "4", "*", "2", "="], "2"),
+    (["(", "2", "+", "3", ")", "*", "4", "="], "20"),
+    (["7", "/", "2", "="], "3.5"),
+    (["9", "9", "⌫", "1", "="], "91"),
+    (["5", "/", "0", "="], ""),
+    (["1", "2", "C", "3", "="], "3"),
+]
+for teclas, esperado in testes:
+    obtido = simular(teclas)
+    marca = "ok" if obtido == esperado else "ERRO"
+    print(f"{''.join(teclas):&lt;12} -&gt; {obtido!r:&lt;7} {marca}")</code></pre>
+    <p class="saida">10-4*2= &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; '2' &nbsp;&nbsp;&nbsp;&nbsp;ok<br>
+(2+3)*4= &nbsp;&nbsp;&nbsp;&nbsp;-&gt; '20' &nbsp;&nbsp;&nbsp;ok<br>
+7/2= &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; '3.5' &nbsp;&nbsp;ok<br>
+99⌫1= &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; '91' &nbsp;&nbsp;&nbsp;ok<br>
+&nbsp;&nbsp;(caixa de aviso: Não dá para dividir por zero.)<br>
+5/0= &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; '' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ok<br>
+12C3= &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; '3' &nbsp;&nbsp;&nbsp;&nbsp;ok</p>
+    <p>Este é o mesmo raciocínio dos testes automáticos do módulo 6: cada linha da lista é um caso de teste com o resultado esperado.</p>
+
+    <h2>Passo 5: a janela completa</h2>
+    <p>Agora sim, a parte visual. Crie uma pasta <code>calculadora</code>, ative o ambiente virtual com o PySide6 instalado (aula 190), salve o código abaixo como <code>calculadora.py</code> e rode:</p>
+<pre class="codigo"><code>python calculadora.py</code></pre>
+<pre class="codigo"><code>import sys
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QGridLayout, QLineEdit,
+                               QMessageBox, QPushButton, QWidget)
+
+# ------------------------------------------------ lógica (sem Qt)
+PERMITIDOS = set("0123456789+-*/.() ")
+
+
+def calcular(expressao):
+    if not expressao or not set(expressao) &lt;= PERMITIDOS or "**" in expressao or "//" in expressao:
+        raise ValueError("Conta inválida.")
+    try:
+        resultado = eval(expressao, {"__builtins__": {}})
+    except ZeroDivisionError:
+        raise ValueError("Não dá para dividir por zero.")
+    except SyntaxError:
+        raise ValueError("Conta incompleta.")
+    resultado = round(resultado, 10)
+    if resultado == int(resultado):
+        resultado = int(resultado)
+    return resultado
+
+
+class Motor:
+    def __init__(self):
+        self.texto = ""
+
+    def apertar(self, tecla):
+        if tecla == "C":
+            self.texto = ""
+        elif tecla == "⌫":
+            self.texto = self.texto[:-1]
+        elif tecla == "=":
+            try:
+                self.texto = str(calcular(self.texto))
+            except ValueError:
+                self.texto = ""
+                raise
+        else:
+            self.texto += tecla
+        return self.texto
+
+
+# ------------------------------------------------ tela (Qt)
+BOTOES = [
+    ["C", "⌫", "(", ")"],
+    ["7", "8", "9", "/"],
+    ["4", "5", "6", "*"],
+    ["1", "2", "3", "-"],
+    ["0", ".", "=", "+"],
+]
+
+TECLAS_DIGITAVEIS = "0123456789+-*/.()"
 
 
 class Calculadora(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Calculadora")
+        self.motor = Motor()
+
         self.display = QLineEdit()
         self.display.setReadOnly(True)
         self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.display.setStyleSheet("font-size: 28px; padding: 6px")
+        self.display.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
         grade = QGridLayout(self)
-        grade.addWidget(self.display, 0, 0, 1, 4)
+        grade.addWidget(self.display, 0, 0, 1, 4)   # linha 0, coluna 0, 1 linha, 4 colunas
+
         for linha, textos in enumerate(BOTOES, start=1):
             for coluna, texto in enumerate(textos):
                 botao = QPushButton(texto)
+                botao.setMinimumSize(60, 50)
+                botao.setFocusPolicy(Qt.FocusPolicy.NoFocus)
                 botao.clicked.connect(lambda _=False, t=texto: self.apertar(t))
                 grade.addWidget(botao, linha, coluna)
 
-    def apertar(self, texto):
-        if texto == "C":
-            self.display.clear()
-        elif texto == "=":
-            try:
-                self.display.setText(str(calcular(self.display.text())))
-            except (ValueError, SyntaxError, ZeroDivisionError):
-                QMessageBox.warning(self, "Ops", "Essa conta não dá para fazer.")
-                self.display.clear()
-        else:
-            self.display.setText(self.display.text() + texto)
+    def apertar(self, tecla):
+        try:
+            self.motor.apertar(tecla)
+        except ValueError as erro:
+            QMessageBox.warning(self, "Ops", str(erro))
+        self.display.setText(self.motor.texto)
 
     def keyPressEvent(self, evento):
         tecla = evento.text()
-        if tecla in "0123456789+-*/":
-            self.apertar(tecla)
-        elif evento.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+        if evento.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter) or tecla == "=":
             self.apertar("=")
+        elif evento.key() == Qt.Key.Key_Backspace:
+            self.apertar("⌫")
         elif evento.key() == Qt.Key.Key_Escape:
             self.apertar("C")
+        elif tecla and tecla in TECLAS_DIGITAVEIS:
+            self.apertar(tecla)
         else:
             super().keyPressEvent(evento)
 
 
-app = QApplication(sys.argv)
-janela = Calculadora()
-janela.show()
-sys.exit(app.exec())</code></pre>
-    <p>Pontos importantes:</p>
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    janela = Calculadora()
+    janela.show()
+    sys.exit(app.exec())</code></pre>
+    <p class="saida">Abre a janela "Calculadora": o display grande no alto e, embaixo, a grade 5×4 de botões.<br>
+Clicando 1, 2, +, 3, 0 e =, o display mostra 42.<br>
+Digitando 5/0 e apertando Enter, aparece a caixa "Ops" com "Não dá para dividir por zero." e o display fica vazio.<br>
+Backspace apaga o último caractere e Esc limpa tudo.</p>
+    <p>O que cada parte faz:</p>
     <ul>
-      <li><code>grade.addWidget(self.display, 0, 0, 1, 4)</code> faz o display ocupar 1 linha e 4 colunas.</li>
-      <li>Na <code>lambda</code>, <code>t=texto</code> guarda o texto de <strong>cada</strong> botão. Sem isso, todos os botões usariam o último texto do laço.</li>
-      <li><code>keyPressEvent</code> é chamado a cada tecla: assim dá para usar a calculadora pelo teclado — ótimo para quem treina digitação!</li>
+      <li><code>grade.addWidget(self.display, 0, 0, 1, 4)</code> faz o display ocupar a linha 0 inteira (1 linha e 4 colunas).</li>
+      <li>Os dois <code>for</code> com <code>enumerate</code> montam a grade a partir da lista <code>BOTOES</code>, como no Passo 1.</li>
+      <li><code>lambda _=False, t=texto: self.apertar(t)</code> liga <strong>todos</strong> os botões ao mesmo método, cada um mandando o seu texto (aula 192).</li>
+      <li>O método <code>apertar</code> da janela só repassa a tecla ao motor, mostra o resultado e, se o motor reclamar, abre a caixa de aviso com <code>QMessageBox.warning</code>.</li>
+      <li><code>keyPressEvent</code> é chamado pelo Qt a cada tecla apertada com a janela em foco. <code>evento.text()</code> é o caractere digitado e <code>evento.key()</code> identifica teclas especiais como Enter e Esc.</li>
+      <li><code>setFocusPolicy(NoFocus)</code> nos botões e no display faz as teclas chegarem sempre à janela. Sem isso, depois de clicar num botão, o Enter "apertaria" de novo o botão que ficou em foco.</li>
     </ul>
-    <div class="dica"><strong>Dica:</strong> Teste com <code>5/0</code>: o <code>ZeroDivisionError</code> é capturado e aparece a caixa de aviso do QMessageBox.</div>
+    <div class="atencao"><strong>Atenção:</strong> Em <code>keyPressEvent</code>, teste <code>tecla and tecla in TECLAS_DIGITAVEIS</code>. Teclas como Shift e Ctrl têm <code>evento.text()</code> vazio, e <code>"" in "0123"</code> dá <code>True</code> no Python — sem o <code>tecla and</code>, elas entrariam como se fossem dígitos.</div>
+    <div class="dica"><strong>Dica:</strong> O <code>if __name__ == "__main__":</code> (aula 100) deixa você importar <code>Motor</code> e <code>calcular</code> deste arquivo num teste sem abrir a janela.</div>
+
+    <h2>Passo 6: testando a janela sem abrir a tela</h2>
+    <p>Para quem quiser ir além: o Qt tem o módulo <code>QtTest</code>, que clica e digita sozinho. Salve como <code>testar_calculadora.py</code> na mesma pasta e rode com <code>python testar_calculadora.py</code>:</p>
+<pre class="codigo"><code>import os
+import sys
+
+os.environ["QT_QPA_PLATFORM"] = "offscreen"   # não mostra nada na tela
+
+from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication, QMessageBox
+
+import calculadora
+
+app = QApplication(sys.argv)
+avisos = []
+QMessageBox.warning = lambda pai, titulo, texto: avisos.append(texto)   # troca a caixa modal
+
+janela = calculadora.Calculadora()
+QTest.keyClicks(janela, "12+30")
+QTest.keyClick(janela, Qt.Key.Key_Return)
+print("Display:", janela.display.text())
+
+QTest.keyClicks(janela, "5/0")
+QTest.keyClick(janela, Qt.Key.Key_Return)
+print("Avisos:", avisos)</code></pre>
+    <p class="saida">Display: 42<br>
+Avisos: ['Não dá para dividir por zero.']</p>
+    <p>A caixa do <code>QMessageBox</code> espera alguém clicar em OK, o que travaria um teste automático. Por isso o teste troca <code>QMessageBox.warning</code> por uma função que só guarda a mensagem — é a mesma ideia dos mocks da aula 133.</p>
 
     <h2>Desafios extras</h2>
     <ul>
-      <li>Acrescente um botão "⌫" que apaga só o último caractere.</li>
       <li>Mostre o histórico das contas num <code>QLabel</code> acima do display.</li>
+      <li>Acrescente um botão <code>%</code> que divide o número do display por 100.</li>
+      <li>Troque as cores dos botões de operação com <code>setStyleSheet("background: orange")</code>.</li>
     </ul>
 
     <div class="digite">
@@ -135,27 +397,39 @@ sys.exit(app.exec())</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Teste a função <code>calcular</code> com "10-4*2" e com "2**10". O que acontece com a segunda? Por quê?</p>
+      <p><strong>1.</strong> Teste a função <code>calcular</code> com "10-4*2", "2**10" e "2*(3+4)". Por que a segunda dá erro?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>def calcular(expressao):
-    permitido = "0123456789+-*/.() "
-    if not expressao or any(c not in permitido for c in expressao):
-        raise ValueError("Conta inválida")
-    resultado = eval(expressao, {"__builtins__": {}})
+<pre class="codigo" data-executar="sim"><code>PERMITIDOS = set("0123456789+-*/.() ")
+
+
+def calcular(expressao):
+    if not expressao or not set(expressao) &lt;= PERMITIDOS or "**" in expressao or "//" in expressao:
+        raise ValueError("Conta inválida.")
+    try:
+        resultado = eval(expressao, {"__builtins__": {}})
+    except ZeroDivisionError:
+        raise ValueError("Não dá para dividir por zero.")
+    except SyntaxError:
+        raise ValueError("Conta incompleta.")
+    resultado = round(resultado, 10)
     if resultado == int(resultado):
         resultado = int(resultado)
     return resultado
 
 
-print(calcular("10-4*2"))
-print(calcular("2**10"))</code></pre>
-      <p class="saida">2<br>
-1024</p>
-      <p>A segunda também funciona: <code>**</code> é formado por dois <code>*</code>, que estão na lista de permitidos. Se quiser proibir potência, teste <code>if "**" in expressao</code>.</p>
+for conta in ["10-4*2", "2**10", "2*(3+4)"]:
+    try:
+        print(conta, "=", calcular(conta))
+    except ValueError as erro:
+        print(conta, "-&gt;", erro)</code></pre>
+      <p class="saida">10-4*2 = 2<br>
+2**10 -&gt; Conta inválida.<br>
+2*(3+4) = 14</p>
+      <p>A multiplicação vem antes da subtração, por isso <code>10-4*2</code> dá 2. O <code>**</code> (potência) foi proibido de propósito: com ele, alguém poderia digitar <code>9**9**9</code>, uma conta tão gigante que travaria o programa.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva a função <code>apagar_ultimo(texto)</code> que será usada pelo botão "⌫" e teste com "123+4".</p>
+      <p><strong>2.</strong> Escreva a função <code>apagar_ultimo(texto)</code> usada pelo botão "⌫" e teste com "123+4" e com um texto vazio.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>def apagar_ultimo(texto):
     return texto[:-1]
@@ -166,6 +440,105 @@ print(repr(apagar_ultimo("")))</code></pre>
       <p class="saida">123+<br>
 ''</p>
       <p>Fatiar <code>[:-1]</code> um texto vazio devolve outro texto vazio, então não há erro.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Acrescente ao <code>Motor</code> a tecla <code>"±"</code>, que troca o sinal do número do display: <code>"8"</code> vira <code>"-8"</code> e <code>"-8"</code> vira <code>"8"</code>. Teste.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Motor:
+    def __init__(self):
+        self.texto = ""
+
+    def apertar(self, tecla):
+        if tecla == "C":
+            self.texto = ""
+        elif tecla == "±":
+            if self.texto.startswith("-"):
+                self.texto = self.texto[1:]
+            elif self.texto:
+                self.texto = "-" + self.texto
+        else:
+            self.texto += tecla
+        return self.texto
+
+
+motor = Motor()
+motor.apertar("8")
+print(motor.apertar("±"))
+print(motor.apertar("±"))</code></pre>
+      <p class="saida">-8<br>
+8</p>
+      <p>Na janela, basta colocar <code>"±"</code> em algum lugar da lista <code>BOTOES</code>: o botão aparece e já chama o motor.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça o <code>Motor</code> guardar um histórico: cada conta que der certo vira um texto como <code>"12+30 = 42"</code> numa lista <code>self.historico</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>PERMITIDOS = set("0123456789+-*/.() ")
+
+
+def calcular(expressao):
+    if not expressao or not set(expressao) &lt;= PERMITIDOS or "**" in expressao or "//" in expressao:
+        raise ValueError("Conta inválida.")
+    try:
+        resultado = eval(expressao, {"__builtins__": {}})
+    except ZeroDivisionError:
+        raise ValueError("Não dá para dividir por zero.")
+    except SyntaxError:
+        raise ValueError("Conta incompleta.")
+    resultado = round(resultado, 10)
+    if resultado == int(resultado):
+        resultado = int(resultado)
+    return resultado
+
+
+class Motor:
+    def __init__(self):
+        self.texto = ""
+        self.historico = []
+
+    def apertar(self, tecla):
+        if tecla == "=":
+            conta = self.texto
+            try:
+                self.texto = str(calcular(conta))
+            except ValueError:
+                self.texto = ""
+                raise
+            self.historico.append(f"{conta} = {self.texto}")
+        elif tecla == "C":
+            self.texto = ""
+        else:
+            self.texto += tecla
+        return self.texto
+
+
+motor = Motor()
+for tecla in "12+30=*2=":
+    motor.apertar(tecla)
+print(motor.historico)</code></pre>
+      <p class="saida">['12+30 = 42', '42*2 = 84']</p>
+      <p>Na janela, depois de cada <code>=</code>, você pode mostrar <code>motor.historico[-1]</code> num <code>QLabel</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Na janela da calculadora, faça a tecla <code>,</code> (vírgula) do teclado funcionar como ponto decimal, já que no Brasil escrevemos <code>3,5</code>. Mostre só o método que muda.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def keyPressEvent(self, evento):
+    tecla = evento.text()
+    if tecla == ",":
+        tecla = "."
+    if evento.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter) or tecla == "=":
+        self.apertar("=")
+    elif evento.key() == Qt.Key.Key_Backspace:
+        self.apertar("⌫")
+    elif evento.key() == Qt.Key.Key_Escape:
+        self.apertar("C")
+    elif tecla and tecla in TECLAS_DIGITAVEIS:
+        self.apertar(tecla)
+    else:
+        super().keyPressEvent(evento)</code></pre>
+      <p>Trocando a vírgula por ponto logo no começo, o resto do método e o motor continuam iguais.</p>
       </details>
     </div>
 

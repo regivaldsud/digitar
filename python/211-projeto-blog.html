@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 211 · Projeto: blog (categorias, tags, slugs, imagens, context processors) — Curso de Python · DIGITAR</title>
-<meta name="description" content="Monte um blog com posts, categorias, tags, endereços amigáveis com slug, imagens e um menu disponível em todas as páginas.">
+<meta name="description" content="Construa passo a passo um blog completo em Django, com posts, categorias, tags, endereços amigáveis com slug, imagens de capa, paginação e um menu presente em todas as páginas.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,15 +20,104 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Relacionar posts com categorias (ForeignKey) e tags (ManyToManyField)</li>
-        <li>Criar endereços amigáveis com <code>slug</code> e <code>slugify</code></li>
-        <li>Enviar imagens com <code>ImageField</code> e configurar <code>MEDIA</code></li>
-        <li>Usar um context processor para o menu de categorias</li>
+        <li>Planejar os models de um blog ligando posts a categorias (<code>ForeignKey</code>) e tags (<code>ManyToManyField</code>)</li>
+        <li>Criar endereços amigáveis com <code>SlugField</code>, <code>slugify</code> e <code>get_absolute_url</code></li>
+        <li>Enviar imagens de capa com <code>ImageField</code> e configurar <code>MEDIA_URL</code> e <code>MEDIA_ROOT</code></li>
+        <li>Mostrar os posts em páginas com <code>Paginator</code> e filtrar por categoria e por tag</li>
+        <li>Colocar o menu de categorias em todas as páginas com um context processor</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Os models</h2>
+    <h2>O que vamos construir</h2>
+    <p>Neste projeto você junta tudo o que viu nas aulas 200 a 207 num blog de verdade. Quem visita o site vê os últimos posts, de 5 em 5, clica num post para ler o texto inteiro e navega por <strong>categorias</strong> (Receitas, Viagens…) e por <strong>tags</strong> (#doce, #praia…). Quem escreve usa a área administrativa.</p>
+    <p>O blog terá estes endereços:</p>
+    <ul>
+      <li><code>/</code> — lista dos posts publicados, com páginas (<code>/?pagina=2</code>);</li>
+      <li><code>/post/pao-de-queijo-mineiro/</code> — um post, achado pelo <strong>slug</strong> (o título escrito do jeito que cabe numa URL);</li>
+      <li><code>/categoria/receitas/</code> e <code>/tag/doce/</code> — só os posts daquela categoria ou tag;</li>
+      <li><code>/admin/</code> — onde você escreve, publica e envia as imagens.</li>
+    </ul>
+    <p>Cada post pertence a <strong>uma</strong> categoria, mas uma categoria tem <strong>muitos</strong> posts: isso é uma <code>ForeignKey</code>. Já as tags são "muitos para muitos": um post tem várias tags e uma tag aparece em vários posts. Isso é um <code>ManyToManyField</code>, que por baixo dos panos cria uma tabela de ligação, como na aula 173.</p>
+
+    <h2>Passo 1: o projeto e o app</h2>
+    <p>Crie uma pasta nova, um ambiente virtual (aula 60) e instale o Django e o <strong>Pillow</strong>, que o Django usa para conferir se o arquivo enviado é mesmo uma imagem:</p>
+<pre class="codigo"><code>mkdir meu_blog
+cd meu_blog
+py -m venv .venv
+.venv\Scripts\activate
+pip install django pillow
+django-admin startproject config .
+python manage.py startapp blog</code></pre>
+    <p>No Linux e no macOS, troque as duas linhas do ambiente por <code>python3 -m venv .venv</code> e <code>source .venv/bin/activate</code>.</p>
+    <p>Agora avise o projeto de que o app existe e deixe o site em português. Em <code>config/settings.py</code>, mude estas partes:</p>
+<pre class="codigo"><code># config/settings.py (trecho)
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "blog",
+]
+
+LANGUAGE_CODE = "pt-br"
+TIME_ZONE = "America/Sao_Paulo"</code></pre>
+    <p class="saida">(sem saída: o arquivo só guarda configurações)</p>
+
+    <h2>Passo 2: entendendo o slug</h2>
+    <p>Um título como "Pão de queijo mineiro!" tem acentos, espaços e pontuação, que ficam feios (ou quebram) numa URL. O <strong>slug</strong> é a versão "limpa": só letras minúsculas sem acento, números e hífens. O Django já tem a função <code>slugify</code>, mas vale entender o que ela faz. Esta versão feita à mão roda aqui no navegador:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+import unicodedata
+
+
+def meu_slugify(texto):
+    # separa a letra do acento (á -&gt; a + ´) e joga fora o que não é ASCII
+    sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+    # tudo que não for letra ou número vira um hífen
+    com_hifens = re.sub(r"[^a-z0-9]+", "-", sem_acento.lower())
+    return com_hifens.strip("-")
+
+
+print(meu_slugify("Olá, Mundo!"))
+print(meu_slugify("Pão de queijo mineiro!"))
+print(meu_slugify("10 dicas de digitação"))</code></pre>
+    <p class="saida">ola-mundo<br>
+pao-de-queijo-mineiro<br>
+10-dicas-de-digitacao</p>
+    <p>O slug precisa ser <strong>único</strong>: dois posts com o mesmo endereço seriam um problema. A saída é acrescentar um número quando o slug já existe. Veja a ideia com um conjunto (<code>set</code>, aula 48) no papel do banco de dados:</p>
+<pre class="codigo" data-executar="sim"><code>import re
+import unicodedata
+
+
+def meu_slugify(texto):
+    sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", sem_acento.lower()).strip("-")
+
+
+def slug_unico(titulo, existentes):
+    base = meu_slugify(titulo)
+    slug = base
+    numero = 2
+    while slug in existentes:
+        slug = f"{base}-{numero}"
+        numero += 1
+    return slug
+
+
+banco = set()
+for titulo in ["Bolo de cenoura", "Bolo de cenoura", "Bolo de Cenoura!"]:
+    slug = slug_unico(titulo, banco)
+    banco.add(slug)
+    print(slug)</code></pre>
+    <p class="saida">bolo-de-cenoura<br>
+bolo-de-cenoura-2<br>
+bolo-de-cenoura-3</p>
+    <p>É exatamente isso que o model <code>Post</code> vai fazer no método <code>save</code>, só que perguntando ao banco com <code>Post.objects.filter(slug=slug).exists()</code>.</p>
+
+    <h2>Passo 3: os models</h2>
+    <p>Escreva o arquivo inteiro <code>blog/models.py</code>:</p>
 <pre class="codigo"><code># blog/models.py
 from django.db import models
 from django.urls import reverse
@@ -39,23 +128,34 @@ class Categoria(models.Model):
     nome = models.CharField(max_length=60)
     slug = models.SlugField(unique=True)
 
+    class Meta:
+        ordering = ["nome"]
+
     def __str__(self):
         return self.nome
+
+    def get_absolute_url(self):
+        return reverse("categoria", args=[self.slug])
 
 
 class Tag(models.Model):
     nome = models.CharField(max_length=40, unique=True)
+    slug = models.SlugField(unique=True)
 
     def __str__(self):
         return self.nome
 
+    def get_absolute_url(self):
+        return reverse("tag", args=[self.slug])
+
 
 class Post(models.Model):
     titulo = models.CharField(max_length=150)
-    slug = models.SlugField(unique=True, blank=True)
+    slug = models.SlugField(max_length=160, unique=True, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name="posts")
-    tags = models.ManyToManyField(Tag, blank=True)
+    tags = models.ManyToManyField(Tag, blank=True, related_name="posts")
     capa = models.ImageField(upload_to="capas/", blank=True)
+    resumo = models.CharField(max_length=200)
     texto = models.TextField()
     publicado = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -63,63 +163,338 @@ class Post(models.Model):
     class Meta:
         ordering = ["-criado_em"]
 
+    def __str__(self):
+        return self.titulo
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.titulo)
+            base = slugify(self.titulo)
+            slug = base
+            numero = 2
+            while Post.objects.filter(slug=slug).exists():
+                slug = f"{base}-{numero}"
+                numero += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse("post", args=[self.slug])
-
-    def __str__(self):
-        return self.titulo</code></pre>
+        return reverse("post", args=[self.slug])</code></pre>
+    <p class="saida">(sem saída: os models descrevem as tabelas)</p>
+    <p>O que tem de novo aqui:</p>
     <ul>
-      <li>Uma categoria tem <strong>muitos</strong> posts (<code>ForeignKey</code>); um post tem <strong>muitas</strong> tags, e uma tag está em <strong>muitos</strong> posts (<code>ManyToManyField</code>). Veja JOIN e chaves na aula 173.</li>
-      <li>O <code>ImageField</code> precisa do pacote Pillow: <code>pip install pillow</code>.</li>
+      <li><code>on_delete=models.PROTECT</code> impede apagar uma categoria que ainda tem posts. Assim nenhum post fica "órfão" sem querer.</li>
+      <li><code>related_name="posts"</code> dá o caminho de volta: <code>categoria.posts.all()</code> e <code>tag.posts.all()</code> trazem os posts dela.</li>
+      <li><code>get_absolute_url</code> devolve o endereço do objeto. Nos templates basta escrever <code>{{ post.get_absolute_url }}</code>, e se um dia a URL mudar, você só altera o <code>urls.py</code>.</li>
+      <li><code>ordering = ["-criado_em"]</code> deixa os posts mais novos primeiro (o <code>-</code> inverte a ordem).</li>
     </ul>
-    <div class="atencao"><strong>Atenção:</strong> <code>slugify</code> remove acentos e espaços: "Pão de queijo mineiro" vira <code>pao-de-queijo-mineiro</code>. Dois posts com o mesmo título dariam o mesmo slug e um erro de <code>unique</code>; num blog real, acrescente um número ao final quando já existir.</div>
+    <p>Crie as tabelas no banco:</p>
+<pre class="codigo"><code>python manage.py makemigrations blog
+python manage.py migrate</code></pre>
+    <p class="saida">Migrations for 'blog':<br>
+&nbsp;&nbsp;blog\migrations\0001_initial.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;+ Create model Categoria<br>
+&nbsp;&nbsp;&nbsp;&nbsp;+ Create model Tag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;+ Create model Post</p>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>Cannot use ImageField because Pillow is not installed</code>, o ambiente virtual não tem o Pillow. Ative o <code>.venv</code> e rode <code>pip install pillow</code> de novo.</div>
 
-    <h2>A ideia do slug, em Python puro</h2>
-<pre class="codigo" data-executar="sim"><code>import re
-import unicodedata
+    <h2>Passo 4: a área administrativa</h2>
+    <p>É pelo admin (aula 203) que você vai escrever os posts. Escreva <code>blog/admin.py</code>:</p>
+<pre class="codigo"><code># blog/admin.py
+from django.contrib import admin
+from .models import Categoria, Post, Tag
 
 
-def meu_slugify(texto):
-    sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
-    sem_acento = re.sub(r"[^a-z0-9]+", "-", sem_acento.lower())
-    return sem_acento.strip("-")
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ["nome"]}
 
 
-print(meu_slugify("Pão de queijo mineiro!"))
-print(meu_slugify("10 dicas de digitação"))</code></pre>
-    <p class="saida">pao-de-queijo-mineiro<br>
-10-dicas-de-digitacao</p>
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ["nome"]}
 
-    <h2>Imagens e o menu em todas as páginas</h2>
-<pre class="codigo"><code># config/settings.py (trecho)
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ["titulo", "categoria", "publicado", "criado_em"]
+    list_filter = ["publicado", "categoria", "tags"]
+    search_fields = ["titulo", "texto"]
+    prepopulated_fields = {"slug": ["titulo"]}
+    filter_horizontal = ["tags"]</code></pre>
+    <p class="saida">(no admin, o campo slug se preenche sozinho enquanto você digita o título)</p>
+    <p><code>prepopulated_fields</code> preenche o slug na própria tela, enquanto você digita. <code>filter_horizontal</code> troca a caixinha de tags por duas listas lado a lado, bem mais fáceis de usar. Crie o seu usuário de administrador:</p>
+<pre class="codigo"><code>python manage.py createsuperuser</code></pre>
+
+    <h2>Passo 5: imagens de capa</h2>
+    <p>Arquivos enviados pelos usuários (as capas) são chamados de <strong>mídia</strong> e ficam separados dos arquivos estáticos do site (CSS, logo). Diga ao Django onde guardá-los, no fim do <code>config/settings.py</code>:</p>
+<pre class="codigo"><code># config/settings.py (trecho, no fim do arquivo)
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-# em TEMPLATES[0]["OPTIONS"]["context_processors"], acrescente:
-#     "blog.context_processors.categorias",</code></pre>
+MEDIA_ROOT = BASE_DIR / "media"</code></pre>
+    <p class="saida">(as capas enviadas vão parar em media/capas/)</p>
+    <ul>
+      <li><code>MEDIA_ROOT</code> é a <strong>pasta</strong> do computador onde os arquivos são gravados;</li>
+      <li><code>MEDIA_URL</code> é o <strong>começo do endereço</strong> usado para mostrar esses arquivos no navegador.</li>
+    </ul>
+    <p>Durante o desenvolvimento, o <code>runserver</code> precisa saber servir essa pasta. Escreva o <code>config/urls.py</code> inteiro:</p>
+<pre class="codigo"><code># config/urls.py
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("blog.urls")),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)</code></pre>
+    <p class="saida">(uma capa enviada abre em http://127.0.0.1:8000/media/capas/nome-da-imagem.jpg)</p>
+    <div class="dica"><strong>Dica:</strong> Se um dia você fizer um formulário próprio de envio de imagem (fora do admin), a tag precisa ser <code>&lt;form method="post" enctype="multipart/form-data"&gt;</code> e a view tem de passar <code>request.FILES</code> para o form. Sem isso, o texto chega e a imagem não.</div>
+
+    <h2>Passo 6: as views e as URLs</h2>
+    <p>O <code>Paginator</code> (aula 204) divide uma lista em páginas. Antes de usá-lo, veja a conta que ele faz, com fatias de lista (aula 20):</p>
+<pre class="codigo" data-executar="sim"><code>import math
+
+
+def paginar(itens, por_pagina, numero):
+    total_paginas = max(1, math.ceil(len(itens) / por_pagina))
+    numero = min(max(1, numero), total_paginas)   # página inválida vira a mais próxima
+    inicio = (numero - 1) * por_pagina
+    return itens[inicio:inicio + por_pagina], numero, total_paginas
+
+
+posts = [f"Post {n}" for n in range(1, 13)]
+for pedido in [1, 3, 99]:
+    pagina, numero, total = paginar(posts, 5, pedido)
+    print(f"Página {numero} de {total}: {pagina}")</code></pre>
+    <p class="saida">Página 1 de 3: ['Post 1', 'Post 2', 'Post 3', 'Post 4', 'Post 5']<br>
+Página 3 de 3: ['Post 11', 'Post 12']<br>
+Página 3 de 3: ['Post 11', 'Post 12']</p>
+    <p>O <code>get_page</code> do Django faz igualzinho: se alguém digitar <code>?pagina=99</code> ou <code>?pagina=abc</code>, ele mostra uma página válida em vez de dar erro. Agora escreva <code>blog/views.py</code>:</p>
+<pre class="codigo"><code># blog/views.py
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, render
+from .models import Categoria, Post, Tag
+
+
+def paginar(request, posts):
+    paginador = Paginator(posts, 5)
+    return paginador.get_page(request.GET.get("pagina"))
+
+
+def lista(request):
+    posts = Post.objects.filter(publicado=True)
+    contexto = {"titulo": "Últimos posts", "pagina": paginar(request, posts)}
+    return render(request, "blog/lista.html", contexto)
+
+
+def por_categoria(request, slug):
+    categoria = get_object_or_404(Categoria, slug=slug)
+    posts = categoria.posts.filter(publicado=True)
+    contexto = {"titulo": f"Categoria: {categoria.nome}", "pagina": paginar(request, posts)}
+    return render(request, "blog/lista.html", contexto)
+
+
+def por_tag(request, slug):
+    tag = get_object_or_404(Tag, slug=slug)
+    posts = tag.posts.filter(publicado=True)
+    contexto = {"titulo": f"Tag: {tag.nome}", "pagina": paginar(request, posts)}
+    return render(request, "blog/lista.html", contexto)
+
+
+def post(request, slug):
+    item = get_object_or_404(Post, slug=slug, publicado=True)
+    return render(request, "blog/post.html", {"post": item})</code></pre>
+    <p class="saida">(sem saída: as views só rodam quando alguém abre uma página)</p>
+    <p>Repare que as três listas usam o <strong>mesmo</strong> template, <code>blog/lista.html</code>; só o título e os posts mudam. E a view <code>post</code> exige <code>publicado=True</code>: um rascunho dá "página não encontrada" (404) para quem tentar adivinhar o endereço.</p>
+    <p>Crie o arquivo <code>blog/urls.py</code>:</p>
+<pre class="codigo"><code># blog/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.lista, name="lista"),
+    path("post/&lt;slug:slug&gt;/", views.post, name="post"),
+    path("categoria/&lt;slug:slug&gt;/", views.por_categoria, name="categoria"),
+    path("tag/&lt;slug:slug&gt;/", views.por_tag, name="tag"),
+]</code></pre>
+    <p class="saida">(o conversor &lt;slug:slug&gt; aceita só letras, números, hífens e sublinhados)</p>
+
+    <h2>Passo 7: o menu em todas as páginas</h2>
+    <p>O menu do topo lista todas as categorias. Toda view teria de mandar <code>Categoria.objects.all()</code> no contexto… e um dia alguém esqueceria. O <strong>context processor</strong> resolve: é uma função que recebe o <code>request</code> e devolve um dicionário que o Django junta ao contexto de <strong>todos</strong> os templates. A ideia, em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>def categorias(request):
+    return {"menu_categorias": ["Receitas", "Viagens"]}
+
+
+def usuario(request):
+    return {"usuario": request["usuario"]}
+
+
+processadores = [categorias, usuario]
+
+
+def montar_contexto(request, contexto_da_view):
+    contexto = {}
+    for funcao in processadores:
+        contexto.update(funcao(request))
+    contexto.update(contexto_da_view)
+    return contexto
+
+
+pedido = {"usuario": "Bia"}
+print(montar_contexto(pedido, {"titulo": "Últimos posts"}))
+print(montar_contexto(pedido, {"titulo": "Tag: doce"}))</code></pre>
+    <p class="saida">{'menu_categorias': ['Receitas', 'Viagens'], 'usuario': 'Bia', 'titulo': 'Últimos posts'}<br>
+{'menu_categorias': ['Receitas', 'Viagens'], 'usuario': 'Bia', 'titulo': 'Tag: doce'}</p>
+    <p>Agora a versão de verdade. Crie <code>blog/context_processors.py</code>:</p>
 <pre class="codigo"><code># blog/context_processors.py
 from .models import Categoria
 
 
 def categorias(request):
     return {"menu_categorias": Categoria.objects.all()}</code></pre>
-<pre class="codigo"><code># config/urls.py (trecho, só para desenvolvimento)
-from django.conf import settings
-from django.conf.urls.static import static
-from django.urls import include, path
+    <p class="saida">(todo template passa a enxergar a variável menu_categorias)</p>
+    <p>E registre a função em <code>config/settings.py</code>, dentro de <code>TEMPLATES</code>:</p>
+<pre class="codigo"><code># config/settings.py (trecho)
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "blog.context_processors.categorias",
+            ],
+        },
+    },
+]</code></pre>
+    <p class="saida">(a última linha é a única novidade)</p>
+    <div class="atencao"><strong>Atenção:</strong> O caminho no <code>settings.py</code> é texto: <code>"blog.context_processors.categorias"</code>. Um erro de digitação ali só aparece quando uma página é aberta, como <code>ModuleNotFoundError</code> ou <code>AttributeError</code>. Se o site inteiro quebrar logo depois desse passo, confira essa linha.</div>
 
-urlpatterns = [
-    path("", include("blog.urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)</code></pre>
-    <p>Um <strong>context processor</strong> é uma função que acrescenta variáveis ao contexto de <strong>todos</strong> os templates. Assim o <code>base.html</code> pode listar <code>menu_categorias</code> sem cada view ter que mandar.</p>
-    <div class="dica"><strong>Dica:</strong> Num formulário com upload, use <code>&lt;form method="post" enctype="multipart/form-data"&gt;</code> e passe <code>request.FILES</code> para o form. Sem isso, a imagem não chega.</div>
+    <h2>Passo 8: os templates</h2>
+    <p>Crie a pasta <code>blog/templates/blog/</code>. O layout base fica em <code>blog/templates/base.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- blog/templates/base.html --&gt;
+&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;{% block titulo %}Meu blog{% endblock %}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;a href="{% url 'lista' %}"&gt;Meu blog&lt;/a&gt;
+    &lt;nav&gt;
+      {% for cat in menu_categorias %}
+        &lt;a href="{{ cat.get_absolute_url }}"&gt;{{ cat.nome }}&lt;/a&gt;
+      {% endfor %}
+    &lt;/nav&gt;
+  &lt;/header&gt;
+  &lt;main&gt;
+    {% block conteudo %}{% endblock %}
+  &lt;/main&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <p>A lista, com a navegação entre páginas, em <code>blog/templates/blog/lista.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- blog/templates/blog/lista.html --&gt;
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+&lt;h1&gt;{{ titulo }}&lt;/h1&gt;
+{% for post in pagina %}
+  &lt;article&gt;
+    {% if post.capa %}&lt;img src="{{ post.capa.url }}" alt="" width="300"&gt;{% endif %}
+    &lt;h2&gt;&lt;a href="{{ post.get_absolute_url }}"&gt;{{ post.titulo }}&lt;/a&gt;&lt;/h2&gt;
+    &lt;p&gt;{{ post.resumo }}&lt;/p&gt;
+    &lt;small&gt;{{ post.criado_em|date:"d/m/Y" }} em
+      &lt;a href="{{ post.categoria.get_absolute_url }}"&gt;{{ post.categoria }}&lt;/a&gt;&lt;/small&gt;
+  &lt;/article&gt;
+{% empty %}
+  &lt;p&gt;Nenhum post por aqui ainda.&lt;/p&gt;
+{% endfor %}
+
+&lt;nav&gt;
+  {% if pagina.has_previous %}
+    &lt;a href="?pagina={{ pagina.previous_page_number }}"&gt;Anterior&lt;/a&gt;
+  {% endif %}
+  Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}
+  {% if pagina.has_next %}
+    &lt;a href="?pagina={{ pagina.next_page_number }}"&gt;Próxima&lt;/a&gt;
+  {% endif %}
+&lt;/nav&gt;
+{% endblock %}</code></pre>
+    <p>E o post completo em <code>blog/templates/blog/post.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- blog/templates/blog/post.html --&gt;
+{% extends "base.html" %}
+{% block titulo %}{{ post.titulo }}{% endblock %}
+{% block conteudo %}
+&lt;article&gt;
+  &lt;h1&gt;{{ post.titulo }}&lt;/h1&gt;
+  &lt;p&gt;&lt;small&gt;{{ post.criado_em|date:"d/m/Y" }} em
+    &lt;a href="{{ post.categoria.get_absolute_url }}"&gt;{{ post.categoria }}&lt;/a&gt;&lt;/small&gt;&lt;/p&gt;
+  {% if post.capa %}&lt;img src="{{ post.capa.url }}" alt="{{ post.titulo }}"&gt;{% endif %}
+  {{ post.texto|linebreaks }}
+  &lt;p&gt;Tags:
+    {% for tag in post.tags.all %}
+      &lt;a href="{{ tag.get_absolute_url }}"&gt;#{{ tag.nome }}&lt;/a&gt;
+    {% empty %}
+      nenhuma
+    {% endfor %}
+  &lt;/p&gt;
+&lt;/article&gt;
+{% endblock %}</code></pre>
+    <ul>
+      <li><code>{% if post.capa %}</code> evita um erro: <code>post.capa.url</code> de um post <strong>sem</strong> imagem dá <code>ValueError</code>.</li>
+      <li>O filtro <code>linebreaks</code> transforma as linhas em branco do texto em parágrafos <code>&lt;p&gt;</code>.</li>
+      <li><code>post.tags.all</code> (sem parênteses no template) busca as tags daquele post.</li>
+    </ul>
+
+    <h2>Passo 9: rodar e testar</h2>
+<pre class="codigo"><code>python manage.py runserver</code></pre>
+    <p>Entre em <code>http://127.0.0.1:8000/admin/</code>, crie as categorias Receitas e Viagens, algumas tags e uns 7 posts marcados como publicados (pelo menos um com capa). Depois abra <code>http://127.0.0.1:8000/</code>: você deve ver 5 posts, o texto "Página 1 de 2", o link "Próxima" e o menu com as categorias no topo de todas as páginas.</p>
+    <p>Para ter certeza de que tudo continua funcionando quando você mudar o código, escreva testes automáticos (aula 131). Coloque em <code>blog/tests.py</code>:</p>
+<pre class="codigo"><code># blog/tests.py
+from django.test import TestCase
+from .models import Categoria, Post, Tag
+
+
+class BlogTeste(TestCase):
+    def setUp(self):
+        self.receitas = Categoria.objects.create(nome="Receitas", slug="receitas")
+        doce = Tag.objects.create(nome="doce", slug="doce")
+        self.post = Post.objects.create(titulo="Pão de queijo mineiro", categoria=self.receitas,
+                                        resumo="Fácil e rápido", texto="Misture tudo.", publicado=True)
+        self.post.tags.add(doce)
+        Post.objects.create(titulo="Rascunho secreto", categoria=self.receitas,
+                            resumo="ainda não", texto="...")
+
+    def test_slug_automatico_e_unico(self):
+        self.assertEqual(self.post.slug, "pao-de-queijo-mineiro")
+        outro = Post.objects.create(titulo="Pão de queijo mineiro", categoria=self.receitas,
+                                    resumo="r", texto="t")
+        self.assertEqual(outro.slug, "pao-de-queijo-mineiro-2")
+
+    def test_paginas(self):
+        resposta = self.client.get("/")
+        self.assertContains(resposta, "Pão de queijo mineiro")
+        self.assertNotContains(resposta, "Rascunho secreto")
+        self.assertContains(resposta, 'href="/categoria/receitas/"')   # o menu
+        self.assertContains(self.client.get("/tag/doce/"), "Pão de queijo")
+        self.assertEqual(self.client.get("/post/rascunho-secreto/").status_code, 404)</code></pre>
+<pre class="codigo"><code>python manage.py test blog</code></pre>
+    <p class="saida">Found 2 test(s).<br>
+Creating test database for alias 'default'...<br>
+System check identified no issues (0 silenced).<br>
+..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.050s<br>
+&nbsp;<br>
+OK<br>
+Destroying test database for alias 'default'...</p>
+    <div class="dica"><strong>Dica:</strong> Os testes usam um banco de dados <strong>temporário</strong>, criado e apagado a cada rodada. Pode testar à vontade: os posts que você escreveu no admin não são tocados.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -128,26 +503,90 @@ urlpatterns = [
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva a view <code>post(request, slug)</code> que mostra só posts publicados e a URL correspondente.</p>
+      <p><strong>1.</strong> Escreva (em Python puro) a função <code>resumir(texto, palavras)</code> que devolve as primeiras palavras do texto seguidas de "..." quando o texto for maior. Ela serve para gerar o resumo de um post automaticamente.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>from django.shortcuts import get_object_or_404, render
-from .models import Post
+<pre class="codigo" data-executar="sim"><code>def resumir(texto, palavras):
+    lista = texto.split()
+    if len(lista) &lt;= palavras:
+        return texto
+    return " ".join(lista[:palavras]) + "..."
 
 
-def post(request, slug):
-    item = get_object_or_404(Post, slug=slug, publicado=True)
-    return render(request, "blog/post.html", {"post": item})
-
-# blog/urls.py: path("post/&lt;slug:slug&gt;/", views.post, name="post"),</code></pre>
+print(resumir("Hoje vamos aprender a fazer um pão de queijo muito fácil", 5))
+print(resumir("Texto curto", 5))</code></pre>
+      <p class="saida">Hoje vamos aprender a fazer...<br>
+Texto curto</p>
+      <p>No template, o Django já tem um filtro que faz isso: <code>{{ post.texto|truncatewords:30 }}</code>.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva a consulta dos posts publicados da categoria com slug "receitas" que têm a tag "doce".</p>
+      <p><strong>2.</strong> Escreva a consulta dos posts publicados da categoria com slug "receitas" que têm a tag "doce" (para testar no <code>python manage.py shell</code>).</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from blog.models import Post
 
-posts = Post.objects.filter(publicado=True, categoria__slug="receitas", tags__nome="doce")</code></pre>
-      <p>O <code>__</code> atravessa as relações: <code>categoria__slug</code> olha o campo <code>slug</code> da categoria do post.</p>
+posts = Post.objects.filter(publicado=True, categoria__slug="receitas", tags__slug="doce")
+print(posts)</code></pre>
+      <p class="saida">&lt;QuerySet [&lt;Post: Pão de queijo mineiro&gt;]&gt;</p>
+      <p>O <code>__</code> atravessa as relações: <code>categoria__slug</code> olha o campo <code>slug</code> da categoria do post, e <code>tags__slug</code> procura entre as tags dele.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Acrescente uma busca ao blog: a view <code>busca</code> lê <code>?q=</code> e mostra os posts publicados com o termo no título <strong>ou</strong> no texto, usando o template <code>blog/lista.html</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># blog/views.py (acrescente)
+from django.db.models import Q
+
+
+def busca(request):
+    termo = request.GET.get("q", "")
+    posts = Post.objects.filter(publicado=True).filter(
+        Q(titulo__icontains=termo) | Q(texto__icontains=termo)
+    )
+    contexto = {"titulo": f"Busca: {termo}", "pagina": paginar(request, posts)}
+    return render(request, "blog/lista.html", contexto)
+
+# blog/urls.py: path("busca/", views.busca, name="busca"),</code></pre>
+      <p>No <code>base.html</code>, um formulário simples leva até ela: <code>&lt;form action="{% url 'busca' %}"&gt;&lt;input name="q"&gt;&lt;/form&gt;</code>. Atenção: o link "Próxima" da lista precisa então levar o termo junto (<code>?q={{ request.GET.q }}&amp;pagina=...</code>).</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Um blog tem 23 posts publicados e mostra 5 por página. Quantas páginas existem e quantos posts aparecem na última? Calcule em Python.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import math
+
+total = 23
+por_pagina = 5
+paginas = math.ceil(total / por_pagina)
+na_ultima = total - (paginas - 1) * por_pagina
+print("Páginas:", paginas)
+print("Posts na última:", na_ultima)</code></pre>
+      <p class="saida">Páginas: 5<br>
+Posts na última: 3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça o menu mostrar quantos posts publicados cada categoria tem, por exemplo "Receitas (4)". Altere só o context processor e o <code>base.html</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># blog/context_processors.py
+from django.db.models import Count, Q
+from .models import Categoria
+
+
+def categorias(request):
+    menu = Categoria.objects.annotate(
+        total=Count("posts", filter=Q(posts__publicado=True))
+    )
+    return {"menu_categorias": menu}</code></pre>
+      <p>No <code>base.html</code>, troque o texto do link por <code>{{ cat.nome }} ({{ cat.total }})</code>. O <code>annotate</code> com <code>Count</code> pede ao banco a contagem numa única consulta, em vez de uma consulta por categoria.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Por que a <code>ForeignKey</code> da categoria usa <code>on_delete=models.PROTECT</code> e não <code>models.CASCADE</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Com CASCADE, apagar a categoria "Receitas" apagaria junto TODOS os posts dela, sem aviso.<br>
+Com PROTECT, o Django recusa apagar a categoria enquanto houver posts nela<br>
+(dá ProtectedError, e o admin mostra quais posts impedem). Primeiro você move<br>
+ou apaga os posts, depois a categoria. É uma proteção contra perder textos sem querer.</p>
       </details>
     </div>
 

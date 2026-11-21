@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 111 · HTTP com requests e http.server — Curso de Python · DIGITAR</title>
-<meta name="description" content="Entenda como a web funciona por HTTP, busque dados de uma API com a biblioteca requests e sirva arquivos com http.server.">
+<meta name="description" content="Entenda como a web funciona por HTTP, monte endereços com parâmetros, busque e envie dados para uma API com a biblioteca requests e crie seu próprio servidor com http.server.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,21 +20,75 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que são HTTP, requisição, resposta e código de status</li>
-        <li>Buscar dados de uma API com <code>requests.get</code></li>
-        <li>Servir uma pasta no navegador com <code>python -m http.server</code></li>
+        <li>O que são HTTP, requisição, resposta, método e código de status</li>
+        <li>Desmontar e montar endereços com parâmetros usando <code>urllib.parse</code></li>
+        <li>Buscar dados de uma API com <code>requests.get</code> e ler o JSON da resposta</li>
+        <li>Tratar erros com <code>timeout</code>, <code>raise_for_status</code> e <code>try/except</code></li>
+        <li>Enviar dados com <code>requests.post</code></li>
+        <li>Servir uma pasta e criar uma pequena API com <code>http.server</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Como a web conversa</h2>
-    <p>Quando você abre um site, o navegador manda uma <strong>requisição</strong> HTTP para um servidor, e o servidor devolve uma <strong>resposta</strong>. Toda resposta tem um <strong>código de status</strong>: <code>200</code> quer dizer "deu certo", <code>404</code> "não encontrado" e <code>500</code> "erro no servidor".</p>
+    <p>Quando você abre um site, o navegador manda uma <strong>requisição</strong> HTTP para um servidor, e o servidor devolve uma <strong>resposta</strong>. É como pedir um lanche no balcão: você faz o pedido, e o atendente devolve o lanche (ou avisa que acabou).</p>
+    <p>Toda requisição tem um <strong>método</strong>, que diz o que você quer fazer. Os dois mais usados são <code>GET</code> (buscar algo) e <code>POST</code> (enviar dados, como um formulário).</p>
+    <p>Toda resposta traz um <strong>código de status</strong>, um número de três dígitos que diz como foi o pedido. O primeiro dígito já conta muito:</p>
+    <ul>
+      <li><code>2xx</code> deu certo (<code>200</code> OK, <code>201</code> criado);</li>
+      <li><code>3xx</code> o endereço mudou de lugar (redirecionamento);</li>
+      <li><code>4xx</code> o erro foi de quem pediu (<code>404</code> não encontrado, <code>401</code> sem permissão);</li>
+      <li><code>5xx</code> o erro foi do servidor (<code>500</code> erro interno).</li>
+    </ul>
+    <p>O Python já conhece todos esses códigos no módulo <code>http</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from http import HTTPStatus
+
+for codigo in [200, 201, 301, 404, 500]:
+    status = HTTPStatus(codigo)
+    print(codigo, status.phrase)</code></pre>
+    <p class="saida">200 OK<br>
+201 Created<br>
+301 Moved Permanently<br>
+404 Not Found<br>
+500 Internal Server Error</p>
     <p>Uma <strong>API</strong> é um endereço feito para programas, e não para pessoas: em vez de uma página bonita, ela devolve dados, quase sempre em JSON (aula 105).</p>
 
-    <h2>Instalando e usando requests</h2>
-    <p>A biblioteca <code>requests</code> não vem com o Python. Instale dentro do seu ambiente virtual (aula 60):</p>
-<pre class="codigo"><code>pip install requests</code></pre>
-    <p>Este exemplo consulta um CEP no ViaCEP, um serviço público brasileiro:</p>
+    <h2>As partes de um endereço</h2>
+    <p>Um endereço da web (URL) tem várias partes. Entender cada uma ajuda muito a usar APIs, porque é no endereço que você diz o que quer:</p>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import urlparse, parse_qs
+
+url = "https://loja.exemplo.com.br/busca?produto=chinelo&amp;tamanho=38"
+partes = urlparse(url)
+
+print("Protocolo:", partes.scheme)
+print("Servidor:", partes.netloc)
+print("Caminho:", partes.path)
+print("Parâmetros:", parse_qs(partes.query))</code></pre>
+    <p class="saida">Protocolo: https<br>
+Servidor: loja.exemplo.com.br<br>
+Caminho: /busca<br>
+Parâmetros: {'produto': ['chinelo'], 'tamanho': ['38']}</p>
+    <p>Os <strong>parâmetros</strong> vêm depois do <code>?</code>, no formato <code>nome=valor</code>, separados por <code>&amp;</code>. Espaços e acentos não podem ir direto no endereço: eles são trocados por códigos. O <code>urlencode</code> faz isso para você:</p>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import urlencode
+
+base = "https://receitas.exemplo.com.br/busca"
+parametros = {"q": "pão de queijo", "pagina": 2}
+
+print(base + "?" + urlencode(parametros))</code></pre>
+    <p class="saida">https://receitas.exemplo.com.br/busca?q=p%C3%A3o+de+queijo&amp;pagina=2</p>
+    <div class="dica"><strong>Dica:</strong> Nunca monte parâmetros "na mão", juntando textos com <code>+</code>. Um espaço ou um <code>&amp;</code> dentro do valor quebra o endereço. Use <code>urlencode</code> ou, com a biblioteca <code>requests</code>, o argumento <code>params</code>, que faz a mesma coisa.</div>
+
+    <h2>Instalando a biblioteca requests</h2>
+    <p>O Python traz o módulo <code>urllib.request</code> para fazer requisições, mas ele é chato de usar. Quase todo mundo usa a biblioteca <code>requests</code>, que não vem com o Python. Instale dentro do seu ambiente virtual (aula 60):</p>
+<pre class="codigo"><code># Windows
+py -m pip install requests
+
+# Linux e macOS
+python3 -m pip install requests</code></pre>
+    <p>Os exemplos com <code>requests</code> precisam de internet e rodam no seu computador: copie para um arquivo <code>.py</code> no VS Code e rode com <code>py arquivo.py</code> (Windows) ou <code>python3 arquivo.py</code>.</p>
+
+    <h2>Buscando dados com GET</h2>
+    <p>Este exemplo consulta um CEP no ViaCEP, um serviço público brasileiro que responde em JSON:</p>
 <pre class="codigo"><code>import requests
 
 resposta = requests.get("https://viacep.com.br/ws/01001000/json/", timeout=10)
@@ -45,20 +99,125 @@ if resposta.status_code == 200:
     print(dados["logradouro"], "-", dados["localidade"], "/", dados["uf"])
 else:
     print("Algo deu errado.")</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> Sempre passe <code>timeout</code>. Sem ele, se o servidor não responder, seu programa pode ficar esperando para sempre. E trate erros de conexão com <code>try/except requests.RequestException</code> (aula 53).</div>
-    <p>O <code>resposta.json()</code> faz o mesmo que <code>json.loads(resposta.text)</code>. Dá para treinar essa parte sem internet, com uma resposta de exemplo guardada num texto:</p>
-<pre class="codigo"><code>import json
+    <p class="saida">Status: 200<br>
+Praça da Sé - São Paulo / SP</p>
+    <ul>
+      <li><code>requests.get(url)</code> faz a requisição e devolve um objeto <strong>resposta</strong>;</li>
+      <li><code>resposta.status_code</code> é o código de status;</li>
+      <li><code>resposta.text</code> é o corpo da resposta como texto, e <code>resposta.json()</code> já transforma esse texto em dicionário.</li>
+    </ul>
+    <p>Para APIs que recebem parâmetros, passe um dicionário em <code>params</code>. Aqui buscamos, na API do GitHub, os três repositórios de Python com mais estrelas:</p>
+<pre class="codigo"><code>import requests
 
-texto = '{"cep": "01001-000", "logradouro": "Praça da Sé", "localidade": "São Paulo", "uf": "SP"}'
+url = "https://api.github.com/search/repositories"
+parametros = {"q": "language:python", "sort": "stars", "per_page": 3}
+
+resposta = requests.get(url, params=parametros, timeout=10)
+print(resposta.url)
+for repo in resposta.json()["items"]:
+    print(repo["full_name"], "-", repo["stargazers_count"], "estrelas")</code></pre>
+    <p class="saida">https://api.github.com/search/repositories?q=language%3Apython&amp;sort=stars&amp;per_page=3<br>
+(depois, três linhas com o nome de cada repositório e o número de estrelas, que muda todo dia)</p>
+    <p>Repare que o próprio <code>requests</code> montou o endereço com <code>?</code>, <code>&amp;</code> e o <code>:</code> trocado por <code>%3A</code>.</p>
+
+    <h2>Lendo o JSON da resposta</h2>
+    <p>A parte mais trabalhosa costuma ser achar o dado certo dentro do JSON, que muitas vezes tem dicionários dentro de listas dentro de dicionários. Dá para treinar sem internet, com uma resposta de exemplo guardada num texto — é exatamente o que o <code>resposta.json()</code> faria:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+texto = """
+{
+  "cidade": "Recife",
+  "previsao": [
+    {"dia": "segunda", "max": 31, "min": 24},
+    {"dia": "terça", "max": 29, "min": 23},
+    {"dia": "quarta", "max": 30, "min": 24}
+  ]
+}
+"""
+
 dados = json.loads(texto)
-print(f"{dados['logradouro']}, {dados['localidade']} - {dados['uf']}")</code></pre>
-    <p class="saida">Praça da Sé, São Paulo - SP</p>
+print("Previsão para", dados["cidade"])
+for dia in dados["previsao"]:
+    print(f"  {dia['dia']:&lt;8} {dia['min']}°C a {dia['max']}°C")
 
-    <h2>Um servidor em um comando</h2>
+mais_quente = max(dados["previsao"], key=lambda d: d["max"])
+print("Dia mais quente:", mais_quente["dia"])</code></pre>
+    <p class="saida">Previsão para Recife<br>
+&nbsp;&nbsp;segunda &nbsp;24°C a 31°C<br>
+&nbsp;&nbsp;terça &nbsp;&nbsp;&nbsp;23°C a 29°C<br>
+&nbsp;&nbsp;quarta &nbsp;&nbsp;24°C a 30°C<br>
+Dia mais quente: segunda</p>
+    <div class="dica"><strong>Dica:</strong> Quando não souber o formato de uma API, abra o endereço no navegador ou rode <code>print(resposta.json())</code> uma vez para ver o que vem. Depois escreva o código que navega até o dado.</div>
+
+    <h2>Quando algo dá errado</h2>
+    <p>Na internet muita coisa pode falhar: o Wi-Fi cai, o servidor demora, o endereço está errado. Um programa bem feito trata cada caso em vez de quebrar com um erro enorme:</p>
+<pre class="codigo"><code>import requests
+
+try:
+    resposta = requests.get("https://viacep.com.br/ws/123/json/", timeout=10)
+    resposta.raise_for_status()      # vira exceção se o status for 4xx ou 5xx
+    print(resposta.json())
+except requests.Timeout:
+    print("O servidor demorou demais para responder.")
+except requests.ConnectionError:
+    print("Sem conexão. Confira sua internet.")
+except requests.HTTPError as erro:
+    print("O servidor recusou o pedido:", erro.response.status_code)</code></pre>
+    <p class="saida">O servidor recusou o pedido: 400</p>
+    <p>O CEP <code>123</code> tem o formato errado, e o ViaCEP responde <code>400</code> (pedido inválido). O <code>raise_for_status()</code> transforma esse código em uma exceção <code>HTTPError</code>, que o <code>except</code> trata (aula 53).</p>
+    <div class="atencao"><strong>Atenção:</strong> Sempre passe <code>timeout</code>. Sem ele, se o servidor não responder, seu programa pode ficar esperando para sempre. E lembre: um status <code>404</code> ou <code>500</code> <strong>não</strong> gera erro sozinho — <code>resposta.json()</code> pode até funcionar, mas com dados de erro. Confira o status ou use <code>raise_for_status()</code>.</div>
+
+    <h2>Enviando dados com POST</h2>
+    <p>Para enviar dados (um cadastro, uma mensagem, uma nota), usa-se <code>POST</code>. Com <code>json=</code>, o <code>requests</code> transforma o dicionário em JSON e avisa o servidor que o corpo é JSON:</p>
+<pre class="codigo"><code>import requests
+
+aluno = {"nome": "Bia", "nota": 9.5}
+resposta = requests.post("http://127.0.0.1:8000/notas", json=aluno, timeout=10)
+print(resposta.status_code)
+print(resposta.json())</code></pre>
+    <p class="saida">201<br>
+{'recebido': {'nome': 'Bia', 'nota': 9.5}}</p>
+    <p>Esse endereço <code>127.0.0.1</code> é o seu próprio computador. Para o exemplo funcionar, você precisa do servidor da próxima seção rodando.</p>
+
+    <h2>Um servidor no seu computador</h2>
     <p>O Python traz um servidor web simples. Entre numa pasta com um arquivo <code>index.html</code> e rode:</p>
-<pre class="codigo"><code>python -m http.server 8000</code></pre>
+<pre class="codigo"><code># Windows
+py -m http.server 8000
+
+# Linux e macOS
+python3 -m http.server 8000</code></pre>
     <p>Agora abra <code>http://localhost:8000</code> no navegador: a página é servida pelo seu computador. Aperte <code>Ctrl+C</code> no terminal para parar. É ótimo para testar sites estáticos, como os das aulas 241 a 243.</p>
-    <div class="dica"><strong>Dica:</strong> <code>localhost</code> quer dizer "este computador". Só você consegue abrir esse endereço; não é um site público.</div>
+    <p>Com o mesmo módulo dá para criar uma API de brinquedo, para entender o outro lado da conversa. Salve como <code>servidor_api.py</code>, rode num terminal e deixe aberto:</p>
+<pre class="codigo"><code>import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+
+class Atendente(BaseHTTPRequestHandler):
+    def responder(self, status, dados):
+        corpo = json.dumps(dados, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(corpo)
+
+    def do_GET(self):
+        if self.path == "/placar":
+            self.responder(200, {"time": "Bahia", "gols": 2})
+        else:
+            self.responder(404, {"erro": "endereço não existe"})
+
+    def do_POST(self):
+        tamanho = int(self.headers["Content-Length"])
+        recebido = json.loads(self.rfile.read(tamanho))
+        self.responder(201, {"recebido": recebido})
+
+
+servidor = HTTPServer(("127.0.0.1", 8000), Atendente)
+print("Servidor em http://127.0.0.1:8000 (Ctrl+C para parar)")
+servidor.serve_forever()</code></pre>
+    <p class="saida">Servidor em http://127.0.0.1:8000 (Ctrl+C para parar)</p>
+    <p>Abra <code>http://127.0.0.1:8000/placar</code> no navegador e você verá o JSON. Em outro terminal, rode o exemplo do POST da seção anterior: o servidor devolve o que recebeu, com status <code>201</code>. Cada pedido aparece também no terminal do servidor.</p>
+    <div class="dica"><strong>Dica:</strong> <code>localhost</code> e <code>127.0.0.1</code> querem dizer "este computador". Só você consegue abrir esse endereço; não é um site público. O <code>http.server</code> serve para estudar e testar, não para colocar um site no ar (veja a aula 220).</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -67,37 +226,87 @@ print(f"{dados['logradouro']}, {dados['localidade']} - {dados['uf']}")</code></p
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva uma função <code>descrever_status(codigo)</code> que devolve <code>"sucesso"</code> para 200, <code>"não encontrado"</code> para 404 e <code>"erro"</code> para os outros. Teste com 200, 404 e 500.</p>
+      <p><strong>1.</strong> Escreva uma função <code>descrever_status(codigo)</code> que devolve <code>"sucesso"</code> para códigos de 200 a 299, <code>"redirecionamento"</code> de 300 a 399, <code>"erro de quem pediu"</code> de 400 a 499 e <code>"erro do servidor"</code> de 500 em diante. Teste com 200, 301, 404 e 503, mostrando também o nome do código com <code>HTTPStatus</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>def descrever_status(codigo):
-    if codigo == 200:
-        return "sucesso"
-    if codigo == 404:
-        return "não encontrado"
-    return "erro"
+<pre class="codigo" data-executar="sim"><code>from http import HTTPStatus
 
-for c in [200, 404, 500]:
-    print(c, descrever_status(c))</code></pre>
-      <p class="saida">200 sucesso<br>
-404 não encontrado<br>
-500 erro</p>
+
+def descrever_status(codigo):
+    if 200 &lt;= codigo &lt;= 299:
+        return "sucesso"
+    if 300 &lt;= codigo &lt;= 399:
+        return "redirecionamento"
+    if 400 &lt;= codigo &lt;= 499:
+        return "erro de quem pediu"
+    return "erro do servidor"
+
+
+for c in [200, 301, 404, 503]:
+    print(c, HTTPStatus(c).phrase, "-&gt;", descrever_status(c))</code></pre>
+      <p class="saida">200 OK -&gt; sucesso<br>
+301 Moved Permanently -&gt; redirecionamento<br>
+404 Not Found -&gt; erro de quem pediu<br>
+503 Service Unavailable -&gt; erro do servidor</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Modifique o exemplo do ViaCEP para pedir um CEP ao usuário com <code>input</code> e tratar falta de internet.</p>
+      <p><strong>2.</strong> Monte o endereço de busca <code>https://biblioteca.exemplo.com.br/livros</code> com os parâmetros <code>titulo</code> = "Dom Casmurro", <code>autor</code> = "Machado de Assis" e <code>ano</code> = 1899. Depois desmonte o endereço de volta e mostre o autor.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import urlencode, urlparse, parse_qs
+
+base = "https://biblioteca.exemplo.com.br/livros"
+url = base + "?" + urlencode({"titulo": "Dom Casmurro", "autor": "Machado de Assis", "ano": 1899})
+print(url)
+
+parametros = parse_qs(urlparse(url).query)
+print(parametros["autor"][0])</code></pre>
+      <p class="saida">https://biblioteca.exemplo.com.br/livros?titulo=Dom+Casmurro&amp;autor=Machado+de+Assis&amp;ano=1899<br>
+Machado de Assis</p>
+      <p>O <code>parse_qs</code> devolve listas porque um mesmo parâmetro pode aparecer mais de uma vez no endereço.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma API de filmes respondeu o JSON abaixo. Mostre o título de cada filme com nota maior ou igual a 8. <code>{"resultados": [{"titulo": "Central do Brasil", "nota": 8.0}, {"titulo": "Filme Ruim", "nota": 4.5}, {"titulo": "Cidade de Deus", "nota": 8.6}]}</code></p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import json
+
+texto = '{"resultados": [{"titulo": "Central do Brasil", "nota": 8.0}, {"titulo": "Filme Ruim", "nota": 4.5}, {"titulo": "Cidade de Deus", "nota": 8.6}]}'
+dados = json.loads(texto)
+for filme in dados["resultados"]:
+    if filme["nota"] &gt;= 8:
+        print(filme["titulo"])</code></pre>
+      <p class="saida">Central do Brasil<br>
+Cidade de Deus</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Modifique o exemplo do ViaCEP para pedir um CEP ao usuário com <code>input</code>, avisar quando o CEP não existir e tratar falta de internet.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>import requests
 
 cep = input("CEP (só números): ").strip()
 try:
     resposta = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=10)
+    resposta.raise_for_status()
     dados = resposta.json()
     if "erro" in dados:
         print("CEP não encontrado.")
     else:
         print(dados["logradouro"], "-", dados["localidade"])
+except requests.HTTPError:
+    print("Formato de CEP inválido. Digite 8 números.")
 except requests.RequestException:
     print("Não consegui conectar. Confira sua internet.")</code></pre>
+      <p>Quando o CEP tem 8 números mas não existe, o ViaCEP responde <code>200</code> com <code>{"erro": "true"}</code>. Quando o formato está errado, responde <code>400</code>. <code>RequestException</code> é a "mãe" de todos os erros do <code>requests</code>, por isso vem por último.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Qual é a diferença entre <code>GET</code> e <code>POST</code>? E por que o status <code>404</code> não faz o <code>requests.get</code> dar erro sozinho?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">GET serve para buscar dados; os parâmetros vão no próprio endereço, depois do ?.<br>
+POST serve para enviar dados (um cadastro, uma mensagem); os dados vão no corpo da requisição.<br>
+O 404 é uma resposta válida do servidor ("não achei"), e não uma falha de conexão.<br>
+Por isso o requests só levanta erro se você chamar resposta.raise_for_status().</p>
       </details>
     </div>
 

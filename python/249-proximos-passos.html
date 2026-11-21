@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 249 · Próximos passos e como continuar estudando — Curso de Python · DIGITAR</title>
-<meta name="description" content="Você terminou o curso! Veja como continuar praticando, que áreas explorar e como montar seu portfólio.">
+<meta name="description" content="Você terminou o curso! Veja que áreas explorar, como estudar sozinho, como ler documentação e como montar seu portfólio, com um esqueleto de projeto para cada trilha.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -21,54 +21,205 @@
       <h2>Nesta aula você vai aprender</h2>
       <ul>
         <li>Revisar o caminho que você percorreu no curso</li>
-        <li>Conhecer áreas onde o Python é usado e por onde começar em cada uma</li>
-        <li>Montar um plano de estudos e um portfólio de projetos</li>
+        <li>Conhecer as principais trilhas do Python (web, dados, automação, jogos e IA) e por onde começar em cada uma</li>
+        <li>Criar hábitos de estudo que funcionam: pouco todo dia, projetos pequenos e revisão</li>
+        <li>Aprender a ler a documentação oficial e a pesquisar erros</li>
+        <li>Montar um portfólio no GitHub com projetos seus</li>
+        <li>Começar um projeto de cada trilha a partir de um esqueleto pronto</li>
       </ul>
     </div>
 
     <h2>Olha só até onde você chegou</h2>
-    <p>Você começou com <code>print("Olá, mundo!")</code> e passou por variáveis, decisões, laços, listas, dicionários, funções, arquivos, exceções, classes, testes e muito mais. Isso é a base de qualquer programador Python — parabéns!</p>
-    <p>O próximo passo é o mais importante: <strong>praticar com projetos seus</strong>. Programação se aprende como digitação: um pouco todo dia vale mais do que muito de vez em quando.</p>
+    <p>Você começou com <code>print("Olá, mundo!")</code> e passou por variáveis, decisões, laços, listas, dicionários, funções, arquivos, exceções, classes, testes, expressões regulares, bancos de dados, interfaces gráficas e sites. Isso é a base de qualquer programador Python — parabéns!</p>
+    <p>O próximo passo é o mais importante: <strong>praticar com projetos seus</strong>. Programação se aprende como digitação: um pouco todo dia vale mais do que muito de vez em quando. Ver uma aula não é o mesmo que saber; saber é conseguir fazer sem olhar.</p>
+    <p>Este programa resume o curso em números — e mostra quanto você já sabe:</p>
+<pre class="codigo" data-executar="sim"><code>modulos = {
+    "Primeiros passos": 6, "Lógica": 23, "Intermediário": 30, "Orientação a objetos": 25,
+    "Biblioteca padrão": 20, "Testes": 5, "Regex": 6, "Padrões de projeto": 4,
+    "Bancos de dados": 8, "Interface gráfica": 7, "Django": 13, "Extras": 6,
+}
 
-    <h2>Para onde ir agora</h2>
+total = sum(modulos.values())
+maior = max(modulos, key=modulos.get)
+print(f"{len(modulos)} módulos e {total} aulas concluídas!")
+print(f"O módulo mais longo foi '{maior}', com {modulos[maior]} aulas.")</code></pre>
+    <p class="saida">12 módulos e 153 aulas concluídas!<br>
+O módulo mais longo foi 'Intermediário', com 30 aulas.</p>
+
+    <h2>Para onde ir agora: as trilhas</h2>
+    <p>O Python é usado em quase tudo. Escolha a trilha que mais combina com você:</p>
     <ul>
-      <li><strong>Sites e APIs:</strong> aprofunde o Django (módulo 11) ou experimente o Flask e o FastAPI.</li>
-      <li><strong>Dados e ciência:</strong> aprenda pandas para planilhas e matplotlib para gráficos, usando o Jupyter (aula 115).</li>
-      <li><strong>Automação:</strong> junte arquivos, planilhas e e-mail (módulo 5) para acabar com tarefas repetitivas.</li>
+      <li><strong>Sites e APIs:</strong> aprofunde o Django (módulo 11) ou experimente o Flask e o FastAPI. Você vai precisar também de HTML e CSS (aulas 241 a 243).</li>
+      <li><strong>Dados e ciência:</strong> aprenda pandas para tabelas e matplotlib para gráficos, usando o Jupyter (aula 115). Comece pelo módulo <code>statistics</code>, que já vem com o Python.</li>
+      <li><strong>Automação:</strong> junte arquivos, planilhas, PDF e e-mail (módulo 5) para acabar com tarefas repetitivas do dia a dia.</li>
       <li><strong>Jogos:</strong> a biblioteca pygame é um ótimo jeito de treinar laços, classes e eventos.</li>
-      <li><strong>Inteligência artificial:</strong> depois de dominar o básico e um pouco de matemática, conheça o scikit-learn.</li>
+      <li><strong>Inteligência artificial:</strong> depois de dominar o básico, um pouco de matemática e o pandas, conheça o scikit-learn.</li>
     </ul>
-    <div class="dica"><strong>Dica:</strong> Desafios curtos ajudam a manter o ritmo. Sites como o Beecrowd (feito no Brasil) e o Exercism têm milhares de exercícios, e você pode resolver em Python.</div>
+    <p>Nas próximas seções há um <strong>esqueleto</strong> pequeno para cada trilha: um programa que já funciona e que você pode ir aumentando.</p>
+    <div class="atencao"><strong>Atenção:</strong> Não tente aprender tudo ao mesmo tempo. Escolha <strong>uma</strong> trilha, faça um projeto pequeno do começo ao fim e só então passe para a próxima. Quem pula de tutorial em tutorial sem terminar nada fica com a sensação de não saber nada.</div>
 
-    <h2>Monte seu plano de estudos</h2>
-    <p>Que tal usar Python para organizar o próprio estudo? Este programa distribui os temas pelas semanas e mostra o plano:</p>
-<pre class="codigo" data-executar="sim"><code>temas = ["Revisar funções", "Projeto com pygame", "pandas básico",
-         "Gráficos com matplotlib", "Publicar no GitHub"]
+    <h2>Esqueleto 1: dados com statistics</h2>
+    <p>Antes do pandas, dá para analisar dados com o módulo <code>statistics</code>, que já vem com o Python. Troque as notas pelas suas e acrescente gráficos de barras feitos com texto:</p>
+<pre class="codigo" data-executar="sim"><code>import statistics
 
-for semana, tema in enumerate(temas, start=1):
-    print(f"Semana {semana}: {tema}")
+notas = {"Matemática": [7.5, 8.0, 6.5, 9.0], "Português": [9.0, 8.5, 9.5, 8.0],
+         "Ciências": [6.0, 7.0, 8.5, 7.5]}
 
-print(f"Total: {len(temas)} semanas de estudo")</code></pre>
-    <p class="saida">Semana 1: Revisar funções<br>
-Semana 2: Projeto com pygame<br>
-Semana 3: pandas básico<br>
-Semana 4: Gráficos com matplotlib<br>
-Semana 5: Publicar no GitHub<br>
-Total: 5 semanas de estudo</p>
-    <p>E este conta quantos minutos você pratica por semana, juntando o treino de digitação no DIGITAR e o de programação:</p>
-<pre class="codigo" data-executar="sim"><code>pratica = {"seg": 30, "ter": 20, "qua": 0, "qui": 45, "sex": 25}
+for materia, valores in notas.items():
+    media = statistics.mean(valores)
+    barra = "#" * round(media * 2)
+    print(f"{materia:11} {media:4.1f} {barra}")
+
+todas = [n for valores in notas.values() for n in valores]
+print(f"Mediana geral: {statistics.median(todas)}")
+print(f"Desvio padrão: {statistics.stdev(todas):.2f}")</code></pre>
+    <p class="saida">Matemática &nbsp;&nbsp;7.8 ################<br>
+Português &nbsp;&nbsp;&nbsp;8.8 ##################<br>
+Ciências &nbsp;&nbsp;&nbsp;&nbsp;7.2 ##############<br>
+Mediana geral: 8.0<br>
+Desvio padrão: 1.06</p>
+    <p>Ideias para crescer: ler as notas de um CSV (aula 106), salvar o resultado em JSON (aula 62) e, depois, refazer tudo com pandas.</p>
+
+    <h2>Esqueleto 2: automação com pathlib</h2>
+    <p>Este organizador separa arquivos em pastas pela extensão — o tipo de tarefa chata que um programa faz em segundos. Aqui ele roda numa pasta temporária, com arquivos de mentira:</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+TIPOS = {".jpg": "imagens", ".png": "imagens", ".pdf": "documentos", ".txt": "textos"}
+
+with tempfile.TemporaryDirectory() as raiz:
+    downloads = Path(raiz)
+    for nome in ["foto.jpg", "prova.pdf", "lista.txt", "meme.png", "musica.mp3"]:
+        (downloads / nome).touch()
+
+    for arquivo in list(downloads.iterdir()):
+        pasta = TIPOS.get(arquivo.suffix, "outros")
+        (downloads / pasta).mkdir(exist_ok=True)
+        shutil.move(str(arquivo), str(downloads / pasta / arquivo.name))
+
+    for pasta in sorted(downloads.iterdir()):
+        print(pasta.name, "-&gt;", sorted(p.name for p in pasta.iterdir()))</code></pre>
+    <p class="saida">documentos -&gt; ['prova.pdf']<br>
+imagens -&gt; ['foto.jpg', 'meme.png']<br>
+outros -&gt; ['musica.mp3']<br>
+textos -&gt; ['lista.txt']</p>
+    <div class="atencao"><strong>Atenção:</strong> Quando for usar um programa que move ou apaga arquivos de verdade, teste antes numa pasta de treino, com cópias. E faça o programa só <strong>mostrar</strong> o que faria (um "modo ensaio") antes de deixá-lo mexer nos arquivos.</div>
+
+    <h2>Esqueleto 3: um jogo de terminal</h2>
+    <p>Jogos são ótimos para treinar classes e regras. Este é um jogo de dados entre dois jogadores; as jogadas são sorteadas, e o <code>random.seed</code> faz o resultado sair sempre igual para você conferir. No seu computador, troque o sorteio por <code>input</code> para jogar de verdade:</p>
+<pre class="codigo" data-executar="sim"><code>import random
+
+
+class Jogador:
+    def __init__(self, nome):
+        self.nome = nome
+        self.pontos = 0
+
+    def jogar(self):
+        dado = random.randint(1, 6)
+        self.pontos += dado
+        return dado
+
+
+random.seed(7)
+jogadores = [Jogador("Ana"), Jogador("Léo")]
+for rodada in range(1, 4):
+    jogadas = [f"{j.nome} tirou {j.jogar()}" for j in jogadores]
+    print(f"Rodada {rodada}: " + ", ".join(jogadas))
+
+vencedor = max(jogadores, key=lambda j: j.pontos)
+print(f"Vencedor: {vencedor.nome} com {vencedor.pontos} pontos")</code></pre>
+    <p class="saida">Rodada 1: Ana tirou 3, Léo tirou 2<br>
+Rodada 2: Ana tirou 4, Léo tirou 6<br>
+Rodada 3: Ana tirou 1, Léo tirou 1<br>
+Vencedor: Léo com 9 pontos</p>
+    <p>Ideias para crescer: empate, mais jogadores, um placar salvo em arquivo e, depois, uma versão com janela usando pygame ou PySide6 (módulo 10).</p>
+
+    <h2>Esqueleto 4: a ideia da inteligência artificial</h2>
+    <p>No fundo, muitos programas de IA <strong>aprendem com exemplos</strong>. O mais simples deles é o "vizinho mais próximo": para classificar algo novo, procure o exemplo conhecido mais parecido. Aqui, frutas descritas por peso (em gramas) e cor (0 = verde, 10 = vermelho):</p>
+<pre class="codigo" data-executar="sim"><code>import math
+
+exemplos = [((150, 9), "maçã"), ((170, 8), "maçã"), ((120, 2), "limão"),
+            ((110, 1), "limão"), ((300, 3), "manga")]
+
+
+def classificar(peso, cor):
+    def distancia(exemplo):
+        (p, c), _ = exemplo
+        return math.dist((peso / 10, cor), (p / 10, c))
+
+    return min(exemplos, key=distancia)[1]
+
+
+for fruta in [(160, 9), (115, 2), (280, 4)]:
+    print(fruta, "-&gt;", classificar(*fruta))</code></pre>
+    <p class="saida">(160, 9) -&gt; maçã<br>
+(115, 2) -&gt; limão<br>
+(280, 4) -&gt; manga</p>
+    <p>O scikit-learn faz essa mesma ideia (e muitas outras) com milhares de exemplos e muito mais rapidez. Entender a versão pequena primeiro deixa a grande bem menos misteriosa.</p>
+
+    <h2>Como estudar sozinho</h2>
+    <ul>
+      <li><strong>Pouco todo dia:</strong> 20 a 30 minutos por dia rendem mais do que 4 horas no sábado.</li>
+      <li><strong>Projetos pequenos e terminados:</strong> um programa simples que funciona ensina mais do que um gigante pela metade.</li>
+      <li><strong>Digite, não copie e cole:</strong> digitar o código (como no modo Programar do DIGITAR) faz você reparar em cada detalhe.</li>
+      <li><strong>Explique para alguém:</strong> se você consegue explicar uma ideia para um colega, aprendeu de verdade.</li>
+      <li><strong>Revise:</strong> volte às aulas antigas de vez em quando e refaça os exercícios sem olhar a resposta.</li>
+    </ul>
+    <p>Que tal usar Python para acompanhar o próprio estudo? Este programa soma os minutos da semana e mostra os dias parados:</p>
+<pre class="codigo" data-executar="sim"><code>pratica = {"seg": 30, "ter": 20, "qua": 0, "qui": 45, "sex": 25, "sáb": 0, "dom": 15}
+meta = 150
 
 total = sum(pratica.values())
 dias_parados = [dia for dia, minutos in pratica.items() if minutos == 0]
 
-print(f"Você praticou {total} minutos nesta semana.")
+print(f"Você praticou {total} de {meta} minutos nesta semana.")
+print("Meta atingida!" if total &gt;= meta else f"Faltaram {meta - total} minutos.")
 print("Dias sem prática:", ", ".join(dias_parados))</code></pre>
-    <p class="saida">Você praticou 120 minutos nesta semana.<br>
-Dias sem prática: qua</p>
-    <div class="atencao"><strong>Atenção:</strong> Não tente aprender tudo ao mesmo tempo. Escolha <strong>uma</strong> área, faça um projeto pequeno do começo ao fim e só então passe para a próxima.</div>
+    <p class="saida">Você praticou 135 de 150 minutos nesta semana.<br>
+Faltaram 15 minutos.<br>
+Dias sem prática: qua, sáb</p>
+    <div class="dica"><strong>Dica:</strong> Desafios curtos ajudam a manter o ritmo. Sites como o Beecrowd (feito no Brasil) e o Exercism têm milhares de exercícios, e você pode resolver em Python.</div>
+
+    <h2>Lendo documentação e pesquisando erros</h2>
+    <p>A documentação oficial, em <a href="https://docs.python.org/pt-br/3/">docs.python.org/pt-br/3</a>, tem boa parte traduzida para o português. Quando quiser saber o que um módulo faz, comece por lá. Dentro do próprio Python também há ajuda: <code>help()</code> mostra a documentação e <code>dir()</code> lista o que um objeto tem (aula 86):</p>
+<pre class="codigo" data-executar="sim"><code>import statistics
+
+funcoes = [nome for nome in statistics.__all__ if nome.islower()]
+print("Algumas funções de statistics:", funcoes[:8])
+print(statistics.mode.__doc__.strip().splitlines()[0])</code></pre>
+    <p class="saida">Algumas funções de statistics: ['correlation', 'covariance', 'fmean', 'geometric_mean', 'harmonic_mean', 'linear_regression', 'mean', 'median']<br>
+Return the most common data point from discrete or nominal data.</p>
+    <p>Quando aparecer um erro, leia a <strong>última linha</strong> do traceback primeiro (aula 06). Se não entender, copie essa linha (sem os nomes dos seus arquivos) e pesquise. Quase sempre alguém já teve o mesmo problema.</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca cole senhas, chaves ou dados pessoais em sites de pergunta ou em ferramentas de IA ao pedir ajuda (veja a aula 177). E quando uma IA ou um site sugerir um código, entenda o que ele faz antes de usar.</div>
 
     <h2>Seu portfólio</h2>
-    <p>Guarde cada projeto no GitHub (aula 244), com um <code>README.md</code> explicando o que ele faz e como rodar. Os projetos deste curso — jogo de adivinhação, lista de tarefas, analisador de texto, treino de digitação, agenda de contatos — já são um ótimo começo. Melhore cada um com as ideias dos "Desafios extras".</p>
+    <p>Guarde cada projeto no GitHub (aula 244), com um <code>README.md</code> explicando o que ele faz, como instalar e como rodar, e de preferência uma imagem da tela. Os projetos deste curso — validador de CPF, jogo de adivinhação, lista de tarefas, analisador de texto, treino de digitação, agenda de contatos, banco simples, calculadora com PySide6, agenda e blog com Django, landing page — já são um ótimo começo. Melhore cada um com as ideias dos "Desafios extras".</p>
+    <p>Um bom README tem sempre as mesmas partes. Este programa monta um modelo para você copiar:</p>
+<pre class="codigo" data-executar="sim"><code>def readme(nome, descricao, comando, aprendi):
+    linhas = [f"# {nome}", "", descricao, "", "## Como rodar", "", "```", comando, "```",
+              "", "## O que eu aprendi", ""]
+    linhas += [f"- {item}" for item in aprendi]
+    return "\n".join(linhas)
+
+
+print(readme("Jogo da Forca", "Jogo da forca no terminal, com palavras sobre o Brasil.",
+             "python forca.py", ["listas e laços", "ler palavras de um arquivo"]))</code></pre>
+    <p class="saida"># Jogo da Forca<br>
+&nbsp;<br>
+Jogo da forca no terminal, com palavras sobre o Brasil.<br>
+&nbsp;<br>
+## Como rodar<br>
+&nbsp;<br>
+```<br>
+python forca.py<br>
+```<br>
+&nbsp;<br>
+## O que eu aprendi<br>
+&nbsp;<br>
+- listas e laços<br>
+- ler palavras de um arquivo</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -77,38 +228,110 @@ Dias sem prática: qua</p>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie uma lista com três projetos que você quer fazer e mostre cada um numerado, no formato <code>1. Nome do projeto</code>.</p>
+      <p><strong>1.</strong> Monte um plano de estudos: dada a lista de temas <code>["Revisar funções", "pandas básico", "Gráficos", "Publicar no GitHub"]</code>, mostre <code>Semana N: tema</code> para cada um e o total de semanas.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>projetos = ["Jogo da forca", "Controle de mesada", "Quiz de geografia"]
+<pre class="codigo" data-executar="sim"><code>temas = ["Revisar funções", "pandas básico", "Gráficos", "Publicar no GitHub"]
 
-for numero, projeto in enumerate(projetos, start=1):
-    print(f"{numero}. {projeto}")</code></pre>
-      <p class="saida">1. Jogo da forca<br>
-2. Controle de mesada<br>
-3. Quiz de geografia</p>
+for semana, tema in enumerate(temas, start=1):
+    print(f"Semana {semana}: {tema}")
+print(f"Total: {len(temas)} semanas")</code></pre>
+      <p class="saida">Semana 1: Revisar funções<br>
+Semana 2: pandas básico<br>
+Semana 3: Gráficos<br>
+Semana 4: Publicar no GitHub<br>
+Total: 4 semanas</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Usando o dicionário <code>pratica</code> do exemplo, descubra o dia em que você mais praticou.</p>
+      <p><strong>2.</strong> Usando o dicionário <code>pratica</code> do exemplo de estudo, descubra o dia em que você mais praticou e a média de minutos por dia.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>pratica = {"seg": 30, "ter": 20, "qua": 0, "qui": 45, "sex": 25}
+<pre class="codigo" data-executar="sim"><code>pratica = {"seg": 30, "ter": 20, "qua": 0, "qui": 45, "sex": 25, "sáb": 0, "dom": 15}
 
 melhor_dia = max(pratica, key=pratica.get)
-print(f"O dia com mais prática foi {melhor_dia}: {pratica[melhor_dia]} minutos.")</code></pre>
-      <p class="saida">O dia com mais prática foi qui: 45 minutos.</p>
+media = sum(pratica.values()) / len(pratica)
+print(f"O dia com mais prática foi {melhor_dia}: {pratica[melhor_dia]} minutos.")
+print(f"Média: {media:.1f} minutos por dia.")</code></pre>
+      <p class="saida">O dia com mais prática foi qui: 45 minutos.<br>
+Média: 19.3 minutos por dia.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>3.</strong> Faça uma função <code>meta_atingida(minutos, meta=150)</code> que devolva <code>True</code> se o total de minutos da semana chegou à meta, e teste com 140 e com 160.</p>
+      <p><strong>3.</strong> Melhore o organizador de arquivos: em vez de mover, faça um "modo ensaio" que só <strong>mostre</strong> para onde cada arquivo iria, sem mexer em nada.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>def meta_atingida(minutos, meta=150):
-    return minutos &gt;= meta
+<pre class="codigo" data-executar="sim"><code>from pathlib import Path
+
+TIPOS = {".jpg": "imagens", ".png": "imagens", ".pdf": "documentos", ".txt": "textos"}
+arquivos = [Path("foto.jpg"), Path("prova.pdf"), Path("musica.mp3")]
+
+for arquivo in arquivos:
+    pasta = TIPOS.get(arquivo.suffix, "outros")
+    print(f"[ensaio] {arquivo.name} -&gt; {pasta}/{arquivo.name}")</code></pre>
+      <p class="saida">[ensaio] foto.jpg -&gt; imagens/foto.jpg<br>
+[ensaio] prova.pdf -&gt; documentos/prova.pdf<br>
+[ensaio] musica.mp3 -&gt; outros/musica.mp3</p>
+      <p>Com o modo ensaio, você confere a lista antes; só depois troca o <code>print</code> pelo <code>shutil.move</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> No jogo de dados, acrescente a regra: quem tirar 6 joga de novo (uma vez só por rodada). Use <code>random.seed(3)</code> e jogue 3 rodadas com Ana e Léo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import random
 
 
-print(meta_atingida(140))
-print(meta_atingida(160))</code></pre>
-      <p class="saida">False<br>
-True</p>
+class Jogador:
+    def __init__(self, nome):
+        self.nome = nome
+        self.pontos = 0
+
+    def jogar(self):
+        dado = random.randint(1, 6)
+        if dado == 6:
+            dado += random.randint(1, 6)
+        self.pontos += dado
+        return dado
+
+
+random.seed(3)
+jogadores = [Jogador("Ana"), Jogador("Léo")]
+for rodada in range(1, 4):
+    print(f"Rodada {rodada}: " + ", ".join(f"{j.nome} fez {j.jogar()}" for j in jogadores))
+for j in jogadores:
+    print(j.nome, j.pontos)</code></pre>
+      <p class="saida">Rodada 1: Ana fez 2, Léo fez 5<br>
+Rodada 2: Ana fez 5, Léo fez 2<br>
+Rodada 3: Ana fez 3, Léo fez 5<br>
+Ana 10<br>
+Léo 12</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> No classificador de frutas, acrescente o exemplo <code>((60, 5), "kiwi")</code> e classifique uma fruta de 65 g com cor 5.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import math
+
+exemplos = [((150, 9), "maçã"), ((170, 8), "maçã"), ((120, 2), "limão"),
+            ((110, 1), "limão"), ((300, 3), "manga"), ((60, 5), "kiwi")]
+
+
+def classificar(peso, cor):
+    return min(exemplos, key=lambda e: math.dist((peso / 10, cor), (e[0][0] / 10, e[0][1])))[1]
+
+
+print(classificar(65, 5))</code></pre>
+      <p class="saida">kiwi</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Escreva três projetos que você quer fazer, um de cada trilha diferente, e mostre-os numerados no formato <code>1. Nome (trilha)</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>projetos = [("Controle de mesada", "dados"), ("Organizador de downloads", "automação"),
+            ("Quiz de geografia", "jogos")]
+
+for numero, (nome, trilha) in enumerate(projetos, start=1):
+    print(f"{numero}. {nome} ({trilha})")</code></pre>
+      <p class="saida">1. Controle de mesada (dados)<br>
+2. Organizador de downloads (automação)<br>
+3. Quiz de geografia (jogos)</p>
       </details>
     </div>
 

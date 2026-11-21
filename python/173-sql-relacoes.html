@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 173 · Chaves estrangeiras e JOIN — Curso de Python · DIGITAR</title>
-<meta name="description" content="Ligue tabelas com chaves estrangeiras e junte os dados delas com JOIN.">
+<meta name="description" content="Ligue tabelas com chaves estrangeiras, monte relações 1 para N e N para N e junte os dados delas com INNER JOIN e LEFT JOIN.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,16 +20,48 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Por que dividir os dados em várias tabelas</li>
-        <li>O que é uma chave estrangeira</li>
-        <li>Como juntar tabelas com INNER JOIN e LEFT JOIN</li>
+        <li>Entender por que dividir os dados em várias tabelas</li>
+        <li>Reconhecer relações 1 para N (um para muitos) e N para N (muitos para muitos)</li>
+        <li>Criar chaves estrangeiras com <code>REFERENCES</code> e ligar a checagem com <code>PRAGMA foreign_keys = ON</code></li>
+        <li>Juntar tabelas com <code>INNER JOIN</code> e <code>LEFT JOIN</code>, inclusive com <code>GROUP BY</code></li>
+        <li>Montar uma tabela de ligação e usar <code>ON DELETE CASCADE</code></li>
       </ul>
     </div>
 
     <h2>Dividir para não repetir</h2>
-    <p>Se cada pedido guardasse o nome, o e-mail e o endereço do cliente, um cliente com 50 pedidos teria os dados repetidos 50 vezes, e mudar o e-mail seria um pesadelo. A solução é ter uma tabela <code>clientes</code> e, em <code>pedidos</code>, guardar só o <code>id</code> do cliente. Essa coluna que aponta para outra tabela é a <strong>chave estrangeira</strong> (<code>FOREIGN KEY</code>).</p>
+    <p>Imagine uma tabela de pedidos que guardasse, em cada linha, o nome, o e-mail e o endereço do cliente. Um cliente com 50 pedidos teria os dados repetidos 50 vezes. Se ele mudasse de e-mail, seria preciso alterar 50 linhas — e se uma ficasse esquecida, o banco teria dois e-mails diferentes para a mesma pessoa.</p>
+    <p>A solução é separar: uma tabela <code>clientes</code>, com cada cliente uma única vez, e uma tabela <code>pedidos</code> que guarda só o <strong>número</strong> (<code>id</code>) do cliente. Essa coluna que aponta para a chave primária de outra tabela é a <strong>chave estrangeira</strong> (em inglês, *foreign key*).</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
 
-    <h2>Juntando com JOIN</h2>
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT, email TEXT);
+    CREATE TABLE pedidos (
+        id INTEGER PRIMARY KEY,
+        cliente_id INTEGER REFERENCES clientes(id),
+        produto TEXT
+    );
+    INSERT INTO clientes (nome, email) VALUES ('Lia', 'lia@email.com');
+    INSERT INTO pedidos (cliente_id, produto) VALUES (1, 'Fone'), (1, 'Capinha'), (1, 'Cabo');
+""")
+print("pedidos:", con.execute("SELECT * FROM pedidos").fetchall())
+
+con.execute("UPDATE clientes SET email = 'lia.nova@email.com' WHERE id = 1")
+print("e-mail trocado em um lugar só:", con.execute("SELECT email FROM clientes").fetchone())
+con.close()</code></pre>
+    <p class="saida">pedidos: [(1, 1, 'Fone'), (2, 1, 'Capinha'), (3, 1, 'Cabo')]<br>
+e-mail trocado em um lugar só: ('lia.nova@email.com',)</p>
+    <p><code>executescript</code> roda vários comandos de uma vez, separados por <code>;</code>. <code>REFERENCES clientes(id)</code> diz ao banco que <code>cliente_id</code> aponta para o <code>id</code> da tabela <code>clientes</code>. Os três pedidos guardam só o número 1, e o e-mail mudou num único lugar.</p>
+
+    <h2>Tipos de relação</h2>
+    <ul>
+      <li><strong>1 para N</strong> (um para muitos): um cliente tem muitos pedidos, mas cada pedido é de um só cliente. A chave estrangeira fica no lado "muitos" (<code>pedidos.cliente_id</code>).</li>
+      <li><strong>N para N</strong> (muitos para muitos): um aluno faz várias matérias e cada matéria tem vários alunos. Aqui não dá para pôr uma coluna só em nenhum dos lados; usamos uma terceira tabela, a <strong>tabela de ligação</strong>, que você verá mais adiante nesta aula.</li>
+      <li><strong>1 para 1</strong>: um aluno tem uma carteirinha. É mais raro; muitas vezes as colunas ficam na mesma tabela.</li>
+    </ul>
+
+    <h2>Juntando com INNER JOIN</h2>
+    <p>Separar é ótimo para guardar, mas na hora de mostrar queremos o nome do cliente junto com cada pedido. O <code>JOIN</code> junta as tabelas <strong>na consulta</strong>, combinando as linhas pela condição do <code>ON</code>:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -51,16 +83,53 @@ sql = """
     INNER JOIN clientes ON clientes.id = pedidos.cliente_id
     ORDER BY pedidos.id
 """
-for linha in con.execute(sql):
-    print(linha)
+for nome, produto, valor in con.execute(sql):
+    print(f"{nome:&lt;5} comprou {produto:&lt;8} R$ {valor:6.2f}")
 con.close()</code></pre>
-    <p class="saida">('Lia', 'Fone', 89.9)<br>
-('Lia', 'Capinha', 25.0)<br>
-('Davi', 'Mouse', 59.0)</p>
-    <p><code>executescript</code> roda vários comandos separados por <code>;</code>. O <code>INNER JOIN ... ON</code> junta cada pedido com o cliente cujo <code>id</code> é igual ao <code>cliente_id</code>.</p>
+    <p class="saida">Lia &nbsp;&nbsp;comprou Fone &nbsp;&nbsp;&nbsp;&nbsp;R$ &nbsp;89.90<br>
+Lia &nbsp;&nbsp;comprou Capinha &nbsp;R$ &nbsp;25.00<br>
+Davi &nbsp;comprou Mouse &nbsp;&nbsp;&nbsp;R$ &nbsp;59.00</p>
+    <p>Para cada pedido, o banco procura o cliente cujo <code>id</code> é igual ao <code>cliente_id</code> e junta as colunas dos dois. Como as duas tabelas têm uma coluna <code>id</code>, escrevemos <code>tabela.coluna</code> para não haver confusão. Só <code>JOIN</code> significa o mesmo que <code>INNER JOIN</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer o <code>ON</code> é um erro clássico: sem ele, o banco combina <strong>cada</strong> pedido com <strong>cada</strong> cliente (3 pedidos × 3 clientes = 9 linhas sem sentido). Se o resultado veio com linhas demais, confira o <code>ON</code>.</div>
 
     <h2>LEFT JOIN: incluindo quem não tem par</h2>
-    <p>A Rosa não fez pedidos, por isso não apareceu acima. O <code>LEFT JOIN</code> mantém todas as linhas da tabela da esquerda, mesmo sem par:</p>
+    <p>A Rosa não fez pedidos, por isso não apareceu acima: o <code>INNER JOIN</code> só mostra as linhas que têm par nas duas tabelas. O <code>LEFT JOIN</code> mantém <strong>todas</strong> as linhas da tabela da esquerda (a do <code>FROM</code>), mesmo sem par; as colunas da outra tabela vêm como <code>NULL</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE pedidos (id INTEGER PRIMARY KEY, cliente_id INTEGER, produto TEXT);
+    INSERT INTO clientes (nome) VALUES ('Lia'), ('Davi'), ('Rosa');
+    INSERT INTO pedidos (cliente_id, produto) VALUES (1, 'Fone'), (1, 'Capinha'), (2, 'Mouse');
+""")
+sql = """
+    SELECT c.nome, p.produto
+    FROM clientes AS c
+    LEFT JOIN pedidos AS p ON p.cliente_id = c.id
+    ORDER BY c.nome, p.produto
+"""
+for linha in con.execute(sql):
+    print(linha)
+
+print("Clientes sem nenhum pedido:")
+sql = """
+    SELECT c.nome FROM clientes AS c
+    LEFT JOIN pedidos AS p ON p.cliente_id = c.id
+    WHERE p.id IS NULL
+"""
+print(con.execute(sql).fetchall())
+con.close()</code></pre>
+    <p class="saida">('Davi', 'Mouse')<br>
+('Lia', 'Capinha')<br>
+('Lia', 'Fone')<br>
+('Rosa', None)<br>
+Clientes sem nenhum pedido:<br>
+[('Rosa',)]</p>
+    <p><code>AS c</code> dá um apelido curto à tabela, para não repetir o nome inteiro. O truque <code>LEFT JOIN ... WHERE p.id IS NULL</code> é o jeito clássico de achar "quem não tem nenhum".</p>
+
+    <h2>JOIN com GROUP BY: relatórios</h2>
+    <p>Juntar e agrupar ao mesmo tempo responde perguntas como "quantos pedidos e quanto gastou cada cliente?":</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -71,20 +140,87 @@ con.executescript("""
     INSERT INTO pedidos (cliente_id, valor) VALUES (1, 89.9), (1, 25.0), (2, 59.0);
 """)
 sql = """
-    SELECT c.nome, COUNT(p.id), COALESCE(SUM(p.valor), 0)
+    SELECT c.nome, COUNT(p.id) AS qtd, COALESCE(SUM(p.valor), 0) AS total
     FROM clientes AS c
     LEFT JOIN pedidos AS p ON p.cliente_id = c.id
     GROUP BY c.id
-    ORDER BY c.nome
+    ORDER BY total DESC
 """
 for nome, qtd, total in con.execute(sql):
     print(f"{nome}: {qtd} pedido(s), R$ {total:.2f}")
 con.close()</code></pre>
-    <p class="saida">Davi: 1 pedido(s), R$ 59.00<br>
-Lia: 2 pedido(s), R$ 114.90<br>
+    <p class="saida">Lia: 2 pedido(s), R$ 114.90<br>
+Davi: 1 pedido(s), R$ 59.00<br>
 Rosa: 0 pedido(s), R$ 0.00</p>
-    <p><code>AS c</code> dá um apelido curto à tabela. <code>COALESCE(x, 0)</code> troca o vazio (<code>NULL</code>) por 0.</p>
-    <div class="atencao"><strong>Atenção:</strong> No SQLite, a checagem de chaves estrangeiras vem desligada. Para ligar, rode <code>PRAGMA foreign_keys = ON</code> logo depois de conectar.</div>
+    <p><code>COUNT(p.id)</code> conta só os pedidos que existem (o <code>NULL</code> da Rosa não conta), por isso ela aparece com 0. <code>COALESCE(x, 0)</code> troca o vazio (<code>NULL</code>) por 0 — sem ele, o total da Rosa seria <code>None</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Ao montar um JOIN difícil, vá por partes: primeiro rode só o <code>JOIN</code> e confira as linhas; depois acrescente o <code>GROUP BY</code> e as somas.</div>
+
+    <h2>Garantindo as ligações: PRAGMA foreign_keys</h2>
+    <p>A chave estrangeira também serve para o banco <strong>proteger</strong> as ligações: não deixar criar um pedido de um cliente que não existe, nem apagar um cliente que ainda tem pedidos. Mas, no SQLite, essa checagem vem <strong>desligada</strong> por padrão. Ligue com <code>PRAGMA foreign_keys = ON</code> logo depois de conectar:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("PRAGMA foreign_keys = ON")
+con.executescript("""
+    CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE pedidos (id INTEGER PRIMARY KEY,
+                          cliente_id INTEGER NOT NULL REFERENCES clientes(id));
+    INSERT INTO clientes (nome) VALUES ('Lia');
+    INSERT INTO pedidos (cliente_id) VALUES (1);
+""")
+tentativas = {
+    "pedido do cliente 99": "INSERT INTO pedidos (cliente_id) VALUES (99)",
+    "apagar a Lia": "DELETE FROM clientes WHERE id = 1",
+}
+for descricao, comando in tentativas.items():
+    try:
+        con.execute(comando)
+    except sqlite3.IntegrityError as erro:
+        print(f"Barrado ({descricao}): {erro}")
+con.close()</code></pre>
+    <p class="saida">Barrado (pedido do cliente 99): FOREIGN KEY constraint failed<br>
+Barrado (apagar a Lia): FOREIGN KEY constraint failed</p>
+    <p>Os dois comandos foram recusados: o cliente 99 não existe, e a Lia ainda tem um pedido ligado a ela.</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>PRAGMA foreign_keys = ON</code> vale <strong>por conexão</strong>: cada vez que o programa conecta ao banco, precisa rodar o comando de novo. Sem ele, o SQLite aceita <code>cliente_id</code> inválidos em silêncio.</div>
+
+    <h2>N para N e ON DELETE CASCADE</h2>
+    <p>Para a relação "alunos fazem matérias", criamos a tabela de ligação <code>matriculas</code>, com uma chave estrangeira para cada lado. Cada linha dela diz "este aluno faz esta matéria". Com <code>ON DELETE CASCADE</code>, quando um aluno é apagado, as matrículas dele somem junto, em vez de o banco recusar o <code>DELETE</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("PRAGMA foreign_keys = ON")
+con.executescript("""
+    CREATE TABLE alunos (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE materias (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE matriculas (
+        aluno_id INTEGER REFERENCES alunos(id) ON DELETE CASCADE,
+        materia_id INTEGER REFERENCES materias(id) ON DELETE CASCADE,
+        PRIMARY KEY (aluno_id, materia_id)
+    );
+    INSERT INTO alunos (nome) VALUES ('Ana'), ('Caio'), ('Duda');
+    INSERT INTO materias (nome) VALUES ('Robótica'), ('Xadrez'), ('Teatro');
+    INSERT INTO matriculas VALUES (1, 1), (1, 2), (2, 1), (3, 3), (3, 2);
+""")
+sql = """
+    SELECT m.nome, GROUP_CONCAT(a.nome, ', ')
+    FROM matriculas AS mt
+    JOIN alunos AS a ON a.id = mt.aluno_id
+    JOIN materias AS m ON m.id = mt.materia_id
+    GROUP BY m.id
+    ORDER BY m.nome
+"""
+for materia, alunos in con.execute(sql):
+    print(f"{materia}: {alunos}")
+
+con.execute("DELETE FROM alunos WHERE nome = 'Ana'")
+print("Matrículas depois de apagar a Ana:",
+      con.execute("SELECT COUNT(*) FROM matriculas").fetchone()[0])
+con.close()</code></pre>
+    <p class="saida">Robótica: Ana, Caio<br>
+Teatro: Duda<br>
+Xadrez: Ana, Duda<br>
+Matrículas depois de apagar a Ana: 3</p>
+    <p>Dá para encadear vários <code>JOIN</code>: aqui, cada matrícula ganha o nome do aluno e o nome da matéria. A chave primária <code>(aluno_id, materia_id)</code> é formada por duas colunas e impede matricular o mesmo aluno duas vezes na mesma matéria. <code>GROUP_CONCAT</code> junta os nomes de cada grupo num texto só. Das 5 matrículas sobraram 3, porque as 2 da Ana foram apagadas em cascata.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -132,6 +268,94 @@ except sqlite3.IntegrityError as e:
     print("Erro:", e)
 con.close()</code></pre>
       <p class="saida">Erro: FOREIGN KEY constraint failed</p>
+      <p>O banco recusa com <code>IntegrityError</code>. Sem o <code>PRAGMA</code>, o pedido seria aceito e ficaria apontando para um cliente que não existe.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Mostre quantos alunos tem cada turma, incluindo uma turma que ainda não tem nenhum aluno.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE turmas (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE alunos (id INTEGER PRIMARY KEY, nome TEXT, turma_id INTEGER REFERENCES turmas(id));
+    INSERT INTO turmas (nome) VALUES ('7º A'), ('8º B'), ('9º C');
+    INSERT INTO alunos (nome, turma_id) VALUES ('Ana', 1), ('Caio', 2), ('Duda', 1);
+""")
+sql = """
+    SELECT t.nome, COUNT(a.id)
+    FROM turmas AS t
+    LEFT JOIN alunos AS a ON a.turma_id = t.id
+    GROUP BY t.id
+    ORDER BY t.nome
+"""
+for turma, qtd in con.execute(sql):
+    print(f"{turma}: {qtd} aluno(s)")
+con.close()</code></pre>
+      <p class="saida">7º A: 2 aluno(s)<br>
+8º B: 1 aluno(s)<br>
+9º C: 0 aluno(s)</p>
+      <p>Com <code>INNER JOIN</code>, o 9º C sumiria do resultado; o <code>LEFT JOIN</code> mantém todas as turmas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Uma biblioteca tem <code>livros</code> e <code>autores</code>, e um livro pode ter vários autores. Que tabelas você criaria? Monte-as e mostre os autores de cada livro.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("PRAGMA foreign_keys = ON")
+con.executescript("""
+    CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT);
+    CREATE TABLE autores (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE livro_autor (
+        livro_id INTEGER REFERENCES livros(id),
+        autor_id INTEGER REFERENCES autores(id),
+        PRIMARY KEY (livro_id, autor_id)
+    );
+    INSERT INTO livros (titulo) VALUES ('Contos da Floresta'), ('Robôs na Escola');
+    INSERT INTO autores (nome) VALUES ('Bia Rocha'), ('Tomás Lima'), ('Iara Melo');
+    INSERT INTO livro_autor VALUES (1, 1), (2, 2), (2, 3);
+""")
+sql = """
+    SELECT l.titulo, a.nome
+    FROM livro_autor AS la
+    JOIN livros AS l ON l.id = la.livro_id
+    JOIN autores AS a ON a.id = la.autor_id
+    ORDER BY l.titulo, a.nome
+"""
+for titulo, autor in con.execute(sql):
+    print(f"{titulo} - {autor}")
+con.close()</code></pre>
+      <p class="saida">Contos da Floresta - Bia Rocha<br>
+Robôs na Escola - Iara Melo<br>
+Robôs na Escola - Tomás Lima</p>
+      <p>É uma relação N para N: além de <code>livros</code> e <code>autores</code>, é preciso a tabela de ligação <code>livro_autor</code>, com uma linha para cada par livro-autor.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Liste os clientes que nunca fizeram um pedido.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.executescript("""
+    CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT);
+    CREATE TABLE pedidos (id INTEGER PRIMARY KEY, cliente_id INTEGER REFERENCES clientes(id));
+    INSERT INTO clientes (nome) VALUES ('Lia'), ('Davi'), ('Rosa'), ('Téo');
+    INSERT INTO pedidos (cliente_id) VALUES (1), (1), (3);
+""")
+sql = """
+    SELECT c.nome FROM clientes AS c
+    LEFT JOIN pedidos AS p ON p.cliente_id = c.id
+    WHERE p.id IS NULL
+    ORDER BY c.nome
+"""
+print([nome for (nome,) in con.execute(sql)])
+con.close()</code></pre>
+      <p class="saida">['Davi', 'Téo']</p>
+      <p>O <code>LEFT JOIN</code> traz todos os clientes; os que não têm pedido ficam com <code>p.id</code> em <code>NULL</code>, e o <code>WHERE p.id IS NULL</code> separa justamente esses.</p>
       </details>
     </div>
 

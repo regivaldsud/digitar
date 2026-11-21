@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 204 · QuerySets: filter, order_by, Q, paginação — Curso de Python · DIGITAR</title>
-<meta name="description" content="Busque, filtre, ordene e pagine registros do banco usando a ORM do Django.">
+<meta name="description" content="Crie, busque, filtre, ordene, altere, apague e pagine registros do banco usando a ORM do Django, entendendo o que cada consulta faz por baixo.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,56 +20,219 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Criar, buscar, alterar e apagar registros com a ORM</li>
-        <li>Filtrar com <code>filter</code>, <code>exclude</code>, buscas como <code>__icontains</code> e <code>Q</code></li>
-        <li>Ordenar e dividir resultados em páginas com <code>Paginator</code></li>
+        <li>Criar, buscar, alterar e apagar registros com a ORM (o CRUD sem SQL)</li>
+        <li>Entender o que é um QuerySet e por que ele é "preguiçoso"</li>
+        <li>Filtrar com <code>filter</code>, <code>exclude</code> e buscas como <code>__icontains</code>, <code>__startswith</code> e <code>__gte</code></li>
+        <li>Saber quando usar <code>get</code> e quando usar <code>filter</code>, e o erro <code>DoesNotExist</code></li>
+        <li>Combinar condições com <code>Q</code>, ordenar com <code>order_by</code> e limitar com fatias</li>
+        <li>Dividir resultados em páginas com <code>Paginator</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>A ORM no shell</h2>
-    <p>A <strong>ORM</strong> traduz código Python para SQL. Teste no shell do Django:</p>
+    <h2>A ORM: Python no lugar do SQL</h2>
+    <p>A <strong>ORM</strong> (mapeamento objeto-relacional) é a parte do Django que traduz código Python em SQL. Em vez de escrever <code>SELECT * FROM contatos_contato WHERE favorito = 1</code>, você escreve <code>Contato.objects.filter(favorito=True)</code>. Toda busca começa pelo <code>objects</code> do model, o <strong>gerenciador</strong>.</p>
+    <p>O resultado de uma busca é um <strong>QuerySet</strong>: uma "lista" de registros que ainda pode ser refinada com mais filtros. Ele é <strong>preguiçoso</strong>: montar o QuerySet não vai ao banco. A consulta só acontece quando você usa os resultados — num <code>for</code>, num <code>print</code>, com <code>count()</code>, <code>list()</code> ou no template.</p>
+    <p>Os exemplos usam o model <code>Contato</code> da aula 203. Abra o shell do projeto:</p>
 <pre class="codigo"><code>python manage.py shell</code></pre>
+
+    <h2>Criar, ler, alterar e apagar</h2>
+    <p>Digite no shell, linha por linha:</p>
 <pre class="codigo"><code>from contatos.models import Contato
 
-Contato.objects.create(nome="Ana", telefone="81 99999-0000", favorito=True)
+Contato.objects.create(nome="Ana", telefone="81 99999-0000", email="ana@email.com", favorito=True)
 Contato.objects.create(nome="Bruno", telefone="11 98888-1111")
+Contato.objects.create(nome="Carla", telefone="81 97777-3333", email="carla@email.com")
+Contato.objects.create(nome="Davi", telefone="11 96666-4444", favorito=True)
+Contato.objects.create(nome="Beatriz", telefone="21 95555-5555", favorito=True)
 
-todos = Contato.objects.all()
-favoritos = Contato.objects.filter(favorito=True)
+print(Contato.objects.count())
+print(Contato.objects.all())
+print(Contato.objects.filter(favorito=True))</code></pre>
+    <p class="saida">5<br>
+&lt;QuerySet [&lt;Contato: Ana&gt;, &lt;Contato: Beatriz&gt;, &lt;Contato: Bruno&gt;, &lt;Contato: Carla&gt;, &lt;Contato: Davi&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Ana&gt;, &lt;Contato: Beatriz&gt;, &lt;Contato: Davi&gt;]&gt;</p>
+    <p>Os contatos vêm em ordem alfabética por causa do <code>ordering = ["nome"]</code> do model. Para alterar, pegue o registro, mude o atributo e chame <code>save()</code>. Para apagar, use <code>delete()</code>:</p>
+<pre class="codigo"><code>from contatos.models import Contato
+
 ana = Contato.objects.get(nome="Ana")
-ana.telefone = "81 97777-2222"
+ana.telefone = "81 90000-2222"
 ana.save()
-print(Contato.objects.count())</code></pre>
-    <p>Um <strong>QuerySet</strong> é preguiçoso: a consulta ao banco só acontece quando você usa os resultados (num <code>for</code>, num <code>print</code>, com <code>count()</code>...).</p>
-    <div class="atencao"><strong>Atenção:</strong> <code>get</code> devolve <strong>um</strong> registro. Se não achar nenhum, dá <code>Contato.DoesNotExist</code>; se achar mais de um, <code>MultipleObjectsReturned</code>. Para "zero ou mais", use <code>filter</code>.</div>
+print(Contato.objects.get(nome="Ana").telefone)
 
-    <h2>Filtros, Q e ordenação</h2>
+print(Contato.objects.filter(nome="Bruno").delete())
+print(Contato.objects.count())
+
+print(Contato.objects.filter(telefone__startswith="81").update(favorito=True))</code></pre>
+    <p class="saida">81 90000-2222<br>
+(1, {'contatos.Contato': 1})<br>
+4<br>
+2</p>
+    <p>O <code>delete()</code> conta quantos registros apagou. O <code>update()</code> altera de uma vez todos os registros do QuerySet, direto no banco, e devolve quantos mudou — aqui, Ana e Carla viraram favoritas.</p>
+    <div class="atencao"><strong>Atenção:</strong> Sem o <code>save()</code>, a mudança fica só na variável do Python e se perde. E cuidado: <code>Contato.objects.all().delete()</code> apaga <strong>todos</strong> os contatos, sem pedir confirmação.</div>
+
+    <h2>get ou filter?</h2>
+    <ul>
+      <li><code>filter(...)</code> devolve um <strong>QuerySet</strong> com zero, um ou muitos registros. Nunca dá erro por não achar: devolve um QuerySet vazio.</li>
+      <li><code>get(...)</code> devolve <strong>um</strong> registro. Se não achar nenhum, levanta <code>Contato.DoesNotExist</code>; se achar mais de um, <code>Contato.MultipleObjectsReturned</code>.</li>
+    </ul>
+<pre class="codigo"><code>from contatos.models import Contato
+
+try:
+    Contato.objects.get(nome="Zeca")
+except Contato.DoesNotExist as erro:
+    print("Não achei:", erro)
+
+try:
+    Contato.objects.get(favorito=True)
+except Contato.MultipleObjectsReturned as erro:
+    print("Achei demais:", erro)
+
+print(Contato.objects.filter(nome="Zeca").first())
+print(Contato.objects.filter(nome="Zeca").exists())</code></pre>
+    <p class="saida">Não achei: Contato matching query does not exist.<br>
+Achei demais: get() returned more than one Contato -- it returned 4!<br>
+None<br>
+False</p>
+    <p>Use <code>get</code> para buscar por algo único, como o <code>id</code>. Numa view, troque o <code>get</code> por <code>get_object_or_404</code> (de <code>django.shortcuts</code>): se o contato não existir, o visitante recebe a página 404 em vez de um erro 500. A view <code>def detalhe(request, id)</code> ficaria <code>contato = get_object_or_404(Contato, id=id)</code>.</p>
+    <p>A mesma lógica, em Python puro, sobre uma lista de dicionários. É assim que você pode imaginar um <code>filter</code>, um <code>exclude</code> e um <code>get</code>:</p>
+<pre class="codigo" data-executar="sim"><code>contatos = [
+    {"id": 1, "nome": "Ana", "telefone": "81 99999-0000", "favorito": True},
+    {"id": 2, "nome": "Bruno", "telefone": "11 98888-1111", "favorito": False},
+    {"id": 3, "nome": "Carla", "telefone": "81 97777-3333", "favorito": False},
+    {"id": 4, "nome": "Davi", "telefone": "11 96666-4444", "favorito": True},
+]
+
+
+def filtrar(lista, **condicoes):
+    return [c for c in lista if all(c[k] == v for k, v in condicoes.items())]
+
+
+def excluir(lista, **condicoes):
+    return [c for c in lista if not all(c[k] == v for k, v in condicoes.items())]
+
+
+def pegar(lista, **condicoes):
+    achados = filtrar(lista, **condicoes)
+    if len(achados) == 0:
+        raise LookupError("nenhum registro encontrado")
+    if len(achados) &gt; 1:
+        raise LookupError(f"achei {len(achados)} registros")
+    return achados[0]
+
+
+print([c["nome"] for c in filtrar(contatos, favorito=True)])
+print([c["nome"] for c in excluir(contatos, favorito=True)])
+print(pegar(contatos, id=3)["nome"])
+try:
+    pegar(contatos, favorito=True)
+except LookupError as erro:
+    print("Erro:", erro)</code></pre>
+    <p class="saida">['Ana', 'Davi']<br>
+['Bruno', 'Carla']<br>
+Carla<br>
+Erro: achei 2 registros</p>
+
+    <h2>Buscas com dois sublinhados</h2>
+    <p>Para comparar de outros jeitos além de "igual a", o nome do campo ganha um sufixo depois de <strong>dois sublinhados</strong> (<code>__</code>). Os mais usados:</p>
+    <ul>
+      <li><code>nome__icontains="a"</code>: contém "a", sem ligar para maiúsculas (o <code>i</code> vem de *insensitive*);</li>
+      <li><code>nome__startswith="B"</code> e <code>nome__endswith="a"</code>: começa ou termina com;</li>
+      <li><code>id__gte=3</code>, <code>id__gt</code>, <code>id__lte</code>, <code>id__lt</code>: maior ou igual, maior, menor ou igual, menor;</li>
+      <li><code>nome__in=["Ana", "Davi"]</code>: está na lista.</li>
+    </ul>
+    <p>Com os quatro contatos que sobraram (Ana, Beatriz, Carla e Davi):</p>
+<pre class="codigo"><code>from contatos.models import Contato
+
+print(Contato.objects.filter(nome__icontains="a"))
+print(Contato.objects.filter(nome__startswith="B"))
+print(Contato.objects.exclude(email=""))
+print(Contato.objects.filter(nome__in=["Ana", "Davi"]))
+print(Contato.objects.filter(nome__icontains="a").query)</code></pre>
+    <p class="saida">&lt;QuerySet [&lt;Contato: Ana&gt;, &lt;Contato: Beatriz&gt;, &lt;Contato: Carla&gt;, &lt;Contato: Davi&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Beatriz&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Ana&gt;, &lt;Contato: Carla&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Ana&gt;, &lt;Contato: Davi&gt;]&gt;<br>
+SELECT "contatos_contato"."id", "contatos_contato"."nome", (...) FROM "contatos_contato" WHERE "contatos_contato"."nome" LIKE %a% ESCAPE '\' ORDER BY "contatos_contato"."nome" ASC</p>
+    <p>O <code>.query</code> mostra o SQL que o Django montou: o <code>__icontains</code> virou um <code>LIKE</code> (aula 172). Colocar dois filtros no mesmo <code>filter</code>, separados por vírgula, exige os dois ao mesmo tempo: <code>filter(favorito=True, nome__startswith="B")</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> São <strong>dois</strong> sublinhados: <code>nome__icontains</code>. Com um só (<code>nome_icontains</code>), o Django procura um campo com esse nome e dá <code>FieldError: Cannot resolve keyword 'nome_icontains' into field</code>.</div>
+
+    <h2>Q, ordenação e fatias</h2>
+    <p>Vírgulas no <code>filter</code> significam "e". Para "ou" e "não", use o objeto <code>Q</code>: <code>|</code> é <strong>ou</strong>, <code>&amp;</code> é <strong>e</strong>, <code>~</code> é <strong>não</strong>. Para ordenar, <code>order_by("campo")</code> vai do menor para o maior e <code>order_by("-campo")</code>, com o sinal de menos, inverte. E fatias (aula 20) limitam a quantidade — o Django transforma <code>[:2]</code> num <code>LIMIT 2</code> no SQL.</p>
 <pre class="codigo"><code>from django.db.models import Q
 from contatos.models import Contato
 
-com_a = Contato.objects.filter(nome__icontains="a")       # contém "a", sem ligar p/ maiúscula
-de_sp = Contato.objects.filter(telefone__startswith="11")
-sem_email = Contato.objects.exclude(email__contains="@")
-recife_ou_fav = Contato.objects.filter(Q(telefone__startswith="81") | Q(favorito=True))
-por_nome = Contato.objects.order_by("nome")              # A a Z
-recentes = Contato.objects.order_by("-criado_em")[:5]    # 5 mais novos</code></pre>
-    <p><code>Q</code> permite combinar condições com <code>|</code> (ou), <code>&amp;</code> (e) e <code>~</code> (não).</p>
+print(Contato.objects.filter(Q(telefone__startswith="21") | Q(nome="Davi")))
+print(Contato.objects.filter(Q(favorito=True) &amp; ~Q(telefone__startswith="11")))
+print(Contato.objects.order_by("-nome"))
+print(Contato.objects.order_by("-criado_em")[:2])</code></pre>
+    <p class="saida">&lt;QuerySet [&lt;Contato: Beatriz&gt;, &lt;Contato: Davi&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Ana&gt;, &lt;Contato: Beatriz&gt;, &lt;Contato: Carla&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Davi&gt;, &lt;Contato: Carla&gt;, &lt;Contato: Beatriz&gt;, &lt;Contato: Ana&gt;]&gt;<br>
+&lt;QuerySet [&lt;Contato: Beatriz&gt;, &lt;Contato: Davi&gt;]&gt;</p>
+    <p>A última linha traz os dois contatos criados por último (Beatriz foi a quinta, Davi o quarto). Em Python puro, o "ou" é um <code>or</code> dentro da comprehension e o <code>order_by("-nome")</code> é um <code>sorted</code> com <code>reverse=True</code>:</p>
+<pre class="codigo" data-executar="sim"><code>contatos = [
+    {"nome": "Ana", "telefone": "81 90000-2222", "favorito": True, "ordem": 1},
+    {"nome": "Carla", "telefone": "81 97777-3333", "favorito": True, "ordem": 3},
+    {"nome": "Davi", "telefone": "11 96666-4444", "favorito": True, "ordem": 4},
+    {"nome": "Beatriz", "telefone": "21 95555-5555", "favorito": True, "ordem": 5},
+]
+
+ou = [c["nome"] for c in contatos if c["telefone"].startswith("21") or c["nome"] == "Davi"]
+print("Q(...) | Q(...):", sorted(ou))
+
+decrescente = sorted(contatos, key=lambda c: c["nome"], reverse=True)
+print("order_by('-nome'):", [c["nome"] for c in decrescente])
+
+recentes = sorted(contatos, key=lambda c: c["ordem"], reverse=True)[:2]
+print("order_by('-criado_em')[:2]:", sorted(c["nome"] for c in recentes))</code></pre>
+    <p class="saida">Q(...) | Q(...): ['Beatriz', 'Davi']<br>
+order_by('-nome'): ['Davi', 'Carla', 'Beatriz', 'Ana']<br>
+order_by('-criado_em')[:2]: ['Beatriz', 'Davi']</p>
+    <div class="dica"><strong>Dica:</strong> Os filtros podem ser encadeados: <code>Contato.objects.filter(favorito=True).exclude(email="").order_by("nome")</code>. Cada passo devolve um novo QuerySet, e o banco só é consultado uma vez, no fim.</div>
 
     <h2>Paginação</h2>
-    <p>Com mil contatos, ninguém quer ver todos de uma vez. O <code>Paginator</code> divide a lista:</p>
+    <p>Com mil contatos, ninguém quer uma página gigante. O <code>Paginator</code> divide os resultados em páginas e diz qual é a atual, se existe próxima e quantas são no total.</p>
+    <p>Arquivo <code>contatos/views.py</code>:</p>
 <pre class="codigo"><code>from django.core.paginator import Paginator
 from django.shortcuts import render
-from contatos.models import Contato
+
+from .models import Contato
 
 
-def lista(request):
-    paginador = Paginator(Contato.objects.order_by("nome"), 10)
+def lista_paginada(request):
+    paginador = Paginator(Contato.objects.order_by("nome"), 2)
     pagina = paginador.get_page(request.GET.get("page"))
-    return render(request, "contatos/lista.html", {"pagina": pagina})</code></pre>
+    return render(request, "contatos/paginada.html", {"pagina": pagina})</code></pre>
+    <p>Arquivo <code>contatos/templates/contatos/paginada.html</code>:</p>
 <pre class="codigo"><code>{% for contato in pagina %}&lt;p&gt;{{ contato.nome }}&lt;/p&gt;{% endfor %}
+&lt;p&gt;Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}&lt;/p&gt;
+{% if pagina.has_previous %}&lt;a href="?page={{ pagina.previous_page_number }}"&gt;Anterior&lt;/a&gt;{% endif %}
 {% if pagina.has_next %}&lt;a href="?page={{ pagina.next_page_number }}"&gt;Próxima&lt;/a&gt;{% endif %}</code></pre>
-    <div class="dica"><strong>Dica:</strong> <code>get_page</code> é tolerante: se o número da página for inválido ou grande demais, ele devolve a primeira ou a última página em vez de dar erro.</div>
+    <p>Com a rota <code>path("paginada/", views.lista_paginada, name="paginada")</code> e os quatro contatos, abrir <code>/paginada/</code> mostra Ana e Beatriz, "Página 1 de 2" e o link <strong>Próxima</strong>; <code>/paginada/?page=2</code> mostra Carla e Davi, "Página 2 de 2" e o link <strong>Anterior</strong>.</p>
+    <p>Por dentro, uma página é só uma fatia. A página <code>n</code>, com <code>t</code> itens por página, vai do item <code>(n - 1) * t</code> até <code>n * t</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import math
+
+nomes = [f"Aluno {i}" for i in range(1, 24)]
+por_pagina = 10
+total_paginas = math.ceil(len(nomes) / por_pagina)
+print("Páginas:", total_paginas)
+
+
+def pagina(numero):
+    numero = max(1, min(numero, total_paginas))
+    inicio = (numero - 1) * por_pagina
+    return nomes[inicio:inicio + por_pagina]
+
+
+print("Página 3:", pagina(3))
+print("Página 99 vira a última:", pagina(99))
+print("Tem próxima depois da 2?", 2 &lt; total_paginas)</code></pre>
+    <p class="saida">Páginas: 3<br>
+Página 3: ['Aluno 21', 'Aluno 22', 'Aluno 23']<br>
+Página 99 vira a última: ['Aluno 21', 'Aluno 22', 'Aluno 23']<br>
+Tem próxima depois da 2? True</p>
+    <div class="dica"><strong>Dica:</strong> O <code>get_page</code> é tolerante como a função acima: se o número da página for inválido (<code>?page=abc</code>) ou grande demais (<code>?page=50</code>), ele devolve a primeira ou a última página em vez de dar erro. Já o <code>paginador.page(50)</code> levanta <code>EmptyPage</code>.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -82,11 +245,13 @@ def lista(request):
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from contatos.models import Contato
 
-resultado = Contato.objects.filter(favorito=True, nome__startswith="B").order_by("nome")</code></pre>
+resultado = Contato.objects.filter(favorito=True, nome__startswith="B").order_by("nome")
+print(resultado)</code></pre>
+      <p class="saida">&lt;QuerySet [&lt;Contato: Beatriz&gt;]&gt;</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> O <code>Paginator</code> funciona até com listas comuns. Teste: divida 23 nomes em páginas de 10 — quantas páginas existem e quais nomes ficam na última? (rode no <code>python manage.py shell</code>)</p>
+      <p><strong>2.</strong> O <code>Paginator</code> funciona até com listas comuns. No <code>python manage.py shell</code>, divida 23 nomes em páginas de 10: quantas páginas existem e quais nomes ficam na última?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from django.core.paginator import Paginator
 
@@ -96,6 +261,56 @@ print(paginador.num_pages)
 print(paginador.page(3).object_list)</code></pre>
       <p class="saida">3<br>
 ['Aluno 21', 'Aluno 22', 'Aluno 23']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Usando a lista de dicionários abaixo, faça em Python puro o equivalente a <code>Livro.objects.filter(paginas__gte=200).exclude(lido=True).order_by("titulo")</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>livros = [
+    {"titulo": "Dom Casmurro", "paginas": 256, "lido": True},
+    {"titulo": "O Cortiço", "paginas": 304, "lido": False},
+    {"titulo": "A Hora da Estrela", "paginas": 88, "lido": False},
+    {"titulo": "Capitães da Areia", "paginas": 280, "lido": False},
+]
+
+resultado = sorted(
+    (l for l in livros if l["paginas"] &gt;= 200 and not l["lido"]),
+    key=lambda l: l["titulo"],
+)
+print([l["titulo"] for l in resultado])</code></pre>
+      <p class="saida">['Capitães da Areia', 'O Cortiço']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva a consulta dos contatos que <strong>não</strong> são favoritos <strong>ou</strong> que não têm e-mail, do mais novo para o mais antigo, só os 3 primeiros.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django.db.models import Q
+from contatos.models import Contato
+
+resultado = Contato.objects.filter(Q(favorito=False) | Q(email="")).order_by("-criado_em")[:3]</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> O código <code>contato = Contato.objects.get(nome__startswith="A")</code> funciona hoje, mas quebrou quando a Alice foi cadastrada. Por quê? Como buscar "o primeiro contato que começa com A" sem esse risco?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Com Ana e Alice, a busca acha DOIS registros e o get() levanta<br>
+MultipleObjectsReturned (e, se não houver nenhum, DoesNotExist).<br>
+Sem risco: Contato.objects.filter(nome__startswith="A").order_by("nome").first()<br>
+-&gt; devolve o primeiro da lista, ou None se a lista estiver vazia.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Monte em Python puro uma paginação de 7 cores em páginas de 3 e mostre cada página com o seu número.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>cores = ["azul", "verde", "amarelo", "vermelho", "roxo", "preto", "branco"]
+por_pagina = 3
+
+for inicio in range(0, len(cores), por_pagina):
+    numero = inicio // por_pagina + 1
+    print(f"Página {numero}:", cores[inicio:inicio + por_pagina])</code></pre>
+      <p class="saida">Página 1: ['azul', 'verde', 'amarelo']<br>
+Página 2: ['vermelho', 'roxo', 'preto']<br>
+Página 3: ['branco']</p>
       </details>
     </div>
 

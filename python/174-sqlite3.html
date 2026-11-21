@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 174 · sqlite3: conectar, criar tabela, CRUD — Curso de Python · DIGITAR</title>
-<meta name="description" content="Use o módulo sqlite3 do Python para montar um pequeno sistema completo: conectar, criar a tabela e fazer o CRUD com funções.">
+<meta name="description" content="Use o módulo sqlite3 do Python para montar um pequeno sistema completo: conectar, criar a tabela, fazer o CRUD com funções, usar transações e gravar o banco num arquivo.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -21,14 +21,27 @@
       <h2>Nesta aula você vai aprender</h2>
       <ul>
         <li>Conectar a um banco SQLite em memória ou em arquivo</li>
-        <li>Usar cursor, fetchone, fetchall e lastrowid</li>
-        <li>Organizar o CRUD em funções reutilizáveis</li>
-        <li>Ler as linhas como dicionários com row_factory</li>
+        <li>Entender a diferença entre conexão e cursor e usar <code>fetchone</code>, <code>fetchall</code> e <code>lastrowid</code></li>
+        <li>Gravar com <code>commit</code>, desfazer com <code>rollback</code> e usar <code>with con:</code> como transação</li>
+        <li>Ler as linhas pelo nome da coluna com <code>sqlite3.Row</code></li>
+        <li>Organizar o CRUD de um pequeno sistema em funções reutilizáveis</li>
       </ul>
     </div>
 
+    <h2>O módulo sqlite3</h2>
+    <p>Nas aulas 170 a 173 você aprendeu a linguagem SQL. Agora o foco é o lado do <strong>Python</strong>: como o seu programa conversa com o banco, guarda o que foi feito e trata os erros.</p>
+    <p>O módulo <code>sqlite3</code> já vem com o Python, sem instalar nada. Ele segue uma regra comum a quase todas as bibliotecas de banco do Python, chamada <strong>DB-API</strong>. Por isso, o que você aprender aqui (<code>connect</code>, <code>cursor</code>, <code>execute</code>, <code>fetchall</code>, <code>commit</code>) vale também para o MySQL da aula 176 e para o PostgreSQL.</p>
+    <p>O roteiro de qualquer programa com banco é sempre o mesmo:</p>
+    <ul>
+      <li>abrir a conexão com <code>sqlite3.connect(...)</code>;</li>
+      <li>mandar comandos com <code>execute</code>;</li>
+      <li>buscar os resultados com <code>fetchone</code> ou <code>fetchall</code>;</li>
+      <li>gravar as mudanças com <code>commit</code>;</li>
+      <li>fechar a conexão com <code>close</code>.</li>
+    </ul>
+
     <h2>Conexão e cursor</h2>
-    <p>A conexão (<code>connect</code>) representa o banco. O <strong>cursor</strong> é quem executa os comandos e percorre os resultados. O <code>con.execute</code> que usamos até aqui é um atalho que cria um cursor para você.</p>
+    <p>A <strong>conexão</strong> representa o banco aberto. O <strong>cursor</strong> é quem executa os comandos e anda pelas linhas do resultado, uma de cada vez, como o dedo que acompanha a leitura de uma lista.</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -36,60 +49,88 @@ cur = con.cursor()
 cur.execute("CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT, autor TEXT)")
 cur.execute("INSERT INTO livros (titulo, autor) VALUES (?, ?)", ("Dom Casmurro", "Machado de Assis"))
 print("id do novo livro:", cur.lastrowid)
+cur.execute("INSERT INTO livros (titulo, autor) VALUES (?, ?)", ("Iracema", "José de Alencar"))
+print("id do novo livro:", cur.lastrowid)
+
 cur.execute("SELECT titulo, autor FROM livros")
+print(cur.fetchone())
 print(cur.fetchone())
 print(cur.fetchone())
 con.close()</code></pre>
     <p class="saida">id do novo livro: 1<br>
+id do novo livro: 2<br>
 ('Dom Casmurro', 'Machado de Assis')<br>
+('Iracema', 'José de Alencar')<br>
 None</p>
-    <p><code>lastrowid</code> diz o <code>id</code> gerado no último <code>INSERT</code>. Quando não há mais linhas, <code>fetchone()</code> devolve <code>None</code>.</p>
+    <ul>
+      <li><code>lastrowid</code> diz o <code>id</code> que o banco gerou no último <code>INSERT</code>. É útil para ligar esse registro a outro logo em seguida.</li>
+      <li><code>fetchone()</code> pega a próxima linha; quando acabam as linhas, devolve <code>None</code>.</li>
+      <li>O <code>?</code> dentro do comando é um <strong>placeholder</strong>: o valor vai separado, numa tupla. A aula 175 explica por que isso é tão importante.</li>
+    </ul>
+    <p>O <code>con.execute(...)</code> que usamos nas aulas anteriores é um atalho: ele cria um cursor, executa e devolve esse cursor. Para programas pequenos, o atalho basta.</p>
 
-    <h2>CRUD em funções</h2>
+    <h2>fetchone, fetchall ou um for</h2>
+    <p>Existem três jeitos de ler o resultado de um <code>SELECT</code>. Escolha conforme a quantidade de linhas que você espera:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE notas (aluno TEXT, nota REAL)")
+con.executemany("INSERT INTO notas VALUES (?, ?)",
+                [("Ana", 9.0), ("Bruno", 6.5), ("Carla", 8.0)])
 
-def criar_banco():
-    con = sqlite3.connect(":memory:")
-    con.execute("CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT, autor TEXT)")
-    return con
+# uma linha só (ex.: uma contagem)
+total = con.execute("SELECT COUNT(*) FROM notas").fetchone()[0]
+print("Alunos:", total)
 
+# todas as linhas numa lista
+lista = con.execute("SELECT aluno FROM notas ORDER BY aluno").fetchall()
+print("Lista:", lista)
 
-def adicionar(con, titulo, autor):
-    with con:
-        cur = con.execute("INSERT INTO livros (titulo, autor) VALUES (?, ?)", (titulo, autor))
-    return cur.lastrowid
-
-
-def listar(con):
-    return con.execute("SELECT id, titulo, autor FROM livros ORDER BY titulo").fetchall()
-
-
-def trocar_autor(con, id_livro, autor):
-    with con:
-        con.execute("UPDATE livros SET autor = ? WHERE id = ?", (autor, id_livro))
-
-
-def remover(con, id_livro):
-    with con:
-        con.execute("DELETE FROM livros WHERE id = ?", (id_livro,))
-
-
-con = criar_banco()
-adicionar(con, "O Cortiço", "Aluísio Azevedo")
-n = adicionar(con, "Vidas Secas", "Graciliano")
-adicionar(con, "Iracema", "José de Alencar")
-trocar_autor(con, n, "Graciliano Ramos")
-remover(con, 1)
-for livro in listar(con):
-    print(livro)
+# uma por vez, sem carregar tudo na memória
+for aluno, nota in con.execute("SELECT aluno, nota FROM notas WHERE nota &gt;= 7"):
+    print(aluno, "passou com", nota)
 con.close()</code></pre>
-    <p class="saida">(3, 'Iracema', 'José de Alencar')<br>
-(2, 'Vidas Secas', 'Graciliano Ramos')</p>
-    <div class="atencao"><strong>Atenção:</strong> Uma tupla de um item só precisa de vírgula: <code>(id_livro,)</code>. Sem a vírgula, <code>(id_livro)</code> é só um número entre parênteses e o <code>sqlite3</code> reclama.</div>
+    <p class="saida">Alunos: 3<br>
+Lista: [('Ana',), ('Bruno',), ('Carla',)]<br>
+Ana passou com 9.0<br>
+Carla passou com 8.0</p>
+    <p>Cada linha volta como uma <strong>tupla</strong>. Mesmo quando você pede uma coluna só, ela vem como <code>('Ana',)</code>, por isso usamos <code>[0]</code> para pegar o valor.</p>
+    <div class="dica"><strong>Dica:</strong> Para resultados enormes (milhares de linhas), prefira o <code>for</code> direto no cursor: ele lê uma linha por vez e não enche a memória.</div>
 
-    <h2>Linhas como dicionários</h2>
-    <p>Com <code>row_factory = sqlite3.Row</code>, cada linha pode ser lida pelo nome da coluna:</p>
+    <h2>commit, rollback e transações</h2>
+    <p>Quando você faz <code>INSERT</code>, <code>UPDATE</code> ou <code>DELETE</code>, a mudança ainda não está garantida no banco. Ela só fica gravada de verdade depois do <code>commit()</code>. Se algo der errado no meio do caminho, o <code>rollback()</code> desfaz tudo o que ainda não foi gravado.</p>
+    <p>Esse conjunto de mudanças que vale "tudo ou nada" se chama <strong>transação</strong>. Pense numa transferência de dinheiro: tirar de uma conta e pôr na outra precisam acontecer juntas, ou nenhuma das duas.</p>
+    <p>O jeito mais fácil é usar <code>with con:</code>. Se o bloco termina bem, o Python faz o <code>commit</code>; se acontece um erro, ele faz o <code>rollback</code> sozinho:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE contas (dono TEXT PRIMARY KEY, saldo REAL CHECK (saldo &gt;= 0))")
+with con:
+    con.executemany("INSERT INTO contas VALUES (?, ?)", [("Ana", 100.0), ("Beto", 20.0)])
+
+
+def transferir(con, de, para, valor):
+    try:
+        with con:
+            con.execute("UPDATE contas SET saldo = saldo + ? WHERE dono = ?", (valor, para))
+            con.execute("UPDATE contas SET saldo = saldo - ? WHERE dono = ?", (valor, de))
+        print(f"Transferiu {valor:.2f} de {de} para {para}")
+    except sqlite3.IntegrityError:
+        print(f"Saldo insuficiente: transferência de {valor:.2f} cancelada")
+
+
+transferir(con, "Ana", "Beto", 30)
+transferir(con, "Beto", "Ana", 500)
+print(con.execute("SELECT * FROM contas").fetchall())
+con.close()</code></pre>
+    <p class="saida">Transferiu 30.00 de Ana para Beto<br>
+Saldo insuficiente: transferência de 500.00 cancelada<br>
+[('Ana', 70.0), ('Beto', 50.0)]</p>
+    <p>Na segunda transferência, a Ana chegou a ganhar 500 dentro da transação, mas em seguida a regra <code>CHECK (saldo &gt;= 0)</code> barrou o saldo negativo do Beto. Como deu erro, o <code>with con:</code> desfez <strong>as duas</strong> mudanças. Ninguém ficou com dinheiro a mais.</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>with con:</code> <strong>não fecha</strong> a conexão: ele só faz <code>commit</code> ou <code>rollback</code>. Ainda é preciso chamar <code>con.close()</code> no fim do programa.</div>
+
+    <h2>Linhas como dicionários com sqlite3.Row</h2>
+    <p>Tuplas obrigam você a lembrar a ordem das colunas: <code>linha[2]</code> era o quê mesmo? Com <code>row_factory = sqlite3.Row</code>, cada linha pode ser lida pelo <strong>nome</strong> da coluna:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -99,10 +140,103 @@ con.executemany("INSERT INTO times VALUES (?, ?, ?)",
                 [("Bahia", "BA", 2), ("Fortaleza", "CE", 0)])
 for t in con.execute("SELECT * FROM times"):
     print(t["nome"], "-", t["estado"], "-", t["titulos"], "título(s) brasileiro(s)")
+
+primeiro = con.execute("SELECT * FROM times").fetchone()
+print(primeiro.keys())
+print(dict(primeiro))
 con.close()</code></pre>
     <p class="saida">Bahia - BA - 2 título(s) brasileiro(s)<br>
-Fortaleza - CE - 0 título(s) brasileiro(s)</p>
-    <div class="dica"><strong>Dica:</strong> Quando você roda este código no seu computador com <code>sqlite3.connect("biblioteca.db")</code>, o arquivo <code>biblioteca.db</code> aparece na pasta. Programas como o DB Browser for SQLite abrem esse arquivo para você ver as tabelas.</div>
+Fortaleza - CE - 0 título(s) brasileiro(s)<br>
+['nome', 'estado', 'titulos']<br>
+{'nome': 'Bahia', 'estado': 'BA', 'titulos': 2}</p>
+    <p>Um <code>sqlite3.Row</code> também aceita índice (<code>t[0]</code>) e vira dicionário com <code>dict(t)</code>, o que ajuda a mandar os dados para um JSON (aula 62).</p>
+
+    <h2>Um pequeno sistema: CRUD em funções</h2>
+    <p>Num programa de verdade, você não espalha SQL pelo código todo. Cada operação vira uma função com um nome claro. Quem usa a função nem precisa saber SQL:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+
+def criar_banco(caminho=":memory:"):
+    con = sqlite3.connect(caminho)
+    con.row_factory = sqlite3.Row
+    con.execute("""CREATE TABLE IF NOT EXISTS livros (
+        id INTEGER PRIMARY KEY,
+        titulo TEXT NOT NULL,
+        autor TEXT NOT NULL
+    )""")
+    return con
+
+
+def adicionar(con, titulo, autor):
+    with con:
+        cur = con.execute("INSERT INTO livros (titulo, autor) VALUES (?, ?)", (titulo, autor))
+    return cur.lastrowid
+
+
+def buscar(con, id_livro):
+    return con.execute("SELECT * FROM livros WHERE id = ?", (id_livro,)).fetchone()
+
+
+def listar(con):
+    return con.execute("SELECT * FROM livros ORDER BY titulo").fetchall()
+
+
+def trocar_autor(con, id_livro, autor):
+    with con:
+        cur = con.execute("UPDATE livros SET autor = ? WHERE id = ?", (autor, id_livro))
+    return cur.rowcount == 1
+
+
+def remover(con, id_livro):
+    with con:
+        cur = con.execute("DELETE FROM livros WHERE id = ?", (id_livro,))
+    return cur.rowcount == 1
+
+
+con = criar_banco()
+adicionar(con, "O Cortiço", "Aluísio Azevedo")
+n = adicionar(con, "Vidas Secas", "Graciliano")
+adicionar(con, "Iracema", "José de Alencar")
+print("Trocou?", trocar_autor(con, n, "Graciliano Ramos"))
+print("Removeu o 1?", remover(con, 1))
+print("Removeu o 99?", remover(con, 99))
+print("Livro 2:", dict(buscar(con, 2)))
+for livro in listar(con):
+    print(livro["id"], livro["titulo"], "-", livro["autor"])
+con.close()</code></pre>
+    <p class="saida">Trocou? True<br>
+Removeu o 1? True<br>
+Removeu o 99? False<br>
+Livro 2: {'id': 2, 'titulo': 'Vidas Secas', 'autor': 'Graciliano Ramos'}<br>
+3 Iracema - José de Alencar<br>
+2 Vidas Secas - Graciliano Ramos</p>
+    <ul>
+      <li><code>CREATE TABLE IF NOT EXISTS</code> não dá erro se a tabela já existir: perfeito para um banco em arquivo que é aberto todo dia.</li>
+      <li><code>rowcount</code> diz quantas linhas o <code>UPDATE</code> ou o <code>DELETE</code> mudou. Se for <code>0</code>, o <code>id</code> não existia.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Uma tupla de um item só precisa de vírgula: <code>(id_livro,)</code>. Sem a vírgula, <code>(id_livro)</code> é só um número entre parênteses e o <code>sqlite3</code> reclama com <code>ProgrammingError</code> ou <code>ValueError</code>.</div>
+
+    <h2>Banco em arquivo</h2>
+    <p>Com <code>":memory:"</code> o banco some quando o programa termina. Para guardar os dados entre uma execução e outra, passe o nome de um arquivo. Salve como <code>biblioteca.py</code> e rode duas vezes com <code>python biblioteca.py</code>:</p>
+<pre class="codigo"><code>import sqlite3
+from pathlib import Path
+
+caminho = Path("biblioteca.db")
+existia = caminho.exists()
+
+con = sqlite3.connect(caminho)
+con.execute("CREATE TABLE IF NOT EXISTS visitas (id INTEGER PRIMARY KEY, quando TEXT)")
+with con:
+    con.execute("INSERT INTO visitas (quando) VALUES (datetime('now'))")
+total = con.execute("SELECT COUNT(*) FROM visitas").fetchone()[0]
+con.close()
+
+print("O arquivo já existia?", existia)
+print("Este programa já rodou", total, "vez(es)")</code></pre>
+    <p class="saida">O arquivo já existia? False<br>
+Este programa já rodou 1 vez(es)</p>
+    <p>Na segunda vez, aparece <code>O arquivo já existia? True</code> e <code>2 vez(es)</code>: os dados ficaram guardados em <code>biblioteca.db</code>, na mesma pasta do programa.</p>
+    <div class="dica"><strong>Dica:</strong> Programas como o <strong>DB Browser for SQLite</strong> (gratuito) abrem o arquivo <code>.db</code> para você ver as tabelas e os dados, como se fosse uma planilha.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -131,6 +265,7 @@ con.executemany("INSERT INTO livros (titulo, autor) VALUES (?, ?)", [
 print(buscar_por_autor(con, "Machado"))
 con.close()</code></pre>
       <p class="saida">['Dom Casmurro', 'Memórias Póstumas de Brás Cubas']</p>
+      <p>Os <code>%</code> vão no <strong>valor</strong>, não no comando: o placeholder continua sendo só <code>?</code>.</p>
       </details>
     </div>
     <div class="exercicio">
@@ -149,6 +284,63 @@ con.executemany("INSERT INTO livros (titulo) VALUES (?)", [("A",), ("B",), ("C",
 print(contar_livros(con))
 con.close()</code></pre>
       <p class="saida">3</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie uma tabela <code>tarefas (id, texto, feita)</code> e escreva a função <code>adicionar_tarefa(con, texto)</code> que devolve o <code>id</code> gerado. Adicione duas tarefas e mostre os dois ids.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+
+def adicionar_tarefa(con, texto):
+    with con:
+        cur = con.execute("INSERT INTO tarefas (texto, feita) VALUES (?, 0)", (texto,))
+    return cur.lastrowid
+
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE tarefas (id INTEGER PRIMARY KEY, texto TEXT, feita INTEGER)")
+print(adicionar_tarefa(con, "Estudar SQL"))
+print(adicionar_tarefa(con, "Treinar digitação"))
+con.close()</code></pre>
+      <p class="saida">1<br>
+2</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Usando <code>sqlite3.Row</code>, mostre cada produto da tabela abaixo no formato <code>Caderno: R$ 12.50</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.row_factory = sqlite3.Row
+con.execute("CREATE TABLE produtos (nome TEXT, preco REAL)")
+con.executemany("INSERT INTO produtos VALUES (?, ?)", [("Caderno", 12.5), ("Lápis", 1.8)])
+for p in con.execute("SELECT * FROM produtos"):
+    print(f"{p['nome']}: R$ {p['preco']:.2f}")
+con.close()</code></pre>
+      <p class="saida">Caderno: R$ 12.50<br>
+Lápis: R$ 1.80</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Mostre que o <code>with con:</code> desfaz tudo quando dá erro: dentro dele, insira o aluno <code>Ana</code> e depois force um erro com <code>raise ValueError("ops")</code>. Capture o erro e mostre quantos alunos ficaram na tabela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (nome TEXT)")
+try:
+    with con:
+        con.execute("INSERT INTO alunos VALUES (?)", ("Ana",))
+        raise ValueError("ops")
+except ValueError as erro:
+    print("Deu erro:", erro)
+print("Alunos na tabela:", con.execute("SELECT COUNT(*) FROM alunos").fetchone()[0])
+con.close()</code></pre>
+      <p class="saida">Deu erro: ops<br>
+Alunos na tabela: 0</p>
+      <p>Como o bloco terminou com erro, o <code>with con:</code> fez <code>rollback</code> e o <code>INSERT</code> da Ana foi desfeito.</p>
       </details>
     </div>
 

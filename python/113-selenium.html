@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 113 · Automatizando o navegador com Selenium — Curso de Python · DIGITAR</title>
-<meta name="description" content="Controle um navegador de verdade com Selenium para abrir páginas, preencher campos e clicar em botões automaticamente.">
+<meta name="description" content="Controle um navegador de verdade com Selenium para abrir páginas, encontrar elementos, preencher campos, clicar em botões e esperar a página carregar, inclusive sem abrir janela.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -21,19 +21,137 @@
       <h2>Nesta aula você vai aprender</h2>
       <ul>
         <li>Para que serve o Selenium e quando ele é melhor que <code>requests</code></li>
-        <li>Abrir uma página e encontrar elementos</li>
-        <li>Digitar, clicar e esperar a página carregar</li>
+        <li>Instalar o Selenium e abrir o navegador pelo Python</li>
+        <li>Encontrar elementos com <code>find_element</code>, <code>find_elements</code> e <code>By</code></li>
+        <li>Digitar com <code>send_keys</code>, clicar com <code>click</code> e ler textos e atributos</li>
+        <li>Esperar a página com <code>WebDriverWait</code> em vez de <code>time.sleep</code></li>
+        <li>Rodar sem janela (modo headless) e tirar print da tela</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Um robô que usa o navegador</h2>
-    <p>O <code>requests</code> (aula 111) só baixa o HTML. Muitos sites montam a página com JavaScript, e aí o conteúdo só aparece num navegador de verdade. O <strong>Selenium</strong> abre o Chrome ou o Firefox e controla tudo pelo Python: digita, clica, rola a página. Também é muito usado para <strong>testar</strong> sites automaticamente.</p>
-<pre class="codigo"><code>pip install selenium</code></pre>
-    <p>As versões novas do Selenium baixam sozinhas o "driver" do navegador. Você só precisa ter o Chrome (ou Firefox) instalado.</p>
+    <p>O <code>requests</code> (aula 111) só baixa o HTML que o servidor mandou. Muitos sites montam a página depois, com JavaScript, e aí o conteúdo só aparece num navegador de verdade. O <strong>Selenium</strong> abre o Chrome, o Edge ou o Firefox e controla tudo pelo Python: digita, clica, rola a página, lê o que apareceu.</p>
+    <p>Ele é muito usado para <strong>testar</strong> sites automaticamente: em vez de uma pessoa clicar em tudo antes de cada versão nova, um robô faz isso em segundos. Também serve para automatizar tarefas repetitivas suas.</p>
+    <p>Como abre um navegador inteiro, o Selenium é bem mais lento que o <code>requests</code>. Regra prática: se o dado aparece no HTML baixado com <code>requests</code>, use <code>requests</code>; se só aparece depois que o JavaScript roda, use Selenium.</p>
 
-    <h2>Primeiro robô</h2>
-    <p>Este exemplo abre o site de documentação do Python, pesquisa uma palavra e mostra o título da página de resultados:</p>
+    <h2>Instalando</h2>
+    <p>Instale no seu ambiente virtual e tenha o Chrome (ou Edge, ou Firefox) instalado no computador:</p>
+<pre class="codigo"><code># Windows
+py -m pip install selenium
+
+# Linux e macOS
+python3 -m pip install selenium</code></pre>
+    <p>O navegador é controlado por um programa auxiliar chamado <strong>driver</strong>. As versões novas do Selenium (4.6 em diante) baixam o driver certo sozinhas na primeira vez que você roda, por isso a primeira execução demora um pouco mais e precisa de internet.</p>
+
+    <h2>Abrindo uma página</h2>
+    <p>Salve como <code>primeiro_robo.py</code> e rode no computador. Uma janela do Chrome vai abrir sozinha, carregar o site e fechar:</p>
+<pre class="codigo"><code>from selenium import webdriver
+
+navegador = webdriver.Chrome()      # ou webdriver.Edge(), webdriver.Firefox()
+try:
+    navegador.get("https://www.python.org")
+    print("Título:", navegador.title)
+    print("Endereço:", navegador.current_url)
+finally:
+    navegador.quit()</code></pre>
+    <p class="saida">Título: Welcome to Python.org<br>
+Endereço: https://www.python.org/</p>
+    <div class="dica"><strong>Dica:</strong> O <code>try/finally</code> garante que o navegador fecha mesmo se der erro no meio (aula 53). Sem ele, janelas e processos do Chrome vão se acumulando no seu computador.</div>
+
+    <h2>Encontrando elementos</h2>
+    <p>Para mexer num campo ou botão, primeiro você precisa achá-lo. O <code>find_element</code> recebe <strong>como</strong> procurar (<code>By</code>) e <strong>o quê</strong>:</p>
+    <ul>
+      <li><code>By.ID</code> pelo atributo <code>id</code> (o jeito mais confiável, porque é único);</li>
+      <li><code>By.NAME</code> pelo atributo <code>name</code> dos campos de formulário;</li>
+      <li><code>By.CLASS_NAME</code> por uma classe;</li>
+      <li><code>By.CSS_SELECTOR</code> por um seletor CSS, como <code>"li.prato span"</code> (aula 242);</li>
+      <li><code>By.TAG_NAME</code> pelo nome da tag, como <code>"h1"</code>.</li>
+    </ul>
+    <p><code>find_element</code> devolve o primeiro que achar (e dá erro <code>NoSuchElementException</code> se não achar nenhum); <code>find_elements</code>, no plural, devolve uma lista, que pode vir vazia.</p>
+    <p>A ideia por trás é a mesma da raspagem (aula 112): percorrer a árvore do HTML e parar no elemento com o <code>id</code> ou a classe pedida. Este exemplo, que roda aqui no navegador, imita um <code>find_element</code> simples com o <code>html.parser</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from html.parser import HTMLParser
+
+pagina = """
+&lt;form&gt;
+  &lt;input id="nome" name="nome" class="campo"&gt;
+  &lt;input id="email" name="email" class="campo"&gt;
+  &lt;button id="enviar" class="botao principal"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;
+"""
+
+
+class Procurador(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.elementos = []
+
+    def handle_starttag(self, tag, attrs):
+        self.elementos.append((tag, dict(attrs)))
+
+
+def procurar(por, valor):
+    p = Procurador()
+    p.feed(pagina)
+    achados = []
+    for tag, atributos in p.elementos:
+        if por == "id" and atributos.get("id") == valor:
+            achados.append(tag)
+        elif por == "classe" and valor in atributos.get("class", "").split():
+            achados.append(atributos.get("id"))
+    return achados
+
+
+print("id 'email':", procurar("id", "email"))
+print("classe 'campo':", procurar("classe", "campo"))
+print("classe 'principal':", procurar("classe", "principal"))
+print("id 'senha':", procurar("id", "senha"))</code></pre>
+    <p class="saida">id 'email': ['input']<br>
+classe 'campo': ['nome', 'email']<br>
+classe 'principal': ['enviar']<br>
+id 'senha': []</p>
+    <p>Repare que um elemento pode ter várias classes separadas por espaço (<code>"botao principal"</code>), e que procurar algo que não existe devolve uma lista vazia — igualzinho ao <code>find_elements</code>.</p>
+
+    <h2>Digitando e clicando</h2>
+    <p>Para treinar sem depender de nenhum site, o robô abaixo cria uma página de cadastro no seu computador e abre o arquivo no navegador. A página tem um campo, um botão e um parágrafo que o JavaScript preenche quando você clica:</p>
+<pre class="codigo"><code>from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+Path("cadastro.html").write_text("""&lt;!doctype html&gt;
+&lt;html&gt;&lt;body&gt;
+  &lt;h1&gt;Cadastro&lt;/h1&gt;
+  &lt;input id="nome"&gt;
+  &lt;button id="enviar"
+    onclick="document.getElementById('msg').textContent =
+             'Olá, ' + document.getElementById('nome').value + '!'"&gt;Enviar&lt;/button&gt;
+  &lt;p id="msg"&gt;&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;""", encoding="utf-8")
+
+navegador = webdriver.Chrome()
+try:
+    navegador.get(Path("cadastro.html").resolve().as_uri())
+    campo = navegador.find_element(By.ID, "nome")
+    campo.send_keys("Joana")
+    navegador.find_element(By.ID, "enviar").click()
+
+    print(navegador.find_element(By.TAG_NAME, "h1").text)
+    print(navegador.find_element(By.ID, "msg").text)
+    print("Valor do campo:", campo.get_attribute("value"))
+finally:
+    navegador.quit()</code></pre>
+    <p class="saida">Cadastro<br>
+Olá, Joana!<br>
+Valor do campo: Joana</p>
+    <ul>
+      <li><code>send_keys("texto")</code> digita no campo, tecla por tecla (que nem você no DIGITAR!); <code>clear()</code> apaga o que já estava escrito;</li>
+      <li><code>click()</code> clica no elemento;</li>
+      <li><code>.text</code> é o texto visível do elemento e <code>get_attribute("value")</code> lê um atributo;</li>
+      <li><code>Path(...).resolve().as_uri()</code> transforma o caminho do arquivo num endereço <code>file:///...</code>, que o navegador sabe abrir.</li>
+    </ul>
+
+    <h2>Esperando a página carregar</h2>
+    <p>O robô é muito mais rápido que a página. Se ele procurar um elemento antes de a página terminar de carregar, recebe <code>NoSuchElementException</code>. A solução é <strong>esperar</strong> — mas do jeito certo. O <code>WebDriverWait</code> fica conferindo uma condição até ela acontecer, com um tempo máximo:</p>
 <pre class="codigo"><code>from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -47,17 +165,45 @@ try:
     busca.send_keys("pathlib")
     busca.send_keys(Keys.ENTER)
 
-    WebDriverWait(navegador, 10).until(EC.title_contains("Buscar"))
+    espera = WebDriverWait(navegador, 10)
+    espera.until(EC.title_contains("Busca"))
+    resultados = espera.until(
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "ul.search li a"))
+    )
     print("Título:", navegador.title)
+    print("Primeiro resultado:", resultados[0].text)
 finally:
     navegador.quit()</code></pre>
+    <p class="saida">Título: Busca — documentação Python 3 (o número da versão aparece no título)<br>
+Primeiro resultado: pathlib — Caminhos de sistema de arquivos orientados a objetos</p>
     <ul>
-      <li><code>find_element(By.NAME, "q")</code> acha o campo pelo atributo <code>name</code>; também existem <code>By.ID</code>, <code>By.CSS_SELECTOR</code> e outros;</li>
-      <li><code>send_keys</code> digita (que nem você no DIGITAR!) e <code>click()</code> clica;</li>
-      <li><code>WebDriverWait</code> espera até uma condição acontecer, em vez de chutar um tempo.</li>
+      <li><code>Keys.ENTER</code> aperta a tecla Enter; há também <code>Keys.TAB</code>, <code>Keys.ESCAPE</code> e outras;</li>
+      <li><code>EC.title_contains</code>, <code>EC.presence_of_element_located</code> e <code>EC.element_to_be_clickable</code> são condições prontas; repare que o localizador vai como uma tupla <code>(By..., "...")</code>, com parênteses extras;</li>
+      <li>se a condição não acontecer em 10 segundos, aparece <code>TimeoutException</code>, que você pode tratar com <code>try/except</code>.</li>
     </ul>
-    <div class="atencao"><strong>Atenção:</strong> Não use robôs para fazer login em contas, comprar, votar em enquetes ou burlar CAPTCHAs. Além de ir contra as regras da maioria dos sites, pode bloquear a sua conta. Use o Selenium para tarefas suas e para testar os seus próprios sites.</div>
-    <div class="dica"><strong>Dica:</strong> O <code>try/finally</code> garante que o navegador fecha mesmo se der erro no meio (aula 53). Sem ele, janelas de Chrome vão se acumulando.</div>
+    <div class="atencao"><strong>Atenção:</strong> Não use <code>time.sleep(5)</code> para esperar a página. Às vezes 5 segundos é pouco (a internet está lenta e o programa quebra) e às vezes é demais (o robô fica parado à toa). O <code>WebDriverWait</code> espera só o necessário. Os textos de sites reais também mudam: se a documentação mudar o título, ajuste a condição.</div>
+
+    <h2>Sem janela: o modo headless</h2>
+    <p>Para tarefas que rodam sozinhas (num servidor, num agendamento), não é preciso ver a janela. O modo <strong>headless</strong> ("sem cabeça") roda o navegador escondido. Dá até para tirar um print da página:</p>
+<pre class="codigo"><code>from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+opcoes = webdriver.ChromeOptions()
+opcoes.add_argument("--headless=new")
+opcoes.add_argument("--window-size=1280,800")
+
+navegador = webdriver.Chrome(options=opcoes)
+try:
+    navegador.get("https://www.python.org")
+    links = navegador.find_elements(By.CSS_SELECTOR, "#top ul.menu li a")
+    print(len(links), "links no menu do topo")
+    navegador.save_screenshot("python_org.png")
+    print("Print salvo em python_org.png")
+finally:
+    navegador.quit()</code></pre>
+    <p class="saida">6 links no menu do topo (o número muda se o site mudar o menu)<br>
+Print salvo em python_org.png</p>
+    <div class="atencao"><strong>Atenção:</strong> Não use robôs para fazer login em contas, comprar, votar em enquetes, mandar mensagens em massa ou burlar CAPTCHAs. Além de ir contra as regras da maioria dos sites, pode bloquear a sua conta. Use o Selenium para tarefas suas e para testar os seus próprios sites.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -66,7 +212,7 @@ finally:
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva um robô que abre <code>https://www.python.org</code>, mostra o título da página e fecha o navegador.</p>
+      <p><strong>1.</strong> Escreva um robô que abre <code>https://www.python.org</code>, mostra o título da página e fecha o navegador mesmo se der erro.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from selenium import webdriver
 
@@ -76,14 +222,90 @@ try:
     print(navegador.title)
 finally:
     navegador.quit()</code></pre>
+      <p>A saída é <code>Welcome to Python.org</code>. O <code>finally</code> garante o <code>quit()</code>.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Por que <code>WebDriverWait</code> é melhor do que <code>time.sleep(5)</code> para esperar a página?</p>
+      <p><strong>2.</strong> Qual <code>By</code> você usaria para achar cada um destes elementos? <code>&lt;input id="email"&gt;</code>, <code>&lt;input name="q"&gt;</code>, <code>&lt;button class="botao enviar"&gt;</code> e todos os <code>&lt;li&gt;</code> dentro de <code>&lt;ul id="menu"&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">&lt;input id="email"&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; find_element(By.ID, "email")<br>
+&lt;input name="q"&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; find_element(By.NAME, "q")<br>
+&lt;button class="botao enviar"&gt; -&gt; find_element(By.CLASS_NAME, "enviar")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ou By.CSS_SELECTOR, "button.enviar")<br>
+todos os &lt;li&gt; do menu &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; find_elements(By.CSS_SELECTOR, "#menu li")</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que <code>WebDriverWait</code> é melhor do que <code>time.sleep(5)</code> para esperar a página?</p>
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">time.sleep(5) espera sempre 5 segundos: às vezes é pouco (a página ainda não<br>
-carregou) e às vezes é demais (perde tempo). O WebDriverWait espera só até a<br>
-condição acontecer, com um limite máximo.</p>
+carregou e o programa quebra) e às vezes é demais (perde tempo). O WebDriverWait<br>
+espera só até a condição acontecer, com um limite máximo, e avisa com<br>
+TimeoutException se passar do limite.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Usando a ideia do exemplo com <code>html.parser</code>, escreva uma função <code>texto_do_id(pagina, id_procurado)</code> que devolve o texto de dentro do elemento com aquele <code>id</code>. Teste com <code>&lt;p id="msg"&gt;Olá, Joana!&lt;/p&gt;&lt;p id="rodape"&gt;Fim&lt;/p&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from html.parser import HTMLParser
+
+
+class LeitorDeTexto(HTMLParser):
+    def __init__(self, id_procurado):
+        super().__init__()
+        self.id_procurado = id_procurado
+        self.dentro = False
+        self.texto = ""
+
+    def handle_starttag(self, tag, attrs):
+        if dict(attrs).get("id") == self.id_procurado:
+            self.dentro = True
+
+    def handle_data(self, dado):
+        if self.dentro:
+            self.texto += dado
+
+    def handle_endtag(self, tag):
+        self.dentro = False
+
+
+def texto_do_id(pagina, id_procurado):
+    leitor = LeitorDeTexto(id_procurado)
+    leitor.feed(pagina)
+    return leitor.texto
+
+
+pagina = '&lt;p id="msg"&gt;Olá, Joana!&lt;/p&gt;&lt;p id="rodape"&gt;Fim&lt;/p&gt;'
+print(texto_do_id(pagina, "msg"))
+print(texto_do_id(pagina, "rodape"))</code></pre>
+      <p class="saida">Olá, Joana!<br>
+Fim</p>
+      <p>É o que o Selenium faz por você com <code>navegador.find_element(By.ID, "msg").text</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva um robô em modo headless que abra o arquivo <code>cadastro.html</code> da aula, digite o seu nome, clique em Enviar e espere, com <code>WebDriverWait</code>, até o parágrafo <code>msg</code> ter algum texto; depois mostre esse texto.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+
+opcoes = webdriver.ChromeOptions()
+opcoes.add_argument("--headless=new")
+
+navegador = webdriver.Chrome(options=opcoes)
+try:
+    navegador.get(Path("cadastro.html").resolve().as_uri())
+    navegador.find_element(By.ID, "nome").send_keys("Rafael")
+    navegador.find_element(By.ID, "enviar").click()
+
+    msg = navegador.find_element(By.ID, "msg")
+    WebDriverWait(navegador, 5).until(lambda n: msg.text != "")
+    print(msg.text)
+finally:
+    navegador.quit()</code></pre>
+      <p>A saída é <code>Olá, Rafael!</code>. O <code>until</code> também aceita uma função sua: ele chama a função de novo e de novo até ela devolver algo verdadeiro.</p>
       </details>
     </div>
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 176 · MySQL com pymysql e Docker — Curso de Python · DIGITAR</title>
-<meta name="description" content="Suba um servidor MySQL com Docker no seu computador e conecte a ele pelo Python com a biblioteca pymysql.">
+<meta name="description" content="Suba um servidor MySQL com Docker no seu computador e conecte a ele pelo Python com a biblioteca pymysql, aproveitando tudo o que você aprendeu com o sqlite3.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,52 +20,162 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Subir um servidor MySQL com Docker</li>
-        <li>Instalar e usar a biblioteca pymysql</li>
-        <li>Ver o que muda do SQLite para o MySQL</li>
+        <li>Entender a diferença entre um banco em arquivo (SQLite) e um servidor de banco (MySQL)</li>
+        <li>Subir um servidor MySQL com Docker, com senha, porta e volume para guardar os dados</li>
+        <li>Conectar com pymysql e usar cursor, <code>%s</code>, <code>commit</code> e <code>DictCursor</code></li>
+        <li>Ver o que muda e o que continua igual em relação ao sqlite3</li>
+        <li>Usar o Docker Compose para não precisar decorar o comando longo</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Por que MySQL</h2>
-    <p>O SQLite é um arquivo usado por um programa. O <strong>MySQL</strong> é um <strong>servidor</strong>: um programa que fica rodando e atende muitos programas ao mesmo tempo, até pela rede. Sites e sistemas grandes usam servidores assim (MySQL, PostgreSQL).</p>
+    <h2>Por que um servidor de banco</h2>
+    <p>O SQLite guarda tudo num <strong>arquivo</strong> usado por um programa de cada vez. Para um sistema escolar com dezenas de pessoas usando ao mesmo tempo, ou um site com milhares de visitas, usamos um <strong>servidor de banco de dados</strong>: um programa que fica ligado o tempo todo e atende vários programas ao mesmo tempo, inclusive pela rede.</p>
+    <p>O <strong>MySQL</strong> e o <strong>PostgreSQL</strong> são os servidores gratuitos mais usados. Seu programa Python é o <strong>cliente</strong>: ele se conecta ao servidor informando o endereço (<code>host</code>), a porta, o usuário, a senha e o nome do banco.</p>
+    <p>A boa notícia: pelo jeito DB-API que você viu na aula 174, o código Python muda muito pouco.</p>
 
     <h2>Subindo o MySQL com Docker</h2>
-    <p>O <strong>Docker</strong> roda programas prontos dentro de "contêineres", sem instalação complicada. Instale o Docker Desktop (docker.com), abra-o e, no terminal, rode:</p>
-<pre class="codigo"><code>docker run --name mysql-curso -e MYSQL_ROOT_PASSWORD=troque_esta_senha -e MYSQL_DATABASE=escola -p 3306:3306 -d mysql:8
+    <p>Instalar um servidor de banco à mão dá trabalho. O <strong>Docker</strong> roda programas prontos dentro de <strong>contêineres</strong>, caixinhas isoladas que você liga e desliga com um comando (a aula 210 aprofunda o Docker).</p>
+    <p>Instale o <strong>Docker Desktop</strong> pelo site docker.com, abra o programa e espere ele dizer que está rodando. Depois, no terminal:</p>
+<pre class="codigo"><code>docker run --name mysql-curso -e MYSQL_ROOT_PASSWORD=troque_esta_senha -e MYSQL_DATABASE=escola -p 3306:3306 -v dados-mysql:/var/lib/mysql -d mysql:8
 docker ps</code></pre>
-    <p>O <code>-p 3306:3306</code> libera a porta do MySQL no seu computador e <code>-d</code> deixa rodando em segundo plano. Para parar: <code>docker stop mysql-curso</code>; para ligar de novo: <code>docker start mysql-curso</code>.</p>
+    <p>O que cada parte faz:</p>
+    <ul>
+      <li><code>--name mysql-curso</code> dá um nome ao contêiner, para você ligar e desligar depois;</li>
+      <li><code>-e MYSQL_ROOT_PASSWORD=...</code> define a senha do usuário <code>root</code>, e <code>-e MYSQL_DATABASE=escola</code> já cria o banco <code>escola</code>;</li>
+      <li><code>-p 3306:3306</code> liga a porta 3306 do contêiner (a porta padrão do MySQL) à porta 3306 do seu computador;</li>
+      <li><code>-v dados-mysql:/var/lib/mysql</code> cria um <strong>volume</strong>: os dados ficam guardados mesmo se o contêiner for apagado;</li>
+      <li><code>-d</code> deixa o servidor rodando em segundo plano, e <code>mysql:8</code> é a imagem (MySQL versão 8).</li>
+    </ul>
+    <p>Os outros comandos do dia a dia:</p>
+<pre class="codigo"><code>docker stop mysql-curso
+docker start mysql-curso
+docker logs mysql-curso</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Na primeira vez, o MySQL leva uns 20 a 30 segundos para ficar pronto. Se o Python mostrar <code>Can't connect to MySQL server</code> ou <code>Lost connection</code>, espere um pouco e tente de novo. Se aparecer erro de porta já em uso, outro MySQL está ligado no seu computador: troque para <code>-p 3307:3306</code> e use <code>port=3307</code> no Python.</div>
 
     <h2>Conectando com pymysql</h2>
-    <p>Dentro do seu ambiente virtual (aula 60), instale a biblioteca:</p>
-<pre class="codigo"><code>pip install pymysql</code></pre>
+    <p>O <code>pymysql</code> é uma biblioteca escrita só em Python que conversa com o MySQL. Dentro do seu ambiente virtual (aula 60), instale:</p>
+<pre class="codigo"><code>py -m pip install pymysql
+python3 -m pip install pymysql</code></pre>
+    <p>(A primeira linha é para Windows; a segunda, para Linux e macOS.) Salve como <code>mysql_teste.py</code> e rode com <code>python mysql_teste.py</code>:</p>
 <pre class="codigo"><code>import pymysql
 
 con = pymysql.connect(
     host="localhost",
+    port=3306,
     user="root",
     password="troque_esta_senha",
     database="escola",
 )
 with con:
     with con.cursor() as cur:
-        cur.execute("CREATE TABLE IF NOT EXISTS alunos (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(80))")
-        cur.execute("INSERT INTO alunos (nome) VALUES (%s)", ("Ana",))
+        cur.execute("""CREATE TABLE IF NOT EXISTS alunos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(80) NOT NULL,
+            idade INT
+        )""")
+        cur.execute("INSERT INTO alunos (nome, idade) VALUES (%s, %s)", ("Ana", 12))
+        print("id gerado:", cur.lastrowid)
     con.commit()
+
     with con.cursor() as cur:
-        cur.execute("SELECT id, nome FROM alunos")
+        cur.execute("SELECT id, nome, idade FROM alunos")
         for linha in cur.fetchall():
             print(linha)</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> No pymysql o placeholder é <code>%s</code>, não <code>?</code>. Mesmo parecendo formatação de texto, ele é seguro: passe os valores separados, como na aula 175. Nunca use <code>%</code> do Python para montar o comando.</div>
-    <div class="dica"><strong>Dica:</strong> Não deixe a senha escrita no código que vai para o GitHub. A aula 177 mostra como guardá-la num arquivo <code>.env</code>.</div>
-
-    <h2>O que muda do SQLite</h2>
+    <p class="saida">id gerado: 1<br>
+(1, 'Ana', 12)</p>
+    <p>Cada vez que você roda, entra mais uma Ana, com <code>id</code> 2, 3... porque o banco agora é um servidor que guarda tudo.</p>
     <ul>
-      <li><code>INTEGER PRIMARY KEY</code> vira <code>INT AUTO_INCREMENT PRIMARY KEY</code>.</li>
-      <li>Textos costumam ter tamanho: <code>VARCHAR(80)</code>.</li>
-      <li>É preciso <code>commit()</code> para gravar, como no SQLite em arquivo.</li>
-      <li>O resto do SQL (<code>SELECT</code>, <code>WHERE</code>, <code>JOIN</code>, <code>GROUP BY</code>) é praticamente igual.</li>
+      <li><code>with con:</code> fecha a conexão no fim; <code>with con.cursor() as cur:</code> fecha o cursor.</li>
+      <li>No pymysql é <strong>obrigatório</strong> o <code>con.commit()</code> para gravar. Sem ele, o <code>INSERT</code> é desfeito quando a conexão fecha.</li>
     </ul>
+    <div class="atencao"><strong>Atenção:</strong> No pymysql o placeholder é <code>%s</code> (para qualquer tipo, até número), não <code>?</code>. Mesmo parecendo formatação de texto, ele é seguro <strong>porque você passa os valores separados</strong>, como na aula 175. Nunca use o <code>%</code> do Python para montar o comando: <code>"... VALUES ('%s')" % nome</code> volta a abrir a porta para o SQL Injection.</div>
+
+    <h2>Quando a conexão falha</h2>
+    <p>Com um servidor, a conexão pode falhar: o Docker está desligado, a senha está errada ou o MySQL ainda está ligando. Em vez de deixar o programa quebrar com uma mensagem enorme, trate o erro e explique o que fazer:</p>
+<pre class="codigo"><code>import pymysql
+
+try:
+    con = pymysql.connect(host="localhost", user="root",
+                          password="senha_errada", database="escola",
+                          connect_timeout=5)
+except pymysql.err.OperationalError as erro:
+    codigo = erro.args[0]
+    if codigo == 1045:
+        print("Usuário ou senha incorretos.")
+    elif codigo == 2003:
+        print("Servidor desligado. Rode: docker start mysql-curso")
+    else:
+        print("Não consegui conectar:", erro)
+else:
+    print("Conectado!")
+    con.close()</code></pre>
+    <p class="saida">Usuário ou senha incorretos.</p>
+    <p>O código <code>1045</code> é o erro de acesso negado do MySQL e o <code>2003</code> significa que ninguém atendeu na porta 3306 (servidor desligado ou porta errada).</p>
+
+    <h2>Linhas como dicionários: DictCursor</h2>
+    <p>O <code>sqlite3.Row</code> da aula 174 tem um primo no pymysql: o <code>DictCursor</code>, que devolve cada linha como dicionário:</p>
+<pre class="codigo"><code>import pymysql
+import pymysql.cursors
+
+con = pymysql.connect(host="localhost", user="root", password="troque_esta_senha",
+                      database="escola", cursorclass=pymysql.cursors.DictCursor)
+with con:
+    with con.cursor() as cur:
+        cur.execute("SELECT nome, idade FROM alunos WHERE idade &gt;= %s ORDER BY nome", (12,))
+        for aluno in cur.fetchall():
+            print(aluno["nome"], "tem", aluno["idade"], "anos")</code></pre>
+    <p class="saida">Ana tem 12 anos</p>
+
+    <h2>O mesmo código com sqlite3</h2>
+    <p>Para ver como a ideia é a mesma, aqui está o programa anterior com <code>sqlite3</code>, que você pode rodar agora no navegador. Compare linha por linha:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.row_factory = sqlite3.Row
+cur = con.cursor()
+cur.execute("""CREATE TABLE IF NOT EXISTS alunos (
+    id INTEGER PRIMARY KEY,
+    nome VARCHAR(80) NOT NULL,
+    idade INT
+)""")
+cur.execute("INSERT INTO alunos (nome, idade) VALUES (?, ?)", ("Ana", 12))
+print("id gerado:", cur.lastrowid)
+con.commit()
+
+cur.execute("SELECT nome, idade FROM alunos WHERE idade &gt;= ? ORDER BY nome", (12,))
+for aluno in cur.fetchall():
+    print(aluno["nome"], "tem", aluno["idade"], "anos")
+cur.close()
+con.close()</code></pre>
+    <p class="saida">id gerado: 1<br>
+Ana tem 12 anos</p>
+    <p>As diferenças principais:</p>
+    <ul>
+      <li><code>sqlite3.connect("arquivo.db")</code> vira <code>pymysql.connect(host=..., user=..., password=..., database=...)</code>;</li>
+      <li>o placeholder <code>?</code> vira <code>%s</code>;</li>
+      <li><code>INTEGER PRIMARY KEY</code> vira <code>INT AUTO_INCREMENT PRIMARY KEY</code>, e textos costumam ter tamanho máximo: <code>VARCHAR(80)</code>;</li>
+      <li><code>sqlite3.Row</code> vira <code>DictCursor</code>.</li>
+    </ul>
+    <p>O resto do SQL (<code>SELECT</code>, <code>WHERE</code>, <code>JOIN</code>, <code>GROUP BY</code>) e o roteiro conectar, executar, buscar, <code>commit</code> e fechar continuam iguais.</p>
+    <div class="dica"><strong>Dica:</strong> Uma boa ideia é escrever e testar a lógica do seu programa com <code>sqlite3</code> e só depois trocar para o MySQL. Se você usar funções como as da aula 174, só a função que abre a conexão e os placeholders mudam.</div>
+
+    <h2>Docker Compose: o comando guardado num arquivo</h2>
+    <p>Aquele <code>docker run</code> comprido é fácil de errar. O <strong>Docker Compose</strong> guarda a configuração num arquivo <code>compose.yaml</code> na pasta do projeto:</p>
+<pre class="codigo"><code>services:
+  banco:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: troque_esta_senha
+      MYSQL_DATABASE: escola
+    ports:
+      - "3306:3306"
+    volumes:
+      - dados-mysql:/var/lib/mysql
+volumes:
+  dados-mysql:</code></pre>
+    <p>Na pasta desse arquivo, <code>docker compose up -d</code> liga o banco e <code>docker compose down</code> desliga (os dados continuam no volume).</p>
+    <div class="dica"><strong>Dica:</strong> A senha não deveria ficar escrita nem no código Python nem no <code>compose.yaml</code> que vai para o GitHub. A aula 177 mostra como guardar tudo num arquivo <code>.env</code>.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -74,16 +184,44 @@ with con:
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Qual comando do Docker mostra os contêineres rodando, e qual para o contêiner <code>mysql-curso</code>?</p>
+      <p><strong>1.</strong> Qual comando do Docker mostra os contêineres rodando, qual para o contêiner <code>mysql-curso</code> e qual liga ele de novo?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>docker ps
-docker stop mysql-curso</code></pre>
+docker stop mysql-curso
+docker start mysql-curso</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva o comando pymysql (só a linha do <code>execute</code>) que busca alunos pelo nome de forma segura, com a variável <code>nome</code>.</p>
+      <p><strong>2.</strong> Escreva a linha do <code>execute</code> (pymysql) que busca alunos pelo nome de forma segura, com a variável <code>nome</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>cur.execute("SELECT id, nome FROM alunos WHERE nome = %s", (nome,))</code></pre>
+      <p>O valor vai separado numa tupla com vírgula: <code>(nome,)</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Converta este trecho de <code>sqlite3</code> para <code>pymysql</code> (só os comandos): <code>cur.execute("UPDATE alunos SET idade = ? WHERE id = ?", (13, 1))</code> seguido de <code>con.commit()</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>cur.execute("UPDATE alunos SET idade = %s WHERE id = %s", (13, 1))
+con.commit()</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Para que serve o <code>-v dados-mysql:/var/lib/mysql</code> no <code>docker run</code>? O que aconteceria sem ele se você apagasse o contêiner com <code>docker rm mysql-curso</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Ele cria um volume chamado dados-mysql, um lugar fora do contêiner onde o MySQL<br>
+guarda os arquivos do banco. Sem o volume, os dados ficam dentro do contêiner e<br>
+somem junto com ele quando ele é apagado com docker rm.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Escreva a função <code>inserir_aluno(con, nome, idade)</code> para pymysql que insere o aluno, grava com <code>commit</code> e devolve o <code>id</code> gerado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>def inserir_aluno(con, nome, idade):
+    with con.cursor() as cur:
+        cur.execute("INSERT INTO alunos (nome, idade) VALUES (%s, %s)", (nome, idade))
+        novo_id = cur.lastrowid
+    con.commit()
+    return novo_id</code></pre>
       </details>
     </div>
 

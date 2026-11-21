@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 201 · URLs, views, request e response — Curso de Python · DIGITAR</title>
-<meta name="description" content="Ligue endereços do site a funções Python (views) que recebem o pedido e devolvem uma resposta.">
+<meta name="description" content="Ligue endereços do site a funções Python (views) que recebem o pedido do navegador e devolvem uma resposta, com partes variáveis na URL e dados do request.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,17 +20,55 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O caminho de um pedido: URL, view e resposta</li>
+        <li>Entender o caminho de um pedido: navegador, URL, view e resposta</li>
         <li>Escrever views que recebem <code>request</code> e devolvem <code>HttpResponse</code></li>
-        <li>Criar URLs com partes variáveis, como <code>&lt;int:id&gt;</code></li>
+        <li>Organizar as rotas no <code>urls.py</code> do app e ligá-las ao projeto com <code>include</code></li>
+        <li>Criar URLs com partes variáveis, como <code>&lt;int:numero&gt;</code> e <code>&lt;str:nome&gt;</code></li>
+        <li>Ler dados do pedido com <code>request.GET</code> e <code>request.method</code> e responder "página não encontrada" com <code>Http404</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Do endereço até a função</h2>
-    <p>Quando você abre <code>http://127.0.0.1:8000/ola/</code>, o Django procura em <code>urls.py</code> qual <strong>view</strong> cuida do caminho <code>ola/</code>. A view é uma função Python que recebe o pedido (<code>request</code>) e devolve uma resposta (<code>HttpResponse</code>).</p>
-<pre class="codigo"><code># contatos/views.py
-from django.http import HttpResponse
+    <h2>O caminho de um pedido</h2>
+    <p>Quando você digita <code>http://127.0.0.1:8000/ola/</code> no navegador, acontece uma conversa em três passos:</p>
+    <ul>
+      <li>o navegador envia um <strong>pedido</strong> (request) dizendo "quero o caminho <code>/ola/</code>";</li>
+      <li>o Django procura na lista de <strong>URLs</strong> qual função cuida desse caminho;</li>
+      <li>essa função, chamada <strong>view</strong>, monta e devolve uma <strong>resposta</strong> (response), que o navegador mostra.</li>
+    </ul>
+    <p>Antes de abrir o Django, veja a ideia funcionando só com Python puro. O dicionário <code>rotas</code> faz o papel do <code>urls.py</code> e as funções fazem o papel das views:</p>
+<pre class="codigo" data-executar="sim"><code>def pagina_inicial(pedido):
+    return "Bem-vindo ao meu site!"
+
+
+def pagina_ola(pedido):
+    return "Olá, visitante!"
+
+
+rotas = {
+    "/": pagina_inicial,
+    "/ola/": pagina_ola,
+}
+
+
+def atender(caminho):
+    view = rotas.get(caminho)
+    if view is None:
+        return "404 - Página não encontrada"
+    return view({"caminho": caminho})
+
+
+for caminho in ["/", "/ola/", "/sorvete/"]:
+    print(caminho, "-&gt;", atender(caminho))</code></pre>
+    <p class="saida">/ -&gt; Bem-vindo ao meu site!<br>
+/ola/ -&gt; Olá, visitante!<br>
+/sorvete/ -&gt; 404 - Página não encontrada</p>
+    <p>O Django faz exatamente isso, só que com muito mais recursos: segurança, partes variáveis no caminho, formulários, cabeçalhos e tudo o que um site de verdade precisa.</p>
+
+    <h2>Sua primeira view</h2>
+    <p>Uma view é uma função comum que <strong>recebe</strong> o <code>request</code> e <strong>devolve</strong> um <code>HttpResponse</code>. Continue no projeto da aula 200 (projeto <code>config</code>, app <code>contatos</code>, já registrado em <code>INSTALLED_APPS</code>).</p>
+    <p>Arquivo <code>contatos/views.py</code>:</p>
+<pre class="codigo"><code>from django.http import HttpResponse
 
 
 def ola(request):
@@ -39,38 +77,150 @@ def ola(request):
 
 def dobro(request, numero):
     return HttpResponse(f"O dobro de {numero} é {numero * 2}")</code></pre>
+    <p>O texto dentro de <code>HttpResponse</code> é o que vai para o navegador. Como é HTML, o <code>&lt;h1&gt;</code> aparece como um título grande. Na aula 202 você vai trocar essas strings por arquivos HTML de verdade, os templates.</p>
+    <div class="atencao"><strong>Atenção:</strong> Toda view precisa <strong>devolver</strong> uma resposta com <code>return</code>. Se você esquecer, o Django mostra o erro <code>The view contatos.views.ola didn't return an HttpResponse object. It returned None instead.</code></div>
 
     <h2>Ligando as URLs</h2>
-<pre class="codigo"><code># contatos/urls.py (crie este arquivo)
-from django.urls import path
+    <p>As views ainda não têm endereço. Cada app guarda as suas rotas num arquivo próprio, e o projeto junta tudo. Crie o arquivo <code>contatos/urls.py</code>:</p>
+<pre class="codigo"><code>from django.urls import path
+
 from . import views
 
 urlpatterns = [
     path("ola/", views.ola, name="ola"),
     path("dobro/&lt;int:numero&gt;/", views.dobro, name="dobro"),
 ]</code></pre>
-<pre class="codigo"><code># config/urls.py
-from django.contrib import admin
+    <p>Agora avise o projeto que essas rotas existem. Arquivo <code>config/urls.py</code> (ele já existe; acrescente o <code>include</code>):</p>
+<pre class="codigo"><code>from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("contatos.urls")),
 ]</code></pre>
-    <p>Abrindo <code>http://127.0.0.1:8000/dobro/21/</code>:</p>
+    <p>Rode <code>python manage.py runserver</code> e abra <code>http://127.0.0.1:8000/ola/</code>. A página mostra:</p>
+    <p class="saida">Olá do Django!</p>
+    <p>Por que dois arquivos? Porque um projeto costuma ter vários apps. Cada app cuida das suas rotas, e o <code>config/urls.py</code> só diz "as rotas que começam com tal coisa ficam com tal app". O <code>""</code> no <code>include</code> quer dizer "sem prefixo nenhum"; se fosse <code>path("agenda/", include("contatos.urls"))</code>, a página viraria <code>/agenda/ola/</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Termine as rotas com barra: <code>"ola/"</code>. Se alguém digitar <code>/ola</code> sem a barra, o Django redireciona sozinho para <code>/ola/</code> (é a configuração <code>APPEND_SLASH</code>, ligada por padrão). Não comece a rota com barra: <code>"/ola/"</code> não funciona.</div>
+
+    <h2>Partes variáveis na URL</h2>
+    <p>Seria impossível escrever uma rota para cada número. Por isso a rota pode ter um pedaço variável entre <code>&lt;</code> e <code>&gt;</code>. Em <code>"dobro/&lt;int:numero&gt;/"</code>:</p>
+    <ul>
+      <li><code>int</code> é o <strong>conversor</strong>: só aceita dígitos e já transforma o texto em <code>int</code>;</li>
+      <li><code>numero</code> é o nome do parâmetro que a view recebe.</li>
+    </ul>
+    <p>Abrindo <code>http://127.0.0.1:8000/dobro/21/</code>, o Django chama <code>dobro(request, numero=21)</code>:</p>
     <p class="saida">O dobro de 21 é 42</p>
-    <p>O conversor <code>&lt;int:numero&gt;</code> pega o pedaço da URL, transforma em <code>int</code> e entrega para a view com o nome <code>numero</code>.</p>
+    <p>Se você abrir <code>/dobro/abc/</code>, nenhuma rota combina (<code>abc</code> não é número) e a resposta é <strong>404, página não encontrada</strong>. Os conversores mais usados são <code>int</code>, <code>str</code> (qualquer texto sem barra) e <code>slug</code> (letras, números, hífen e sublinhado, como <code>bolo-de-cenoura</code>).</p>
+    <p>Veja como um conversor funciona por dentro. Este mini-roteador transforma <code>&lt;int:numero&gt;</code> numa expressão regular (aulas 140 a 145):</p>
+<pre class="codigo" data-executar="sim"><code>import re
+
+CONVERSORES = {"int": (r"\d+", int), "str": (r"[^/]+", str)}
+
+
+def compilar(rota):
+    tipos = {}
+
+    def troca(m):
+        tipo, nome = m.group(1), m.group(2)
+        tipos[nome] = CONVERSORES[tipo][1]
+        return f"(?P&lt;{nome}&gt;{CONVERSORES[tipo][0]})"
+
+    padrao = re.sub(r"&lt;(\w+):(\w+)&gt;", troca, rota)
+    return re.compile("^" + padrao + "$"), tipos
+
+
+def dobro(numero):
+    return f"O dobro de {numero} é {numero * 2}"
+
+
+def saudacao(nome):
+    return f"Oi, {nome}!"
+
+
+rotas = [("dobro/&lt;int:numero&gt;/", dobro), ("oi/&lt;str:nome&gt;/", saudacao)]
+compiladas = [(compilar(r), view) for r, view in rotas]
+
+
+def atender(caminho):
+    for (regex, tipos), view in compiladas:
+        achou = regex.match(caminho)
+        if achou:
+            args = {k: tipos[k](v) for k, v in achou.groupdict().items()}
+            return view(**args)
+    return "404 - Página não encontrada"
+
+
+for caminho in ["dobro/21/", "oi/Bia/", "dobro/abc/"]:
+    print(caminho, "-&gt;", atender(caminho))</code></pre>
+    <p class="saida">dobro/21/ -&gt; O dobro de 21 é 42<br>
+oi/Bia/ -&gt; Oi, Bia!<br>
+dobro/abc/ -&gt; 404 - Página não encontrada</p>
+    <p>Repare que a view <code>dobro</code> recebeu o número já como <code>int</code> — por isso <code>numero * 2</code> deu 42, e não <code>"2121"</code>.</p>
 
     <h2>O que vem no request</h2>
-    <p>O objeto <code>request</code> traz tudo sobre o pedido: o método (<code>GET</code> ou <code>POST</code>), os dados enviados e o usuário logado. Os dados da URL depois do <code>?</code> ficam em <code>request.GET</code>:</p>
-<pre class="codigo"><code>from django.http import HttpResponse
-
-
-def busca(request):
+    <p>O objeto <code>request</code> traz tudo sobre o pedido. Os mais usados no começo:</p>
+    <ul>
+      <li><code>request.method</code>: <code>"GET"</code> quando a pessoa só abre a página, <code>"POST"</code> quando envia um formulário (aula 205);</li>
+      <li><code>request.GET</code>: os dados que vêm na URL depois do <code>?</code>, como em <code>/busca/?q=pastel&amp;pagina=2</code>;</li>
+      <li><code>request.user</code>: quem está logado (aula 206).</li>
+    </ul>
+    <p>Arquivo <code>contatos/views.py</code> (acrescente):</p>
+<pre class="codigo"><code>def busca(request):
     termo = request.GET.get("q", "")
-    return HttpResponse(f"Você buscou: {termo}")</code></pre>
-    <p>Para <code>/busca/?q=pastel</code>, a resposta é <code>Você buscou: pastel</code> (registre a rota <code>path("busca/", views.busca)</code>).</p>
-    <div class="atencao"><strong>Atenção:</strong> Toda view precisa <strong>devolver</strong> uma resposta com <code>return</code>. Se esquecer, o Django mostra o erro "didn't return an HttpResponse object. It returned None instead."</div>
+    pagina = request.GET.get("pagina", "1")
+    return HttpResponse(f"Você buscou: {termo} (página {pagina})")
+
+
+def metodo(request):
+    if request.method == "POST":
+        return HttpResponse("Recebi dados enviados por um formulário")
+    return HttpResponse("Você só abriu a página")</code></pre>
+    <p class="saida">Você buscou: pastel (página 2)</p>
+    <p>Registre em <code>contatos/urls.py</code> com <code>path("busca/", views.busca, name="busca")</code> e <code>path("metodo/", views.metodo, name="metodo")</code>. Abrindo <code>/busca/?q=pastel&amp;pagina=2</code>:</p>
+    <p>Use <code>request.GET.get("q", "")</code>, com um valor padrão, em vez de <code>request.GET["q"]</code>: se a pessoa abrir <code>/busca/</code> sem o <code>?q=</code>, o <code>get</code> devolve <code>""</code> e o colchete daria erro.</p>
+    <p>A parte depois do <code>?</code> se chama <strong>query string</strong>. O Python sabe separá-la sozinho com <code>urllib.parse</code>, e é isso que o Django faz para montar o <code>request.GET</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import urlsplit, parse_qs
+
+endereco = "http://127.0.0.1:8000/busca/?q=pastel&amp;pagina=2"
+partes = urlsplit(endereco)
+print("Caminho:", partes.path)
+print("Query string:", partes.query)
+
+dados = parse_qs(partes.query)
+print(dados)
+print("Termo:", dados.get("q", [""])[0])
+print("Cor:", dados.get("cor", ["nenhuma"])[0])</code></pre>
+    <p class="saida">Caminho: /busca/<br>
+Query string: q=pastel&amp;pagina=2<br>
+{'q': ['pastel'], 'pagina': ['2']}<br>
+Termo: pastel<br>
+Cor: nenhuma</p>
+    <p>Os valores vêm em listas porque uma URL pode repetir o mesmo nome (<code>?cor=azul&amp;cor=verde</code>). O <code>request.GET.get</code> do Django já devolve o último valor, sem lista.</p>
+
+    <h2>Página não encontrada e nomes de rota</h2>
+    <p>Quando a URL combina mas o dado não existe, a view deve responder 404. Para isso, <strong>levante</strong> a exceção <code>Http404</code> (aula 53):</p>
+<pre class="codigo"><code>from django.http import Http404, HttpResponse
+
+DIAS = {1: "segunda", 2: "terça", 3: "quarta", 4: "quinta", 5: "sexta"}
+
+
+def dia(request, numero):
+    if numero not in DIAS:
+        raise Http404("Esse dia não existe")
+    return HttpResponse(f"Dia {numero}: {DIAS[numero]}")</code></pre>
+    <p class="saida">Dia 3: quarta</p>
+    <p>Com a rota <code>path("dia/&lt;int:numero&gt;/", views.dia, name="dia")</code>, abrir <code>/dia/3/</code> mostra:</p>
+    <p>E <code>/dia/9/</code> mostra a página de erro <strong>Page not found (404)</strong>. Com <code>DEBUG = True</code> ela traz a mensagem "Esse dia não existe" para ajudar você; no site publicado, o visitante vê só uma página simples de "não encontrado".</p>
+    <p>O <code>name="dia"</code> de cada rota serve para gerar o endereço sem escrevê-lo à mão. Teste no <code>python manage.py shell</code>:</p>
+<pre class="codigo"><code>from django.urls import reverse
+
+print(reverse("ola"))
+print(reverse("dobro", args=[5]))</code></pre>
+    <p class="saida">/ola/<br>
+/dobro/5/</p>
+    <p>Se um dia você mudar <code>"dobro/"</code> para <code>"vezes-dois/"</code>, todo lugar que usa <code>reverse("dobro")</code> (ou <code>{% url 'dobro' 5 %}</code> nos templates) se atualiza sozinho.</p>
+    <div class="atencao"><strong>Atenção:</strong> O erro <code>NoReverseMatch</code> aparece quando o nome da rota está escrito errado ou quando faltou passar o parâmetro: <code>reverse("dobro")</code> sem o número não tem como montar <code>/dobro/&lt;numero&gt;/</code>.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -79,9 +229,9 @@ def busca(request):
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie uma view <code>saudacao</code> e a URL <code>oi/&lt;str:nome&gt;/</code> que responde "Oi, NOME!". Ex.: <code>/oi/Bia/</code>.</p>
+      <p><strong>1.</strong> Crie a view <code>saudacao</code> e a rota <code>oi/&lt;str:nome&gt;/</code> que responde "Oi, NOME!". Ex.: abrindo <code>/oi/Bia/</code> aparece <code>Oi, Bia!</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code># views.py
+<pre class="codigo"><code># contatos/views.py
 from django.http import HttpResponse
 
 
@@ -89,19 +239,79 @@ def saudacao(request, nome):
     return HttpResponse(f"Oi, {nome}!")
 
 
-# urls.py, dentro de urlpatterns:
+# contatos/urls.py, dentro de urlpatterns:
 # path("oi/&lt;str:nome&gt;/", views.saudacao, name="saudacao"),</code></pre>
+      <p class="saida">Oi, Bia!</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> A lógica de uma view pode ser testada como função comum. Escreva <code>tabuada_texto(n)</code> que devolve a tabuada de <code>n</code> (de 1 a 3) separada por vírgulas, para usar numa view <code>/tabuada/&lt;int:n&gt;/</code>.</p>
+      <p><strong>2.</strong> A lógica de uma view pode ser testada como uma função comum, sem servidor. Escreva <code>tabuada_texto(n)</code> que devolve a tabuada de <code>n</code> (de 1 a 5) separada por vírgulas, para usar numa view <code>/tabuada/&lt;int:n&gt;/</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>def tabuada_texto(n):
-    return ", ".join(f"{n}x{i}={n * i}" for i in range(1, 4))
+    return ", ".join(f"{n}x{i}={n * i}" for i in range(1, 6))
 
 
 print(tabuada_texto(7))</code></pre>
-      <p class="saida">7x1=7, 7x2=14, 7x3=21</p>
+      <p class="saida">7x1=7, 7x2=14, 7x3=21, 7x4=28, 7x5=35</p>
+      <p>A view ficaria só <code>return HttpResponse(tabuada_texto(n))</code>. Separar a conta da view deixa fácil testar a conta (aula 131).</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> No mini-roteador com dicionário do começo da aula, acrescente a rota <code>"/sobre/"</code> com uma view que devolve "Site feito em Python". Teste os caminhos <code>"/sobre/"</code> e <code>"/contato/"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def pagina_inicial(pedido):
+    return "Bem-vindo ao meu site!"
+
+
+def pagina_sobre(pedido):
+    return "Site feito em Python"
+
+
+rotas = {"/": pagina_inicial, "/sobre/": pagina_sobre}
+
+
+def atender(caminho):
+    view = rotas.get(caminho)
+    if view is None:
+        return "404 - Página não encontrada"
+    return view({"caminho": caminho})
+
+
+print(atender("/sobre/"))
+print(atender("/contato/"))</code></pre>
+      <p class="saida">Site feito em Python<br>
+404 - Página não encontrada</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça uma view <code>par_ou_impar</code> na rota <code>numero/&lt;int:n&gt;/</code> que responde "N é par" ou "N é ímpar". O que acontece se alguém abrir <code>/numero/sete/</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># contatos/views.py
+def par_ou_impar(request, n):
+    tipo = "par" if n % 2 == 0 else "ímpar"
+    return HttpResponse(f"{n} é {tipo}")
+
+
+# contatos/urls.py:
+# path("numero/&lt;int:n&gt;/", views.par_ou_impar, name="par_ou_impar"),</code></pre>
+      <p class="saida">8 é par</p>
+      <p>Abrindo <code>/numero/sete/</code>, o conversor <code>int</code> não aceita letras, nenhuma rota combina e a resposta é 404. A view nem chega a ser chamada.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Uma view <code>busca</code> usa <code>termo = request.GET["q"]</code>. Ela funciona com <code>/busca/?q=bolo</code>, mas quebra com <code>/busca/</code>. Por quê, e como consertar?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Sem o ?q= na URL, a chave "q" não existe em request.GET e o colchete levanta erro<br>
+(MultiValueDictKeyError), que vira uma página de erro 500.<br>
+Conserto: termo = request.GET.get("q", "") &nbsp;-&gt; sem o q, o termo fica vazio.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Você criou <code>path("/contatos/", views.lista)</code> e a página dá 404, mesmo digitando o endereço certo. Qual é o erro?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">A rota começa com barra. No Django as rotas NÃO começam com "/":<br>
+o certo é path("contatos/", views.lista). (O Django até avisa no runserver<br>
+com o aviso urls.W002.)</p>
       </details>
     </div>
 

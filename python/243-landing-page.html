@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 243 · Projeto: uma landing page com HTML e CSS — Curso de Python · DIGITAR</title>
-<meta name="description" content="Monte uma landing page de verdade, com cabeçalho, destaques, depoimentos e rodapé, gerada por um script Python.">
+<meta name="description" content="Monte uma landing page de verdade, com cabeçalho, destaques, depoimentos e rodapé, responsiva, gerada por um script Python a partir de dados.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,37 +20,28 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Planejar as partes de uma landing page</li>
-        <li>Escrever o HTML e o CSS de cada parte</li>
-        <li>Gerar a página a partir de dados guardados em Python</li>
+        <li>Planejar as partes de uma landing page antes de programar</li>
+        <li>Guardar o conteúdo da página em listas e dicionários do Python</li>
+        <li>Escrever funções que geram cada parte do HTML, com <code>html.escape</code></li>
+        <li>Gerar o CSS com flexbox, grid e uma media query para o celular</li>
+        <li>Gravar <code>index.html</code> e <code>estilo.css</code>, conferir com <code>html.parser</code> e abrir no navegador</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que vamos construir</h2>
-    <p>Uma <strong>landing page</strong> é uma página única que apresenta um produto e convida a pessoa a fazer algo, como se inscrever. A nossa vai divulgar uma (imaginária) <strong>Feira de Ciências da Escola</strong>. Ela terá:</p>
+    <p>Uma <strong>landing page</strong> ("página de chegada") é uma página única que apresenta algo e convida a pessoa a fazer uma ação, como se inscrever. A nossa vai divulgar uma (imaginária) <strong>Feira de Ciências da Escola</strong>. Ela terá:</p>
     <ul>
-      <li>um cabeçalho com o nome do evento e um botão;</li>
-      <li>três cartões com os destaques, lado a lado (flexbox);</li>
-      <li>um rodapé com a data e o local.</li>
+      <li>um <strong>cabeçalho</strong> com o nome do evento, uma frase e um botão;</li>
+      <li>três ou mais <strong>cartões de destaque</strong>, lado a lado no computador e um embaixo do outro no celular;</li>
+      <li>uma seção de <strong>depoimentos</strong> de quem foi no ano passado;</li>
+      <li>um <strong>rodapé</strong> com a data e o local.</li>
     </ul>
-    <p>Use o que você viu nas aulas 241 (HTML) e 242 (CSS).</p>
+    <p>Por que gerar a página com Python, em vez de escrever o HTML à mão? Porque o conteúdo fica separado da aparência: para trocar um cartão ou adicionar um depoimento, você mexe só nos dados e roda o script de novo. É o mesmo princípio dos templates do Django (aula 202).</p>
+    <p>Crie uma pasta <code>feira</code> no computador. No fim, ela terá <code>dados.py</code>, <code>gerar_pagina.py</code>, <code>index.html</code> e <code>estilo.css</code>.</p>
 
-    <h2>Passo 1: o CSS</h2>
-    <p>Salve como <code>estilo.css</code>:</p>
-<pre class="codigo"><code>body { margin: 0; font-family: Arial, sans-serif; color: #222; }
-.topo { background: #0b6e4f; color: white; text-align: center; padding: 48px 16px; }
-.botao { background: #ffd23f; color: #222; padding: 12px 24px;
-         border-radius: 8px; text-decoration: none; font-weight: bold; }
-.destaques { display: flex; flex-wrap: wrap; gap: 16px; padding: 32px 16px;
-             justify-content: center; }
-.cartao { flex: 1 1 220px; max-width: 300px; padding: 16px;
-          border: 2px solid #0b6e4f; border-radius: 8px; }
-.rodape { background: #eee; text-align: center; padding: 16px; }</code></pre>
-    <p>O <code>flex-wrap: wrap</code> com <code>flex: 1 1 220px</code> faz os cartões descerem um embaixo do outro no celular, quando não cabem lado a lado.</p>
-
-    <h2>Passo 2: os dados em Python</h2>
-    <p>Em vez de escrever cada cartão à mão, guardamos o conteúdo numa lista de dicionários. Para mudar a página, basta mudar os dados:</p>
+    <h2>Passo 1: os dados</h2>
+    <p>Salve como <code>dados.py</code> dentro da pasta <code>feira</code>:</p>
 <pre class="codigo"><code>evento = {
     "nome": "Feira de Ciências 2026",
     "frase": "Venha ver os projetos dos alunos!",
@@ -60,55 +51,195 @@
 
 destaques = [
     {"titulo": "Robótica", "texto": "Robôs feitos com sucata e Arduino."},
-    {"titulo": "Química", "texto": "Vulcão de bicarbonato e outras reações."},
+    {"titulo": "Química", "texto": "Vulcão de bicarbonato &amp; outras reações."},
     {"titulo": "Programação", "texto": "Jogos criados em Python pelos alunos."},
-]</code></pre>
+]
 
-    <h2>Passo 3: o gerador da página</h2>
-    <p>Este script lê os dados e escreve <code>index.html</code>. Salve como <code>gerar_pagina.py</code>, na mesma pasta de <code>dados.py</code> e <code>estilo.css</code>, e rode com <code>python gerar_pagina.py</code>:</p>
-<pre class="codigo"><code>from pathlib import Path
-from dados import evento, destaques
+depoimentos = [
+    {"nome": "Prof. Carla", "texto": "A melhor feira dos últimos anos!"},
+    {"nome": "Rafael, 7º ano", "texto": "Meu robô andou sozinho na frente de todo mundo."},
+]</code></pre>
+    <p>Repare no <code>&amp;</code> do segundo destaque: ele vai testar se o nosso gerador escapa o texto direitinho.</p>
+
+    <h2>Passo 2: uma função para cada parte</h2>
+    <p>Cada parte da página vira uma função pequena que recebe dados e devolve um texto HTML. Funções pequenas são fáceis de testar uma de cada vez. Veja duas delas funcionando:</p>
+<pre class="codigo" data-executar="sim"><code>import html
 
 
 def cartao(item):
-    return (f'    &lt;div class="cartao"&gt;\n'
-            f'      &lt;h2&gt;{item["titulo"]}&lt;/h2&gt;\n'
-            f'      &lt;p&gt;{item["texto"]}&lt;/p&gt;\n'
-            f'    &lt;/div&gt;')
+    return (f'    &lt;article class="cartao"&gt;\n'
+            f'      &lt;h2&gt;{html.escape(item["titulo"])}&lt;/h2&gt;\n'
+            f'      &lt;p&gt;{html.escape(item["texto"])}&lt;/p&gt;\n'
+            f'    &lt;/article&gt;')
 
 
-cartoes = "\n".join(cartao(item) for item in destaques)
+def depoimento(item):
+    return (f'    &lt;blockquote&gt;\n'
+            f'      &lt;p&gt;“{html.escape(item["texto"])}”&lt;/p&gt;\n'
+            f'      &lt;cite&gt;{html.escape(item["nome"])}&lt;/cite&gt;\n'
+            f'    &lt;/blockquote&gt;')
 
-pagina = f"""&lt;!doctype html&gt;
+
+print(cartao({"titulo": "Química", "texto": "Vulcão de bicarbonato &amp; outras reações."}))
+print(depoimento({"nome": "Prof. Carla", "texto": "A melhor feira!"}))</code></pre>
+    <p class="saida">&nbsp;&nbsp;&nbsp;&nbsp;&lt;article class="cartao"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;h2&gt;Química&lt;/h2&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;Vulcão de bicarbonato &amp;amp; outras reações.&lt;/p&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/article&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;blockquote&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;“A melhor feira!”&lt;/p&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;cite&gt;Prof. Carla&lt;/cite&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/blockquote&gt;</p>
+    <p>O <code>&amp;</code> virou <code>&amp;amp;</code>, que o navegador mostra como <code>&amp;</code> normal.</p>
+
+    <h2>Passo 3: o CSS</h2>
+    <p>O CSS também é gerado pelo script, com as cores num dicionário (aula 242). Os pontos importantes:</p>
+    <ul>
+      <li><code>* { box-sizing: border-box; }</code> para as larguras não surpreenderem;</li>
+      <li><code>.destaques</code> usa <strong>flexbox</strong> com <code>flex-wrap: wrap</code>: os cartões descem para a linha de baixo quando não cabem;</li>
+      <li><code>.depoimentos</code> usa <strong>grid</strong> com duas colunas;</li>
+      <li>a <strong>media query</strong> deixa os depoimentos em uma coluna e diminui o título em telas de até 600px.</li>
+    </ul>
+    <p>Veja o trecho das cores sendo montado:</p>
+<pre class="codigo" data-executar="sim"><code>cores = {"principal": "#0b6e4f", "botao": "#ffd23f", "fundo_rodape": "#eeeeee"}
+
+trecho = f""".topo {{ background: {cores["principal"]}; color: white; }}
+.botao {{ background: {cores["botao"]}; }}
+.rodape {{ background: {cores["fundo_rodape"]}; }}"""
+print(trecho)</code></pre>
+    <p class="saida">.topo { background: #0b6e4f; color: white; }<br>
+.botao { background: #ffd23f; }<br>
+.rodape { background: #eeeeee; }</p>
+
+    <h2>Passo 4: o gerador completo</h2>
+    <p>Este é o programa inteiro. Salve como <code>gerar_pagina.py</code> na pasta <code>feira</code>, ao lado de <code>dados.py</code>, abra o terminal nessa pasta e rode com <code>python gerar_pagina.py</code> (<code>python3</code> no Linux e no Mac):</p>
+<pre class="codigo"><code>import html
+from pathlib import Path
+
+from dados import depoimentos, destaques, evento
+
+CORES = {"principal": "#0b6e4f", "botao": "#ffd23f", "texto": "#222222",
+         "fundo_rodape": "#eeeeee"}
+
+
+def esc(texto):
+    return html.escape(texto)
+
+
+def cartao(item):
+    return (f'    &lt;article class="cartao"&gt;\n'
+            f'      &lt;h2&gt;{esc(item["titulo"])}&lt;/h2&gt;\n'
+            f'      &lt;p&gt;{esc(item["texto"])}&lt;/p&gt;\n'
+            f'    &lt;/article&gt;')
+
+
+def depoimento(item):
+    return (f'    &lt;blockquote&gt;\n'
+            f'      &lt;p&gt;“{esc(item["texto"])}”&lt;/p&gt;\n'
+            f'      &lt;cite&gt;{esc(item["nome"])}&lt;/cite&gt;\n'
+            f'    &lt;/blockquote&gt;')
+
+
+def gerar_html():
+    cartoes = "\n".join(cartao(d) for d in destaques)
+    falas = "\n".join(depoimento(d) for d in depoimentos)
+    return f"""&lt;!doctype html&gt;
 &lt;html lang="pt-BR"&gt;
 &lt;head&gt;
   &lt;meta charset="utf-8"&gt;
   &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
-  &lt;title&gt;{evento["nome"]}&lt;/title&gt;
+  &lt;title&gt;{esc(evento["nome"])}&lt;/title&gt;
   &lt;link rel="stylesheet" href="estilo.css"&gt;
 &lt;/head&gt;
 &lt;body&gt;
   &lt;header class="topo"&gt;
-    &lt;h1&gt;{evento["nome"]}&lt;/h1&gt;
-    &lt;p&gt;{evento["frase"]}&lt;/p&gt;
+    &lt;h1&gt;{esc(evento["nome"])}&lt;/h1&gt;
+    &lt;p&gt;{esc(evento["frase"])}&lt;/p&gt;
     &lt;a class="botao" href="#local"&gt;Quero participar&lt;/a&gt;
   &lt;/header&gt;
-  &lt;main class="destaques"&gt;
+  &lt;main&gt;
+  &lt;section class="destaques"&gt;
 {cartoes}
+  &lt;/section&gt;
+  &lt;section class="depoimentos"&gt;
+{falas}
+  &lt;/section&gt;
   &lt;/main&gt;
   &lt;footer class="rodape" id="local"&gt;
-    &lt;p&gt;{evento["data"]} · {evento["local"]}&lt;/p&gt;
+    &lt;p&gt;{esc(evento["data"])} · {esc(evento["local"])}&lt;/p&gt;
   &lt;/footer&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 """
 
-Path("index.html").write_text(pagina, encoding="utf-8")
-print(f"Página gerada com {len(destaques)} cartões em index.html")</code></pre>
-    <p class="saida">Página gerada com 3 cartões em index.html</p>
-    <p>Abra <code>index.html</code> no navegador. O botão leva até o rodapé porque o link <code>href="#local"</code> aponta para o elemento com <code>id="local"</code>.</p>
-    <div class="atencao"><strong>Atenção:</strong> O <code>&lt;meta name="viewport" ...&gt;</code> é o que faz a página ficar boa no celular. Sem ele, o celular mostra a página minúscula, como se fosse uma tela de computador.</div>
-    <div class="dica"><strong>Dica:</strong> Desafios extras: adicione uma seção de depoimentos, troque as cores do tema, ou publique a página de graça com o GitHub Pages (veja a aula 244).</div>
+
+def gerar_css():
+    c = CORES
+    return f"""* {{ box-sizing: border-box; }}
+body {{ margin: 0; font-family: Arial, sans-serif; color: {c["texto"]}; }}
+.topo {{ background: {c["principal"]}; color: white; text-align: center; padding: 48px 16px; }}
+.topo h1 {{ font-size: 2.5rem; margin: 0 0 8px; }}
+.botao {{ display: inline-block; background: {c["botao"]}; color: {c["texto"]};
+         padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; }}
+.botao:hover {{ filter: brightness(0.9); }}
+.destaques {{ display: flex; flex-wrap: wrap; gap: 16px; padding: 32px 16px;
+             justify-content: center; }}
+.cartao {{ flex: 1 1 220px; max-width: 300px; padding: 16px;
+          border: 2px solid {c["principal"]}; border-radius: 8px; }}
+.depoimentos {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+               max-width: 800px; margin: 0 auto; padding: 0 16px 32px; }}
+blockquote {{ margin: 0; padding: 16px; border-left: 4px solid {c["principal"]};
+             background: #f7f7f7; }}
+cite {{ display: block; margin-top: 8px; font-weight: bold; }}
+.rodape {{ background: {c["fundo_rodape"]}; text-align: center; padding: 16px; }}
+
+@media (max-width: 600px) {{
+  .topo h1 {{ font-size: 1.8rem; }}
+  .depoimentos {{ grid-template-columns: 1fr; }}
+}}
+"""
+
+
+Path("index.html").write_text(gerar_html(), encoding="utf-8")
+Path("estilo.css").write_text(gerar_css(), encoding="utf-8")
+print(f"index.html: {len(destaques)} destaques e {len(depoimentos)} depoimentos")
+print("estilo.css:", gerar_css().count("{"), "blocos de regras")</code></pre>
+    <p class="saida">index.html: 3 destaques e 2 depoimentos<br>
+estilo.css: 15 blocos de regras</p>
+    <p>Agora abra o <code>index.html</code> com dois cliques (ou, no terminal, <code>start index.html</code> no Windows, <code>open index.html</code> no Mac, <code>xdg-open index.html</code> no Linux). O botão leva até o rodapé porque o link <code>href="#local"</code> aponta para o elemento com <code>id="local"</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>ModuleNotFoundError: No module named 'dados'</code>, o terminal não está na pasta <code>feira</code> ou o arquivo tem outro nome. Use <code>cd feira</code> e confira com <code>ls</code> (ou <code>dir</code>) que <code>dados.py</code> está ali.</div>
+    <div class="atencao"><strong>Atenção:</strong> O <code>&lt;meta name="viewport" ...&gt;</code> é o que faz a página ficar boa no celular. Sem ele, o celular mostra a página minúscula, como se fosse uma tela de computador, e a media query não funciona.</div>
+
+    <h2>Passo 5: conferir o resultado</h2>
+    <p>Antes de mostrar para alguém, confira se a página está bem formada. Este script lê o <code>index.html</code> gerado e conta as tags importantes com o <code>html.parser</code> (aula 241). Salve como <code>conferir.py</code> na mesma pasta e rode:</p>
+<pre class="codigo"><code>from collections import Counter
+from html.parser import HTMLParser
+from pathlib import Path
+
+
+class Contador(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.tags = Counter()
+
+    def handle_starttag(self, tag, attrs):
+        self.tags[tag] += 1
+
+
+c = Contador()
+c.feed(Path("index.html").read_text(encoding="utf-8"))
+for tag in ["header", "section", "article", "blockquote", "footer", "a"]:
+    print(f"{tag:10} {c.tags[tag]}")
+print("Tem viewport?", "viewport" in Path("index.html").read_text(encoding="utf-8"))</code></pre>
+    <p class="saida">header &nbsp;&nbsp;&nbsp;&nbsp;1<br>
+section &nbsp;&nbsp;&nbsp;2<br>
+article &nbsp;&nbsp;&nbsp;3<br>
+blockquote 2<br>
+footer &nbsp;&nbsp;&nbsp;&nbsp;1<br>
+a &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1<br>
+Tem viewport? True</p>
+    <p>Para ver como fica no celular, aperte F12 no navegador e clique no ícone de celular (modo dispositivo): os cartões ficam um embaixo do outro e os depoimentos viram uma coluna.</p>
+    <div class="dica"><strong>Dica:</strong> Desafios extras: troque as cores do tema, adicione um menu com <code>&lt;nav&gt;</code> e flexbox, crie uma seção de perguntas frequentes com <code>&lt;details&gt;</code> ou publique a página de graça com o GitHub Pages (veja a aula 244).</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -117,28 +248,74 @@ print(f"Página gerada com {len(destaques)} cartões em index.html")</code></pre
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Adicione aos dados um quarto destaque, "Astronomia", e rode o gerador de novo. Quantos cartões a página passa a ter?</p>
+      <p><strong>1.</strong> Adicione aos dados um quarto destaque, "Astronomia", e rode o gerador de novo. O que muda no código do gerador?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>destaques = [
+<pre class="codigo" data-executar="sim"><code>destaques = [
     {"titulo": "Robótica", "texto": "Robôs feitos com sucata e Arduino."},
-    {"titulo": "Química", "texto": "Vulcão de bicarbonato e outras reações."},
+    {"titulo": "Química", "texto": "Vulcão de bicarbonato &amp; outras reações."},
     {"titulo": "Programação", "texto": "Jogos criados em Python pelos alunos."},
     {"titulo": "Astronomia", "texto": "Telescópio caseiro e mapa do céu."},
 ]
 print(len(destaques), "cartões")</code></pre>
       <p class="saida">4 cartões</p>
-      <p>Basta acrescentar o dicionário na lista <code>destaques</code> do arquivo <code>dados.py</code>; o gerador cria o cartão novo sozinho.</p>
+      <p>Nada muda no gerador: basta acrescentar o dicionário na lista <code>destaques</code> do arquivo <code>dados.py</code>. O laço <code>"\n".join(cartao(d) for d in destaques)</code> cria o cartão novo sozinho.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva uma função <code>depoimento(nome, texto)</code> que devolva o HTML de um depoimento dentro de <code>&lt;blockquote&gt;</code>, com o nome numa tag <code>&lt;cite&gt;</code>, e teste com um exemplo.</p>
+      <p><strong>2.</strong> Escreva uma função <code>menu(itens)</code> que receba uma lista de pares <code>(texto, endereço)</code> e devolva um <code>&lt;nav&gt;</code> com um link para cada item. Teste com Destaques (<code>#destaques</code>) e Local (<code>#local</code>).</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>def depoimento(nome, texto):
-    return f"&lt;blockquote&gt;&lt;p&gt;{texto}&lt;/p&gt;&lt;cite&gt;{nome}&lt;/cite&gt;&lt;/blockquote&gt;"
+<pre class="codigo" data-executar="sim"><code>import html
 
 
-print(depoimento("Prof. Carla", "A melhor feira dos últimos anos!"))</code></pre>
-      <p class="saida">&lt;blockquote&gt;&lt;p&gt;A melhor feira dos últimos anos!&lt;/p&gt;&lt;cite&gt;Prof. Carla&lt;/cite&gt;&lt;/blockquote&gt;</p>
+def menu(itens):
+    links = "".join(f'&lt;a href="{html.escape(end)}"&gt;{html.escape(txt)}&lt;/a&gt;' for txt, end in itens)
+    return f"&lt;nav&gt;{links}&lt;/nav&gt;"
+
+
+print(menu([("Destaques", "#destaques"), ("Local", "#local")]))</code></pre>
+      <p class="saida">&lt;nav&gt;&lt;a href="#destaques"&gt;Destaques&lt;/a&gt;&lt;a href="#local"&gt;Local&lt;/a&gt;&lt;/nav&gt;</p>
+      <p>Para o link <code>#destaques</code> funcionar, coloque <code>id="destaques"</code> na <code>&lt;section class="destaques"&gt;</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que usamos <code>html.escape</code> nas funções do gerador, se fomos nós mesmos que escrevemos os dados?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque os dados podem mudar: um dia o depoimento pode vir de um formulário ou de uma<br>
+planilha. Um texto com &lt; ou &amp; quebraria a página (ou abriria espaço para um ataque XSS).<br>
+Escapar sempre é um hábito barato que evita esses problemas.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva a media query que, em telas de até 600px, deixa o texto do botão com 18px e a seção <code>.destaques</code> com <code>padding</code> de 16px.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>@media (max-width: 600px) {
+  .botao { font-size: 18px; }
+  .destaques { padding: 16px; }
+}</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça uma função <code>secao_faq(perguntas)</code> que receba uma lista de pares <code>(pergunta, resposta)</code> e devolva uma <code>&lt;section&gt;</code> com um <code>&lt;details&gt;</code> para cada par (a pergunta vai no <code>&lt;summary&gt;</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import html
+
+
+def secao_faq(perguntas):
+    partes = ['&lt;section class="faq"&gt;', "  &lt;h2&gt;Perguntas frequentes&lt;/h2&gt;"]
+    for pergunta, resposta in perguntas:
+        partes.append(f"  &lt;details&gt;&lt;summary&gt;{html.escape(pergunta)}&lt;/summary&gt;"
+                      f"&lt;p&gt;{html.escape(resposta)}&lt;/p&gt;&lt;/details&gt;")
+    partes.append("&lt;/section&gt;")
+    return "\n".join(partes)
+
+
+print(secao_faq([("Precisa pagar?", "Não, a entrada é grátis."),
+                 ("Pode levar a família?", "Pode e deve!")]))</code></pre>
+      <p class="saida">&lt;section class="faq"&gt;<br>
+&nbsp;&nbsp;&lt;h2&gt;Perguntas frequentes&lt;/h2&gt;<br>
+&nbsp;&nbsp;&lt;details&gt;&lt;summary&gt;Precisa pagar?&lt;/summary&gt;&lt;p&gt;Não, a entrada é grátis.&lt;/p&gt;&lt;/details&gt;<br>
+&nbsp;&nbsp;&lt;details&gt;&lt;summary&gt;Pode levar a família?&lt;/summary&gt;&lt;p&gt;Pode e deve!&lt;/p&gt;&lt;/details&gt;<br>
+&lt;/section&gt;</p>
       </details>
     </div>
 

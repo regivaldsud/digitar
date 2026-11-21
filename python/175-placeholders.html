@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 175 · Placeholders e como evitar SQL Injection — Curso de Python · DIGITAR</title>
-<meta name="description" content="Entenda o ataque de SQL Injection e por que sempre usar placeholders (?) para colocar valores nos comandos SQL.">
+<meta name="description" content="Entenda o ataque de SQL Injection, veja um login falso sendo enganado e aprenda a se proteger sempre com placeholders.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,58 +20,139 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que é SQL Injection e por que é perigoso</li>
-        <li>Como usar placeholders <code>?</code> e com nome (<code>:nome</code>)</li>
-        <li>Por que nunca montar SQL com f-string ou <code>+</code></li>
+        <li>Entender o que é SQL Injection e por que é tão perigoso</li>
+        <li>Ver na prática um login inseguro sendo enganado e consertá-lo</li>
+        <li>Usar placeholders <code>?</code> e com nome (<code>:nome</code>), inclusive com <code>executemany</code></li>
+        <li>Saber por que f-string, <code>+</code> e <code>format</code> não servem para montar SQL</li>
+        <li>Escolher nomes de tabela ou coluna com segurança usando uma lista de permitidos</li>
       </ul>
     </div>
 
-    <h2>O perigo de montar SQL com texto</h2>
-    <p>Imagine uma tela de login que monta o comando juntando textos. Se alguém digitar um "nome" esperto, ele muda o sentido do SQL. Isso se chama <strong>SQL Injection</strong> e é uma das falhas de segurança mais comuns do mundo:</p>
+    <h2>O perigo de montar SQL juntando textos</h2>
+    <p>Um comando SQL é só um texto. Quando o programa monta esse texto colando pedaços que vieram do usuário, quem digita pode <strong>mudar o sentido do comando</strong>. Esse ataque se chama <strong>SQL Injection</strong> ("injeção de SQL") e há décadas está entre as falhas de segurança mais comuns da internet.</p>
+    <p>Veja o que acontece quando alguém digita um "nome" esperto numa busca montada com f-string:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE usuarios (nome TEXT, senha TEXT)")
+con.execute("INSERT INTO usuarios VALUES ('ana', 'segredo123')")
+con.execute("INSERT INTO usuarios VALUES ('caio', 'abacaxi')")
+
+nome = "qualquer' OR '1'='1"
+sql = f"SELECT * FROM usuarios WHERE nome = '{nome}'"
+print(sql)
+print("Linhas encontradas:", con.execute(sql).fetchall())
+con.close()</code></pre>
+    <p class="saida">SELECT * FROM usuarios WHERE nome = 'qualquer' OR '1'='1'<br>
+Linhas encontradas: [('ana', 'segredo123'), ('caio', 'abacaxi')]</p>
+    <p>O texto digitado <strong>fechou a aspa</strong> e acrescentou <code>OR '1'='1'</code>, que é sempre verdadeiro. O banco obedeceu e devolveu todos os usuários, com as senhas.</p>
+    <div class="atencao"><strong>Atenção:</strong> Os exemplos desta aula são só para entender o ataque no seu próprio banco de treino. Tentar isso em sites e sistemas de outras pessoas é crime.</div>
+
+    <h2>Um login que pode ser enganado</h2>
+    <p>O caso clássico é a tela de login. O programa monta o comando com o nome <strong>e</strong> a senha digitados:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 con.execute("CREATE TABLE usuarios (nome TEXT, senha TEXT)")
 con.execute("INSERT INTO usuarios VALUES ('ana', 'segredo123')")
 
-nome = "qualquer' OR '1'='1"
-sql = f"SELECT * FROM usuarios WHERE nome = '{nome}'"
-print(sql)
-print("Linhas encontradas:", len(con.execute(sql).fetchall()))
+
+def login_inseguro(nome, senha):
+    sql = f"SELECT nome FROM usuarios WHERE nome = '{nome}' AND senha = '{senha}'"
+    linha = con.execute(sql).fetchone()
+    return linha is not None
+
+
+print("Senha certa:  ", login_inseguro("ana", "segredo123"))
+print("Senha errada: ", login_inseguro("ana", "chute"))
+print("Ataque:       ", login_inseguro("ana", "x' OR '1'='1"))
 con.close()</code></pre>
-    <p class="saida">SELECT * FROM usuarios WHERE nome = 'qualquer' OR '1'='1'<br>
-Linhas encontradas: 1</p>
-    <p>O texto digitado fechou a aspa e acrescentou <code>OR '1'='1'</code>, que é sempre verdadeiro. Resultado: o comando devolve usuários sem saber o nome certo.</p>
-    <div class="atencao"><strong>Atenção:</strong> Nunca monte comandos SQL com f-string, <code>+</code> ou <code>format</code> usando dados que vieram do usuário, de um formulário ou de um arquivo.</div>
+    <p class="saida">Senha certa: &nbsp;&nbsp;True<br>
+Senha errada: &nbsp;False<br>
+Ataque: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;True</p>
+    <p>Com a "senha" <code>x' OR '1'='1</code>, o comando final fica <code>... AND senha = 'x' OR '1'='1'</code>. Como o <code>OR '1'='1'</code> é sempre verdadeiro, o programa deixa a pessoa entrar <strong>sem saber a senha</strong>.</p>
 
     <h2>A solução: placeholders</h2>
-    <p>Com o <strong>placeholder</strong> <code>?</code>, você manda o comando e os valores separados. O banco trata o valor sempre como dado, nunca como parte do comando:</p>
+    <p>Com o <strong>placeholder</strong> <code>?</code>, o comando e os valores viajam <strong>separados</strong> até o banco. O banco primeiro entende o comando e depois encaixa cada valor no seu lugar, sempre como <strong>dado</strong>, nunca como parte do comando. Uma aspa dentro do valor vira só uma aspa, sem poder fechar nada.</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 con.execute("CREATE TABLE usuarios (nome TEXT, senha TEXT)")
 con.execute("INSERT INTO usuarios VALUES (?, ?)", ("ana", "segredo123"))
 
-nome = "qualquer' OR '1'='1"
-linhas = con.execute("SELECT * FROM usuarios WHERE nome = ?", (nome,)).fetchall()
-print("Linhas encontradas:", len(linhas))
-print(con.execute("SELECT nome FROM usuarios WHERE nome = ?", ("ana",)).fetchall())
+
+def login_seguro(nome, senha):
+    sql = "SELECT nome FROM usuarios WHERE nome = ? AND senha = ?"
+    linha = con.execute(sql, (nome, senha)).fetchone()
+    return linha is not None
+
+
+print("Senha certa:  ", login_seguro("ana", "segredo123"))
+print("Senha errada: ", login_seguro("ana", "chute"))
+print("Ataque:       ", login_seguro("ana", "x' OR '1'='1"))
+
+# de bônus: nomes com aspa, como D'Ávila, funcionam sem quebrar nada
+con.execute("INSERT INTO usuarios VALUES (?, ?)", ("Pedro D'Ávila", "mangaba"))
+print(con.execute("SELECT nome FROM usuarios WHERE nome = ?", ("Pedro D'Ávila",)).fetchone())
 con.close()</code></pre>
-    <p class="saida">Linhas encontradas: 0<br>
-[('ana',)]</p>
+    <p class="saida">Senha certa: &nbsp;&nbsp;True<br>
+Senha errada: &nbsp;False<br>
+Ataque: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;False<br>
+("Pedro D'Ávila",)</p>
+    <p>Repare que o mesmo cuidado resolve outro problema: com f-string, um nome como <code>D'Ávila</code> quebraria o comando com erro de sintaxe. Com placeholder, ele entra normalmente.</p>
+    <div class="dica"><strong>Dica:</strong> Num sistema de verdade, a senha também nunca é guardada como texto puro: guarda-se um "resumo" dela (um hash, com bibliotecas como <code>hashlib</code> ou <code>bcrypt</code>). Aqui deixamos a senha visível só para o exemplo ficar curto.</div>
 
     <h2>Placeholders com nome</h2>
-    <p>Quando há muitos valores, use <code>:nome</code> e passe um dicionário. Fica mais fácil de ler:</p>
+    <p>Quando há muitos valores, contar a posição de cada <code>?</code> fica confuso. Use <code>:nome</code> no comando e passe um <strong>dicionário</strong>:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 con.execute("CREATE TABLE contatos (nome TEXT, cidade TEXT, telefone TEXT)")
 contato = {"nome": "Beto", "cidade": "Belém", "telefone": "(91) 90000-0000"}
 con.execute("INSERT INTO contatos VALUES (:nome, :cidade, :telefone)", contato)
-print(con.execute("SELECT * FROM contatos WHERE cidade = :c", {"c": "Belém"}).fetchone())
+
+novos = [
+    {"nome": "Lia", "cidade": "Recife", "telefone": "(81) 90000-0001"},
+    {"nome": "Rui", "cidade": "Belém", "telefone": "(91) 90000-0002"},
+]
+con.executemany("INSERT INTO contatos VALUES (:nome, :cidade, :telefone)", novos)
+
+for linha in con.execute("SELECT nome, telefone FROM contatos WHERE cidade = :c", {"c": "Belém"}):
+    print(linha)
 con.close()</code></pre>
-    <p class="saida">('Beto', 'Belém', '(91) 90000-0000')</p>
-    <div class="dica"><strong>Dica:</strong> Placeholders servem só para <strong>valores</strong>. Nomes de tabela ou de coluna não podem ser <code>?</code>. Se precisar escolher a coluna, confira o nome contra uma lista de nomes permitidos.</div>
+    <p class="saida">('Beto', '(91) 90000-0000')<br>
+('Rui', '(91) 90000-0002')</p>
+    <p><code>executemany</code> roda o mesmo comando uma vez para cada item da lista. Funciona com tuplas e <code>?</code> ou com dicionários e <code>:nome</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> O número de valores precisa bater com o número de placeholders. <code>con.execute("... VALUES (?, ?)", ("Ana",))</code> dá <code>ProgrammingError: Incorrect number of bindings supplied</code>.</div>
+
+    <h2>O que não pode ser placeholder</h2>
+    <p>Placeholders servem só para <strong>valores</strong> (um texto, um número, uma data). Nomes de <strong>tabela</strong> e de <strong>coluna</strong> fazem parte do comando e não podem ser <code>?</code>. Se o usuário pode escolher, por exemplo, por qual coluna ordenar, confira a escolha contra uma <strong>lista de nomes permitidos</strong> antes de montar o comando:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (nome TEXT, idade INTEGER, cidade TEXT)")
+con.executemany("INSERT INTO alunos VALUES (?, ?, ?)",
+                [("Ana", 13, "Natal"), ("Caio", 12, "Cuiabá"), ("Bia", 14, "Aracaju")])
+
+PERMITIDAS = {"nome", "idade", "cidade"}
+
+
+def listar_ordenado(coluna):
+    if coluna not in PERMITIDAS:
+        raise ValueError(f"Coluna não permitida: {coluna!r}")
+    sql = f"SELECT nome, idade FROM alunos ORDER BY {coluna}"
+    return con.execute(sql).fetchall()
+
+
+print(listar_ordenado("idade"))
+try:
+    listar_ordenado("nome; DROP TABLE alunos")
+except ValueError as erro:
+    print(erro)
+con.close()</code></pre>
+    <p class="saida">[('Caio', 12), ('Ana', 13), ('Bia', 14)]<br>
+Coluna não permitida: 'nome; DROP TABLE alunos'</p>
+    <p>Aqui a f-string é aceitável <strong>só porque</strong> a coluna já foi conferida: ela é obrigatoriamente uma das três palavras da lista. Qualquer outra coisa é recusada antes de chegar ao banco.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -95,7 +176,7 @@ con.close()</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Insira três produtos com <code>executemany</code> e placeholders com nome, usando uma lista de dicionários.</p>
+      <p><strong>2.</strong> Insira três produtos com <code>executemany</code> e placeholders com nome, usando uma lista de dicionários. Depois mostre a quantidade e a soma dos preços.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
@@ -110,6 +191,63 @@ con.executemany("INSERT INTO produtos VALUES (:nome, :preco)", lista)
 print(con.execute("SELECT COUNT(*), SUM(preco) FROM produtos").fetchone())
 con.close()</code></pre>
       <p class="saida">(3, 30.5)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma busca insegura usa <code>f"SELECT * FROM filmes WHERE titulo = '{busca}'"</code>. Mostre que, com placeholder, a busca <code>' OR ''='</code> não encontra nada, enquanto a busca <code>Central do Brasil</code> encontra o filme.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE filmes (titulo TEXT, ano INTEGER)")
+con.executemany("INSERT INTO filmes VALUES (?, ?)",
+                [("Central do Brasil", 1998), ("Cidade de Deus", 2002)])
+for busca in ["' OR ''='", "Central do Brasil"]:
+    achou = con.execute("SELECT * FROM filmes WHERE titulo = ?", (busca,)).fetchall()
+    print(repr(busca), "-&gt;", achou)
+con.close()</code></pre>
+      <p class="saida">"' OR ''='" -&gt; []<br>
+'Central do Brasil' -&gt; [('Central do Brasil', 1998)]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva <code>contar_por(coluna)</code> que conta quantos alunos há em cada valor da coluna escolhida (<code>cidade</code> ou <code>turma</code>), recusando qualquer outra coluna com <code>ValueError</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (nome TEXT, cidade TEXT, turma TEXT)")
+con.executemany("INSERT INTO alunos VALUES (?, ?, ?)", [
+    ("Ana", "Natal", "7A"), ("Caio", "Natal", "7B"), ("Bia", "Recife", "7A"),
+])
+
+
+def contar_por(coluna):
+    if coluna not in {"cidade", "turma"}:
+        raise ValueError("coluna não permitida")
+    sql = f"SELECT {coluna}, COUNT(*) FROM alunos GROUP BY {coluna} ORDER BY {coluna}"
+    return con.execute(sql).fetchall()
+
+
+print(contar_por("cidade"))
+print(contar_por("turma"))
+try:
+    contar_por("senha")
+except ValueError as erro:
+    print("Recusado:", erro)
+con.close()</code></pre>
+      <p class="saida">[('Natal', 2), ('Recife', 1)]<br>
+[('7A', 2), ('7B', 1)]<br>
+Recusado: coluna não permitida</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Explique com suas palavras por que o placeholder impede o SQL Injection e a f-string não.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Com f-string, o valor digitado é colado DENTRO do texto do comando antes de ele<br>
+chegar ao banco. Uma aspa no valor pode fechar o texto e o resto vira comando.<br>
+Com placeholder, o comando e os valores vão separados: o banco entende o comando<br>
+primeiro e depois encaixa cada valor como dado. O valor nunca vira comando.</p>
       </details>
     </div>
 

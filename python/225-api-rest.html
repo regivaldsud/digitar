@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 225 · Introdução a APIs REST com Django — Curso de Python · DIGITAR</title>
-<meta name="description" content="Entenda o que é uma API REST e faça endpoints que devolvem JSON com o próprio Django.">
+<meta name="description" content="Entenda o que é uma API REST e crie com o próprio Django endpoints que listam, mostram, criam, alteram e apagam dados em JSON, tratando erros com os códigos de status certos.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,63 +20,336 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que é uma API REST e os métodos GET, POST, PUT e DELETE</li>
-        <li>Devolver JSON com <code>JsonResponse</code></li>
-        <li>Receber JSON num POST e conhecer o Django REST Framework</li>
+        <li>Entender o que é uma API REST: recursos, métodos HTTP e códigos de status</li>
+        <li>Devolver JSON com <code>JsonResponse</code> e ler o JSON recebido com <code>json.loads(request.body)</code></li>
+        <li>Responder erros com os códigos certos: 400, 404 e 405</li>
+        <li>Testar a API com o <code>Client</code> do Django e com o <code>curl</code></li>
+        <li>Conhecer o Django REST Framework, usado nas APIs maiores</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que é uma API</h2>
-    <p>Uma <strong>API</strong> é um site feito para programas, não para pessoas: em vez de HTML, ela devolve <strong>dados</strong>, quase sempre em JSON (aula 62). Um aplicativo de celular, por exemplo, busca os contatos numa API. No estilo <strong>REST</strong>, cada endereço representa um recurso e o método diz a ação:</p>
+    <p>Uma <strong>API</strong> é um site feito para <strong>programas</strong>, não para pessoas. Em vez de devolver uma página HTML bonita, ela devolve <strong>dados</strong>, quase sempre em JSON (aula 62). O aplicativo do celular, um site feito em JavaScript ou outro programa Python (aula 111, com <code>requests</code>) conversam com ela.</p>
+    <p>No estilo <strong>REST</strong>, cada endereço representa um <strong>recurso</strong> (as tarefas, uma tarefa) e o <strong>método</strong> do HTTP diz o que fazer com ele:</p>
     <ul>
-      <li><code>GET /api/contatos/</code> lista; <code>GET /api/contatos/5/</code> mostra um;</li>
-      <li><code>POST /api/contatos/</code> cria; <code>PUT</code> altera; <code>DELETE</code> apaga.</li>
+      <li><code>GET /api/tarefas/</code> lista as tarefas; <code>GET /api/tarefas/5/</code> mostra a tarefa 5;</li>
+      <li><code>POST /api/tarefas/</code> cria uma tarefa nova com os dados enviados;</li>
+      <li><code>PUT /api/tarefas/5/</code> altera a tarefa 5;</li>
+      <li><code>DELETE /api/tarefas/5/</code> apaga a tarefa 5.</li>
+    </ul>
+    <p>Repare: o endereço é sempre um <strong>substantivo</strong> (<code>tarefas</code>), nunca um verbo como <code>/apagar-tarefa/</code>. Quem diz a ação é o método.</p>
+
+    <h2>Os códigos de status</h2>
+    <p>Toda resposta HTTP vem com um número que diz como foi. Numa página, a pessoa lê a mensagem; numa API, o programa do outro lado <strong>olha o número</strong> para decidir o que fazer. O módulo <code>http</code> da biblioteca padrão tem todos eles com nome:</p>
+<pre class="codigo" data-executar="sim"><code>from http import HTTPStatus
+
+for codigo in [200, 201, 204, 400, 404, 405, 500]:
+    status = HTTPStatus(codigo)
+    print(codigo, status.phrase)
+
+print(HTTPStatus.NOT_FOUND.value)</code></pre>
+    <p class="saida">200 OK<br>
+201 Created<br>
+204 No Content<br>
+400 Bad Request<br>
+404 Not Found<br>
+405 Method Not Allowed<br>
+500 Internal Server Error<br>
+404</p>
+    <ul>
+      <li><strong>2xx</strong> deu certo: <code>200</code> (ok), <code>201</code> (criado), <code>204</code> (feito, sem nada para mostrar — comum ao apagar);</li>
+      <li><strong>4xx</strong> o erro foi de <strong>quem pediu</strong>: <code>400</code> (dados errados), <code>404</code> (não existe), <code>405</code> (método não permitido);</li>
+      <li><strong>5xx</strong> o erro foi do <strong>servidor</strong>: <code>500</code> é uma exceção no seu código.</li>
     </ul>
 
-    <h2>Uma API com JsonResponse</h2>
-<pre class="codigo"><code># contatos/api.py
-import json
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from .models import Contato
-
-
-def para_dict(contato):
-    return {"id": contato.pk, "nome": contato.nome, "telefone": contato.telefone}
-
-
-@csrf_exempt  # só para estudo: numa API real, use autenticação por token
-@require_http_methods(["GET", "POST"])
-def contatos(request):
-    if request.method == "GET":
-        dados = [para_dict(c) for c in Contato.objects.all()]
-        return JsonResponse(dados, safe=False)
-    corpo = json.loads(request.body)
-    novo = Contato.objects.create(nome=corpo["nome"], telefone=corpo["telefone"])
-    return JsonResponse(para_dict(novo), status=201)
-
-
-def contato(request, pk):
-    return JsonResponse(para_dict(get_object_or_404(Contato, pk=pk)))</code></pre>
-    <p class="saida">GET /api/contatos/<br>
-[{"id": 1, "nome": "Ana", "telefone": "81 99999-0000"}]</p>
-    <p><code>safe=False</code> é necessário para devolver uma <strong>lista</strong>; por padrão o <code>JsonResponse</code> só aceita dicionários. O status <code>201</code> significa "criado".</p>
-    <div class="atencao"><strong>Atenção:</strong> O <code>@csrf_exempt</code> desliga a proteção CSRF (aula 205). Use só para aprender; uma API de verdade precisa de autenticação.</div>
-
-    <h2>Testando a API</h2>
-    <p>Com o servidor rodando, teste num outro terminal com o <code>curl</code> (já vem no Windows 10 e 11):</p>
-<pre class="codigo"><code>curl http://127.0.0.1:8000/api/contatos/
-curl -X POST http://127.0.0.1:8000/api/contatos/ -H "Content-Type: application/json" -d "{\"nome\": \"Bia\", \"telefone\": \"11 95555-0000\"}"</code></pre>
-    <p>O formato dos dados é JSON comum, e dá para conferir aqui como o Python transforma o dicionário em texto:</p>
+    <h2>JSON: a língua da conversa</h2>
+    <p>O pedido e a resposta viajam como <strong>texto</strong>. Quem envia transforma o dicionário em texto JSON (<code>json.dumps</code>); quem recebe faz o contrário (<code>json.loads</code>). Se o texto não for um JSON válido, o <code>loads</code> levanta <code>JSONDecodeError</code> — e a API deve responder <code>400</code>, não quebrar:</p>
 <pre class="codigo" data-executar="sim"><code>import json
 
-contato = {"id": 2, "nome": "Bia", "telefone": "11 95555-0000"}
-print(json.dumps(contato, ensure_ascii=False))</code></pre>
-    <p class="saida">{"id": 2, "nome": "Bia", "telefone": "11 95555-0000"}</p>
-    <div class="dica"><strong>Dica:</strong> Para APIs maiores, use o <strong>Django REST Framework</strong> (<code>pip install djangorestframework</code>): ele traz serializers, autenticação, paginação e uma página para testar a API no navegador.</div>
+tarefa = {"id": 1, "titulo": "Estudar Python", "feita": False}
+texto = json.dumps(tarefa, ensure_ascii=False)
+print("Viaja assim:", texto)
+print("Tipo:", type(texto).__name__)
+
+de_volta = json.loads('{"titulo": "Ler um livro", "feita": true}')
+print("Chega assim:", de_volta, "-&gt;", type(de_volta).__name__)
+
+try:
+    json.loads("{titulo: sem aspas}")
+except json.JSONDecodeError as erro:
+    print("JSON inválido:", erro.msg)</code></pre>
+    <p class="saida">Viaja assim: {"id": 1, "titulo": "Estudar Python", "feita": false}<br>
+Tipo: str<br>
+Chega assim: {'titulo': 'Ler um livro', 'feita': True} -&gt; dict<br>
+JSON inválido: Expecting property name enclosed in double quotes</p>
+    <p>Note que o <code>false</code> do JSON vira <code>False</code> no Python, e <code>true</code> vira <code>True</code>.</p>
+
+    <h2>Uma API de mentira, em Python puro</h2>
+    <p>Antes do Django, veja a ideia inteira funcionando aqui no navegador. Uma API é, no fundo, um "roteador": olha o <strong>método</strong> e o <strong>caminho</strong> e chama a função certa, que devolve um <strong>status</strong> e um <strong>corpo</strong>:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+from http import HTTPStatus
+
+tarefas = {1: {"id": 1, "titulo": "Estudar Python", "feita": False}}
+
+
+def listar():
+    return HTTPStatus.OK, list(tarefas.values())
+
+
+def criar(corpo):
+    dados = json.loads(corpo)
+    if not dados.get("titulo"):
+        return HTTPStatus.BAD_REQUEST, {"erro": "o campo 'titulo' é obrigatório"}
+    novo_id = max(tarefas, default=0) + 1
+    tarefas[novo_id] = {"id": novo_id, "titulo": dados["titulo"], "feita": False}
+    return HTTPStatus.CREATED, tarefas[novo_id]
+
+
+def detalhe(tarefa_id):
+    if tarefa_id not in tarefas:
+        return HTTPStatus.NOT_FOUND, {"erro": "tarefa não encontrada"}
+    return HTTPStatus.OK, tarefas[tarefa_id]
+
+
+def api(metodo, caminho, corpo=""):
+    partes = caminho.strip("/").split("/")          # "/api/tarefas/1/" -&gt; ["api", "tarefas", "1"]
+    if partes[:2] != ["api", "tarefas"]:
+        return HTTPStatus.NOT_FOUND, {"erro": "endereço desconhecido"}
+    if len(partes) == 2:
+        if metodo == "GET":
+            return listar()
+        if metodo == "POST":
+            return criar(corpo)
+    elif len(partes) == 3 and metodo == "GET":
+        return detalhe(int(partes[2]))
+    return HTTPStatus.METHOD_NOT_ALLOWED, {"erro": f"{metodo} não é permitido aqui"}
+
+
+pedidos = [
+    ("GET", "/api/tarefas/", ""),
+    ("POST", "/api/tarefas/", '{"titulo": "Lavar a louça"}'),
+    ("POST", "/api/tarefas/", '{"titulo": ""}'),
+    ("GET", "/api/tarefas/2/", ""),
+    ("GET", "/api/tarefas/9/", ""),
+    ("DELETE", "/api/tarefas/", ""),
+]
+for metodo, caminho, corpo in pedidos:
+    status, resposta = api(metodo, caminho, corpo)
+    print(f"{metodo} {caminho} -&gt; {status.value} {json.dumps(resposta, ensure_ascii=False)}")</code></pre>
+    <p class="saida">GET /api/tarefas/ -&gt; 200 [{"id": 1, "titulo": "Estudar Python", "feita": false}]<br>
+POST /api/tarefas/ -&gt; 201 {"id": 2, "titulo": "Lavar a louça", "feita": false}<br>
+POST /api/tarefas/ -&gt; 400 {"erro": "o campo 'titulo' é obrigatório"}<br>
+GET /api/tarefas/2/ -&gt; 200 {"id": 2, "titulo": "Lavar a louça", "feita": false}<br>
+GET /api/tarefas/9/ -&gt; 404 {"erro": "tarefa não encontrada"}<br>
+DELETE /api/tarefas/ -&gt; 405 {"erro": "DELETE não é permitido aqui"}</p>
+    <p>O Django vai fazer o papel desse roteador (com o <code>urls.py</code>), do banco (com os models) e da conversão para texto (com o <code>JsonResponse</code>). O resto é a mesma lógica.</p>
+
+    <h2>Passo 1: o app e o model</h2>
+    <p>Num projeto Django (aula 200), crie um app só para as tarefas:</p>
+<pre class="codigo"><code>python manage.py startapp tarefas</code></pre>
+    <p>Acrescente <code>"tarefas"</code> em <code>INSTALLED_APPS</code> e escreva <code>tarefas/models.py</code>:</p>
+<pre class="codigo"><code># tarefas/models.py
+from django.db import models
+
+
+class Tarefa(models.Model):
+    titulo = models.CharField(max_length=100)
+    feita = models.BooleanField(default=False)
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["criada_em"]
+
+    def __str__(self):
+        return self.titulo</code></pre>
+    <p class="saida">(sem saída: depois rode makemigrations e migrate)</p>
+<pre class="codigo"><code>python manage.py makemigrations tarefas
+python manage.py migrate</code></pre>
+
+    <h2>Passo 2: as views da API</h2>
+    <p>Crie o arquivo <code>tarefas/api.py</code>. Ele tem duas views: uma para a coleção (<code>/api/tarefas/</code>) e outra para uma tarefa só (<code>/api/tarefas/5/</code>):</p>
+<pre class="codigo"><code># tarefas/api.py
+import json
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+from .models import Tarefa
+
+
+def para_dict(tarefa):
+    return {
+        "id": tarefa.pk,
+        "titulo": tarefa.titulo,
+        "feita": tarefa.feita,
+        "criada_em": tarefa.criada_em.isoformat(),
+    }
+
+
+def ler_json(request):
+    """Devolve (dados, None) ou (None, resposta_de_erro)."""
+    try:
+        dados = json.loads(request.body)
+    except json.JSONDecodeError:
+        return None, JsonResponse({"erro": "JSON inválido"}, status=400)
+    if not isinstance(dados, dict):
+        return None, JsonResponse({"erro": "envie um objeto JSON"}, status=400)
+    return dados, None
+
+
+def validar_titulo(dados):
+    titulo = str(dados.get("titulo", "")).strip()
+    if not titulo:
+        return None, JsonResponse({"erro": "o campo 'titulo' é obrigatório"}, status=400)
+    if len(titulo) &gt; 100:
+        return None, JsonResponse({"erro": "título com mais de 100 letras"}, status=400)
+    return titulo, None
+
+
+@csrf_exempt  # só para estudo: veja o aviso logo abaixo
+@require_http_methods(["GET", "POST"])
+def lista_tarefas(request):
+    if request.method == "GET":
+        dados = [para_dict(t) for t in Tarefa.objects.all()]
+        return JsonResponse(dados, safe=False)
+    dados, erro = ler_json(request)
+    if erro:
+        return erro
+    titulo, erro = validar_titulo(dados)
+    if erro:
+        return erro
+    nova = Tarefa.objects.create(titulo=titulo, feita=bool(dados.get("feita", False)))
+    return JsonResponse(para_dict(nova), status=201)
+
+
+@csrf_exempt
+@require_http_methods(["GET", "PUT", "DELETE"])
+def detalhe_tarefa(request, pk):
+    tarefa = Tarefa.objects.filter(pk=pk).first()
+    if tarefa is None:
+        return JsonResponse({"erro": "tarefa não encontrada"}, status=404)
+    if request.method == "GET":
+        return JsonResponse(para_dict(tarefa))
+    if request.method == "DELETE":
+        tarefa.delete()
+        return JsonResponse({}, status=204)
+    dados, erro = ler_json(request)
+    if erro:
+        return erro
+    titulo, erro = validar_titulo(dados)
+    if erro:
+        return erro
+    tarefa.titulo = titulo
+    tarefa.feita = bool(dados.get("feita", tarefa.feita))
+    tarefa.save()
+    return JsonResponse(para_dict(tarefa))</code></pre>
+    <p class="saida">(sem saída: as views rodam quando um programa chama a API)</p>
+    <ul>
+      <li><code>JsonResponse</code> transforma o dicionário em JSON e já põe o cabeçalho <code>Content-Type: application/json</code>. Para devolver uma <strong>lista</strong>, é preciso <code>safe=False</code>.</li>
+      <li><code>request.body</code> traz o corpo do pedido como bytes; o <code>json.loads</code> aceita bytes direto.</li>
+      <li><code>@require_http_methods</code> responde <code>405</code> sozinho a qualquer método fora da lista.</li>
+      <li>Para "não encontrado", usamos um <code>404</code> <strong>em JSON</strong>. O <code>get_object_or_404</code> também funcionaria, mas devolveria uma página HTML, que o programa do outro lado não sabe ler.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> O <code>@csrf_exempt</code> desliga a proteção CSRF (aula 205), porque um programa não tem como mandar o <code>csrf_token</code> de um formulário. Isso só é aceitável numa API <strong>com autenticação</strong> (por exemplo, um token secreto em cada pedido). Uma API sem login, aberta na internet, deixaria qualquer um criar e apagar as suas tarefas. Aqui é só para estudo, no seu computador.</div>
+    <p>Ligue os endereços em <code>tarefas/urls.py</code>:</p>
+<pre class="codigo"><code># tarefas/urls.py
+from django.urls import path
+from . import api
+
+urlpatterns = [
+    path("api/tarefas/", api.lista_tarefas, name="api_tarefas"),
+    path("api/tarefas/&lt;int:pk&gt;/", api.detalhe_tarefa, name="api_tarefa"),
+]</code></pre>
+    <p class="saida">(dois endereços: a coleção e cada tarefa)</p>
+    <p>E inclua no <code>config/urls.py</code>, dentro de <code>urlpatterns</code>: <code>path("", include("tarefas.urls")),</code>.</p>
+
+    <h2>Passo 3: testando com curl</h2>
+    <p>Com o <code>python manage.py runserver</code> rodando, abra <strong>outro</strong> terminal. O <code>curl</code> já vem no Windows 10 e 11 e no Linux/macOS. No Windows, use o Prompt de Comando (no PowerShell, o <code>curl</code> é outro comando):</p>
+<pre class="codigo"><code>curl http://127.0.0.1:8000/api/tarefas/
+curl -X POST http://127.0.0.1:8000/api/tarefas/ -H "Content-Type: application/json" -d "{\"titulo\": \"Estudar Python\"}"
+curl http://127.0.0.1:8000/api/tarefas/1/
+curl -X PUT http://127.0.0.1:8000/api/tarefas/1/ -d "{\"titulo\": \"Estudar Python\", \"feita\": true}"
+curl -i -X DELETE http://127.0.0.1:8000/api/tarefas/1/</code></pre>
+    <p class="saida">[]<br>
+{"id": 1, "titulo": "Estudar Python", "feita": false, "criada_em": "2026-11-21T14:30:00.123456+00:00"}<br>
+{"id": 1, "titulo": "Estudar Python", "feita": false, "criada_em": "2026-11-21T14:30:00.123456+00:00"}<br>
+{"id": 1, "titulo": "Estudar Python", "feita": true, "criada_em": "2026-11-21T14:30:00.123456+00:00"}<br>
+HTTP/1.1 204 No Content</p>
+    <p>O <code>-X</code> escolhe o método, o <code>-d</code> manda o corpo e o <code>-i</code> mostra também a linha de status. Abrir <code>http://127.0.0.1:8000/api/tarefas/</code> no navegador funciona para os GET, porque o navegador sempre faz GET.</p>
+    <div class="dica"><strong>Dica:</strong> Por padrão, o <code>JsonResponse</code> troca acentos por códigos como <code>á</code> (<code>"Lavar a louça"</code>). É JSON válido e qualquer programa entende, mas, para ler melhor, use <code>JsonResponse(dados, json_dumps_params={"ensure_ascii": False})</code>.</div>
+
+    <h2>Passo 4: testes automáticos da API</h2>
+    <p>O <code>Client</code> do Django (aula 211) faz pedidos de mentira, sem servidor, e é a melhor forma de garantir que a API continua respondendo certo. Coloque em <code>tarefas/tests.py</code>:</p>
+<pre class="codigo"><code># tarefas/tests.py
+from django.test import TestCase
+
+
+class ApiTarefasTeste(TestCase):
+    def criar(self, corpo):
+        return self.client.post("/api/tarefas/", corpo, content_type="application/json")
+
+    def test_criar_listar_alterar_apagar(self):
+        resposta = self.criar({"titulo": "Estudar Python"})
+        self.assertEqual(resposta.status_code, 201)
+        tarefa_id = resposta.json()["id"]
+        self.assertEqual(len(self.client.get("/api/tarefas/").json()), 1)
+        resposta = self.client.put(f"/api/tarefas/{tarefa_id}/",
+                                   {"titulo": "Estudar Django", "feita": True},
+                                   content_type="application/json")
+        self.assertEqual(resposta.json()["feita"], True)
+        self.assertEqual(self.client.delete(f"/api/tarefas/{tarefa_id}/").status_code, 204)
+        self.assertEqual(self.client.get(f"/api/tarefas/{tarefa_id}/").status_code, 404)
+
+    def test_erros(self):
+        self.assertEqual(self.criar({"titulo": ""}).status_code, 400)
+        self.assertEqual(self.criar("isto não é json").status_code, 400)
+        self.assertEqual(self.client.delete("/api/tarefas/").status_code, 405)
+        self.assertEqual(self.client.get("/api/tarefas/999/").json(), {"erro": "tarefa não encontrada"})</code></pre>
+<pre class="codigo"><code>python manage.py test tarefas</code></pre>
+    <p class="saida">Found 2 test(s).<br>
+Creating test database for alias 'default'...<br>
+System check identified no issues (0 silenced).<br>
+..<br>
+----------------------------------------------------------------------<br>
+Ran 2 tests in 0.040s<br>
+&nbsp;<br>
+OK<br>
+Destroying test database for alias 'default'...</p>
+    <p>Passar um dicionário com <code>content_type="application/json"</code> faz o <code>Client</code> transformá-lo em JSON sozinho, e <code>resposta.json()</code> faz o caminho de volta.</p>
+
+    <h2>O Django REST Framework</h2>
+    <p>Repare quanto código foi preciso só para uma tabela: converter para dicionário, ler o JSON, validar, responder cada erro. Em APIs maiores, quase todo mundo usa o <strong>Django REST Framework</strong> (DRF), que faz essas partes repetitivas e ainda traz login por token, paginação e uma página para testar a API no navegador:</p>
+<pre class="codigo"><code>pip install djangorestframework</code></pre>
+    <p>Com <code>"rest_framework"</code> em <code>INSTALLED_APPS</code>, a mesma API de tarefas fica assim:</p>
+<pre class="codigo"><code># tarefas/serializers.py
+from rest_framework import serializers
+from .models import Tarefa
+
+
+class TarefaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tarefa
+        fields = ["id", "titulo", "feita", "criada_em"]
+        read_only_fields = ["criada_em"]</code></pre>
+<pre class="codigo"><code># tarefas/drf.py
+from rest_framework import routers, viewsets
+from .models import Tarefa
+from .serializers import TarefaSerializer
+
+
+class TarefaViewSet(viewsets.ModelViewSet):
+    queryset = Tarefa.objects.all()
+    serializer_class = TarefaSerializer
+
+
+roteador = routers.DefaultRouter()
+roteador.register("v2/tarefas", TarefaViewSet)
+
+# config/urls.py: path("api/", include(roteador.urls)),</code></pre>
+    <p class="saida">GET /api/v2/tarefas/ &nbsp;-&gt; &nbsp;[{"id": 1, "titulo": "Estudar Python", "feita": false, "criada_em": "..."}]</p>
+    <p>O <strong>serializer</strong> faz a conversão e a validação (título obrigatório, até 100 letras, já tirados do model); o <strong>viewset</strong> cria sozinho listar, mostrar, criar, alterar e apagar, com os códigos de status certos; o <strong>router</strong> gera as URLs. Entender a versão "na mão" desta aula é o que faz o DRF deixar de parecer mágica.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -85,30 +358,104 @@ print(json.dumps(contato, ensure_ascii=False))</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie a função <code>para_dict</code> que também inclua o campo <code>favorito</code>, e teste a ideia com uma classe simples no lugar do model.</p>
+      <p><strong>1.</strong> Qual método HTTP e qual endereço você usaria para: (a) ver todas as tarefas; (b) criar uma; (c) marcar a tarefa 7 como feita; (d) apagar a tarefa 7?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class ContatoFalso:
-    def __init__(self, pk, nome, telefone, favorito):
-        self.pk = pk
-        self.nome = nome
-        self.telefone = telefone
-        self.favorito = favorito
-
-
-def para_dict(contato):
-    return {"id": contato.pk, "nome": contato.nome,
-            "telefone": contato.telefone, "favorito": contato.favorito}
-
-
-print(para_dict(ContatoFalso(3, "Caio", "21 94444-0000", True)))</code></pre>
-      <p class="saida">{'id': 3, 'nome': 'Caio', 'telefone': '21 94444-0000', 'favorito': True}</p>
+      <p class="saida">(a) GET &nbsp;&nbsp;&nbsp;/api/tarefas/<br>
+(b) POST &nbsp;&nbsp;/api/tarefas/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;com o JSON {"titulo": "..."} no corpo<br>
+(c) PUT &nbsp;&nbsp;&nbsp;/api/tarefas/7/ &nbsp;&nbsp;&nbsp;com o JSON {"titulo": "...", "feita": true}<br>
+(d) DELETE /api/tarefas/7/</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Qual método HTTP e qual endereço você usaria para apagar o contato de id 7 nessa API REST?</p>
+      <p><strong>2.</strong> Que código de status a nossa API devolve em cada caso? (a) tarefa criada; (b) <code>GET /api/tarefas/999/</code>, que não existe; (c) corpo <code>{titulo: x}</code>, sem aspas; (d) <code>DELETE /api/tarefas/</code>. Confira com <code>HTTPStatus</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>curl -X DELETE http://127.0.0.1:8000/api/contatos/7/</code></pre>
-      <p>DELETE no endereço do recurso. Para funcionar, a view <code>contato</code> precisaria tratar <code>request.method == "DELETE"</code>.</p>
+<pre class="codigo" data-executar="sim"><code>from http import HTTPStatus
+
+casos = {
+    "tarefa criada": 201,
+    "tarefa 999 não existe": 404,
+    "JSON inválido": 400,
+    "DELETE na coleção": 405,
+}
+for caso, codigo in casos.items():
+    print(f"{caso}: {codigo} {HTTPStatus(codigo).phrase}")</code></pre>
+      <p class="saida">tarefa criada: 201 Created<br>
+tarefa 999 não existe: 404 Not Found<br>
+JSON inválido: 400 Bad Request<br>
+DELETE na coleção: 405 Method Not Allowed</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Escreva em Python puro a função <code>validar(dados)</code>, que devolve uma lista de erros: o título é obrigatório e tem até 100 letras, e <code>feita</code>, se vier, precisa ser <code>True</code> ou <code>False</code>. Teste com três dicionários.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def validar(dados):
+    erros = []
+    titulo = str(dados.get("titulo", "")).strip()
+    if not titulo:
+        erros.append("titulo: obrigatório")
+    elif len(titulo) &gt; 100:
+        erros.append("titulo: até 100 letras")
+    if "feita" in dados and not isinstance(dados["feita"], bool):
+        erros.append("feita: use true ou false")
+    return erros
+
+
+print(validar({"titulo": "Estudar"}))
+print(validar({"titulo": "   ", "feita": "sim"}))
+print(validar({"titulo": "x" * 101}))</code></pre>
+      <p class="saida">[]<br>
+['titulo: obrigatório', 'feita: use true ou false']<br>
+['titulo: até 100 letras']</p>
+      <p>Validar é dizer <strong>todos</strong> os problemas de uma vez, para quem usa a API não ter que corrigir um erro por vez.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça a lista aceitar um filtro: <code>GET /api/tarefas/?feita=true</code> mostra só as feitas e <code>?feita=false</code>, só as pendentes. Altere só a parte do GET da view <code>lista_tarefas</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># tarefas/api.py (troque o começo de lista_tarefas)
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def lista_tarefas(request):
+    if request.method == "GET":
+        tarefas = Tarefa.objects.all()
+        filtro = request.GET.get("feita")
+        if filtro in ("true", "false"):
+            tarefas = tarefas.filter(feita=(filtro == "true"))
+        dados = [para_dict(t) for t in tarefas]
+        return JsonResponse(dados, safe=False)
+    # ... o resto (o POST) continua igual</code></pre>
+      <p>Os filtros de uma lista vêm na <strong>query string</strong> (depois do <code>?</code>), lida com <code>request.GET</code> como na aula 201. O <code>if filtro in (...)</code> ignora valores estranhos, como <code>?feita=talvez</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Na API de mentira em Python puro, acrescente a rota <code>DELETE /api/tarefas/N/</code>, que apaga a tarefa e devolve <code>204</code>, ou <code>404</code> se ela não existir.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from http import HTTPStatus
+
+tarefas = {1: {"id": 1, "titulo": "Estudar Python"}, 2: {"id": 2, "titulo": "Ler"}}
+
+
+def apagar(tarefa_id):
+    if tarefas.pop(tarefa_id, None) is None:
+        return HTTPStatus.NOT_FOUND, {"erro": "tarefa não encontrada"}
+    return HTTPStatus.NO_CONTENT, {}
+
+
+def api(metodo, caminho):
+    partes = caminho.strip("/").split("/")
+    if partes[:2] == ["api", "tarefas"] and len(partes) == 3 and metodo == "DELETE":
+        return apagar(int(partes[2]))
+    return HTTPStatus.METHOD_NOT_ALLOWED, {"erro": "não permitido"}
+
+
+for caminho in ["/api/tarefas/1/", "/api/tarefas/1/", "/api/tarefas/2/"]:
+    status, corpo = api("DELETE", caminho)
+    print("DELETE", caminho, "-&gt;", status.value, status.phrase, corpo)
+print("Sobrou:", tarefas)</code></pre>
+      <p class="saida">DELETE /api/tarefas/1/ -&gt; 204 No Content {}<br>
+DELETE /api/tarefas/1/ -&gt; 404 Not Found {'erro': 'tarefa não encontrada'}<br>
+DELETE /api/tarefas/2/ -&gt; 204 No Content {}<br>
+Sobrou: {}</p>
       </details>
     </div>
 

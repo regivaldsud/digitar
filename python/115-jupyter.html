@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 115 · Jupyter Notebook — Curso de Python · DIGITAR</title>
-<meta name="description" content="Use notebooks Jupyter no VS Code para misturar código, resultados e textos explicativos num só documento.">
+<meta name="description" content="Use notebooks Jupyter no VS Code para misturar código, resultados e textos explicativos num só documento, entendendo células, kernel e ordem de execução.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,36 +20,98 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que é um notebook e o que são células</li>
-        <li>Criar e rodar um notebook no VS Code</li>
-        <li>Quando um notebook ajuda e quando um arquivo <code>.py</code> é melhor</li>
+        <li>Entender o que é um notebook (<code>.ipynb</code>) e o que são células de código e de Markdown</li>
+        <li>Criar e rodar um notebook no VS Code com o pacote <code>ipykernel</code></li>
+        <li>Saber que o valor da última linha aparece sozinho e que as variáveis passam de uma célula para outra</li>
+        <li>Entender o kernel e por que a ordem de execução importa</li>
+        <li>Usar comandos mágicos como <code>%timeit</code> e saber quando preferir um arquivo <code>.py</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Código em pedacinhos</h2>
-    <p>Um <strong>notebook</strong> (arquivo <code>.ipynb</code>) é um documento dividido em <strong>células</strong>. Uma célula pode ter código, que você roda e vê o resultado logo embaixo, ou texto formatado em Markdown. Cientistas de dados usam notebooks o tempo todo para explorar dados passo a passo — do mesmo jeito que você roda os exemplos deste site um por vez.</p>
+    <p>Um <strong>notebook</strong> (arquivo <code>.ipynb</code>) é um documento dividido em <strong>células</strong>. Uma célula pode ter código, que você roda e vê o resultado logo embaixo, ou texto formatado em <strong>Markdown</strong> (títulos, listas, negrito). Fica parecido com um caderno de laboratório: você explica o que vai fazer, faz, vê o resultado e anota a conclusão.</p>
+    <p>Cientistas de dados e professores usam notebooks o tempo todo para explorar dados passo a passo — do mesmo jeito que você roda os exemplos deste site um por vez.</p>
+    <p>Os exemplos com botão <strong>Executar</strong> desta aula são o tipo de código que se escreve numa célula; os outros mostram o que só existe dentro do Jupyter.</p>
 
     <h2>Instalando e abrindo no VS Code</h2>
     <p>Dentro do seu ambiente virtual (aula 60), instale o pacote que roda as células:</p>
-<pre class="codigo"><code>pip install ipykernel</code></pre>
+<pre class="codigo"><code>python -m pip install ipykernel</code></pre>
     <ul>
-      <li>No VS Code, instale a extensão <strong>Jupyter</strong> (da Microsoft);</li>
-      <li>aperte <code>Ctrl+Shift+P</code>, digite <strong>Create: New Jupyter Notebook</strong> e escolha o Python do seu <code>.venv</code> no canto superior direito ("Select Kernel");</li>
-      <li>escreva o código numa célula e aperte <code>Shift+Enter</code> para rodar e ir para a próxima.</li>
+      <li>no VS Code, instale a extensão <strong>Jupyter</strong> (da Microsoft);</li>
+      <li>aperte <code>Ctrl+Shift+P</code>, digite <strong>Create: New Jupyter Notebook</strong> e salve o arquivo como <code>estudo.ipynb</code>;</li>
+      <li>no canto superior direito, clique em <strong>Select Kernel</strong> e escolha o Python do seu <code>.venv</code>;</li>
+      <li>escreva o código numa célula e aperte <code>Shift+Enter</code> para rodar e ir para a próxima (<code>Ctrl+Enter</code> roda e fica na mesma).</li>
     </ul>
+    <div class="dica"><strong>Dica:</strong> Prefere usar no navegador? Instale com <code>python -m pip install notebook</code> e abra com <code>jupyter notebook</code> no terminal. O Google Colab também roda notebooks direto na internet, sem instalar nada.</div>
 
-    <h2>Como as células funcionam</h2>
-    <p>As variáveis criadas numa célula continuam existindo nas outras. Imagine estas duas células:</p>
+    <h2>Células de Markdown</h2>
+    <p>Uma célula de Markdown não roda código: ela vira texto formatado. Você escreve com símbolos simples:</p>
+<pre class="codigo"><code># Análise das notas da turma
+Aqui eu calculo a **média** e a maior nota.
+- notas do 1º bimestre
+- notas do 2º bimestre</code></pre>
+    <p>O <code>#</code> vira título, <code>**...**</code> vira negrito e o <code>-</code> vira item de lista. No VS Code, troque o tipo da célula clicando em <strong>Markdown</strong> ou apertando <code>M</code> (com a célula selecionada, fora do modo de edição).</p>
+
+    <h2>A última linha aparece sozinha</h2>
+    <p>Na última linha de uma célula, você não precisa de <code>print</code>: o notebook mostra o valor da expressão. Imagine estas duas células:</p>
 <pre class="codigo"><code># célula 1
 notas = [7.5, 8.0, 9.5, 6.0]</code></pre>
 <pre class="codigo"><code># célula 2
 media = sum(notas) / len(notas)
 media</code></pre>
     <p class="saida">7.75</p>
-    <p>Na última linha de uma célula, não precisa de <code>print</code>: o notebook mostra o valor sozinho.</p>
-    <div class="atencao"><strong>Atenção:</strong> A ordem em que <strong>você</strong> roda as células vale mais que a ordem em que elas aparecem. Se rodar a célula 2 antes da 1, dá <code>NameError</code>. Quando tudo ficar confuso, use <strong>Restart</strong> e depois <strong>Run All</strong>.</div>
-    <div class="dica"><strong>Dica:</strong> Notebooks são ótimos para experimentar e explicar. Para programas que outras pessoas vão rodar, como os projetos deste curso, prefira arquivos <code>.py</code>.</div>
+    <p>Aqui no site (e num arquivo <code>.py</code>) não existe essa mágica, então usamos <code>print</code>. Este bloco junta as duas células num só:</p>
+<pre class="codigo" data-executar="sim"><code>notas = [7.5, 8.0, 9.5, 6.0]
+media = sum(notas) / len(notas)
+print(media)
+print("Maior nota:", max(notas))</code></pre>
+    <p class="saida">7.75<br>
+Maior nota: 9.5</p>
+    <div class="atencao"><strong>Atenção:</strong> Só a <strong>última</strong> linha aparece. Se uma célula tem <code>media</code> e depois <code>max(notas)</code>, o notebook mostra apenas o maior valor. Para ver vários resultados numa célula, use <code>print</code> em cada um.</div>
+
+    <h2>O kernel e a ordem de execução</h2>
+    <p>Quem roda as células é o <strong>kernel</strong>: um Python que fica ligado enquanto o notebook está aberto. Ele guarda todas as variáveis criadas, e por isso uma célula enxerga o que a outra criou.</p>
+    <p>A ordem em que <strong>você</strong> roda as células vale mais que a ordem em que elas aparecem na tela. O número entre colchetes ao lado de cada célula, como <code>[3]</code>, mostra em que ordem ela rodou. Veja o que acontece quando a mesma "célula" roda duas vezes:</p>
+<pre class="codigo" data-executar="sim"><code># célula 1
+pontos = 0
+
+# célula 2: rodada três vezes seguidas
+pontos = pontos + 10
+pontos = pontos + 10
+pontos = pontos + 10
+print(pontos)</code></pre>
+    <p class="saida">30</p>
+    <p>Num notebook, cada <code>Shift+Enter</code> na célula 2 soma mais 10 — o resultado depende de quantas vezes você rodou, e não do que está escrito. Isso confunde muita gente.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se rodar uma célula que usa uma variável antes da célula que a cria, aparece <code>NameError</code>. Quando tudo ficar confuso, use <strong>Restart</strong> (reinicia o kernel e apaga as variáveis) e depois <strong>Run All</strong> (roda tudo de cima para baixo). Se funcionar assim, o notebook está correto.</div>
+
+    <h2>Comandos mágicos</h2>
+    <p>Linhas que começam com <code>%</code> são <strong>comandos mágicos</strong>: só funcionam no Jupyter, não num arquivo <code>.py</code>.</p>
+<pre class="codigo"><code>%timeit sum(range(1000))
+%pip install matplotlib
+%who</code></pre>
+    <p class="saida">4.85 µs ± 61.2 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)<br>
+Successfully installed matplotlib-3.9.2<br>
+media	notas	pontos</p>
+    <ul>
+      <li><code>%timeit</code> mede quanto tempo um código demora, repetindo muitas vezes;</li>
+      <li><code>%pip install</code> instala um pacote no mesmo Python do kernel (evita instalar no Python errado);</li>
+      <li><code>%who</code> lista as variáveis que o kernel está guardando.</li>
+    </ul>
+    <p>Fora do Jupyter, dá para medir tempo com o módulo <code>timeit</code> da biblioteca padrão:</p>
+<pre class="codigo" data-executar="sim"><code>import timeit
+
+tempo = timeit.timeit("sum(range(1000))", number=1000)
+print(f"1000 repetições levaram {tempo:.4f} segundos")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+1000 repetições levaram 0.0150 segundos</p>
+
+    <h2>Notebook ou arquivo .py?</h2>
+    <ul>
+      <li><strong>Notebook</strong>: explorar dados, testar ideias, fazer gráficos, explicar um raciocínio com texto e resultados juntos;</li>
+      <li><strong>arquivo .py</strong>: programas que outras pessoas vão rodar, que você vai importar (aula 54), testar (módulo 6) ou guardar no Git (o <code>.ipynb</code> é um JSON grande e difícil de comparar).</li>
+    </ul>
+    <p>Um bom costume é explorar no notebook e, quando o código ficar bom, passar as funções para um arquivo <code>.py</code>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -60,14 +122,42 @@ media</code></pre>
     <div class="exercicio">
       <p><strong>1.</strong> Num notebook, você criou <code>preco = 10</code> na célula 1 e <code>preco * 3</code> na célula 2. Depois mudou a célula 1 para <code>preco = 20</code>, mas rodou só a célula 2. O que aparece?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">30. A célula 1 nova não foi rodada, então preco continua valendo 10.<br>
+      <p class="saida">30. A célula 1 nova não foi rodada, então preco continua valendo 10 no kernel.<br>
 Rode a célula 1 de novo (ou Run All) para ver 60.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Qual atalho roda a célula atual e passa para a próxima?</p>
+      <p><strong>2.</strong> Qual atalho roda a célula atual e passa para a próxima? E qual roda e fica na mesma célula?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Shift+Enter</p>
+      <p class="saida">Shift+Enter roda e vai para a próxima; Ctrl+Enter roda e fica na mesma.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma célula tem duas linhas: <code>len(notas)</code> e depois <code>sum(notas)</code>, com <code>notas = [5, 7, 9]</code>. O que o notebook mostra? Reescreva para mostrar os dois valores (aqui com <code>print</code>).</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>notas = [5, 7, 9]
+print(len(notas))
+print(sum(notas))</code></pre>
+      <p class="saida">3<br>
+21</p>
+      <p>O notebook mostraria só <code>21</code>, o valor da última linha. Com <code>print</code> em cada uma, aparecem os dois.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva uma célula de Markdown com um título "Minha análise" e uma lista com dois itens.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida"># Minha análise<br>
+- média da turma<br>
+- maior nota</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Um colega diz que o notebook dele "funciona", mas dá <code>NameError</code> depois de <strong>Restart</strong> e <strong>Run All</strong>. O que provavelmente aconteceu?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Ele rodou as células fora de ordem: alguma célula usa uma variável criada<br>
+numa célula que está mais abaixo (ou que ele apagou). Antes, o kernel ainda<br>
+guardava a variável; depois do Restart ela sumiu. A correção é colocar as<br>
+células na ordem certa, de cima para baixo.</p>
       </details>
     </div>
 

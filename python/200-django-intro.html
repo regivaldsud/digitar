@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 200 · O que é Django; startproject, manage.py, apps — Curso de Python · DIGITAR</title>
-<meta name="description" content="Conheça o Django, crie seu primeiro projeto e rode o servidor de desenvolvimento no computador.">
+<meta name="description" content="Conheça o Django, entenda o caminho de um pedido até a resposta, crie seu primeiro projeto, rode o servidor de desenvolvimento e organize o site em apps.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,43 +20,160 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que é um framework web e o que o Django faz por você</li>
+        <li>Saber o que é um framework web e o que o Django faz por você</li>
+        <li>Entender o caminho pedido → URL → view → resposta</li>
         <li>Criar um projeto com <code>django-admin startproject</code> e rodar o servidor</li>
-        <li>Entender o <code>manage.py</code> e criar um app com <code>startapp</code></li>
+        <li>Conhecer os arquivos do projeto e os comandos do <code>manage.py</code></li>
+        <li>Criar um app com <code>startapp</code> e registrá-lo em <code>INSTALLED_APPS</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que é o Django</h2>
-    <p>Um site tem muitas partes repetitivas: receber o pedido do navegador, falar com o banco de dados, montar o HTML, cuidar de login e segurança. O <strong>Django</strong> é um <strong>framework</strong>: um conjunto de peças prontas, em Python, que resolve tudo isso. Sites grandes como o Instagram começaram com Django.</p>
-    <p>Um site precisa de um servidor rodando, então todo este módulo é feito no seu computador.</p>
+    <p>Um site tem muitas partes que se repetem em todo projeto: receber o pedido do navegador, descobrir qual página foi pedida, falar com o banco de dados, montar o HTML, cuidar de login e de segurança.</p>
+    <p>O <strong>Django</strong> é um <strong>framework</strong> web: um conjunto de peças prontas, em Python, que resolve essas partes. Você escreve só o que é próprio do seu site. Sites grandes, como o Instagram, começaram com Django.</p>
+    <p>Neste módulo você vai construir sites de verdade: uma agenda de contatos (aula 207), um blog (aula 211) e uma loja (aula 215). Um site precisa de um servidor rodando, então os códigos do Django são feitos no seu computador. Os exemplos com o botão Executar mostram as ideias com Python puro.</p>
 
-    <h2>Criando o projeto</h2>
+    <h2>Como um site funciona: pedido e resposta</h2>
+    <p>Quando você digita um endereço, o navegador manda um <strong>pedido</strong> (request) ao servidor dizendo qual caminho quer, como <code>/contatos/</code>. O servidor procura esse caminho numa lista de <strong>rotas</strong> (as URLs), chama a função responsável (a <strong>view</strong>) e devolve uma <strong>resposta</strong> (response) com o HTML e um código de status: <code>200</code> quer dizer "deu certo" e <code>404</code> quer dizer "não encontrei".</p>
+    <p>O Django faz exatamente isso. Esta versão em miniatura, com um dicionário de rotas, roda aqui:</p>
+<pre class="codigo" data-executar="sim"><code>def inicio():
+    return 200, "&lt;h1&gt;Bem-vindo!&lt;/h1&gt;"
+
+
+def contatos():
+    return 200, "&lt;ul&gt;&lt;li&gt;Ana&lt;/li&gt;&lt;li&gt;Caio&lt;/li&gt;&lt;/ul&gt;"
+
+
+rotas = {
+    "/": inicio,
+    "/contatos/": contatos,
+}
+
+
+def atender(caminho):
+    view = rotas.get(caminho)
+    if view is None:
+        return 404, "&lt;h1&gt;Página não encontrada&lt;/h1&gt;"
+    return view()
+
+
+for pedido in ["/", "/contatos/", "/fotos/"]:
+    status, html = atender(pedido)
+    print(f"{pedido:&lt;12} -&gt; {status} {html}")</code></pre>
+    <p class="saida">/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; 200 &lt;h1&gt;Bem-vindo!&lt;/h1&gt;<br>
+/contatos/ &nbsp;&nbsp;-&gt; 200 &lt;ul&gt;&lt;li&gt;Ana&lt;/li&gt;&lt;li&gt;Caio&lt;/li&gt;&lt;/ul&gt;<br>
+/fotos/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; 404 &lt;h1&gt;Página não encontrada&lt;/h1&gt;</p>
+    <p>No Django, o dicionário <code>rotas</code> vira o arquivo <code>urls.py</code>, as funções <code>inicio</code> e <code>contatos</code> vão para o <code>views.py</code>, e o próprio Django faz o papel do <code>atender</code>. A aula 201 mostra isso em detalhes.</p>
+    <div class="dica"><strong>Dica:</strong> Guarde esta imagem: <strong>URL → view → resposta</strong>. Quase todo erro no Django é uma dessas três partes: a URL não bate, a view tem um erro, ou a resposta não é a esperada.</div>
+
+    <h2>Instalando e criando o projeto</h2>
+    <p>Abra o terminal (aula 03) e crie uma pasta para o site, com um ambiente virtual próprio (aula 60). No Windows:</p>
 <pre class="codigo"><code>mkdir meusite
 cd meusite
-python -m venv .venv
+py -m venv .venv
 .venv\Scripts\activate
 pip install django
 django-admin startproject config .
 python manage.py runserver</code></pre>
-    <p class="saida">Starting development server at http://127.0.0.1:8000/<br>
+    <p>No Linux e no macOS, troque as linhas do ambiente virtual por <code>python3 -m venv .venv</code> e <code>source .venv/bin/activate</code>; o resto é igual.</p>
+    <p class="saida">Watching for file changes with StatReloader<br>
+Performing system checks...<br>
+&nbsp;<br>
+System check identified no issues (0 silenced).<br>
+&nbsp;<br>
+You have 18 unapplied migration(s). ...<br>
+Django version 6.x, using settings 'config.settings'<br>
+Starting development server at http://127.0.0.1:8000/<br>
 Quit the server with CTRL-BREAK.</p>
-    <p>Abra <code>http://127.0.0.1:8000/</code> no navegador: aparece a página com um foguete dizendo que deu certo. Para parar o servidor, aperte <code>Ctrl+C</code> no terminal.</p>
-    <div class="dica"><strong>Dica:</strong> O ponto no fim de <code>startproject config .</code> cria o projeto na pasta atual, sem uma pasta extra dentro da outra. Chamar o projeto de <code>config</code> deixa claro que ali ficam as configurações.</div>
+    <p>Abra <code>http://127.0.0.1:8000/</code> no navegador: aparece uma página com um foguete dizendo que a instalação deu certo. Para parar o servidor, aperte <code>Ctrl+C</code> no terminal. O aviso das "migrations" não é erro: na aula 203 você cria o banco.</p>
+    <div class="dica"><strong>Dica:</strong> O ponto no fim de <code>startproject config .</code> cria o projeto na pasta atual, sem uma pasta <code>meusite</code> dentro de outra <code>meusite</code>. Chamar o projeto de <code>config</code> deixa claro que ali só ficam as configurações.</div>
+    <div class="atencao"><strong>Atenção:</strong> Se aparecer <code>'django-admin' não é reconhecido</code> ou <code>No module named django</code>, o ambiente virtual não está ativado (falta o <code>(.venv)</code> no começo da linha do terminal). Ative-o e tente de novo.</div>
 
     <h2>O que foi criado</h2>
     <p class="saida">meusite/<br>
+├── .venv/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- o ambiente virtual (não vai para o Git)<br>
 ├── manage.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- seu "controle remoto" do projeto<br>
 └── config/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;├── settings.py &nbsp;&nbsp;&nbsp;&lt;- configurações (apps, banco, idioma...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── __init__.py &nbsp;&nbsp;&nbsp;&lt;- faz de config um pacote Python (aula 55)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── settings.py &nbsp;&nbsp;&nbsp;&lt;- configurações: apps, banco, idioma...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;├── urls.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- quais endereços o site tem<br>
 &nbsp;&nbsp;&nbsp;&nbsp;├── asgi.py<br>
-&nbsp;&nbsp;&nbsp;&nbsp;└── wsgi.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- usados para publicar o site</p>
-    <p>O <code>manage.py</code> roda os comandos do projeto: <code>runserver</code>, <code>startapp</code>, <code>migrate</code>, <code>createsuperuser</code> e outros.</p>
+&nbsp;&nbsp;&nbsp;&nbsp;└── wsgi.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- os dois são usados para publicar o site</p>
+    <p>Para ver que é uma estrutura comum de pastas e arquivos, este exemplo monta a mesma árvore numa pasta temporária com <code>pathlib</code> (aula 103) e a desenha:</p>
+<pre class="codigo" data-executar="sim"><code>import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as tmp:
+    raiz = Path(tmp) / "meusite"
+    for arquivo in ["manage.py", "config/__init__.py", "config/settings.py",
+                    "config/urls.py", "config/asgi.py", "config/wsgi.py"]:
+        caminho = raiz / arquivo
+        caminho.parent.mkdir(parents=True, exist_ok=True)
+        caminho.touch()
+
+    print(raiz.name + "/")
+    for item in sorted(raiz.rglob("*")):
+        nivel = len(item.relative_to(raiz).parts) - 1
+        nome = item.name + ("/" if item.is_dir() else "")
+        print("    " * nivel + "├── " + nome)</code></pre>
+    <p class="saida">meusite/<br>
+├── config/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── __init__.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── asgi.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── settings.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── urls.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── wsgi.py<br>
+├── manage.py</p>
+    <p>O arquivo que você mais vai abrir no começo é o <code>settings.py</code>. Vale ajustar logo o idioma e o fuso, para as mensagens do Django aparecerem em português e as horas no horário de Brasília:</p>
+<pre class="codigo"><code># config/settings.py (trecho)
+LANGUAGE_CODE = "pt-br"
+TIME_ZONE = "America/Sao_Paulo"
+USE_I18N = True
+USE_TZ = True</code></pre>
+    <p class="saida">(salve e recarregue a página do foguete: os textos dela aparecem em português)</p>
+
+    <h2>O manage.py, seu controle remoto</h2>
+    <p>O <code>manage.py</code> roda os comandos do projeto. Sempre rode na pasta onde ele está, com o ambiente virtual ativado:</p>
+    <ul>
+      <li><code>python manage.py runserver</code> liga o servidor de desenvolvimento;</li>
+      <li><code>python manage.py startapp nome</code> cria um app;</li>
+      <li><code>python manage.py check</code> procura erros de configuração sem ligar o servidor;</li>
+      <li><code>python manage.py migrate</code> cria ou atualiza as tabelas do banco (aula 203);</li>
+      <li><code>python manage.py createsuperuser</code> cria o usuário administrador (aula 203);</li>
+      <li><code>python manage.py shell</code> abre o Python já com o projeto carregado (aula 204).</li>
+    </ul>
+    <p>Por dentro, o <code>manage.py</code> é um arquivo Python bem curto, gerado pelo Django. Ele só diz onde estão as configurações e passa o comando adiante:</p>
+<pre class="codigo"><code># manage.py (gerado pelo Django; resumido)
+import os
+import sys
+
+
+def main():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+<pre class="codigo"><code>python manage.py check</code></pre>
+    <p class="saida">System check identified no issues (0 silenced).</p>
+    <p>Repare no <code>if __name__ == "__main__"</code> da aula 100 e no <code>sys.argv</code> da aula 110: o <code>manage.py</code> usa coisas que você já conhece.</p>
 
     <h2>Apps: as partes do site</h2>
-    <p>Um projeto Django é dividido em <strong>apps</strong>, cada um cuidando de uma parte (blog, loja, contatos). Crie um e registre no <code>settings.py</code>:</p>
+    <p>Um projeto Django é dividido em <strong>apps</strong>, e cada app cuida de uma parte do site: contatos, blog, loja, usuários. Assim, cada parte fica numa pasta própria e pode até ser reaproveitada em outro projeto.</p>
+    <p>Crie o app <code>contatos</code>, que vai crescer ao longo do módulo até virar a agenda da aula 207:</p>
 <pre class="codigo"><code>python manage.py startapp contatos</code></pre>
+    <p class="saida">contatos/<br>
+├── migrations/ &nbsp;&nbsp;&lt;- histórico das mudanças no banco<br>
+├── __init__.py<br>
+├── admin.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- o que aparece na área administrativa<br>
+├── apps.py<br>
+├── models.py &nbsp;&nbsp;&nbsp;&nbsp;&lt;- as tabelas (aula 203)<br>
+├── tests.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- os testes (módulo 6)<br>
+└── views.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- as views (aula 201)</p>
+    <p>Criar a pasta não basta: é preciso <strong>registrar</strong> o app no <code>settings.py</code>, acrescentando o nome dele no fim da lista <code>INSTALLED_APPS</code>:</p>
 <pre class="codigo"><code># config/settings.py (trecho)
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -66,11 +183,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "contatos",
-]
-
-LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "America/Sao_Paulo"</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> Esquecer de pôr o app em <code>INSTALLED_APPS</code> é um erro clássico: os models e templates dele não são encontrados.</div>
+]</code></pre>
+    <p class="saida">(rode python manage.py check de novo: continua sem problemas)</p>
+    <p>Os seis primeiros itens são apps que já vêm com o Django: a área administrativa, os usuários e senhas, as sessões e outros.</p>
+    <div class="atencao"><strong>Atenção:</strong> Esquecer de pôr o app em <code>INSTALLED_APPS</code> é um erro clássico: o Django não encontra os models nem os templates dele, e os erros aparecem só mais tarde, parecendo não ter nada a ver.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -79,18 +195,60 @@ TIME_ZONE = "America/Sao_Paulo"</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Quais comandos criam um projeto <code>config</code> na pasta atual e um app chamado <code>receitas</code>?</p>
+      <p><strong>1.</strong> Quais comandos criam um projeto <code>config</code> na pasta atual e um app chamado <code>receitas</code>? O que falta fazer depois?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>django-admin startproject config .
 python manage.py startapp receitas</code></pre>
-      <p>Depois, acrescente <code>"receitas"</code> em <code>INSTALLED_APPS</code>.</p>
+      <p>Depois, acrescente <code>"receitas"</code> no fim da lista <code>INSTALLED_APPS</code>, em <code>config/settings.py</code>.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> O servidor mostrou <code>Error: That port is already in use.</code> O que fazer?</p>
+      <p><strong>2.</strong> No mini-servidor da aula, acrescente uma view <code>sobre</code> para o caminho <code>/sobre/</code> que devolve <code>&lt;p&gt;Site feito em Python&lt;/p&gt;</code> e teste os caminhos <code>/sobre/</code> e <code>/Sobre/</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def inicio():
+    return 200, "&lt;h1&gt;Bem-vindo!&lt;/h1&gt;"
+
+
+def sobre():
+    return 200, "&lt;p&gt;Site feito em Python&lt;/p&gt;"
+
+
+rotas = {"/": inicio, "/sobre/": sobre}
+
+
+def atender(caminho):
+    view = rotas.get(caminho)
+    if view is None:
+        return 404, "&lt;h1&gt;Página não encontrada&lt;/h1&gt;"
+    return view()
+
+
+for pedido in ["/sobre/", "/Sobre/"]:
+    print(pedido, "-&gt;", atender(pedido))</code></pre>
+      <p class="saida">/sobre/ -&gt; (200, '&lt;p&gt;Site feito em Python&lt;/p&gt;')<br>
+/Sobre/ -&gt; (404, '&lt;h1&gt;Página não encontrada&lt;/h1&gt;')</p>
+      <p>Os caminhos diferenciam maiúsculas de minúsculas: <code>/Sobre/</code> não é a mesma rota que <code>/sobre/</code> e dá 404. No Django acontece o mesmo.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> O servidor mostrou <code>Error: That port is already in use.</code> O que aconteceu e como resolver?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>python manage.py runserver 8001</code></pre>
-      <p>Outro programa (talvez outro servidor seu) já usa a porta 8000. Feche-o com <code>Ctrl+C</code> ou rode em outra porta, como 8001.</p>
+      <p>Outro programa (talvez outro terminal com o seu servidor) já usa a porta 8000. Feche-o com <code>Ctrl+C</code> ou rode em outra porta, como 8001, e abra <code>http://127.0.0.1:8001/</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Em qual arquivo você muda o idioma do site para português? E em qual ficam os endereços do site?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O idioma fica em config/settings.py, na linha LANGUAGE_CODE = "pt-br".<br>
+Os endereços (as rotas) ficam em config/urls.py.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Você digitou <code>python manage.py runserver</code> e apareceu <code>can't open file 'manage.py': No such file or directory</code>. O que está errado?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O terminal não está na pasta do projeto (a que tem o manage.py).<br>
+Use cd para entrar na pasta meusite e rode o comando de novo.</p>
       </details>
     </div>
 

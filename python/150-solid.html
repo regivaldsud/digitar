@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 150 · Princípios SOLID em Python — Curso de Python · DIGITAR</title>
-<meta name="description" content="Conheça os cinco princípios SOLID com exemplos curtos em Python e veja como eles deixam o código mais fácil de mudar.">
+<meta name="description" content="Conheça os cinco princípios SOLID, veja cada um com um exemplo de antes e depois em Python e entenda quando eles ajudam e quando são exagero.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,24 +20,43 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que significa cada letra de SOLID</li>
-        <li>Como separar responsabilidades em classes pequenas</li>
-        <li>Como depender de uma "ideia" (abstração) em vez de uma classe concreta</li>
+        <li>Saber o que significa cada letra de SOLID e por que esses conselhos existem</li>
+        <li>Separar responsabilidades em classes e funções pequenas (S)</li>
+        <li>Acrescentar comportamento novo sem mexer no que já funciona (O)</li>
+        <li>Garantir que uma classe filha possa substituir a mãe sem surpresas (L)</li>
+        <li>Criar interfaces pequenas e depender de abstrações, não de detalhes (I e D)</li>
       </ul>
     </div>
 
-    <h2>O que é SOLID</h2>
-    <p>SOLID é um conjunto de cinco conselhos para escrever classes que não viram um "monstro" difícil de mexer. Não são leis: são ideias que ajudam quando o programa cresce.</p>
+    <h2>Por que existem princípios de projeto</h2>
+    <p>Programas pequenos cabem na cabeça. Quando o programa cresce, cada mudança começa a quebrar outra coisa lá longe. Quase sempre o motivo é o mesmo: partes do código <strong>dependem demais umas das outras</strong>.</p>
+    <p>SOLID é um conjunto de cinco conselhos, juntados pelo programador Robert C. Martin, para escrever classes que continuam fáceis de mudar. O nome vem da primeira letra de cada princípio em inglês:</p>
     <ul>
-      <li><strong>S</strong> — Responsabilidade única: cada classe cuida de uma coisa só.</li>
-      <li><strong>O</strong> — Aberto/fechado: dá para acrescentar comportamento novo sem reescrever o que já funciona.</li>
-      <li><strong>L</strong> — Substituição de Liskov: uma classe filha deve funcionar em qualquer lugar onde a mãe funciona (aula 79).</li>
-      <li><strong>I</strong> — Segregação de interfaces: é melhor ter várias interfaces pequenas do que uma enorme.</li>
-      <li><strong>D</strong> — Inversão de dependência: dependa de abstrações, não de detalhes.</li>
+      <li><strong>S</strong> — Single responsibility (responsabilidade única): cada classe cuida de uma coisa só.</li>
+      <li><strong>O</strong> — Open/closed (aberto/fechado): dá para acrescentar comportamento sem reescrever o que já funciona.</li>
+      <li><strong>L</strong> — Liskov substitution (substituição de Liskov): a filha funciona em qualquer lugar onde a mãe funciona.</li>
+      <li><strong>I</strong> — Interface segregation (segregação de interfaces): várias interfaces pequenas são melhores que uma enorme.</li>
+      <li><strong>D</strong> — Dependency inversion (inversão de dependência): dependa de abstrações, não de detalhes.</li>
     </ul>
+    <p>Eles não são leis. São perguntas que você faz quando o código começa a doer: "se eu mudar isto, o que mais quebra?".</p>
 
     <h2>S: uma responsabilidade por classe</h2>
-    <p>Imagine uma classe de boletim que calcula a média <strong>e</strong> imprime <strong>e</strong> salva em arquivo. Qualquer mudança no formato da impressão mexe na mesma classe do cálculo. Separando, cada parte muda sozinha:</p>
+    <p>Uma classe tem "uma responsabilidade" quando existe <strong>um só motivo</strong> para ela mudar. Veja um boletim que calcula a média, monta o texto e ainda "salva":</p>
+<pre class="codigo" data-executar="sim"><code>class Boletim:
+    def __init__(self, aluno, notas):
+        self.aluno = aluno
+        self.notas = notas
+
+    def processar(self):
+        media = sum(self.notas) / len(self.notas)       # cálculo
+        texto = f"{self.aluno}: média {media:.1f}"     # apresentação
+        print("Salvando:", texto)                     # armazenamento
+        return texto
+
+
+Boletim("Marina", [8, 7.5, 9]).processar()</code></pre>
+    <p class="saida">Salvando: Marina: média 8.2</p>
+    <p>Se a escola mudar o jeito de calcular a média, você mexe nessa classe. Se mudar o formato do texto, mexe de novo. Se trocar o lugar onde salva, de novo. Três motivos para mudar no mesmo lugar. Separando, cada parte muda sozinha:</p>
 <pre class="codigo" data-executar="sim"><code>class Boletim:
     def __init__(self, aluno, notas):
         self.aluno = aluno
@@ -47,113 +66,268 @@
         return sum(self.notas) / len(self.notas)
 
 
-class ImpressoraDeBoletim:
-    def imprimir(self, boletim):
-        print(f"{boletim.aluno}: média {boletim.media():.1f}")
+def formatar(boletim):
+    return f"{boletim.aluno}: média {boletim.media():.1f}"
+
+
+class Arquivo:
+    def __init__(self):
+        self.linhas = []
+
+    def salvar(self, texto):
+        self.linhas.append(texto)
 
 
 b = Boletim("Marina", [8, 7.5, 9])
-ImpressoraDeBoletim().imprimir(b)</code></pre>
-    <p class="saida">Marina: média 8.2</p>
+arquivo = Arquivo()
+arquivo.salvar(formatar(b))
+print(arquivo.linhas)</code></pre>
+    <p class="saida">['Marina: média 8.2']</p>
+    <div class="dica"><strong>Dica:</strong> Em Python, nem tudo precisa ser classe. Uma função simples como <code>formatar</code> já é uma "responsabilidade única" perfeita.</div>
 
-    <h2>O e D: aberto para extensão, dependendo de abstrações</h2>
-    <p>Aqui a loja calcula o frete sem saber qual transportadora é usada. Para criar uma transportadora nova, basta uma classe nova; a <code>Loja</code> não muda:</p>
+    <h2>O: aberto para estender, fechado para modificar</h2>
+    <p>Uma loja calcula o frete com uma fila de <code>if</code>. Cada transportadora nova obriga você a abrir e editar essa função, correndo o risco de estragar as que já funcionavam:</p>
+<pre class="codigo" data-executar="sim"><code>def frete(tipo, peso):
+    if tipo == "correio":
+        return 10 + peso * 2
+    elif tipo == "moto":
+        return 15.0
+    # nova transportadora? mais um elif aqui dentro...
+    raise ValueError("tipo desconhecido")
+
+
+print(frete("correio", 3))
+print(frete("moto", 3))</code></pre>
+    <p class="saida">16<br>
+15.0</p>
+    <p>A versão "aberta para extensão" guarda cada regra num objeto separado. Para uma transportadora nova, você <strong>acrescenta</strong> uma classe; a função <code>cotar</code> não muda:</p>
+<pre class="codigo" data-executar="sim"><code>class Correio:
+    def preco(self, peso):
+        return 10 + peso * 2
+
+
+class Motoboy:
+    def preco(self, peso):
+        return 15.0
+
+
+class Drone:                      # novidade: nenhuma linha antiga mudou
+    def preco(self, peso):
+        return 30.0 if peso &lt;= 2 else 60.0
+
+
+def cotar(transportadoras, peso):
+    for t in transportadoras:
+        print(f"{type(t).__name__:&lt;8} R$ {t.preco(peso):.2f}")
+
+
+cotar([Correio(), Motoboy(), Drone()], 3)</code></pre>
+    <p class="saida">Correio &nbsp;R$ 16.00<br>
+Motoboy &nbsp;R$ 15.00<br>
+Drone &nbsp;&nbsp;&nbsp;R$ 60.00</p>
+
+    <h2>L: a filha precisa servir no lugar da mãe</h2>
+    <p>A aula 79 mostrou o princípio de Liskov: se uma função recebe um <code>Passaro</code>, qualquer filha de <code>Passaro</code> deve funcionar ali sem surpresa. O exemplo clássico de erro é o quadrado que herda do retângulo:</p>
+<pre class="codigo" data-executar="sim"><code>class Retangulo:
+    def __init__(self, largura, altura):
+        self.largura = largura
+        self.altura = altura
+
+    def definir_largura(self, valor):
+        self.largura = valor
+
+    def area(self):
+        return self.largura * self.altura
+
+
+class Quadrado(Retangulo):
+    def __init__(self, lado):
+        super().__init__(lado, lado)
+
+    def definir_largura(self, valor):   # quadrado muda os dois lados!
+        self.largura = valor
+        self.altura = valor
+
+
+def dobrar_largura(r):
+    r.definir_largura(r.largura * 2)
+    return r.area()
+
+
+print("Retângulo 2x3 -&gt;", dobrar_largura(Retangulo(2, 3)), "(esperado 12)")
+print("Quadrado 2x2  -&gt;", dobrar_largura(Quadrado(2)), "(esperado 8)")</code></pre>
+    <p class="saida">Retângulo 2x3 -&gt; 12 (esperado 12)<br>
+Quadrado 2x2 &nbsp;-&gt; 16 (esperado 8)</p>
+    <p>Quem escreveu <code>dobrar_largura</code> contava que a altura não mudaria. O <code>Quadrado</code> quebrou essa promessa. A saída é não forçar a herança: <code>Quadrado</code> e <code>Retangulo</code> podem ser classes irmãs, filhas de uma <code>Forma</code> que só promete <code>area()</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> "É um" na vida real não garante herança no código. Pergunte: a filha cumpre <strong>todas</strong> as promessas da mãe? Se ela precisa desligar ou mudar o sentido de um método, a herança está errada.</div>
+
+    <h2>I: interfaces pequenas</h2>
+    <p>Se uma interface obriga todo mundo a ter métodos que não fazem sentido, as classes acabam com métodos "falsos" que só dão erro. Separe em pedaços pequenos e cada classe pega só o que usa:</p>
 <pre class="codigo" data-executar="sim"><code>from abc import ABC, abstractmethod
 
 
-class Frete(ABC):
+class Imprime(ABC):
     @abstractmethod
-    def calcular(self, peso_kg):
-        ...
+    def imprimir(self, texto): ...
 
 
-class Correios(Frete):
-    def calcular(self, peso_kg):
-        return 15 + 2 * peso_kg
+class Digitaliza(ABC):
+    @abstractmethod
+    def digitalizar(self): ...
 
 
-class Motoboy(Frete):
-    def calcular(self, peso_kg):
-        return 12.0
-
-
-class Loja:
-    def __init__(self, frete: Frete):
-        self.frete = frete
-
-    def total(self, preco, peso_kg):
-        return preco + self.frete.calcular(peso_kg)
-
-
-print(Loja(Correios()).total(100, 3))
-print(Loja(Motoboy()).total(100, 3))</code></pre>
-    <p class="saida">121<br>
-112.0</p>
-    <div class="dica"><strong>Dica:</strong> Não tente aplicar SOLID em programas de 20 linhas. Use quando perceber que uma mudança pequena obriga a mexer em muitos lugares.</div>
-
-    <h2>I: interfaces pequenas</h2>
-    <p>Se uma impressora simples for obrigada a ter os métodos <code>digitalizar</code> e <code>enviar_fax</code> só porque uma classe-mãe enorme pede, algo está errado. Em Python, prefira classes-mãe pequenas e combine as que precisar:</p>
-<pre class="codigo" data-executar="sim"><code>class Imprime:
+class ImpressoraSimples(Imprime):
     def imprimir(self, texto):
         print("Imprimindo:", texto)
 
 
-class Digitaliza:
+class Multifuncional(Imprime, Digitaliza):
+    def imprimir(self, texto):
+        print("Multifuncional imprime:", texto)
+
     def digitalizar(self):
         return "imagem.png"
 
 
-class ImpressoraSimples(Imprime):
-    pass
+for aparelho in [ImpressoraSimples(), Multifuncional()]:
+    aparelho.imprimir("prova de matemática")
+    if isinstance(aparelho, Digitaliza):
+        print("  digitalizou:", aparelho.digitalizar())</code></pre>
+    <p class="saida">Imprimindo: prova de matemática<br>
+Multifuncional imprime: prova de matemática<br>
+&nbsp;&nbsp;digitalizou: imagem.png</p>
+    <p>Sem essa separação, a <code>ImpressoraSimples</code> teria um <code>digitalizar()</code> que só faria <code>raise NotImplementedError</code> — uma armadilha para quem a usasse.</p>
+
+    <h2>D: dependa de abstrações</h2>
+    <p>Quando uma classe cria por conta própria os objetos de que precisa, ela fica presa a eles. Na inversão de dependência, ela <strong>recebe</strong> o objeto pronto (de fora) e só conhece a "ideia" dele. Isso facilita trocar a peça e, principalmente, testar:</p>
+<pre class="codigo" data-executar="sim"><code>from typing import Protocol
 
 
-class Multifuncional(Imprime, Digitaliza):
-    pass
+class Notificador(Protocol):
+    def enviar(self, para: str, texto: str) -&gt; None: ...
 
 
-ImpressoraSimples().imprimir("trabalho de história")
-print(Multifuncional().digitalizar())</code></pre>
-    <p class="saida">Imprimindo: trabalho de história<br>
-imagem.png</p>
+class EmailFalso:
+    def __init__(self):
+        self.enviados = []
+
+    def enviar(self, para, texto):
+        self.enviados.append((para, texto))
+
+
+class Escola:
+    def __init__(self, notificador: Notificador):   # recebe de fora
+        self.notificador = notificador
+
+    def avisar_falta(self, aluno):
+        self.notificador.enviar(f"pais de {aluno}", f"{aluno} faltou hoje")
+
+
+email = EmailFalso()
+Escola(email).avisar_falta("Theo")
+print(email.enviados)</code></pre>
+    <p class="saida">[('pais de Theo', 'Theo faltou hoje')]</p>
+    <p><code>Escola</code> não sabe se a mensagem vai por e-mail, WhatsApp ou SMS. No teste usamos um <code>EmailFalso</code> que só guarda as mensagens — a mesma ideia dos mocks da aula 133. <code>Protocol</code> (aula 91) descreve "qualquer objeto que tenha <code>enviar</code>", sem obrigar herança.</p>
+
+    <h2>Quando usar e quando é exagero</h2>
+    <p>SOLID ajuda quando o código <strong>já está mudando</strong> e as mudanças doem. Um script de 30 linhas que roda uma vez não precisa de cinco classes e três interfaces.</p>
+    <div class="dica"><strong>Dica:</strong> Uma boa regra: escreva do jeito simples primeiro. Quando aparecer o segundo ou terceiro caso parecido (a segunda transportadora, o segundo tipo de aviso), aí sim separe.</div>
+    <div class="atencao"><strong>Atenção:</strong> Exagerar também é um erro: classes demais, cada uma com uma linha, deixam o programa difícil de seguir. O objetivo de SOLID é facilitar a mudança, não deixar o código "bonito".</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
-<pre class="codigo"><code>class Loja:  # depende de Frete, não de Correios</code></pre>
+<pre class="codigo"><code>def __init__(self, notificador: Notificador):</code></pre>
     </div>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie uma nova classe de frete <code>RetirarNaLoja</code>, que sempre custa 0, e use com a <code>Loja</code> do exemplo sem mudar a classe <code>Loja</code>. Qual princípio você aplicou?</p>
+      <p><strong>1.</strong> Esta classe <code>Pedido</code> calcula o total e também monta o recibo em texto. Separe a montagem do recibo numa função <code>recibo(pedido)</code>, mantendo o cálculo na classe.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo" data-executar="sim"><code>class Frete:
-    def calcular(self, peso_kg):
-        raise NotImplementedError
+<pre class="codigo" data-executar="sim"><code>class Pedido:
+    def __init__(self, itens):
+        self.itens = itens  # lista de (nome, preço)
+
+    def total(self):
+        return sum(preco for _, preco in self.itens)
 
 
-class RetirarNaLoja(Frete):
-    def calcular(self, peso_kg):
-        return 0
+def recibo(pedido):
+    linhas = [f"{nome:&lt;10} R$ {preco:6.2f}" for nome, preco in pedido.itens]
+    linhas.append(f"{'TOTAL':&lt;10} R$ {pedido.total():6.2f}")
+    return "\n".join(linhas)
 
 
-class Loja:
-    def __init__(self, frete):
-        self.frete = frete
-
-    def total(self, preco, peso_kg):
-        return preco + self.frete.calcular(peso_kg)
-
-
-print(Loja(RetirarNaLoja()).total(100, 3))</code></pre>
-      <p class="saida">100</p>
-      <p>O princípio aberto/fechado (O): você estendeu o comportamento sem modificar a <code>Loja</code>.</p>
+print(recibo(Pedido([("Caderno", 18.5), ("Lápis", 2.0)])))</code></pre>
+      <p class="saida">Caderno &nbsp;&nbsp;&nbsp;R$ &nbsp;18.50<br>
+Lápis &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ &nbsp;&nbsp;2.00<br>
+TOTAL &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ &nbsp;20.50</p>
+      <p>Agora mudar o visual do recibo não mexe no cálculo, e o cálculo pode ser testado sem olhar texto nenhum.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> A classe abaixo tem quantas responsabilidades? <code>class Pedido</code> com os métodos <code>calcular_total</code>, <code>enviar_email_ao_cliente</code> e <code>salvar_no_banco</code>. Como você dividiria?</p>
+      <p><strong>2.</strong> Aplique o princípio aberto/fechado a um sistema de descontos: crie as classes <code>SemDesconto</code>, <code>DezPorCento</code> e <code>MenosCinco</code> (tira R$ 5), todas com o método <code>aplicar(valor)</code>, e uma função <code>caixa(valor, desconto)</code> que não precise mudar quando um desconto novo aparecer.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Três responsabilidades: cálculo, comunicação e armazenamento.<br>
-Uma divisão possível: Pedido (calcular_total), Notificador (enviar_email)<br>
-e RepositorioDePedidos (salvar).</p>
+<pre class="codigo" data-executar="sim"><code>class SemDesconto:
+    def aplicar(self, valor):
+        return valor
+
+
+class DezPorCento:
+    def aplicar(self, valor):
+        return valor * 0.9
+
+
+class MenosCinco:
+    def aplicar(self, valor):
+        return max(valor - 5, 0)
+
+
+def caixa(valor, desconto):
+    return f"R$ {desconto.aplicar(valor):.2f}"
+
+
+for d in [SemDesconto(), DezPorCento(), MenosCinco()]:
+    print(type(d).__name__, caixa(40, d))</code></pre>
+      <p class="saida">SemDesconto R$ 40.00<br>
+DezPorCento R$ 36.00<br>
+MenosCinco R$ 35.00</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Uma classe <code>Pinguim</code> herda de <code>Passaro</code>, mas o método <code>voar()</code> dela faz <code>raise Exception("não voo")</code>. Qual princípio está sendo quebrado e como resolver?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O princípio de Liskov (L): quem recebe um Passaro espera poder chamar voar(),<br>
+e o Pinguim quebra essa promessa. Solução: tirar voar() de Passaro e criar<br>
+uma classe ou interface separada (por exemplo, PassaroQueVoa) só para quem voa.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Reescreva a classe abaixo para receber o "relógio" de fora (inversão de dependência), de modo que dê para testar a saudação da manhã e da noite sem esperar o horário certo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Saudacao:
+    def __init__(self, hora_atual):
+        self.hora_atual = hora_atual    # uma função que devolve a hora
+
+    def texto(self):
+        hora = self.hora_atual()
+        return "Bom dia!" if hora &lt; 12 else "Boa noite!" if hora &gt;= 18 else "Boa tarde!"
+
+
+print(Saudacao(lambda: 8).texto())
+print(Saudacao(lambda: 15).texto())
+print(Saudacao(lambda: 21).texto())</code></pre>
+      <p class="saida">Bom dia!<br>
+Boa tarde!<br>
+Boa noite!</p>
+      <p>No programa de verdade você passaria <code>lambda: datetime.now().hour</code>; no teste, um número fixo.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que uma interface <code>Funcionario</code> com os métodos <code>dar_aula()</code>, <code>limpar_sala()</code> e <code>dirigir_onibus()</code> é uma má ideia numa escola? Que princípio ela quebra?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Ela quebra a segregação de interfaces (I). Uma professora teria de "implementar"<br>
+limpar_sala() e dirigir_onibus() mesmo sem fazer isso. O melhor é ter interfaces<br>
+pequenas (DaAula, Limpa, Dirige), e cada classe herda só as que usa.</p>
       </details>
     </div>
 

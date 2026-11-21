@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 112 · Raspagem de páginas com BeautifulSoup — Curso de Python · DIGITAR</title>
-<meta name="description" content="Extraia informações de páginas HTML com a biblioteca BeautifulSoup e conheça os cuidados éticos e legais da raspagem.">
+<meta name="description" content="Extraia informações de páginas HTML com html.parser e com a biblioteca BeautifulSoup, salve o resultado em CSV e conheça os cuidados éticos e legais da raspagem.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,20 +20,112 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que é raspagem de dados (web scraping)</li>
-        <li>Encontrar elementos numa página com <code>BeautifulSoup</code></li>
-        <li>Os cuidados éticos antes de raspar um site</li>
+        <li>O que é raspagem de dados (web scraping) e quando usar</li>
+        <li>Entender o HTML como uma árvore de tags, atributos, classes e id</li>
+        <li>Raspar uma página com o <code>html.parser</code> da biblioteca padrão</li>
+        <li>Encontrar elementos com BeautifulSoup: <code>find</code>, <code>find_all</code>, <code>select</code> e <code>get_text</code></li>
+        <li>Baixar uma página real com <code>requests</code> e salvar os dados em CSV</li>
+        <li>Os cuidados éticos antes de raspar um site, incluindo o <code>robots.txt</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>O que é raspagem</h2>
-    <p>Quando um site não tem API (aula 111), dá para ler a própria página HTML e extrair o que interessa: preços, manchetes, horários. Isso se chama <strong>raspagem</strong> (*scraping*).</p>
-    <p>Instale as bibliotecas no seu ambiente virtual:</p>
-<pre class="codigo"><code>pip install requests beautifulsoup4</code></pre>
+    <p>Quando um site não tem API (aula 111), dá para ler a própria página HTML e extrair o que interessa: preços, manchetes, horários de ônibus. Isso se chama <strong>raspagem</strong> (*scraping*): o programa "raspa" os dados de dentro da página.</p>
+    <p>A ordem certa é sempre: primeiro procure uma API oficial; só se não houver, raspe. A API foi feita para programas e não muda de formato sem aviso. A página foi feita para pessoas, e o site pode mudar o visual amanhã.</p>
 
-    <h2>Encontrando elementos</h2>
-    <p>O <code>BeautifulSoup</code> transforma o HTML numa árvore que você consulta. Para treinar sem internet, use um HTML guardado num texto:</p>
+    <h2>O HTML é uma árvore</h2>
+    <p>Para raspar, você precisa enxergar a página como o computador enxerga. O HTML é feito de <strong>tags</strong> que ficam umas dentro das outras, como galhos de uma árvore:</p>
+    <p class="saida">&lt;ul id="cardapio"&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← tag ul, com o atributo id<br>
+&nbsp;&nbsp;&lt;li class="prato"&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← tag li, com o atributo class<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Moqueca &lt;span class="preco"&gt;58,00&lt;/span&gt;<br>
+&nbsp;&nbsp;&lt;/li&gt;<br>
+&lt;/ul&gt;</p>
+    <ul>
+      <li>a <strong>tag</strong> diz o tipo do elemento: <code>ul</code> (lista), <code>li</code> (item), <code>a</code> (link), <code>span</code> (trecho de texto);</li>
+      <li>os <strong>atributos</strong> ficam dentro da tag de abertura: <code>href</code> (endereço de um link), <code>src</code> (de uma imagem);</li>
+      <li><code>id</code> é um nome único na página; <code>class</code> é um "grupo", e vários elementos podem ter a mesma classe.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> No navegador, clique com o botão direito em qualquer parte de uma página e escolha <strong>Inspecionar</strong>. Você vê o HTML daquele pedaço, com as classes e os ids — é assim que se descobre o que procurar.</div>
+
+    <h2>Raspando com a biblioteca padrão</h2>
+    <p>O Python já vem com o <code>html.parser</code>, um leitor de HTML simples. Você cria uma classe filha de <code>HTMLParser</code> e escreve o que fazer quando ele encontra a abertura de uma tag, um texto ou o fechamento de uma tag. Este exemplo coleta todos os links de uma página:</p>
+<pre class="codigo" data-executar="sim"><code>from html.parser import HTMLParser
+
+pagina = """
+&lt;nav&gt;
+  &lt;a href="/inicio"&gt;Início&lt;/a&gt;
+  &lt;a href="/cursos/python"&gt;Curso de Python&lt;/a&gt;
+  &lt;a href="https://www.python.org"&gt;Site oficial&lt;/a&gt;
+&lt;/nav&gt;
+"""
+
+
+class ColetorDeLinks(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            atributos = dict(attrs)          # attrs vem como lista de pares
+            self.links.append(atributos["href"])
+
+
+coletor = ColetorDeLinks()
+coletor.feed(pagina)
+for link in coletor.links:
+    print(link)</code></pre>
+    <p class="saida">/inicio<br>
+/cursos/python<br>
+https://www.python.org</p>
+    <p>Para pegar o <strong>texto</strong> de um elemento, o leitor precisa lembrar onde está. Aqui uma variável marca quando estamos dentro de um <code>&lt;span class="preco"&gt;</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from html.parser import HTMLParser
+
+pagina = """
+&lt;ul id="cardapio"&gt;
+  &lt;li class="prato"&gt;Baião de dois &lt;span class="preco"&gt;32,00&lt;/span&gt;&lt;/li&gt;
+  &lt;li class="prato"&gt;Moqueca &lt;span class="preco"&gt;58,00&lt;/span&gt;&lt;/li&gt;
+  &lt;li class="prato"&gt;Tapioca &lt;span class="preco"&gt;12,00&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+"""
+
+
+class LeitorDePrecos(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.dentro_do_preco = False
+        self.precos = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "span" and ("class", "preco") in attrs:
+            self.dentro_do_preco = True
+
+    def handle_data(self, texto):
+        if self.dentro_do_preco:
+            self.precos.append(float(texto.replace(",", ".")))
+
+    def handle_endtag(self, tag):
+        if tag == "span":
+            self.dentro_do_preco = False
+
+
+leitor = LeitorDePrecos()
+leitor.feed(pagina)
+print("Preços:", leitor.precos)
+print(f"Total: R$ {sum(leitor.precos):.2f}")</code></pre>
+    <p class="saida">Preços: [32.0, 58.0, 12.0]<br>
+Total: R$ 102.00</p>
+    <p>Funciona, mas dá trabalho: para cada coisa que você quer achar, precisa de uma classe nova. É por isso que existe o BeautifulSoup.</p>
+
+    <h2>BeautifulSoup: a mesma coisa, mais fácil</h2>
+    <p>O <code>BeautifulSoup</code> transforma o HTML numa árvore que você consulta com uma linha. Instale no seu ambiente virtual (o <code>requests</code> vai ser usado logo adiante):</p>
+<pre class="codigo"><code># Windows
+py -m pip install requests beautifulsoup4
+
+# Linux e macOS
+python3 -m pip install requests beautifulsoup4</code></pre>
+    <p>O mesmo cardápio, agora com BeautifulSoup. Salve como <code>cardapio.py</code> e rode no computador:</p>
 <pre class="codigo"><code>from bs4 import BeautifulSoup
 
 html = """
@@ -53,14 +145,98 @@ for item in sopa.select("li.prato"):
 Moqueca: R$ 58,00<br>
 Tapioca: R$ 12,00</p>
     <ul>
-      <li><code>select("li.prato")</code> acha todos os <code>&lt;li&gt;</code> com a classe <code>prato</code> (o mesmo seletor do CSS, aula 242);</li>
-      <li><code>select_one</code> acha só o primeiro; <code>get_text()</code> pega o texto sem as tags.</li>
+      <li><code>select("li.prato")</code> acha todos os <code>&lt;li&gt;</code> com a classe <code>prato</code> (o mesmo seletor do CSS, aula 242); <code>select_one</code> acha só o primeiro;</li>
+      <li><code>get_text()</code> pega o texto sem as tags;</li>
+      <li><code>item.contents</code> é a lista do que está dentro do elemento; o primeiro item aqui é o texto com o nome do prato.</li>
     </ul>
-    <p>Numa página real, você baixa o HTML com <code>requests.get(url, timeout=10).text</code> e passa para o <code>BeautifulSoup</code>.</p>
+    <p>Além dos seletores CSS, há <code>find</code> (o primeiro) e <code>find_all</code> (todos), que procuram pelo nome da tag e pelos atributos. E um elemento funciona como dicionário para ler atributos:</p>
+<pre class="codigo"><code>from bs4 import BeautifulSoup
+
+html = """
+&lt;div id="noticias"&gt;
+  &lt;h2&gt;Notícias da escola&lt;/h2&gt;
+  &lt;a class="noticia" href="/feira"&gt;Feira de ciências na sexta&lt;/a&gt;
+  &lt;a class="noticia" href="/jogos"&gt;Jogos internos começam dia 10&lt;/a&gt;
+  &lt;img src="/logo.png" alt="Logo da escola"&gt;
+&lt;/div&gt;
+"""
+
+sopa = BeautifulSoup(html, "html.parser")
+print(sopa.find("h2").get_text())
+for link in sopa.find_all("a", class_="noticia"):
+    print("-", link.get_text(), "-&gt;", link["href"])
+print("Imagem:", sopa.find("img")["src"], "/", sopa.find("img").get("alt"))
+print("Tem vídeo?", sopa.find("video"))</code></pre>
+    <p class="saida">Notícias da escola<br>
+- Feira de ciências na sexta -&gt; /feira<br>
+- Jogos internos começam dia 10 -&gt; /jogos<br>
+Imagem: /logo.png / Logo da escola<br>
+Tem vídeo? None</p>
+    <div class="atencao"><strong>Atenção:</strong> O argumento é <code>class_</code>, com sublinhado, porque <code>class</code> é palavra reservada do Python (aula 70). E quando <code>find</code> não acha nada, devolve <code>None</code>: se você fizer <code>sopa.find("video").get_text()</code>, recebe <code>AttributeError: 'NoneType' object has no attribute 'get_text'</code>. Confira com <code>if elemento is not None:</code> antes de usar.</div>
+
+    <h2>Uma página de verdade</h2>
+    <p>O site <a href="https://books.toscrape.com">books.toscrape.com</a> é uma livraria de mentira feita justamente para treinar raspagem. Este programa baixa a primeira página, pega o título e o preço de cada livro e salva tudo numa planilha CSV (aula 106):</p>
+<pre class="codigo"><code>import csv
+import requests
+from bs4 import BeautifulSoup
+
+resposta = requests.get("https://books.toscrape.com/", timeout=10)
+resposta.raise_for_status()
+resposta.encoding = "utf-8"          # garante que o símbolo £ venha certo
+
+sopa = BeautifulSoup(resposta.text, "html.parser")
+livros = []
+for artigo in sopa.select("article.product_pod"):
+    titulo = artigo.select_one("h3 a")["title"]
+    preco = artigo.select_one(".price_color").get_text()
+    livros.append({"titulo": titulo, "preco": preco})
+
+for livro in livros[:3]:
+    print(livro["titulo"], "-", livro["preco"])
+
+with open("livros.csv", "w", newline="", encoding="utf-8") as arquivo:
+    escritor = csv.DictWriter(arquivo, fieldnames=["titulo", "preco"])
+    escritor.writeheader()
+    escritor.writerows(livros)
+print(len(livros), "livros salvos em livros.csv")</code></pre>
+    <p class="saida">A Light in the Attic - £51.77<br>
+Tipping the Velvet - £53.74<br>
+Soumission - £50.10<br>
+20 livros salvos em livros.csv</p>
+    <p>Repare que o título vem do atributo <code>title</code> do link, porque o texto visível na página é cortado com "..." quando o nome é comprido. Achar esse tipo de detalhe é o trabalho de quem raspa: inspecione a página antes de escrever o código.</p>
 
     <h2>Raspar com responsabilidade</h2>
-    <div class="atencao"><strong>Atenção:</strong> Antes de raspar um site, leia os termos de uso e o arquivo <code>/robots.txt</code> dele, que diz o que robôs podem acessar. Não colete dados pessoais de ninguém, faça poucas requisições (use <code>time.sleep</code> entre elas) e prefira uma API oficial quando existir.</div>
-    <div class="dica"><strong>Dica:</strong> Sites mudam o HTML sem avisar, e o seu programa quebra. Raspagem é ótima para projetos pessoais, mas frágil para coisas importantes.</div>
+    <p>Um robô consegue abrir centenas de páginas por minuto, e isso pode atrapalhar o site de outras pessoas. Antes de raspar:</p>
+    <ul>
+      <li>leia os <strong>termos de uso</strong> do site; alguns proíbem raspagem;</li>
+      <li>leia o arquivo <code>/robots.txt</code> (por exemplo, <code>https://books.toscrape.com/robots.txt</code>), que diz o que robôs podem acessar;</li>
+      <li>não colete <strong>dados pessoais</strong> de ninguém (nomes, telefones, fotos de pessoas);</li>
+      <li>faça poucas requisições e espere entre elas com <code>time.sleep(1)</code>;</li>
+      <li>prefira sempre uma API oficial quando existir.</li>
+    </ul>
+    <p>O Python sabe ler o <code>robots.txt</code> com o módulo <code>urllib.robotparser</code>. Aqui o texto do arquivo foi colocado direto no código para você testar:</p>
+<pre class="codigo" data-executar="sim"><code>from urllib.robotparser import RobotFileParser
+
+robots = """
+User-agent: *
+Disallow: /admin/
+Disallow: /carrinho/
+Crawl-delay: 2
+"""
+
+leitor = RobotFileParser()
+leitor.parse(robots.splitlines())
+
+for caminho in ["/produtos/chinelo", "/admin/usuarios", "/carrinho/"]:
+    pode = leitor.can_fetch("MeuRobo", caminho)
+    print(caminho, "-&gt;", "pode" if pode else "proibido")
+print("Esperar entre pedidos:", leitor.crawl_delay("MeuRobo"), "segundos")</code></pre>
+    <p class="saida">/produtos/chinelo -&gt; pode<br>
+/admin/usuarios -&gt; proibido<br>
+/carrinho/ -&gt; proibido<br>
+Esperar entre pedidos: 2 segundos</p>
+    <p>No computador, <code>leitor.set_url("https://site/robots.txt")</code> seguido de <code>leitor.read()</code> baixa o arquivo de verdade.</p>
+    <div class="dica"><strong>Dica:</strong> Sites mudam o HTML sem avisar, e o seu programa quebra. Raspagem é ótima para projetos pessoais e estudos, mas frágil para coisas importantes. Quando quebrar, abra o <strong>Inspecionar</strong> de novo e veja o que mudou.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -69,7 +245,38 @@ Tapioca: R$ 12,00</p>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Usando o mesmo HTML do cardápio, some os preços de todos os pratos.</p>
+      <p><strong>1.</strong> Use o <code>html.parser</code> para contar quantos itens <code>&lt;li&gt;</code> existem nesta lista e mostrar o texto de cada um: <code>&lt;ul&gt;&lt;li&gt;Arroz&lt;/li&gt;&lt;li&gt;Feijão&lt;/li&gt;&lt;li&gt;Farofa&lt;/li&gt;&lt;/ul&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from html.parser import HTMLParser
+
+
+class LeitorDeItens(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.dentro = False
+        self.itens = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "li":
+            self.dentro = True
+
+    def handle_data(self, texto):
+        if self.dentro:
+            self.itens.append(texto)
+
+    def handle_endtag(self, tag):
+        if tag == "li":
+            self.dentro = False
+
+
+leitor = LeitorDeItens()
+leitor.feed("&lt;ul&gt;&lt;li&gt;Arroz&lt;/li&gt;&lt;li&gt;Feijão&lt;/li&gt;&lt;li&gt;Farofa&lt;/li&gt;&lt;/ul&gt;")
+print(len(leitor.itens), "itens:", ", ".join(leitor.itens))</code></pre>
+      <p class="saida">3 itens: Arroz, Feijão, Farofa</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>2.</strong> Com BeautifulSoup, some os preços de todos os pratos do cardápio da aula.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from bs4 import BeautifulSoup
 
@@ -77,13 +284,45 @@ html = '&lt;span class="preco"&gt;32,00&lt;/span&gt;&lt;span class="preco"&gt;58
 sopa = BeautifulSoup(html, "html.parser")
 total = sum(float(s.get_text().replace(",", ".")) for s in sopa.select(".preco"))
 print(f"Total: R$ {total:.2f}")</code></pre>
+      <p>A saída é <code>Total: R$ 102.00</code>. A vírgula precisa virar ponto antes do <code>float</code>, senão aparece <code>ValueError</code>.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Cite três cuidados antes de raspar um site.</p>
+      <p><strong>3.</strong> Com BeautifulSoup, mostre o endereço (<code>href</code>) de todos os links que abrem um site externo (que começam com <code>https://</code>) neste HTML: <code>&lt;a href="/sobre"&gt;Sobre&lt;/a&gt;&lt;a href="https://www.python.org"&gt;Python&lt;/a&gt;&lt;a href="https://pypi.org"&gt;PyPI&lt;/a&gt;</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from bs4 import BeautifulSoup
+
+html = '&lt;a href="/sobre"&gt;Sobre&lt;/a&gt;&lt;a href="https://www.python.org"&gt;Python&lt;/a&gt;&lt;a href="https://pypi.org"&gt;PyPI&lt;/a&gt;'
+sopa = BeautifulSoup(html, "html.parser")
+for link in sopa.find_all("a"):
+    if link["href"].startswith("https://"):
+        print(link["href"])</code></pre>
+      <p>A saída é <code>https://www.python.org</code> e, na linha de baixo, <code>https://pypi.org</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Um site tem este <code>robots.txt</code>: <code>User-agent: *</code>, <code>Disallow: /privado/</code>, <code>Allow: /privado/publico.html</code>. Use o <code>RobotFileParser</code> para descobrir se um robô pode abrir <code>/privado/notas.html</code> e <code>/privado/publico.html</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from urllib.robotparser import RobotFileParser
+
+leitor = RobotFileParser()
+leitor.parse([
+    "User-agent: *",
+    "Allow: /privado/publico.html",
+    "Disallow: /privado/",
+])
+print(leitor.can_fetch("MeuRobo", "/privado/notas.html"))
+print(leitor.can_fetch("MeuRobo", "/privado/publico.html"))</code></pre>
+      <p class="saida">False<br>
+True</p>
+      <p>O leitor do Python obedece a primeira regra que combina com o caminho, por isso a linha <code>Allow</code>, mais específica, vem antes do <code>Disallow</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Cite três cuidados antes de raspar um site.</p>
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">1. Ler os termos de uso e o robots.txt do site.<br>
-2. Não coletar dados pessoais e fazer poucas requisições, com pausas.<br>
+2. Não coletar dados pessoais e fazer poucas requisições, com pausas entre elas.<br>
 3. Usar a API oficial, se o site tiver uma.</p>
       </details>
     </div>

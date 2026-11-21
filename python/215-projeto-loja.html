@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 215 · Projeto: loja virtual (produtos, variações, carrinho na sessão, pedidos) — Curso de Python · DIGITAR</title>
-<meta name="description" content="Planeje uma loja com produtos e variações, guarde o carrinho na sessão do usuário e transforme o carrinho em pedido.">
+<meta name="description" content="Construa passo a passo uma loja virtual em Django com produtos e variações, carrinho guardado na sessão, fechamento do pedido numa transação e baixa de estoque.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,84 +20,607 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Modelar produtos com variações (tamanho, cor) e estoque</li>
-        <li>Guardar o carrinho em <code>request.session</code></li>
-        <li>Calcular totais com <code>Decimal</code> e gerar um pedido</li>
+        <li>Modelar produtos com variações de tamanho e cor, cada uma com preço e estoque</li>
+        <li>Entender a sessão do Django e guardar o carrinho em <code>request.session</code></li>
+        <li>Escrever uma classe <code>Carrinho</code> para adicionar, alterar, remover e somar itens</li>
+        <li>Transformar o carrinho em pedido com <code>transaction.atomic</code>, baixando o estoque</li>
+        <li>Fazer todas as contas de dinheiro com <code>Decimal</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Os models</h2>
+    <h2>O que vamos construir</h2>
+    <p>Uma loja simples de camisetas, mas com as peças que toda loja de verdade tem:</p>
+    <ul>
+      <li>a <strong>vitrine</strong> (<code>/</code>) e a página de cada produto (<code>/produto/camiseta-python/</code>), onde se escolhe a variação (tamanho e cor);</li>
+      <li>o <strong>carrinho</strong> (<code>/carrinho/</code>), onde dá para mudar a quantidade, remover itens e ver o total;</li>
+      <li>o botão <strong>Fechar pedido</strong>, que exige login, grava o pedido e tira os itens do estoque;</li>
+      <li>a página do <strong>pedido</strong> (<code>/pedido/1/</code>), com o resumo da compra.</li>
+    </ul>
+    <p>Partimos do que você já sabe: models e admin (aula 203), formulários com <code>csrf_token</code> (aula 205) e login (aula 206).</p>
+
+    <h2>Passo 1: o projeto e o app</h2>
+<pre class="codigo"><code>mkdir minha_loja
+cd minha_loja
+py -m venv .venv
+.venv\Scripts\activate
+pip install django
+django-admin startproject config .
+python manage.py startapp loja</code></pre>
+    <p>Em <code>config/settings.py</code>, acrescente o app, deixe o site em português e diga para onde o login manda quem ainda não entrou:</p>
+<pre class="codigo"><code># config/settings.py (trecho)
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "loja",
+]
+
+LANGUAGE_CODE = "pt-br"
+LOGIN_URL = "login"</code></pre>
+    <p class="saida">(sem saída: o arquivo só guarda configurações)</p>
+
+    <h2>Passo 2: dinheiro é Decimal</h2>
+    <p>Antes dos models, uma regra de ouro: **dinheiro nunca é <code>float</code>**. O <code>float</code> guarda os números em binário e erra nas casas decimais (aula 29). Numa loja, centavos errados viram reclamação. Compare:</p>
+<pre class="codigo" data-executar="sim"><code>from decimal import Decimal
+
+print("float:  ", 0.1 + 0.2)
+print("Decimal:", Decimal("0.10") + Decimal("0.20"))
+
+preco = Decimal("19.90")
+print("3 camisetas:", preco * 3)
+print("Com 10% de desconto:", (preco * 3 * Decimal("0.90")).quantize(Decimal("0.01")))</code></pre>
+    <p class="saida">float: &nbsp;&nbsp;0.30000000000000004<br>
+Decimal: 0.30<br>
+3 camisetas: 59.70<br>
+Com 10% de desconto: 53.73</p>
+    <p>Crie o <code>Decimal</code> sempre a partir de <strong>texto</strong>: <code>Decimal("19.90")</code>. Escrever <code>Decimal(19.90)</code> copia o erro do float para dentro dele. No banco, o campo correspondente é o <code>DecimalField</code>.</p>
+
+    <h2>Passo 3: os models</h2>
+    <p>Uma camiseta pode ser P azul, M azul, G preta… Cada combinação tem o seu preço e o seu estoque. Por isso o produto e as <strong>variações</strong> ficam em tabelas separadas. Escreva <code>loja/models.py</code>:</p>
 <pre class="codigo"><code># loja/models.py
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 
 class Produto(models.Model):
     nome = models.CharField(max_length=120)
     slug = models.SlugField(unique=True)
     descricao = models.TextField(blank=True)
+    ativo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nome"]
 
     def __str__(self):
         return self.nome
 
+    def get_absolute_url(self):
+        return reverse("produto", args=[self.slug])
+
 
 class Variacao(models.Model):
     produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name="variacoes")
-    nome = models.CharField(max_length=60)  # ex.: "Camiseta P azul"
+    tamanho = models.CharField(max_length=10, blank=True)   # P, M, G...
+    cor = models.CharField(max_length=30, blank=True)       # azul, preta...
     preco = models.DecimalField(max_digits=8, decimal_places=2)
     estoque = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        verbose_name = "variação"
+        verbose_name_plural = "variações"
+
     def __str__(self):
-        return f"{self.produto} - {self.nome}"
+        detalhes = " ".join(parte for parte in [self.tamanho, self.cor] if parte)
+        return f"{self.produto.nome} {detalhes}".strip()
 
 
 class Pedido(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="pedidos")
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Pedido {self.pk}"
 
 
 class ItemPedido(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name="itens")
     variacao = models.ForeignKey(Variacao, on_delete=models.PROTECT)
     quantidade = models.PositiveIntegerField()
-    preco = models.DecimalField(max_digits=8, decimal_places=2)</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> Dinheiro sempre com <code>DecimalField</code> e <code>Decimal</code> (aula 29), nunca <code>float</code>: 0,1 + 0,2 não dá exatamente 0,3 com float.</div>
-    <p>O <code>ItemPedido</code> guarda o <strong>preço do momento da compra</strong>: se o produto ficar mais caro amanhã, o pedido antigo continua certo.</p>
+    preco = models.DecimalField(max_digits=8, decimal_places=2)   # preço no dia da compra
 
-    <h2>O carrinho na sessão</h2>
-    <p>A <strong>sessão</strong> é um dicionário que o Django guarda para cada visitante, mesmo sem login. O carrinho pode ser <code>{id_da_variacao: quantidade}</code>. Como a sessão é salva em JSON, as chaves viram texto:</p>
-<pre class="codigo"><code>from django.shortcuts import get_object_or_404, redirect
+    @property
+    def subtotal(self):
+        return self.preco * self.quantidade</code></pre>
+    <p class="saida">(sem saída: os models descrevem as tabelas)</p>
+    <ul>
+      <li><code>DecimalField(max_digits=8, decimal_places=2)</code> guarda até 999999,99 com exatamente 2 casas.</li>
+      <li><code>PositiveIntegerField</code> não aceita estoque negativo.</li>
+      <li>O <code>ItemPedido</code> guarda o <strong>preço do momento da compra</strong>. Se a camiseta ficar mais cara amanhã, o pedido de hoje continua com o valor certo.</li>
+      <li><code>on_delete=models.PROTECT</code> na variação impede apagar um produto que já foi vendido: o histórico de pedidos não pode quebrar.</li>
+    </ul>
+<pre class="codigo"><code>python manage.py makemigrations loja
+python manage.py migrate</code></pre>
+
+    <h2>Passo 4: o admin com as variações dentro do produto</h2>
+    <p>Um <strong>inline</strong> mostra as variações na mesma tela do produto, como uma tabelinha. Escreva <code>loja/admin.py</code>:</p>
+<pre class="codigo"><code># loja/admin.py
+from django.contrib import admin
+from .models import ItemPedido, Pedido, Produto, Variacao
+
+
+class VariacaoInline(admin.TabularInline):
+    model = Variacao
+    extra = 1
+
+
+@admin.register(Produto)
+class ProdutoAdmin(admin.ModelAdmin):
+    list_display = ["nome", "ativo"]
+    prepopulated_fields = {"slug": ["nome"]}
+    inlines = [VariacaoInline]
+
+
+class ItemPedidoInline(admin.TabularInline):
+    model = ItemPedido
+    extra = 0
+    readonly_fields = ["variacao", "quantidade", "preco"]
+
+
+@admin.register(Pedido)
+class PedidoAdmin(admin.ModelAdmin):
+    list_display = ["pk", "usuario", "total", "criado_em"]
+    inlines = [ItemPedidoInline]</code></pre>
+    <p class="saida">(na tela do produto aparecem linhas para preencher tamanho, cor, preço e estoque)</p>
+    <p>Rode <code>python manage.py createsuperuser</code>, entre no admin e cadastre um produto "Camiseta Python" com as variações P azul (R$ 49,90, estoque 5) e M preta (R$ 54,90, estoque 2).</p>
+
+    <h2>Passo 5: o que é a sessão</h2>
+    <p>O HTTP "esquece" tudo entre um pedido e outro. Para lembrar que <strong>este</strong> visitante pôs duas camisetas no carrinho, o Django usa a <strong>sessão</strong>: ele grava um dicionário no banco e entrega ao navegador só um cookie com um código (<code>sessionid</code>). Em cada visita, <code>request.session</code> traz o dicionário de volta — mesmo para quem não fez login.</p>
+    <p>O carrinho vai na sessão no formato <code>{id_da_variacao: quantidade}</code>. Só que a sessão é gravada em <strong>JSON</strong>, e no JSON as chaves de um dicionário são sempre texto. Veja o que acontece com uma chave número:</p>
+<pre class="codigo" data-executar="sim"><code>import json
+
+carrinho = {7: 2}
+guardado = json.dumps(carrinho)
+de_volta = json.loads(guardado)
+
+print("Gravado na sessão:", guardado)
+print("Lido de volta:", de_volta)
+print("A chave 7 ainda existe?", 7 in de_volta)
+print("E a chave '7'?", "7" in de_volta)</code></pre>
+    <p class="saida">Gravado na sessão: {"7": 2}<br>
+Lido de volta: {'7': 2}<br>
+A chave 7 ainda existe? False<br>
+E a chave '7'? True</p>
+    <p>Por isso, no carrinho, a chave será sempre <code>str(variacao.pk)</code>. Outra consequência: só guarde na sessão coisas que o JSON entende (texto, número, lista, dicionário). Um <code>Decimal</code> ou um objeto do model <strong>não</strong> cabem lá — guarde o id e busque o resto no banco.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se você mudar um dicionário que está <strong>dentro</strong> da sessão (<code>request.session["carrinho"]["7"] = 3</code>), o Django não percebe a mudança e não salva. Ou você atribui de novo (<code>request.session["carrinho"] = carrinho</code>), ou avisa com <code>request.session.modified = True</code>.</div>
+
+    <h2>Passo 6: a classe Carrinho</h2>
+    <p>Para as views ficarem curtas, toda a lógica do carrinho vai numa classe. Primeiro, veja a mesma ideia em Python puro, com um dicionário comum no papel da sessão e outro no papel do banco:</p>
+<pre class="codigo" data-executar="sim"><code>from decimal import Decimal
+
+BANCO = {  # id: (nome, preço, estoque)
+    1: ("Camiseta P azul", Decimal("49.90"), 5),
+    2: ("Camiseta M preta", Decimal("54.90"), 2),
+}
+
+
+class Carrinho:
+    def __init__(self, sessao):
+        self.dados = sessao.setdefault("carrinho", {})
+
+    def adicionar(self, variacao_id, quantidade=1):
+        estoque = BANCO[variacao_id][2]
+        chave = str(variacao_id)
+        self.dados[chave] = min(self.dados.get(chave, 0) + quantidade, estoque)
+
+    def remover(self, variacao_id):
+        self.dados.pop(str(variacao_id), None)
+
+    def total(self):
+        return sum((BANCO[int(c)][1] * q for c, q in self.dados.items()), Decimal("0.00"))
+
+
+sessao = {}
+carrinho = Carrinho(sessao)
+carrinho.adicionar(1, 2)
+carrinho.adicionar(2, 5)      # só há 2 em estoque
+print("Sessão:", sessao)
+print("Total: R$", carrinho.total())
+carrinho.remover(1)
+print("Depois de remover:", sessao, "Total: R$", carrinho.total())</code></pre>
+    <p class="saida">Sessão: {'carrinho': {'1': 2, '2': 2}}<br>
+Total: R$ 209.60<br>
+Depois de remover: {'carrinho': {'2': 2}} Total: R$ 109.80</p>
+    <p>Repare no <code>min(...)</code>: ninguém consegue pôr no carrinho mais do que existe no estoque. Agora a versão com o Django, em <code>loja/carrinho.py</code>:</p>
+<pre class="codigo"><code># loja/carrinho.py
+from decimal import Decimal
 from .models import Variacao
 
 
-def adicionar(request, variacao_id):
+class Carrinho:
+    """Guarda {id_da_variacao: quantidade} na sessão do visitante."""
+
+    def __init__(self, request):
+        self.session = request.session
+        self.dados = self.session.setdefault("carrinho", {})
+
+    def salvar(self):
+        self.session.modified = True   # avisa o Django que o dicionário mudou
+
+    def adicionar(self, variacao, quantidade=1):
+        chave = str(variacao.pk)
+        nova = self.dados.get(chave, 0) + quantidade
+        self.dados[chave] = min(nova, variacao.estoque)
+        self.salvar()
+
+    def alterar(self, variacao, quantidade):
+        chave = str(variacao.pk)
+        if quantidade &lt;= 0:
+            self.dados.pop(chave, None)
+        else:
+            self.dados[chave] = min(quantidade, variacao.estoque)
+        self.salvar()
+
+    def remover(self, variacao_id):
+        self.dados.pop(str(variacao_id), None)
+        self.salvar()
+
+    def limpar(self):
+        self.session["carrinho"] = {}
+        self.dados = self.session["carrinho"]
+
+    def itens(self):
+        variacoes = Variacao.objects.filter(pk__in=self.dados.keys()).select_related("produto")
+        for variacao in variacoes:
+            quantidade = self.dados[str(variacao.pk)]
+            yield {
+                "variacao": variacao,
+                "quantidade": quantidade,
+                "subtotal": variacao.preco * quantidade,
+            }
+
+    def total(self):
+        return sum((item["subtotal"] for item in self.itens()), Decimal("0.00"))
+
+    def __len__(self):
+        return sum(self.dados.values())</code></pre>
+    <p class="saida">(sem saída: a classe é usada pelas views)</p>
+    <p>O preço <strong>não</strong> fica na sessão: <code>itens()</code> busca as variações no banco a cada vez. Assim, se o preço mudar, o carrinho mostra o valor atual. O <code>__len__</code> (aula 81) permite escrever <code>len(carrinho)</code> para saber quantas peças há nele.</p>
+    <p>Para mostrar "Carrinho (3)" no topo de todas as páginas, use um context processor, como no blog (aula 211). Crie <code>loja/context_processors.py</code>:</p>
+<pre class="codigo"><code># loja/context_processors.py
+from .carrinho import Carrinho
+
+
+def carrinho(request):
+    return {"qtd_no_carrinho": len(Carrinho(request))}</code></pre>
+    <p class="saida">(todo template passa a enxergar qtd_no_carrinho)</p>
+    <p>E acrescente <code>"loja.context_processors.carrinho",</code> à lista <code>context_processors</code> dentro de <code>TEMPLATES</code>, no <code>config/settings.py</code>.</p>
+
+    <h2>Passo 7: fechar o pedido numa transação</h2>
+    <p>Fechar o pedido são vários passos: criar o <code>Pedido</code>, criar cada <code>ItemPedido</code>, baixar o estoque de cada variação. E se faltar estoque do terceiro item, depois que os dois primeiros já foram gravados? Ficaria um pedido pela metade e um estoque errado.</p>
+    <p>A <strong>transação</strong> resolve: os comandos dentro dela valem <strong>todos juntos ou nenhum</strong>. Se der erro no meio, o banco desfaz tudo (*rollback*). Veja com o <code>sqlite3</code> (aula 174), em que <code>with con:</code> abre uma transação:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE variacao (id INTEGER PRIMARY KEY, nome TEXT, estoque INTEGER)")
+con.execute("CREATE TABLE item (variacao_id INTEGER, quantidade INTEGER)")
+con.executemany("INSERT INTO variacao VALUES (?, ?, ?)",
+                [(1, "Camiseta P azul", 5), (2, "Camiseta M preta", 2)])
+con.commit()
+
+
+def fechar_pedido(carrinho):
+    try:
+        with con:   # tudo aqui dentro vale junto ou nada vale
+            for variacao_id, qtd in carrinho.items():
+                nome, estoque = con.execute(
+                    "SELECT nome, estoque FROM variacao WHERE id = ?", (variacao_id,)).fetchone()
+                if estoque &lt; qtd:
+                    raise ValueError(f"Só temos {estoque} de {nome}.")
+                con.execute("UPDATE variacao SET estoque = estoque - ? WHERE id = ?", (qtd, variacao_id))
+                con.execute("INSERT INTO item VALUES (?, ?)", (variacao_id, qtd))
+        print("Pedido fechado!")
+    except ValueError as erro:
+        print("Pedido recusado:", erro)
+    print("  estoque:", con.execute("SELECT nome, estoque FROM variacao").fetchall())
+    print("  itens gravados:", con.execute("SELECT COUNT(*) FROM item").fetchone()[0])
+
+
+fechar_pedido({1: 2, 2: 3})   # falta camiseta preta: nada muda
+fechar_pedido({1: 2, 2: 1})   # tudo certo</code></pre>
+    <p class="saida">Pedido recusado: Só temos 2 de Camiseta M preta.<br>
+&nbsp;&nbsp;estoque: [('Camiseta P azul', 5), ('Camiseta M preta', 2)]<br>
+&nbsp;&nbsp;itens gravados: 0<br>
+Pedido fechado!<br>
+&nbsp;&nbsp;estoque: [('Camiseta P azul', 3), ('Camiseta M preta', 1)]<br>
+&nbsp;&nbsp;itens gravados: 2</p>
+    <p>No primeiro pedido, a baixa da camiseta azul chegou a acontecer, mas foi desfeita quando faltou a preta. No Django, o mesmo papel é do <code>with transaction.atomic():</code>.</p>
+
+    <h2>Passo 8: as views e as URLs</h2>
+    <p>Escreva <code>loja/views.py</code> inteiro:</p>
+<pre class="codigo"><code># loja/views.py
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+from .carrinho import Carrinho
+from .models import ItemPedido, Pedido, Produto, Variacao
+
+
+class EstoqueInsuficiente(Exception):
+    pass
+
+
+def lista(request):
+    produtos = Produto.objects.filter(ativo=True).prefetch_related("variacoes")
+    return render(request, "loja/lista.html", {"produtos": produtos})
+
+
+def produto(request, slug):
+    item = get_object_or_404(Produto, slug=slug, ativo=True)
+    return render(request, "loja/produto.html", {"produto": item})
+
+
+@require_POST
+def adicionar(request):
+    variacao = get_object_or_404(Variacao, pk=request.POST.get("variacao"))
+    quantidade = int(request.POST.get("quantidade", 1))
+    Carrinho(request).adicionar(variacao, quantidade)
+    messages.success(request, f"{variacao} foi para o carrinho.")
+    return redirect("carrinho")
+
+
+@require_POST
+def alterar(request, variacao_id):
     variacao = get_object_or_404(Variacao, pk=variacao_id)
-    carrinho = request.session.get("carrinho", {})
-    chave = str(variacao.pk)
-    carrinho[chave] = min(carrinho.get(chave, 0) + 1, variacao.estoque)
-    request.session["carrinho"] = carrinho
-    return redirect("carrinho")</code></pre>
+    Carrinho(request).alterar(variacao, int(request.POST.get("quantidade", 0)))
+    return redirect("carrinho")
 
-    <h2>A conta do carrinho, em Python puro</h2>
-<pre class="codigo" data-executar="sim"><code>from decimal import Decimal
 
-precos = {"1": Decimal("49.90"), "2": Decimal("12.50")}
-carrinho = {"1": 2, "2": 3}
+@require_POST
+def remover(request, variacao_id):
+    Carrinho(request).remover(variacao_id)
+    return redirect("carrinho")
 
-total = sum(precos[chave] * qtd for chave, qtd in carrinho.items())
-print(f"Total: R$ {total}")
-print(f"Total: R$ {total:.2f}".replace(".", ","))</code></pre>
-    <p class="saida">Total: R$ 137.30<br>
-Total: R$ 137,30</p>
-    <div class="dica"><strong>Dica:</strong> Ao fechar o pedido, use <code>transaction.atomic()</code> do Django: criar o pedido, os itens e baixar o estoque acontece tudo junto ou nada acontece, mesmo se der erro no meio.</div>
 
-    <h2>Desafios extras</h2>
+def ver_carrinho(request):
+    carrinho = Carrinho(request)
+    contexto = {"itens": list(carrinho.itens()), "total": carrinho.total()}
+    return render(request, "loja/carrinho.html", contexto)
+
+
+@login_required
+@require_POST
+def finalizar(request):
+    carrinho = Carrinho(request)
+    if len(carrinho) == 0:
+        messages.error(request, "Seu carrinho está vazio.")
+        return redirect("carrinho")
+    try:
+        with transaction.atomic():
+            pedido = Pedido.objects.create(usuario=request.user)
+            for item in carrinho.itens():
+                variacao = Variacao.objects.select_for_update().get(pk=item["variacao"].pk)
+                if variacao.estoque &lt; item["quantidade"]:
+                    raise EstoqueInsuficiente(f"Só temos {variacao.estoque} de {variacao}.")
+                variacao.estoque -= item["quantidade"]
+                variacao.save()
+                ItemPedido.objects.create(pedido=pedido, variacao=variacao,
+                                          quantidade=item["quantidade"], preco=variacao.preco)
+            pedido.total = carrinho.total()
+            pedido.save()
+    except EstoqueInsuficiente as erro:
+        messages.error(request, str(erro))
+        return redirect("carrinho")
+    carrinho.limpar()
+    return redirect("pedido", pk=pedido.pk)
+
+
+@login_required
+def ver_pedido(request, pk):
+    pedido = get_object_or_404(Pedido, pk=pk, usuario=request.user)
+    return render(request, "loja/pedido.html", {"pedido": pedido})</code></pre>
+    <p class="saida">(sem saída: as views só rodam quando alguém abre uma página)</p>
     <ul>
-      <li>Botões "+" e "−" no carrinho e um botão para remover o item.</li>
-      <li>Um cupom de desconto de 10% (calcule com <code>Decimal("0.10")</code>).</li>
+      <li><code>@require_POST</code> faz as views que <strong>mudam</strong> algo aceitarem só POST (com <code>csrf_token</code>). Um link comum, que é GET, recebe "405 método não permitido".</li>
+      <li><code>select_for_update()</code> "tranca" a linha da variação até a transação acabar. Se duas pessoas comprarem a última camiseta ao mesmo tempo, uma espera a outra, e o estoque não fica negativo. (No SQLite essa trava é ignorada, mas no PostgreSQL da aula 220 ela funciona.)</li>
+      <li>Quando a exceção sai de dentro do <code>with transaction.atomic():</code>, o Django desfaz o pedido e as baixas de estoque, e a mensagem de erro aparece no carrinho.</li>
+      <li><code>ver_pedido</code> filtra por <code>usuario=request.user</code>: ninguém vê o pedido dos outros trocando o número na URL.</li>
     </ul>
+    <p>Agora <code>loja/urls.py</code>:</p>
+<pre class="codigo"><code># loja/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.lista, name="lista"),
+    path("produto/&lt;slug:slug&gt;/", views.produto, name="produto"),
+    path("carrinho/", views.ver_carrinho, name="carrinho"),
+    path("carrinho/adicionar/", views.adicionar, name="adicionar"),
+    path("carrinho/&lt;int:variacao_id&gt;/alterar/", views.alterar, name="alterar"),
+    path("carrinho/&lt;int:variacao_id&gt;/remover/", views.remover, name="remover"),
+    path("carrinho/finalizar/", views.finalizar, name="finalizar"),
+    path("pedido/&lt;int:pk&gt;/", views.ver_pedido, name="pedido"),
+]</code></pre>
+    <p class="saida">(oito endereços: vitrine, produto, carrinho, quatro ações do carrinho e o pedido)</p>
+    <p>E o <code>config/urls.py</code>, que também liga as páginas prontas de login do Django (aula 206):</p>
+<pre class="codigo"><code># config/urls.py
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("contas/", include("django.contrib.auth.urls")),
+    path("", include("loja.urls")),
+]</code></pre>
+    <p class="saida">(o login fica em /contas/login/)</p>
+    <p>O login pronto procura o template <code>registration/login.html</code>. Use o mesmo da aula 206, em <code>loja/templates/registration/login.html</code>.</p>
+
+    <h2>Passo 9: os templates</h2>
+    <p>O layout em <code>loja/templates/base.html</code>, com o contador do carrinho e as mensagens:</p>
+<pre class="codigo"><code>&lt;!-- loja/templates/base.html --&gt;
+&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;{% block titulo %}Minha loja{% endblock %}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;a href="{% url 'lista' %}"&gt;Minha loja&lt;/a&gt;
+    &lt;a href="{% url 'carrinho' %}"&gt;Carrinho ({{ qtd_no_carrinho }})&lt;/a&gt;
+  &lt;/header&gt;
+  {% for mensagem in messages %}
+    &lt;p class="{{ mensagem.tags }}"&gt;{{ mensagem }}&lt;/p&gt;
+  {% endfor %}
+  &lt;main&gt;{% block conteudo %}{% endblock %}&lt;/main&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <p>A vitrine, em <code>loja/templates/loja/lista.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- loja/templates/loja/lista.html --&gt;
+{% extends "base.html" %}
+{% block conteudo %}
+&lt;h1&gt;Produtos&lt;/h1&gt;
+{% for produto in produtos %}
+  &lt;article&gt;
+    &lt;h2&gt;&lt;a href="{{ produto.get_absolute_url }}"&gt;{{ produto.nome }}&lt;/a&gt;&lt;/h2&gt;
+    &lt;p&gt;A partir de R$ {{ produto.variacoes.all.0.preco }}&lt;/p&gt;
+  &lt;/article&gt;
+{% empty %}
+  &lt;p&gt;Nenhum produto à venda.&lt;/p&gt;
+{% endfor %}
+{% endblock %}</code></pre>
+    <p>A página do produto, com a escolha da variação, em <code>loja/templates/loja/produto.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- loja/templates/loja/produto.html --&gt;
+{% extends "base.html" %}
+{% block titulo %}{{ produto.nome }}{% endblock %}
+{% block conteudo %}
+&lt;h1&gt;{{ produto.nome }}&lt;/h1&gt;
+&lt;p&gt;{{ produto.descricao }}&lt;/p&gt;
+&lt;form method="post" action="{% url 'adicionar' %}"&gt;
+  {% csrf_token %}
+  &lt;select name="variacao"&gt;
+    {% for v in produto.variacoes.all %}
+      &lt;option value="{{ v.pk }}" {% if v.estoque == 0 %}disabled{% endif %}&gt;
+        {{ v.tamanho }} {{ v.cor }} — R$ {{ v.preco }} ({{ v.estoque }} em estoque)
+      &lt;/option&gt;
+    {% endfor %}
+  &lt;/select&gt;
+  &lt;input type="number" name="quantidade" value="1" min="1"&gt;
+  &lt;button&gt;Adicionar ao carrinho&lt;/button&gt;
+&lt;/form&gt;
+{% endblock %}</code></pre>
+    <p>O carrinho, em <code>loja/templates/loja/carrinho.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- loja/templates/loja/carrinho.html --&gt;
+{% extends "base.html" %}
+{% block titulo %}Carrinho{% endblock %}
+{% block conteudo %}
+&lt;h1&gt;Seu carrinho&lt;/h1&gt;
+{% for item in itens %}
+  &lt;div&gt;
+    {{ item.variacao }} — R$ {{ item.variacao.preco }}
+    &lt;form method="post" action="{% url 'alterar' item.variacao.pk %}"&gt;
+      {% csrf_token %}
+      &lt;input type="number" name="quantidade" value="{{ item.quantidade }}" min="0"&gt;
+      &lt;button&gt;Atualizar&lt;/button&gt;
+    &lt;/form&gt;
+    &lt;form method="post" action="{% url 'remover' item.variacao.pk %}"&gt;
+      {% csrf_token %}
+      &lt;button&gt;Remover&lt;/button&gt;
+    &lt;/form&gt;
+    Subtotal: R$ {{ item.subtotal }}
+  &lt;/div&gt;
+{% empty %}
+  &lt;p&gt;O carrinho está vazio.&lt;/p&gt;
+{% endfor %}
+&lt;p&gt;&lt;strong&gt;Total: R$ {{ total }}&lt;/strong&gt;&lt;/p&gt;
+{% if itens %}
+  &lt;form method="post" action="{% url 'finalizar' %}"&gt;
+    {% csrf_token %}
+    &lt;button&gt;Fechar pedido&lt;/button&gt;
+  &lt;/form&gt;
+{% endif %}
+{% endblock %}</code></pre>
+    <p>E o resumo do pedido, em <code>loja/templates/loja/pedido.html</code>:</p>
+<pre class="codigo"><code>&lt;!-- loja/templates/loja/pedido.html --&gt;
+{% extends "base.html" %}
+{% block titulo %}Pedido {{ pedido.pk }}{% endblock %}
+{% block conteudo %}
+&lt;h1&gt;Pedido {{ pedido.pk }} recebido!&lt;/h1&gt;
+&lt;ul&gt;
+  {% for item in pedido.itens.all %}
+    &lt;li&gt;{{ item.quantidade }} × {{ item.variacao }} — R$ {{ item.subtotal }}&lt;/li&gt;
+  {% endfor %}
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Total: R$ {{ pedido.total }}&lt;/strong&gt;&lt;/p&gt;
+{% endblock %}</code></pre>
+    <div class="dica"><strong>Dica:</strong> Mudar a quantidade para 0 e clicar em Atualizar também remove o item: a função <code>alterar</code> da classe <code>Carrinho</code> trata esse caso. Um detalhe pequeno que evita um carrinho com "0 camisetas".</div>
+
+    <h2>Passo 10: rodar e testar</h2>
+<pre class="codigo"><code>python manage.py runserver</code></pre>
+    <p>Abra <code>http://127.0.0.1:8000/</code>, entre no produto, adicione 2 camisetas P azul e 1 M preta. O carrinho deve mostrar o total R$ 154,70: com <code>LANGUAGE_CODE = "pt-br"</code>, o Django já escreve os números dos templates com vírgula. Clique em Fechar pedido: o site pede login; depois de entrar, volte ao carrinho e feche de novo. No admin, o estoque da P azul terá caído de 5 para 3.</p>
+    <p>Os testes automáticos conferem tudo isso, inclusive o caso de faltar estoque. Coloque em <code>loja/tests.py</code>:</p>
+<pre class="codigo"><code># loja/tests.py
+from decimal import Decimal
+from django.contrib.auth.models import User
+from django.test import TestCase
+from .models import Pedido, Produto, Variacao
+
+
+class LojaTeste(TestCase):
+    def setUp(self):
+        camiseta = Produto.objects.create(nome="Camiseta Python", slug="camiseta-python")
+        self.azul = Variacao.objects.create(produto=camiseta, tamanho="P", cor="azul",
+                                            preco=Decimal("49.90"), estoque=5)
+        self.preta = Variacao.objects.create(produto=camiseta, tamanho="M", cor="preta",
+                                             preco=Decimal("54.90"), estoque=2)
+        User.objects.create_user("bia", password="senha-de-teste-123")
+
+    def test_carrinho_na_sessao(self):
+        self.client.post("/carrinho/adicionar/", {"variacao": self.azul.pk, "quantidade": 2})
+        self.client.post("/carrinho/adicionar/", {"variacao": self.preta.pk, "quantidade": 9})
+        self.assertEqual(self.client.session["carrinho"], {str(self.azul.pk): 2, str(self.preta.pk): 2})
+        self.client.post(f"/carrinho/{self.preta.pk}/remover/")
+        self.assertContains(self.client.get("/carrinho/"), "Total: R$ 99,80")   # pt-br usa vírgula
+
+    def test_fechar_pedido(self):
+        self.client.login(username="bia", password="senha-de-teste-123")
+        self.client.post("/carrinho/adicionar/", {"variacao": self.azul.pk, "quantidade": 2})
+        self.client.post("/carrinho/adicionar/", {"variacao": self.preta.pk, "quantidade": 1})
+        self.client.post("/carrinho/finalizar/")
+        pedido = Pedido.objects.get()
+        self.assertEqual(pedido.total, Decimal("154.70"))
+        self.azul.refresh_from_db()
+        self.assertEqual(self.azul.estoque, 3)
+        self.assertEqual(self.client.session["carrinho"], {})
+
+    def test_falta_estoque_desfaz_tudo(self):
+        self.client.login(username="bia", password="senha-de-teste-123")
+        self.client.post("/carrinho/adicionar/", {"variacao": self.azul.pk, "quantidade": 2})
+        self.client.post("/carrinho/adicionar/", {"variacao": self.preta.pk, "quantidade": 2})
+        Variacao.objects.filter(pk=self.preta.pk).update(estoque=1)   # alguém comprou antes
+        resposta = self.client.post("/carrinho/finalizar/", follow=True)
+        self.assertContains(resposta, "Só temos 1")
+        self.assertEqual(Pedido.objects.count(), 0)
+        self.azul.refresh_from_db()
+        self.assertEqual(self.azul.estoque, 5)</code></pre>
+<pre class="codigo"><code>python manage.py test loja</code></pre>
+    <p class="saida">Found 3 test(s).<br>
+Creating test database for alias 'default'...<br>
+System check identified no issues (0 silenced).<br>
+...<br>
+----------------------------------------------------------------------<br>
+Ran 3 tests in 1.200s<br>
+&nbsp;<br>
+OK<br>
+Destroying test database for alias 'default'...</p>
+    <p>O último teste é o mais importante: simula alguém comprando a camiseta preta no meio do caminho e confere que <strong>nada</strong> foi gravado e o estoque da azul voltou ao normal.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -118,20 +641,84 @@ def aplicar_cupom(total, porcento):
 
 print(aplicar_cupom(Decimal("137.30"), 10))</code></pre>
       <p class="saida">123.57</p>
+      <p><code>quantize(Decimal("0.01"))</code> deixa exatamente duas casas; <code>ROUND_HALF_UP</code> arredonda 0,5 centavo para cima, como se aprende na escola.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Escreva a view <code>remover(request, variacao_id)</code> que tira o item do carrinho da sessão.</p>
+      <p><strong>2.</strong> Escreva a função <code>frete(total)</code>: grátis para compras a partir de R$ 200,00; abaixo disso, R$ 15,00. Mostre o valor final de compras de R$ 154,70 e de R$ 210,00.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>from django.shortcuts import redirect
+<pre class="codigo" data-executar="sim"><code>from decimal import Decimal
+
+FRETE_GRATIS_A_PARTIR = Decimal("200.00")
+VALOR_FRETE = Decimal("15.00")
 
 
-def remover(request, variacao_id):
-    carrinho = request.session.get("carrinho", {})
-    carrinho.pop(str(variacao_id), None)
-    request.session["carrinho"] = carrinho
-    return redirect("carrinho")</code></pre>
-      <p><code>pop(chave, None)</code> não dá erro se o item não estiver no carrinho.</p>
+def frete(total):
+    if total &gt;= FRETE_GRATIS_A_PARTIR:
+        return Decimal("0.00")
+    return VALOR_FRETE
+
+
+for compra in [Decimal("154.70"), Decimal("210.00")]:
+    print(f"Compra R$ {compra} + frete R$ {frete(compra)} = R$ {compra + frete(compra)}")</code></pre>
+      <p class="saida">Compra R$ 154.70 + frete R$ 15.00 = R$ 169.70<br>
+Compra R$ 210.00 + frete R$ 0.00 = R$ 210.00</p>
+      <p>Na loja, chame <code>frete(carrinho.total())</code> na view <code>ver_carrinho</code> e mande o resultado no contexto.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Por que o model <code>ItemPedido</code> guarda o campo <code>preco</code>, se a <code>Variacao</code> já tem um preço?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque o preço da variação pode mudar depois da compra (promoção, aumento).<br>
+O pedido precisa lembrar quanto o cliente pagou NAQUELE dia. Se o item usasse<br>
+o preço da variação, um pedido antigo mudaria de valor sozinho quando a loja<br>
+mudasse o preço — o que estaria errado para o cliente e para a contabilidade.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie a página "Meus pedidos" (<code>/meus-pedidos/</code>), só para quem fez login, listando os pedidos do usuário do mais novo para o mais antigo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># loja/views.py (acrescente)
+@login_required
+def meus_pedidos(request):
+    pedidos = request.user.pedidos.order_by("-criado_em")
+    return render(request, "loja/meus_pedidos.html", {"pedidos": pedidos})
+
+# loja/urls.py: path("meus-pedidos/", views.meus_pedidos, name="meus_pedidos"),</code></pre>
+      <p><code>request.user.pedidos</code> funciona por causa do <code>related_name="pedidos"</code> no model <code>Pedido</code>. No template, percorra com <code>{% for pedido in pedidos %}</code> e faça um link para <code>{% url 'pedido' pedido.pk %}</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> No carrinho em Python puro do Passo 6, acrescente o método <code>alterar(variacao_id, quantidade)</code>: quantidade 0 ou menor remove o item; acima do estoque fica no máximo do estoque.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from decimal import Decimal
+
+BANCO = {1: ("Camiseta P azul", Decimal("49.90"), 5)}
+
+
+class Carrinho:
+    def __init__(self, sessao):
+        self.dados = sessao.setdefault("carrinho", {})
+
+    def alterar(self, variacao_id, quantidade):
+        chave = str(variacao_id)
+        if quantidade &lt;= 0:
+            self.dados.pop(chave, None)
+        else:
+            self.dados[chave] = min(quantidade, BANCO[variacao_id][2])
+
+
+sessao = {}
+carrinho = Carrinho(sessao)
+carrinho.alterar(1, 3)
+print(sessao)
+carrinho.alterar(1, 50)
+print(sessao)
+carrinho.alterar(1, 0)
+print(sessao)</code></pre>
+      <p class="saida">{'carrinho': {'1': 3}}<br>
+{'carrinho': {'1': 5}}<br>
+{'carrinho': {}}</p>
       </details>
     </div>
 

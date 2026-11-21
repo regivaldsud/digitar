@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 171 · CREATE, INSERT, SELECT, UPDATE, DELETE — Curso de Python · DIGITAR</title>
-<meta name="description" content="Os quatro comandos básicos de qualquer banco: criar, ler, atualizar e apagar registros.">
+<meta name="description" content="Os quatro comandos básicos de qualquer banco — criar, ler, atualizar e apagar registros — com regras como NOT NULL, DEFAULT e UNIQUE.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,68 +20,163 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Criar tabelas com CREATE TABLE</li>
-        <li>Inserir, buscar, alterar e apagar com INSERT, SELECT, UPDATE e DELETE</li>
-        <li>O que significa CRUD e por que o WHERE é tão importante</li>
+        <li>Entender o que é CRUD e quais comandos SQL fazem cada parte</li>
+        <li>Criar tabelas com <code>CREATE TABLE</code> e regras como <code>NOT NULL</code>, <code>DEFAULT</code> e <code>UNIQUE</code></li>
+        <li>Inserir uma ou várias linhas com <code>INSERT</code> e buscar com <code>SELECT</code></li>
+        <li>Alterar e apagar com <code>UPDATE</code> e <code>DELETE</code>, sempre com <code>WHERE</code></li>
+        <li>Usar <code>rowcount</code>, <code>DROP TABLE IF EXISTS</code> e <code>commit</code></li>
       </ul>
     </div>
 
-    <h2>CRUD</h2>
-    <p>Quase todo sistema faz quatro coisas com os dados: <strong>C</strong>reate (criar), <strong>R</strong>ead (ler), <strong>U</strong>pdate (atualizar) e <strong>D</strong>elete (apagar). Em SQL: <code>INSERT</code>, <code>SELECT</code>, <code>UPDATE</code> e <code>DELETE</code>.</p>
+    <h2>CRUD: as quatro operações</h2>
+    <p>Quase todo sistema — a agenda do celular, uma loja, um jogo com ranking — faz quatro coisas com os dados. Os programadores chamam isso de <strong>CRUD</strong>:</p>
+    <ul>
+      <li><strong>C</strong>reate (criar) → <code>INSERT</code></li>
+      <li><strong>R</strong>ead (ler) → <code>SELECT</code></li>
+      <li><strong>U</strong>pdate (atualizar) → <code>UPDATE</code></li>
+      <li><strong>D</strong>elete (apagar) → <code>DELETE</code></li>
+    </ul>
+    <p>Antes de tudo, porém, é preciso criar a tabela com <code>CREATE TABLE</code>. É isso que você vai aprender nesta aula.</p>
 
-    <h2>Criando e inserindo</h2>
+    <h2>Criando a tabela com regras</h2>
+    <p>No <code>CREATE TABLE</code> você dá o nome de cada coluna, o tipo e, se quiser, <strong>regras</strong> que o banco vai garantir sozinho:</p>
+    <ul>
+      <li><code>NOT NULL</code> — a coluna é obrigatória;</li>
+      <li><code>DEFAULT valor</code> — o valor usado quando nada é informado;</li>
+      <li><code>UNIQUE</code> — não pode haver dois valores iguais nessa coluna (bom para e-mail, CPF, nome de usuário).</li>
+    </ul>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 con.execute("""
     CREATE TABLE produtos (
         id INTEGER PRIMARY KEY,
-        nome TEXT NOT NULL,
-        preco REAL,
+        nome TEXT NOT NULL UNIQUE,
+        preco REAL NOT NULL,
         estoque INTEGER DEFAULT 0
     )
 """)
 con.execute("INSERT INTO produtos (nome, preco, estoque) VALUES ('Caderno', 18.5, 30)")
-con.execute("INSERT INTO produtos (nome, preco, estoque) VALUES ('Lápis', 1.2, 200)")
 con.execute("INSERT INTO produtos (nome, preco) VALUES ('Mochila', 120.0)")
 for p in con.execute("SELECT * FROM produtos"):
     print(p)
+
+try:
+    con.execute("INSERT INTO produtos (nome, preco) VALUES ('Caderno', 20.0)")
+except sqlite3.IntegrityError as erro:
+    print("Recusado:", erro)
 con.close()</code></pre>
     <p class="saida">(1, 'Caderno', 18.5, 30)<br>
-(2, 'Lápis', 1.2, 200)<br>
-(3, 'Mochila', 120.0, 0)</p>
-    <p><code>NOT NULL</code> obriga a coluna a ter valor; <code>DEFAULT 0</code> define o valor quando nada é informado (a mochila ficou com estoque 0).</p>
+(2, 'Mochila', 120.0, 0)<br>
+Recusado: UNIQUE constraint failed: produtos.nome</p>
+    <p>As aspas triplas <code>"""</code> deixam escrever o comando em várias linhas, bem mais fácil de ler. A mochila ficou com estoque 0 por causa do <code>DEFAULT</code>, e o segundo caderno foi barrado pelo <code>UNIQUE</code>.</p>
+    <div class="dica"><strong>Dica:</strong> Por que deixar o banco cuidar das regras, se o Python também poderia conferir? Porque o banco protege os dados <strong>sempre</strong>, mesmo que outro programa, ou você daqui a seis meses, esqueça de conferir.</div>
 
-    <h2>Atualizando e apagando</h2>
+    <h2>INSERT: uma ou várias linhas</h2>
+    <p>O <code>INSERT INTO tabela (colunas) VALUES (valores)</code> cria uma linha. Para inserir dados que estão em variáveis, use <code>?</code> no lugar de cada valor e passe uma tupla. Para muitas linhas, <code>executemany</code> recebe uma lista de tuplas:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 con.execute("CREATE TABLE produtos (id INTEGER PRIMARY KEY, nome TEXT, preco REAL)")
-con.execute("INSERT INTO produtos (nome, preco) VALUES ('Caderno', 18.5)")
-con.execute("INSERT INTO produtos (nome, preco) VALUES ('Lápis', 1.2)")
-con.execute("INSERT INTO produtos (nome, preco) VALUES ('Borracha', 2.0)")
 
-con.execute("UPDATE produtos SET preco = 20.0 WHERE nome = 'Caderno'")
-con.execute("DELETE FROM produtos WHERE id = 3")
+nome, preco = "Lápis", 1.2
+cur = con.execute("INSERT INTO produtos (nome, preco) VALUES (?, ?)", (nome, preco))
+print("id do lápis:", cur.lastrowid)
+
+novos = [("Borracha", 2.0), ("Régua", 4.5), ("Cola", 6.9)]
+cur = con.executemany("INSERT INTO produtos (nome, preco) VALUES (?, ?)", novos)
+print("linhas inseridas:", cur.rowcount)
+
+print(con.execute("SELECT COUNT(*) FROM produtos").fetchone()[0], "produtos no total")
+con.close()</code></pre>
+    <p class="saida">id do lápis: 1<br>
+linhas inseridas: 3<br>
+4 produtos no total</p>
+    <p>O <code>execute</code> devolve um <strong>cursor</strong>, um objeto com informações sobre o comando: <code>lastrowid</code> é o <code>id</code> da linha recém-criada e <code>rowcount</code> é quantas linhas o comando afetou.</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca monte o comando juntando textos, como <code>"... VALUES ('" + nome + "')"</code>. Um nome com apóstrofo, como <code>D'Ávila</code>, já quebra o comando — e coisa pior pode acontecer. Use sempre <code>?</code>; a aula 175 mostra o perigo em detalhes.</div>
+
+    <h2>SELECT: lendo os dados</h2>
+    <p>O <code>SELECT</code> escolhe <strong>quais colunas</strong> mostrar; o <code>*</code> significa todas. Pegar só as colunas necessárias deixa o resultado mais limpo e a busca mais rápida:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE produtos (id INTEGER PRIMARY KEY, nome TEXT, preco REAL, estoque INTEGER)")
+con.executemany("INSERT INTO produtos (nome, preco, estoque) VALUES (?, ?, ?)", [
+    ("Caderno", 18.5, 30), ("Lápis", 1.2, 200), ("Mochila", 120.0, 5),
+])
 
 print(con.execute("SELECT * FROM produtos").fetchall())
-con.close()</code></pre>
-    <p class="saida">[(1, 'Caderno', 20.0), (2, 'Lápis', 1.2)]</p>
-    <p><code>fetchall()</code> devolve todas as linhas numa lista; <code>fetchone()</code> devolve só a próxima.</p>
-    <div class="atencao"><strong>Atenção:</strong> <code>UPDATE</code> ou <code>DELETE</code> <strong>sem</strong> <code>WHERE</code> mudam ou apagam a tabela inteira! Antes de rodar, leia o comando e confira o <code>WHERE</code>.</div>
 
-    <h2>Salvando as mudanças</h2>
-    <p>Num banco em arquivo, as alterações só ficam gravadas depois de <code>con.commit()</code>. Usar a conexão num <code>with</code> faz o commit sozinho quando tudo dá certo:</p>
+print("--- tabela de preços ---")
+for nome, preco in con.execute("SELECT nome, preco FROM produtos"):
+    print(f"{nome:&lt;10} R$ {preco:&gt;7.2f}")
+
+print("--- um produto só ---")
+print(con.execute("SELECT nome, estoque FROM produtos WHERE id = 3").fetchone())
+con.close()</code></pre>
+    <p class="saida">[(1, 'Caderno', 18.5, 30), (2, 'Lápis', 1.2, 200), (3, 'Mochila', 120.0, 5)]<br>
+--- tabela de preços ---<br>
+Caderno &nbsp;&nbsp;&nbsp;R$ &nbsp;&nbsp;18.50<br>
+Lápis &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R$ &nbsp;&nbsp;&nbsp;1.20<br>
+Mochila &nbsp;&nbsp;&nbsp;R$ &nbsp;120.00<br>
+--- um produto só ---<br>
+('Mochila', 5)</p>
+    <p><code>fetchall()</code> devolve uma lista com todas as linhas; <code>fetchone()</code> devolve só a próxima linha (ou <code>None</code> se não houver nenhuma). Também dá para percorrer o resultado direto com <code>for</code>, desempacotando as colunas.</p>
+
+    <h2>UPDATE e DELETE: mudando e apagando</h2>
+    <p>O <code>UPDATE</code> muda valores de linhas que já existem; o <code>DELETE</code> apaga linhas. Os dois quase sempre vêm com <code>WHERE</code>, que diz <strong>quais</strong> linhas mexer:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE produtos (id INTEGER PRIMARY KEY, nome TEXT, preco REAL, estoque INTEGER)")
+con.executemany("INSERT INTO produtos (nome, preco, estoque) VALUES (?, ?, ?)", [
+    ("Caderno", 18.5, 30), ("Lápis", 1.2, 200), ("Borracha", 2.0, 0),
+])
+
+cur = con.execute("UPDATE produtos SET preco = 20.0 WHERE nome = 'Caderno'")
+print("atualizados:", cur.rowcount)
+
+cur = con.execute("UPDATE produtos SET estoque = estoque - 10 WHERE id = 2")
+print("vendemos 10 lápis:", cur.rowcount, "linha")
+
+cur = con.execute("DELETE FROM produtos WHERE estoque = 0")
+print("apagados:", cur.rowcount)
+
+for p in con.execute("SELECT * FROM produtos"):
+    print(p)
+con.close()</code></pre>
+    <p class="saida">atualizados: 1<br>
+vendemos 10 lápis: 1 linha<br>
+apagados: 1<br>
+(1, 'Caderno', 20.0, 30)<br>
+(2, 'Lápis', 1.2, 190)</p>
+    <p><code>SET estoque = estoque - 10</code> usa o valor antigo para calcular o novo, como <code>estoque -= 10</code> no Python. O <code>rowcount</code> é ótimo para conferir: se der 0, o <code>WHERE</code> não encontrou ninguém.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>UPDATE</code> ou <code>DELETE</code> <strong>sem</strong> <code>WHERE</code> mudam ou apagam a tabela <strong>inteira</strong>! <code>UPDATE produtos SET preco = 0</code> deixa todos os produtos de graça. Antes de rodar, leia o comando e confira o <code>WHERE</code> — e, na dúvida, rode antes um <code>SELECT</code> com o mesmo <code>WHERE</code> para ver quais linhas serão afetadas.</div>
+
+    <h2>Salvando de verdade: commit</h2>
+    <p>O banco agrupa as mudanças numa <strong>transação</strong>: elas ficam pendentes até você confirmar com <code>con.commit()</code> — ou desistir de todas com <code>con.rollback()</code>. Isso protege os dados: se o programa der erro no meio, nada fica pela metade.</p>
+    <p>Usar a conexão num <code>with</code> faz isso sozinho: se o bloco termina bem, ele faz o commit; se dá erro, desfaz tudo.</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect("loja.db")
 with con:
     con.execute("DROP TABLE IF EXISTS clientes")
-    con.execute("CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT)")
+    con.execute("CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT NOT NULL)")
     con.execute("INSERT INTO clientes (nome) VALUES ('Joana')")
-print(con.execute("SELECT COUNT(*) FROM clientes").fetchone()[0], "cliente(s)")
+
+try:
+    with con:
+        con.execute("INSERT INTO clientes (nome) VALUES ('Pedro')")
+        con.execute("INSERT INTO clientes (nome) VALUES (NULL)")   # quebra o NOT NULL
+except sqlite3.IntegrityError as erro:
+    print("Deu erro, nada foi salvo:", erro)
+
+print(con.execute("SELECT nome FROM clientes").fetchall())
 con.close()</code></pre>
-    <p class="saida">1 cliente(s)</p>
+    <p class="saida">Deu erro, nada foi salvo: NOT NULL constraint failed: clientes.nome<br>
+[('Joana',)]</p>
+    <p>O Pedro não ficou na tabela: como o segundo <code>INSERT</code> falhou, o <code>with</code> desfez o bloco inteiro. <code>DROP TABLE IF EXISTS</code> apaga a tabela (se ela existir), útil para começar do zero quando o exemplo roda várias vezes.</p>
+    <div class="dica"><strong>Dica:</strong> O <code>with con:</code> faz commit ou rollback, mas <strong>não fecha</strong> a conexão. Continue chamando <code>con.close()</code> no fim.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -90,15 +185,17 @@ con.close()</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie uma tabela <code>filmes</code> (id, titulo, ano), insira três filmes, mude o ano de um deles e apague outro. Mostre o resultado.</p>
+      <p><strong>1.</strong> Crie uma tabela <code>filmes</code> (id, titulo, ano), insira três filmes com <code>executemany</code>, mude o ano de um deles e apague outro. Mostre o resultado.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 con.execute("CREATE TABLE filmes (id INTEGER PRIMARY KEY, titulo TEXT, ano INTEGER)")
-con.execute("INSERT INTO filmes (titulo, ano) VALUES ('Central do Brasil', 1998)")
-con.execute("INSERT INTO filmes (titulo, ano) VALUES ('O Auto da Compadecida', 2001)")
-con.execute("INSERT INTO filmes (titulo, ano) VALUES ('Cidade de Deus', 2000)")
+con.executemany("INSERT INTO filmes (titulo, ano) VALUES (?, ?)", [
+    ("Central do Brasil", 1998),
+    ("O Auto da Compadecida", 2001),
+    ("Cidade de Deus", 2000),
+])
 con.execute("UPDATE filmes SET ano = 2002 WHERE titulo = 'Cidade de Deus'")
 con.execute("DELETE FROM filmes WHERE id = 1")
 for f in con.execute("SELECT * FROM filmes"):
@@ -109,9 +206,80 @@ con.close()</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> O que acontece com o comando <code>DELETE FROM produtos</code>, sem <code>WHERE</code>?</p>
+      <p><strong>2.</strong> O que acontece com o comando <code>DELETE FROM produtos</code>, sem <code>WHERE</code>? E com <code>DROP TABLE produtos</code>?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Ele apaga TODAS as linhas da tabela produtos. A tabela continua existindo, mas vazia.</p>
+      <p class="saida">DELETE FROM produtos apaga TODAS as linhas; a tabela continua existindo, mas vazia.<br>
+DROP TABLE produtos apaga a tabela inteira: as linhas, as colunas e as regras.<br>
+Depois do DROP, um SELECT nela dá erro "no such table".</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie uma tabela <code>usuarios</code> com <code>login</code> obrigatório e único e <code>pontos</code> com padrão 0. Insira dois usuários e tente inserir um login repetido, mostrando a mensagem de erro.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("""
+    CREATE TABLE usuarios (
+        id INTEGER PRIMARY KEY,
+        login TEXT NOT NULL UNIQUE,
+        pontos INTEGER DEFAULT 0
+    )
+""")
+con.execute("INSERT INTO usuarios (login) VALUES ('ana_12')")
+con.execute("INSERT INTO usuarios (login, pontos) VALUES ('caio', 50)")
+try:
+    con.execute("INSERT INTO usuarios (login) VALUES ('ana_12')")
+except sqlite3.IntegrityError as erro:
+    print("Erro:", erro)
+print(con.execute("SELECT login, pontos FROM usuarios").fetchall())
+con.close()</code></pre>
+      <p class="saida">Erro: UNIQUE constraint failed: usuarios.login<br>
+[('ana_12', 0), ('caio', 50)]</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Num jogo, todos os jogadores com menos de 100 pontos ganham 10 de bônus. Faça o <code>UPDATE</code> e mostre quantos jogadores foram afetados com <code>rowcount</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE jogadores (nome TEXT, pontos INTEGER)")
+con.executemany("INSERT INTO jogadores VALUES (?, ?)", [
+    ("Lia", 80), ("Davi", 150), ("Rosa", 95), ("Téo", 300),
+])
+cur = con.execute("UPDATE jogadores SET pontos = pontos + 10 WHERE pontos &lt; 100")
+print(cur.rowcount, "jogadores ganharam bônus")
+for nome, pontos in con.execute("SELECT nome, pontos FROM jogadores"):
+    print(nome, pontos)
+con.close()</code></pre>
+      <p class="saida">2 jogadores ganharam bônus<br>
+Lia 90<br>
+Davi 150<br>
+Rosa 105<br>
+Téo 300</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Explique o que o programa abaixo mostra e por quê: dentro de um <code>with con:</code>, ele insere 'Mel' e depois tenta inserir um <code>id</code> repetido.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE pets (id INTEGER PRIMARY KEY, nome TEXT)")
+con.execute("INSERT INTO pets VALUES (1, 'Rex')")
+con.commit()
+try:
+    with con:
+        con.execute("INSERT INTO pets VALUES (2, 'Mel')")
+        con.execute("INSERT INTO pets VALUES (1, 'Bob')")
+except sqlite3.IntegrityError:
+    print("Falhou no meio")
+print(con.execute("SELECT nome FROM pets").fetchall())
+con.close()</code></pre>
+      <p class="saida">Falhou no meio<br>
+[('Rex',)]</p>
+      <p>Só o Rex aparece. O segundo <code>INSERT</code> falhou (id 1 repetido), então o <code>with</code> fez <strong>rollback</strong> de todo o bloco, e a Mel também foi desfeita. Ou o bloco inteiro dá certo, ou nada muda.</p>
       </details>
     </div>
 

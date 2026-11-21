@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 170 · O que é banco relacional e SQL — Curso de Python · DIGITAR</title>
-<meta name="description" content="Entenda o que é um banco de dados relacional, tabelas, linhas e colunas, e rode seus primeiros comandos SQL com sqlite3.">
+<meta name="description" content="Entenda o que é um banco de dados relacional — tabelas, linhas, colunas, tipos, chave primária e NULL — e rode seus primeiros comandos SQL com sqlite3.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,19 +20,28 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que é um banco de dados relacional</li>
-        <li>O que são tabelas, linhas, colunas e chave primária</li>
-        <li>Como rodar comandos SQL a partir do Python com sqlite3</li>
+        <li>Entender para que serve um banco de dados e quando ele é melhor que um arquivo JSON</li>
+        <li>Reconhecer tabelas, linhas, colunas e a chave primária</li>
+        <li>Conhecer os tipos de dados do SQLite e o valor especial <code>NULL</code></li>
+        <li>Entender por que o SQL é uma linguagem <strong>declarativa</strong></li>
+        <li>Criar um banco na memória ou num arquivo com <code>sqlite3.connect</code></li>
       </ul>
     </div>
 
     <h2>Por que um banco de dados</h2>
-    <p>Na aula 62 você salvou dados em JSON. Isso funciona bem para poucos dados. Quando a escola tem milhares de alunos, notas e turmas, e várias pessoas mexem ao mesmo tempo, usamos um <strong>banco de dados</strong>: um programa especializado em guardar e buscar dados rapidamente e com segurança.</p>
-    <p>Um banco <strong>relacional</strong> guarda tudo em <strong>tabelas</strong>, parecidas com planilhas. Cada <strong>coluna</strong> é um tipo de informação (nome, idade) e cada <strong>linha</strong> é um registro (um aluno). A coluna que identifica cada linha sem repetir é a <strong>chave primária</strong>.</p>
+    <p>Na aula 62 você salvou dados em JSON. Isso funciona bem para poucos dados e um só programa. Mas pense numa escola com milhares de alunos, notas e turmas, com a secretaria e os professores mexendo ao mesmo tempo. Ler o arquivo inteiro para achar um aluno fica lento, e duas pessoas gravando juntas podem estragar o arquivo.</p>
+    <p>Para isso existem os <strong>bancos de dados</strong>: programas especializados em guardar muitos dados, achar o que você pede rapidamente e não perder nada mesmo quando vários usuários mexem juntos.</p>
+    <p>Um banco <strong>relacional</strong> organiza tudo em <strong>tabelas</strong>, parecidas com planilhas:</p>
+    <ul>
+      <li>cada <strong>coluna</strong> é um tipo de informação (nome, idade, turma);</li>
+      <li>cada <strong>linha</strong> (ou <strong>registro</strong>) é um item (um aluno);</li>
+      <li>a <strong>chave primária</strong> é a coluna que identifica cada linha sem nunca repetir (normalmente um número, o <code>id</code>).</li>
+    </ul>
+    <p>O nome "relacional" vem de as tabelas poderem se <strong>relacionar</strong> umas com as outras — a aula 173 mostra como.</p>
 
     <h2>A linguagem SQL</h2>
-    <p>Para conversar com o banco usamos o <strong>SQL</strong> (pronuncia-se "esse-quê-éle" ou "síquel"). Os comandos são quase frases em inglês: <code>CREATE TABLE</code> cria tabela, <code>INSERT</code> insere, <code>SELECT</code> busca.</p>
-    <p>O Python já vem com o <strong>SQLite</strong>, um banco pequeno que guarda tudo num arquivo, ou só na memória, com o nome especial <code>":memory:"</code>:</p>
+    <p>Para conversar com o banco usamos o <strong>SQL</strong> (pronuncia-se "esse-quê-éle" ou "síquel"). Os comandos parecem frases em inglês: <code>CREATE TABLE</code> cria uma tabela, <code>INSERT</code> insere, <code>SELECT</code> busca.</p>
+    <p>O Python já vem com o <strong>SQLite</strong>, um banco pequeno e completo que guarda tudo num único arquivo — ou só na memória, com o nome especial <code>":memory:"</code>. É o banco que usaremos em todo o módulo:</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
@@ -44,22 +53,112 @@ for linha in con.execute("SELECT id, nome, idade FROM alunos"):
 con.close()</code></pre>
     <p class="saida">(1, 'Ana', 12)<br>
 (2, 'Caio', 13)</p>
-    <p>Cada linha volta como uma tupla. Repare que o <code>id</code> foi preenchido sozinho: <code>INTEGER PRIMARY KEY</code> numera automaticamente.</p>
+    <p><code>connect</code> abre a conexão com o banco; <code>execute</code> manda um comando SQL; o <code>SELECT</code> devolve as linhas, e cada linha chega ao Python como uma <strong>tupla</strong>. Repare que o <code>id</code> foi preenchido sozinho: uma coluna <code>INTEGER PRIMARY KEY</code> é numerada automaticamente.</p>
     <div class="dica"><strong>Dica:</strong> Na primeira vez que você roda um exemplo com <code>sqlite3</code> aqui no site, o navegador baixa o módulo do SQLite. Pode levar alguns segundos; depois fica rápido.</div>
 
+    <h2>SQL é declarativo</h2>
+    <p>Em Python você diz <strong>como</strong> fazer: "percorra a lista, compare cada idade, guarde as que servem". Em SQL você diz <strong>o que</strong> quer — "os nomes dos alunos com 13 anos ou mais" — e o banco decide sozinho o jeito mais rápido de buscar. Por isso SQL é chamado de linguagem <strong>declarativa</strong>.</p>
+    <p>Compare as duas formas de responder à mesma pergunta:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+alunos = [("Ana", 12), ("Caio", 13), ("Duda", 14)]
+
+# Python: você descreve o passo a passo
+resposta = []
+for nome, idade in alunos:
+    if idade &gt;= 13:
+        resposta.append(nome)
+print("Python:", resposta)
+
+# SQL: você descreve o resultado que quer
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (nome TEXT, idade INTEGER)")
+con.executemany("INSERT INTO alunos VALUES (?, ?)", alunos)
+linhas = con.execute("SELECT nome FROM alunos WHERE idade &gt;= 13").fetchall()
+print("SQL:   ", [nome for (nome,) in linhas])
+con.close()</code></pre>
+    <p class="saida">Python: ['Caio', 'Duda']<br>
+SQL: &nbsp;&nbsp;&nbsp;['Caio', 'Duda']</p>
+    <p><code>executemany</code> roda o mesmo <code>INSERT</code> para cada tupla da lista; cada <code>?</code> é trocado por um valor (a aula 175 explica por que isso é importante). <code>fetchall()</code> pega todas as linhas do resultado de uma vez.</p>
+    <div class="dica"><strong>Dica:</strong> Escrever as palavras do SQL em MAIÚSCULAS (<code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>) não é obrigatório, mas é o costume: ajuda a separar o que é comando do que é nome de tabela ou coluna.</div>
+
+    <h2>Os tipos do SQLite</h2>
+    <p>Cada coluna tem um tipo. O SQLite tem poucos e simples:</p>
+    <ul>
+      <li><code>INTEGER</code> — números inteiros (idade, quantidade);</li>
+      <li><code>REAL</code> — números com vírgula (preço, nota);</li>
+      <li><code>TEXT</code> — textos;</li>
+      <li><code>BLOB</code> — dados binários, como o conteúdo de uma imagem;</li>
+      <li><code>NULL</code> — não é bem um tipo: significa "sem valor", "não informado".</li>
+    </ul>
+    <p>A função SQL <code>typeof</code> mostra o tipo de cada valor guardado:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE produtos (nome TEXT, preco REAL, estoque INTEGER)")
+con.execute("INSERT INTO produtos VALUES ('Caderno', 18.5, 30)")
+con.execute("INSERT INTO produtos VALUES ('Régua', NULL, 12)")
+sql = "SELECT nome, typeof(nome), preco, typeof(preco), typeof(estoque) FROM produtos"
+for linha in con.execute(sql):
+    print(linha)
+con.close()</code></pre>
+    <p class="saida">('Caderno', 'text', 18.5, 'real', 'integer')<br>
+('Régua', 'text', None, 'null', 'integer')</p>
+    <p>O preço da régua não foi informado, então ficou <code>NULL</code> — e no Python o <code>NULL</code> vira <code>None</code>. <code>NULL</code> não é zero nem texto vazio: é a <strong>ausência</strong> de valor. Uma régua com preço 0 seria de graça; com preço <code>NULL</code>, ainda não sabemos o preço.</p>
+    <div class="atencao"><strong>Atenção:</strong> Em SQL, textos vão entre <strong>aspas simples</strong>: <code>'Ana'</code>. Aspas duplas no SQL indicam nome de coluna. Por isso, no Python, a string do comando costuma usar aspas duplas por fora e simples por dentro.</div>
+
+    <h2>Chave primária: a identidade de cada linha</h2>
+    <p>Por que não usar o nome como identificação? Porque dois alunos podem se chamar "Ana Souza". A chave primária precisa ser <strong>única</strong> e <strong>nunca mudar</strong>. O banco garante isso: tentar repetir uma chave dá erro.</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE alunos (id INTEGER PRIMARY KEY, nome TEXT)")
+con.execute("INSERT INTO alunos (id, nome) VALUES (1, 'Ana Souza')")
+con.execute("INSERT INTO alunos (nome) VALUES ('Ana Souza')")
+print(con.execute("SELECT * FROM alunos").fetchall())
+
+try:
+    con.execute("INSERT INTO alunos (id, nome) VALUES (1, 'Bruno')")
+except sqlite3.IntegrityError as erro:
+    print("O banco recusou:", erro)
+con.close()</code></pre>
+    <p class="saida">[(1, 'Ana Souza'), (2, 'Ana Souza')]<br>
+O banco recusou: UNIQUE constraint failed: alunos.id</p>
+    <p>As duas "Ana Souza" convivem sem problema, porque cada uma tem o seu <code>id</code>. Já o id 1 repetido foi barrado com <code>IntegrityError</code>, o erro de quem tenta quebrar uma regra do banco.</p>
+
+    <h2>Banco na memória ou em arquivo</h2>
+    <p>Com <code>":memory:"</code>, o banco some quando o programa termina — ótimo para aprender e testar. Com um nome de arquivo, como <code>"escola.db"</code>, os dados ficam gravados no disco e continuam lá na próxima vez:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+from pathlib import Path
+
+con = sqlite3.connect("escola.db")   # cria o arquivo se ele não existir
+con.execute("CREATE TABLE IF NOT EXISTS recados (texto TEXT)")
+con.execute("INSERT INTO recados VALUES ('Prova na sexta')")
+con.commit()                          # grava as mudanças no arquivo
+con.close()
+
+print("Arquivo criado?", Path("escola.db").exists())
+con = sqlite3.connect("escola.db")    # abrindo de novo, os dados continuam lá
+print(con.execute("SELECT texto FROM recados").fetchall())
+con.close()</code></pre>
+    <p class="saida">Arquivo criado? True<br>
+[('Prova na sexta',)]</p>
+    <p><code>CREATE TABLE IF NOT EXISTS</code> só cria a tabela se ela ainda não existir, para o programa poder rodar várias vezes. <code>commit()</code> confirma as mudanças; sem ele, o que você inseriu num banco em arquivo se perde ao fechar. A aula 171 volta a esse assunto.</p>
+    <div class="dica"><strong>Dica:</strong> Aqui no site, o arquivo <code>escola.db</code> fica num disco de mentira dentro do navegador e some ao recarregar a página. No seu computador, ele aparece de verdade na pasta do programa — e programas como o <strong>DB Browser for SQLite</strong> abrem esse arquivo para você ver as tabelas.</div>
+
     <h2>Bancos diferentes, a mesma ideia</h2>
-    <p>Existem vários bancos relacionais: SQLite, MySQL, PostgreSQL, SQL Server. O SQL básico é quase igual em todos. O que você aprender neste módulo com SQLite vale para os outros (a aula 176 mostra o MySQL).</p>
+    <p>Existem vários bancos relacionais: SQLite, MySQL, PostgreSQL, SQL Server. Os grandes rodam como um servidor separado, que vários computadores acessam pela rede; o SQLite é só um arquivo, perfeito para aplicativos, jogos e aprendizado. O SQL básico é quase igual em todos — o que você aprender neste módulo vale para os outros (a aula 176 mostra o MySQL).</p>
 <pre class="codigo" data-executar="sim"><code>import sqlite3
 
 con = sqlite3.connect(":memory:")
 versao = con.execute("SELECT sqlite_version()").fetchone()[0]
 print("Versão do SQLite:", versao)
-print(con.execute("SELECT 2 + 3, 'texto', 10 * 1.5").fetchone())
+print(con.execute("SELECT 2 + 3, 'texto', 10 * 1.5, upper('sql')").fetchone())
 con.close()</code></pre>
     <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
 Versão do SQLite: 3.49.1<br>
-(5, 'texto', 15.0)</p>
-    <div class="atencao"><strong>Atenção:</strong> Em SQL, textos vão entre <strong>aspas simples</strong>: <code>'Ana'</code>. Por isso, no Python, a string do comando costuma usar aspas duplas por fora.</div>
+(5, 'texto', 15.0, 'SQL')</p>
+    <p><code>fetchone()</code> pega só a primeira linha do resultado. Repare que dá para usar <code>SELECT</code> até sem tabela, como uma calculadora.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -81,13 +180,54 @@ for linha in con.execute("SELECT * FROM cidades"):
 con.close()</code></pre>
       <p class="saida">(1, 'Salvador', 'BA')<br>
 (2, 'Manaus', 'AM')</p>
+      <p>O <code>*</code> no <code>SELECT</code> significa "todas as colunas".</p>
       </details>
     </div>
     <div class="exercicio">
       <p><strong>2.</strong> Numa tabela de alunos, por que o nome não é uma boa chave primária?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Porque dois alunos podem ter o mesmo nome. A chave primária precisa ser única,<br>
-por isso usamos um número (id) que nunca se repete.</p>
+      <p class="saida">Porque dois alunos podem ter o mesmo nome, e a chave primária precisa ser única.<br>
+Além disso, o nome pode mudar (um erro de digitação corrigido, por exemplo).<br>
+Por isso usamos um número (id) que nunca se repete e nunca muda.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Que tipo do SQLite (<code>INTEGER</code>, <code>REAL</code> ou <code>TEXT</code>) você usaria para: a quantidade de figurinhas, o peso de uma pessoa, o CEP e o nome de um time? Pense no CEP com cuidado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">quantidade de figurinhas -&gt; INTEGER<br>
+peso &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; REAL<br>
+CEP &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; TEXT (não fazemos contas com CEP, e um CEP como<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01310-100 perderia o zero da frente se fosse número)<br>
+nome de um time &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; TEXT</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Crie uma tabela <code>contatos</code> (nome, telefone) e insira duas pessoas, uma delas sem telefone. Mostre as linhas e veja como o <code>NULL</code> aparece no Python.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE contatos (nome TEXT, telefone TEXT)")
+con.execute("INSERT INTO contatos VALUES ('Lia', '71 99999-0000')")
+con.execute("INSERT INTO contatos (nome) VALUES ('Davi')")
+for nome, telefone in con.execute("SELECT nome, telefone FROM contatos"):
+    print(nome, "-&gt;", telefone)
+con.close()</code></pre>
+      <p class="saida">Lia -&gt; 71 99999-0000<br>
+Davi -&gt; None</p>
+      <p>A coluna que não foi informada ficou <code>NULL</code>, que no Python aparece como <code>None</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Use o SQLite como calculadora: com um único <code>SELECT</code>, mostre quanto é 7 vezes 8, a média de 6 e 9 e o texto <code>'python'</code> em maiúsculas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+print(con.execute("SELECT 7 * 8, (6 + 9) / 2.0, upper('python')").fetchone())
+con.close()</code></pre>
+      <p class="saida">(56, 7.5, 'PYTHON')</p>
+      <p>Usamos <code>2.0</code> porque, diferente do Python, no SQLite a divisão de dois inteiros dá um inteiro: <code>15 / 2</code> daria 7.</p>
       </details>
     </div>
 

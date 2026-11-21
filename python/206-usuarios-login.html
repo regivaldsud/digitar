@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 206 · Usuários, login, logout e login_required — Curso de Python · DIGITAR</title>
-<meta name="description" content="Use o sistema de usuários do Django para entrar, sair e proteger páginas só para quem está logado.">
+<meta name="description" content="Use o sistema de usuários do Django para criar contas, entrar, sair e proteger páginas só para quem está logado, entendendo como senhas e sessões funcionam.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,15 +20,87 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Usar as views prontas de login e logout do Django</li>
-        <li>Proteger páginas com <code>@login_required</code></li>
-        <li>Mostrar só os dados do usuário logado e criar contas</li>
+        <li>Entender por que senha nunca é guardada em texto puro e o que é um hash com sal</li>
+        <li>Criar usuários e conferir senhas com <code>create_user</code> e <code>check_password</code></li>
+        <li>Usar as views prontas de login e logout e as configurações <code>LOGIN_URL</code> e companhia</li>
+        <li>Entender a sessão: como o site lembra que você entrou</li>
+        <li>Proteger páginas com <code>@login_required</code> e mostrar só os dados do usuário logado</li>
+        <li>Criar uma página de cadastro com <code>UserCreationForm</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
+    <h2>Senha nunca em texto puro</h2>
+    <p>Se um site guarda as senhas como texto e alguém rouba o banco de dados, o ladrão lê todas as senhas — e muita gente usa a mesma senha em vários lugares. Por isso, sites sérios guardam só um <strong>hash</strong>: um "resumo" da senha, calculado por uma conta que só funciona num sentido. Da senha se chega ao hash; do hash não se volta à senha.</p>
+<pre class="codigo" data-executar="sim"><code>import hashlib
+
+for senha in ["girassol", "girassol", "Girassol"]:
+    resumo = hashlib.sha256(senha.encode()).hexdigest()
+    print(senha, "-&gt;", resumo[:20] + "...")</code></pre>
+    <p class="saida">girassol -&gt; 72c3179e035de99f3f30...<br>
+girassol -&gt; 72c3179e035de99f3f30...<br>
+Girassol -&gt; a2437c7acf50490de674...</p>
+    <p>A mesma senha dá sempre o mesmo hash, e uma letra diferente muda tudo. Mas isso tem um problema: duas pessoas com a senha <code>girassol</code> teriam o mesmo hash, e um ladrão poderia usar uma tabela pronta de senhas comuns. A solução é o <strong>sal</strong>: um texto aleatório, diferente para cada usuário, misturado à senha antes do cálculo. E, para atrasar quem tenta adivinhar, a conta é repetida milhares de vezes.</p>
+
+    <h2>Como o Django guarda a senha</h2>
+    <p>O Django usa o algoritmo <strong>PBKDF2</strong> com sal e muitas repetições. Dá para fazer o mesmo com a biblioteca padrão:</p>
+<pre class="codigo" data-executar="sim"><code>import base64
+import hashlib
+
+
+def gerar_hash(senha, sal, repeticoes=50_000):
+    bruto = hashlib.pbkdf2_hmac("sha256", senha.encode(), sal.encode(), repeticoes)
+    return f"pbkdf2_sha256${repeticoes}${sal}${base64.b64encode(bruto).decode()}"
+
+
+print(gerar_hash("girassol", sal="Xy7Qa2"))
+print(gerar_hash("girassol", sal="Lm0Pz9"))</code></pre>
+    <p class="saida">pbkdf2_sha256$50000$Xy7Qa2$Mjk27Bgbwv3WURFbBERpkYeOsILZ07OeWa4MnjZdZmg=<br>
+pbkdf2_sha256$50000$Lm0Pz9$8pNxsvko1CVCsNIEsEZxLgukpLrNn4syNmVuWVrOb6U=</p>
+    <p>Mesma senha, sais diferentes, hashes completamente diferentes. O texto guardado tem quatro partes separadas por <code>$</code>: o algoritmo, as repetições, o sal e o resultado. É exatamente esse o formato que o Django grava na coluna <code>password</code> da tabela de usuários (lá, as repetições passam de um milhão).</p>
+    <p>Para conferir uma senha no login, o site pega o sal guardado, refaz a conta com o que a pessoa digitou e compara:</p>
+<pre class="codigo" data-executar="sim"><code>import base64
+import hashlib
+import hmac
+
+
+def gerar_hash(senha, sal, repeticoes=50_000):
+    bruto = hashlib.pbkdf2_hmac("sha256", senha.encode(), sal.encode(), repeticoes)
+    return f"pbkdf2_sha256${repeticoes}${sal}${base64.b64encode(bruto).decode()}"
+
+
+def confere(senha_digitada, guardado):
+    algoritmo, repeticoes, sal, _ = guardado.split("$")
+    tentativa = gerar_hash(senha_digitada, sal, int(repeticoes))
+    return hmac.compare_digest(tentativa, guardado)
+
+
+no_banco = gerar_hash("girassol-azul-42", sal="Xy7Qa2")
+print(confere("girassol-azul-42", no_banco))
+print(confere("girassol", no_banco))</code></pre>
+    <p class="saida">True<br>
+False</p>
+    <div class="dica"><strong>Dica:</strong> <code>hmac.compare_digest</code> compara textos sempre no mesmo tempo, não importa onde está a primeira diferença. Um <code>==</code> comum para no primeiro caractere diferente, e um atacante muito paciente poderia medir esse tempo. Detalhe pequeno, mas é assim que se faz.</div>
+    <div class="atencao"><strong>Atenção:</strong> Isso é para você <strong>entender</strong> o que acontece. Num projeto de verdade, nunca invente o seu próprio sistema de senhas: use o do Django, que já é testado e atualizado. E nunca grave senha num campo comum de model, como <code>models.CharField</code>.</div>
+
+    <h2>Criando usuários no Django</h2>
+    <p>O Django já tem o model <code>User</code>, com nome de usuário, e-mail e senha. O método <code>create_user</code> cria o usuário <strong>e</strong> calcula o hash. Teste no <code>python manage.py shell</code>:</p>
+<pre class="codigo"><code>from django.contrib.auth.models import User
+
+ana = User.objects.create_user("ana", password="girassol-azul-42")
+print(ana.password[:22] + "...")
+print(ana.check_password("girassol-azul-42"))
+print(ana.check_password("girassol"))
+print(ana.is_authenticated)</code></pre>
+    <p class="saida">pbkdf2_sha256$1500000$...<br>
+True<br>
+False<br>
+True</p>
+    <p>O número de repetições pode mudar de uma versão do Django para outra. Para criar um administrador, continue usando <code>python manage.py createsuperuser</code> (aula 203).</p>
+    <div class="atencao"><strong>Atenção:</strong> Nunca faça <code>User.objects.create(username="ana", password="girassol")</code>: o <code>create</code> comum grava a senha como texto puro e o login nunca vai funcionar. Use <code>create_user</code>, ou <code>usuario.set_password("...")</code> seguido de <code>usuario.save()</code>.</div>
+
     <h2>Login e logout prontos</h2>
-    <p>O Django já tem tudo de usuários: senha guardada com segurança (nunca em texto puro), login e logout. Basta incluir as URLs:</p>
+    <p>O Django já traz as páginas de entrar, sair e trocar senha. Basta incluir as URLs dele no <code>config/urls.py</code>:</p>
 <pre class="codigo"><code># config/urls.py
 from django.contrib import admin
 from django.urls import include, path
@@ -38,20 +110,82 @@ urlpatterns = [
     path("contas/", include("django.contrib.auth.urls")),
     path("", include("contatos.urls")),
 ]</code></pre>
+    <p class="saida">/contas/login/ &nbsp;-&gt; página de login (nome da URL: "login")<br>
+/contas/logout/ -&gt; sair, só por POST (nome da URL: "logout")</p>
+    <p>E diga ao Django para onde mandar as pessoas, no fim do <code>config/settings.py</code>:</p>
 <pre class="codigo"><code># config/settings.py (trecho)
-LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "lista"
-LOGOUT_REDIRECT_URL = "login"</code></pre>
-    <p>O template do login fica em <code>templates/registration/login.html</code>:</p>
-<pre class="codigo"><code>&lt;form method="post"&gt;
+LOGIN_URL = "login"              # quem não entrou vai para cá
+LOGIN_REDIRECT_URL = "lista"     # depois de entrar
+LOGOUT_REDIRECT_URL = "login"    # depois de sair</code></pre>
+    <p class="saida">(sem saída: são só configurações)</p>
+    <p>Falta o template do login. Ele precisa se chamar <code>registration/login.html</code>; crie em <code>contatos/templates/registration/login.html</code>:</p>
+<pre class="codigo"><code>{% extends "base.html" %}
+{% block conteudo %}
+&lt;h1&gt;Entrar&lt;/h1&gt;
+&lt;form method="post"&gt;
   {% csrf_token %}
   {{ form.as_p }}
+  &lt;input type="hidden" name="next" value="{{ next }}"&gt;
   &lt;button type="submit"&gt;Entrar&lt;/button&gt;
-&lt;/form&gt;</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> No Django 5, o logout precisa ser um <strong>POST</strong>: um link <code>&lt;a href="/contas/logout/"&gt;</code> não funciona mais. Use um formulário com <code>{% csrf_token %}</code> e um botão "Sair".</div>
+&lt;/form&gt;
+{% endblock %}</code></pre>
+    <p>O campo escondido <code>next</code> guarda a página que a pessoa queria ver antes de ser mandada para o login; depois de entrar, ela volta para lá.</p>
+    <div class="atencao"><strong>Atenção:</strong> Desde o Django 5, o logout só aceita <strong>POST</strong>: um link <code>&lt;a href="/contas/logout/"&gt;</code> dá erro <strong>405</strong>. Use um formulário com <code>{% csrf_token %}</code> e um botão "Sair" (veja o exercício 1).</div>
 
-    <h2>Páginas só para quem entrou</h2>
-<pre class="codigo"><code>from django.contrib.auth.decorators import login_required
+    <h2>A sessão: como o site lembra de você</h2>
+    <p>A web "esquece" tudo entre um pedido e outro. Depois do login, como o site sabe que o próximo clique também é seu? Com a <strong>sessão</strong>: o servidor guarda "este visitante é a Ana" numa tabela e entrega ao navegador só um número de sorteio num <strong>cookie</strong>. A cada clique, o navegador devolve o cookie e o servidor procura o número. Uma simulação com dicionário:</p>
+<pre class="codigo" data-executar="sim"><code>import secrets
+
+sessoes = {}   # no Django, fica na tabela django_session
+
+
+def fazer_login(usuario):
+    chave = secrets.token_hex(8)
+    sessoes[chave] = {"usuario": usuario}
+    return chave            # vai para o navegador como cookie "sessionid"
+
+
+def quem_e(cookie):
+    sessao = sessoes.get(cookie)
+    return sessao["usuario"] if sessao else None
+
+
+cookie_da_ana = fazer_login("ana")
+print("Com o cookie certo:", quem_e(cookie_da_ana))
+print("Com um cookie inventado:", quem_e("1234"))
+del sessoes[cookie_da_ana]          # é isso que o logout faz
+print("Depois do logout:", quem_e(cookie_da_ana))</code></pre>
+    <p class="saida">Com o cookie certo: ana<br>
+Com um cookie inventado: None<br>
+Depois do logout: None</p>
+    <p>No Django, quem faz esse trabalho é o <code>SessionMiddleware</code> e o <code>AuthenticationMiddleware</code>, que já vêm ligados. Em toda view, <code>request.user</code> é o usuário logado — ou um usuário "anônimo", com <code>request.user.is_authenticated</code> igual a <code>False</code>.</p>
+
+    <h2>Protegendo páginas com @login_required</h2>
+    <p><code>@login_required</code> é um decorador, como os da aula 56: ele "embrulha" a view e, se ninguém entrou, manda para o <code>LOGIN_URL</code>. Veja a ideia em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def login_obrigatorio(view):
+    @wraps(view)
+    def embrulho(request):
+        if request.get("usuario") is None:
+            return "302 -&gt; /contas/login/?next=" + request["caminho"]
+        return view(request)
+    return embrulho
+
+
+@login_obrigatorio
+def lista(request):
+    return "200 -&gt; contatos de " + request["usuario"]
+
+
+print(lista({"caminho": "/", "usuario": "ana"}))
+print(lista({"caminho": "/", "usuario": None}))</code></pre>
+    <p class="saida">200 -&gt; contatos de ana<br>
+302 -&gt; /contas/login/?next=/</p>
+    <p>No Django, é só importar e usar, em <code>contatos/views.py</code>:</p>
+<pre class="codigo"><code># contatos/views.py
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import Contato
 
@@ -60,18 +194,27 @@ from .models import Contato
 def lista(request):
     contatos = Contato.objects.filter(dono=request.user)
     return render(request, "contatos/lista.html", {"contatos": contatos})</code></pre>
-    <p>Para cada usuário ver só os próprios contatos, o model ganha um dono:</p>
-<pre class="codigo"><code>from django.conf import settings
+    <p class="saida">Sem login: &nbsp;GET / &nbsp;-&gt; 302 para /contas/login/?next=/<br>
+Com login: &nbsp;GET / &nbsp;-&gt; 200, só os contatos de quem entrou</p>
+
+    <h2>Cada um com os seus contatos</h2>
+    <p>Para cada pessoa ver só os próprios contatos, o model <code>Contato</code> ganha um <strong>dono</strong>: uma chave estrangeira (aula 173) para o usuário. Em <code>contatos/models.py</code>, acrescente o campo e rode <code>makemigrations</code> e <code>migrate</code>:</p>
+<pre class="codigo"><code># contatos/models.py (trecho)
+from django.conf import settings
 from django.db import models
 
 
 class Contato(models.Model):
     dono = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    nome = models.CharField(max_length=100)</code></pre>
-    <p>No template, <code>{% if user.is_authenticated %}Olá, {{ user.username }}!{% endif %}</code> mostra quem está logado.</p>
+    nome = models.CharField(max_length=100)
+    # ... os outros campos da aula 203 continuam iguais</code></pre>
+    <p class="saida">(o makemigrations vai perguntar o dono dos contatos que já existem: responda 1 e digite o id de um usuário, por exemplo 1)</p>
+    <p><code>settings.AUTH_USER_MODEL</code> aponta para o model de usuário do projeto. <code>on_delete=models.CASCADE</code> apaga os contatos quando o usuário é apagado. Em qualquer template, <code>{% if user.is_authenticated %}Olá, {{ user.username }}!{% endif %}</code> mostra quem está logado.</p>
 
-    <h2>Cadastro de usuários</h2>
-<pre class="codigo"><code>from django.contrib.auth import login
+    <h2>Página de cadastro</h2>
+    <p>Para qualquer pessoa criar a própria conta, o Django tem o <code>UserCreationForm</code>, que já pede a senha duas vezes e confere se ela é forte o bastante.</p>
+<pre class="codigo"><code># contatos/views.py (acrescente)
+from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect, render
 
@@ -82,8 +225,12 @@ def cadastro(request):
         usuario = form.save()
         login(request, usuario)
         return redirect("lista")
-    return render(request, "registration/cadastro.html", {"form": form})</code></pre>
-    <div class="dica"><strong>Dica:</strong> <code>@login_required</code> é um decorador, como os da aula 56: ele "embrulha" a view e manda para o login quem não entrou.</div>
+    return render(request, "registration/cadastro.html", {"form": form})
+
+# contatos/urls.py: path("cadastro/", views.cadastro, name="cadastro"),</code></pre>
+    <p class="saida">POST /cadastro/ com senha "123" &nbsp;-&gt; 200, erros como "Esta senha é muito curta."<br>
+POST /cadastro/ com senha forte &nbsp;-&gt; 302, conta criada e já logada</p>
+    <p><code>request.POST or None</code> é um atalho: no GET o formulário nasce vazio (e <code>is_valid()</code> dá <code>False</code> sem mostrar erros); no POST ele recebe os dados.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -92,7 +239,7 @@ def cadastro(request):
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva o formulário de logout (Django 5) para colocar no menu.</p>
+      <p><strong>1.</strong> Escreva o formulário de logout (Django 5 ou mais novo) para colocar no menu do <code>base.html</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>&lt;form method="post" action="{% url 'logout' %}"&gt;
   {% csrf_token %}
@@ -101,12 +248,77 @@ def cadastro(request):
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Na view <code>novo</code> (aula 205), como gravar o usuário logado como dono antes de salvar o contato?</p>
+      <p><strong>2.</strong> Na view que cria contatos, como gravar o usuário logado como dono antes de salvar?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>contato = form.save(commit=False)
 contato.dono = request.user
 contato.save()</code></pre>
-      <p><code>commit=False</code> cria o objeto sem salvar, para você completar o campo <code>dono</code> antes.</p>
+      <p><code>commit=False</code> monta o objeto sem gravar no banco, para você completar o campo <code>dono</code> antes. Não coloque <code>dono</code> em <code>fields</code> do formulário: senão a pessoa poderia escolher outro dono.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use a função <code>confere</code> da aula para testar três tentativas de login — <code>"Girassol-azul-42"</code>, <code>"girassol-azul-42"</code> e <code>""</code> — contra o hash da senha <code>"girassol-azul-42"</code> com sal <code>"Ab12"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import base64
+import hashlib
+import hmac
+
+
+def gerar_hash(senha, sal, repeticoes=50_000):
+    bruto = hashlib.pbkdf2_hmac("sha256", senha.encode(), sal.encode(), repeticoes)
+    return f"pbkdf2_sha256${repeticoes}${sal}${base64.b64encode(bruto).decode()}"
+
+
+def confere(senha_digitada, guardado):
+    algoritmo, repeticoes, sal, _ = guardado.split("$")
+    return hmac.compare_digest(gerar_hash(senha_digitada, sal, int(repeticoes)), guardado)
+
+
+no_banco = gerar_hash("girassol-azul-42", "Ab12")
+for tentativa in ["Girassol-azul-42", "girassol-azul-42", ""]:
+    print(repr(tentativa), confere(tentativa, no_banco))</code></pre>
+      <p class="saida">'Girassol-azul-42' False<br>
+'girassol-azul-42' True<br>
+'' False</p>
+      <p>Senha diferencia maiúsculas de minúsculas: <code>G</code> maiúsculo já é outra senha.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Mude o decorador <code>login_obrigatorio</code> para um <code>so_admin</code>, que só deixa passar quando <code>request["usuario"]</code> for <code>"admin"</code> e, para os outros, devolve <code>"403 -&gt; proibido"</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from functools import wraps
+
+
+def so_admin(view):
+    @wraps(view)
+    def embrulho(request):
+        if request.get("usuario") != "admin":
+            return "403 -&gt; proibido"
+        return view(request)
+    return embrulho
+
+
+@so_admin
+def painel(request):
+    return "200 -&gt; painel"
+
+
+print(painel({"usuario": "admin"}))
+print(painel({"usuario": "ana"}))
+print(painel.__name__)</code></pre>
+      <p class="saida">200 -&gt; painel<br>
+403 -&gt; proibido<br>
+painel</p>
+      <p>O <code>@wraps</code> mantém o nome <code>painel</code> na função embrulhada. No Django existe algo parecido: <code>@user_passes_test(lambda u: u.is_staff)</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Uma pessoa sem login abre <code>http://127.0.0.1:8000/</code> (a lista, protegida com <code>@login_required</code>) e entra com usuário e senha certos. Descreva para onde ela vai em cada passo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">1. GET / &nbsp;-&gt; o Django vê que ninguém entrou e redireciona (302) para /contas/login/?next=/<br>
+2. Ela vê a página de login e envia o formulário (POST /contas/login/).<br>
+3. Usuário e senha certos -&gt; a sessão é criada e ela volta para o endereço do next: /<br>
+4. Agora GET / devolve 200 com os contatos dela.</p>
       </details>
     </div>
 

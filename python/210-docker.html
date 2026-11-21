@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 210 · Docker e Docker Compose para Django — Curso de Python · DIGITAR</title>
-<meta name="description" content="Rode o Django e o banco PostgreSQL em containers com Docker e Docker Compose.">
+<meta name="description" content="Entenda imagens e containers e rode o projeto Django com o banco PostgreSQL usando Dockerfile, Docker Compose e variáveis de ambiente.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,32 +20,149 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>O que são imagens e containers</li>
-        <li>Escrever um Dockerfile para o projeto Django</li>
+        <li>Entender o que são imagens, containers e volumes, e por que o Docker existe</li>
+        <li>Instalar o Docker e rodar os primeiros comandos</li>
+        <li>Escrever um Dockerfile para o projeto Django, linha por linha</li>
+        <li>Ler as configurações do <code>settings.py</code> em variáveis de ambiente</li>
         <li>Subir Django e PostgreSQL juntos com Docker Compose</li>
+        <li>Usar os comandos do dia a dia: logs, exec, migrate, down</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Para que serve o Docker</h2>
-    <p>"Na minha máquina funciona!" — o Docker resolve essa frase. Ele empacota o programa com tudo de que precisa (Python, bibliotecas, configurações) numa <strong>imagem</strong>. Um <strong>container</strong> é uma imagem rodando. Quem tiver Docker roda igualzinho, em qualquer computador.</p>
-    <p>No Windows, instale o <strong>Docker Desktop</strong> (docker.com), que usa o WSL2. Confira:</p>
-<pre class="codigo"><code>docker --version
-docker compose version</code></pre>
+    <p>"Na minha máquina funciona!" — toda equipe já ouviu essa frase. O programa roda no seu computador, mas no do colega falta uma biblioteca, a versão do Python é outra, o banco não está instalado. O Docker resolve isso empacotando o programa <strong>com tudo de que ele precisa</strong>.</p>
+    <ul>
+      <li>Uma <strong>imagem</strong> é esse pacote pronto: um mini sistema Linux com Python, as bibliotecas e o seu código. É como a receita congelada.</li>
+      <li>Um <strong>container</strong> é uma imagem rodando. Da mesma imagem saem quantos containers você quiser, todos iguais.</li>
+      <li>Um <strong>volume</strong> é uma pasta que sobrevive quando o container é apagado. É onde o banco guarda os dados.</li>
+    </ul>
+    <p>Quem tiver Docker roda o projeto igualzinho, em qualquer computador — e no servidor também (aula 220).</p>
 
-    <h2>O Dockerfile</h2>
-<pre class="codigo"><code># Dockerfile (na pasta do projeto, sem extensão)
+    <h2>Instalando e testando</h2>
+    <p>No Windows, instale o <strong>Docker Desktop</strong> (docker.com), que usa o WSL2 (aula 240). No Linux, instale o pacote <code>docker</code> da sua distribuição; no macOS, o Docker Desktop também. Depois, no terminal:</p>
+<pre class="codigo"><code>docker --version
+docker compose version
+docker run --rm hello-world</code></pre>
+    <p class="saida">Docker version 27.x.x<br>
+Docker Compose version v2.x.x<br>
+Hello from Docker!<br>
+This message shows that your installation appears to be working correctly.</p>
+    <p>O <code>docker run</code> baixou a imagem <code>hello-world</code>, criou um container, rodou e (por causa do <code>--rm</code>) apagou o container no fim.</p>
+
+    <h2>O Dockerfile, linha por linha</h2>
+    <p>O <strong>Dockerfile</strong> é a receita da imagem. Crie um arquivo chamado exatamente <code>Dockerfile</code> (sem extensão) na pasta do projeto, ao lado do <code>manage.py</code>:</p>
+<pre class="codigo"><code># Dockerfile
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
+EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]</code></pre>
-    <p>O <code>requirements.txt</code> (aula 60) lista <code>django</code> e <code>psycopg[binary]</code>, o driver do PostgreSQL.</p>
-    <div class="atencao"><strong>Atenção:</strong> Dentro do container use <code>0.0.0.0:8000</code>, não <code>127.0.0.1</code>. Com <code>127.0.0.1</code>, o servidor só aceita conexões de dentro do próprio container e o navegador do seu computador não consegue abrir.</div>
+    <ul>
+      <li><code>FROM</code> — começa de uma imagem pronta com o Python 3.12 (a versão <code>slim</code> é menor);</li>
+      <li><code>ENV</code> — não gravar arquivos <code>.pyc</code> e mostrar os <code>print</code> na hora, sem atraso;</li>
+      <li><code>WORKDIR /app</code> — a pasta de trabalho dentro do container;</li>
+      <li><code>COPY requirements.txt .</code> e <code>RUN pip install</code> — instala as bibliotecas;</li>
+      <li><code>COPY . .</code> — copia o seu código;</li>
+      <li><code>CMD</code> — o comando que roda quando o container começa.</li>
+    </ul>
+    <p>Por que copiar o <code>requirements.txt</code> <strong>antes</strong> do resto? O Docker guarda cada passo em cache. Se você só mudou o código, ele reaproveita o passo do <code>pip install</code> e a imagem fica pronta em segundos.</p>
+    <p>O <code>requirements.txt</code> (aula 60) fica assim:</p>
+<pre class="codigo"><code># requirements.txt
+django&gt;=5.0
+psycopg[binary]&gt;=3.1</code></pre>
+    <p>O <code>psycopg</code> é o driver que deixa o Python conversar com o PostgreSQL. Crie também um <code>.dockerignore</code>, para não copiar lixo para dentro da imagem:</p>
+<pre class="codigo"><code># .dockerignore
+.venv/
+__pycache__/
+db.sqlite3
+.env
+.git/</code></pre>
+    <div class="atencao"><strong>Atenção:</strong> Dentro do container use <code>0.0.0.0:8000</code>, nunca <code>127.0.0.1:8000</code>. O <code>127.0.0.1</code> é "este computador" — e, dentro do container, "este computador" é o próprio container: o servidor só aceitaria conexões de dentro dele e o seu navegador não abriria a página.</div>
 
-    <h2>Docker Compose: vários containers</h2>
+    <h2>Configurações nas variáveis de ambiente</h2>
+    <p>A mesma imagem vai rodar no seu computador e no servidor, com senhas e bancos diferentes. Então o <code>settings.py</code> não pode ter nada disso escrito: ele lê das <strong>variáveis de ambiente</strong> (aulas 108 e 177), com um valor padrão para quando a variável não existe. Veja a ideia em Python puro (aqui definimos as variáveis no próprio código só para testar):</p>
+<pre class="codigo" data-executar="sim"><code>import os
+
+os.environ["DJANGO_DEBUG"] = "0"
+os.environ["DJANGO_ALLOWED_HOSTS"] = "localhost,agenda.exemplo.com"
+
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "so-para-desenvolvimento")
+
+print("DEBUG:", DEBUG)
+print("ALLOWED_HOSTS:", ALLOWED_HOSTS)
+print("SECRET_KEY veio do ambiente?", "DJANGO_SECRET_KEY" in os.environ)</code></pre>
+    <p class="saida">DEBUG: False<br>
+ALLOWED_HOSTS: ['localhost', 'agenda.exemplo.com']<br>
+SECRET_KEY veio do ambiente? False</p>
+    <p>Repare que toda variável de ambiente é <strong>texto</strong>: <code>"0"</code> não é <code>False</code>. Por isso comparamos com <code>== "1"</code>. Um jeito prático de levar o endereço do banco é uma só variável, a <code>DATABASE_URL</code>, que o Python desmonta com <code>urlsplit</code>:</p>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import urlsplit
+
+url = urlsplit("postgres://agenda:troque-esta-senha@db:5432/agenda")
+print("Usuário:", url.username)
+print("Senha:", url.password)
+print("Servidor:", url.hostname)
+print("Porta:", url.port)
+print("Banco:", url.path.lstrip("/"))</code></pre>
+    <p class="saida">Usuário: agenda<br>
+Senha: troque-esta-senha<br>
+Servidor: db<br>
+Porta: 5432<br>
+Banco: agenda</p>
+    <p>Com isso, dá para montar o dicionário <code>DATABASES</code> que o Django espera:</p>
+<pre class="codigo" data-executar="sim"><code>import os
+from urllib.parse import urlsplit
+
+
+def banco_da_url(texto):
+    url = urlsplit(texto)
+    if url.scheme == "sqlite":
+        return {"ENGINE": "django.db.backends.sqlite3", "NAME": url.path.lstrip("/") or "db.sqlite3"}
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": url.path.lstrip("/"),
+        "USER": url.username,
+        "PASSWORD": url.password,
+        "HOST": url.hostname,
+        "PORT": str(url.port or 5432),
+    }
+
+
+print(banco_da_url(os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3")))
+print(banco_da_url("postgres://agenda:segredo@db:5432/agenda"))</code></pre>
+    <p class="saida">{'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'db.sqlite3'}<br>
+{'ENGINE': 'django.db.backends.postgresql', 'NAME': 'agenda', 'USER': 'agenda', 'PASSWORD': 'segredo', 'HOST': 'db', 'PORT': '5432'}</p>
+    <p>Sem <code>DATABASE_URL</code>, o projeto usa o SQLite de sempre; no Docker, usa o PostgreSQL. No <code>config/settings.py</code> fica assim:</p>
+<pre class="codigo"><code># config/settings.py (trecho)
+import os
+from urllib.parse import urlsplit
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "so-para-desenvolvimento")
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+_url = urlsplit(os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3"))
+if _url.scheme == "sqlite":
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+else:
+    DATABASES = {"default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": _url.path.lstrip("/"),
+        "USER": _url.username,
+        "PASSWORD": _url.password,
+        "HOST": _url.hostname,
+        "PORT": str(_url.port or 5432),
+    }}</code></pre>
+    <p class="saida">python manage.py check<br>
+System check identified no issues (0 silenced).</p>
+
+    <h2>Docker Compose: vários containers juntos</h2>
+    <p>Um site de verdade tem pelo menos duas peças: o Django e o banco. O <strong>Docker Compose</strong> descreve todas num arquivo só, <code>compose.yaml</code>, na pasta do projeto:</p>
 <pre class="codigo"><code># compose.yaml
 services:
   db:
@@ -53,35 +170,59 @@ services:
     environment:
       POSTGRES_DB: agenda
       POSTGRES_USER: agenda
-      POSTGRES_PASSWORD: troque-esta-senha
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - dados_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agenda"]
+      interval: 3s
+      retries: 10
   web:
     build: .
     ports:
       - "8000:8000"
     env_file: .env
+    volumes:
+      - .:/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 volumes:
   dados_db:</code></pre>
-    <p>No <code>settings.py</code>, o banco aponta para o serviço <code>db</code>:</p>
-<pre class="codigo"><code>import os
+    <ul>
+      <li><code>db</code> usa a imagem oficial do PostgreSQL; <code>web</code> é construído com o seu <code>Dockerfile</code> (<code>build: .</code>).</li>
+      <li><code>ports: "8000:8000"</code> liga a porta 8000 do seu computador à 8000 do container.</li>
+      <li>Dentro do Compose, cada serviço é encontrado pelo <strong>nome</strong>: o Django acha o banco no endereço <code>db</code>.</li>
+      <li><code>volumes: - .:/app</code> espelha a pasta do projeto dentro do container: você edita no VS Code e o <code>runserver</code> recarrega sozinho.</li>
+      <li><code>condition: service_healthy</code> faz o Django esperar o banco estar pronto antes de começar.</li>
+    </ul>
+    <p>As senhas ficam no arquivo <code>.env</code>, ao lado do <code>compose.yaml</code> (e fora do Git, aula 177):</p>
+<pre class="codigo"><code># .env
+POSTGRES_PASSWORD=troque-esta-senha
+DATABASE_URL=postgres://agenda:troque-esta-senha@db:5432/agenda
+DJANGO_SECRET_KEY=troque-por-um-texto-longo-e-aleatorio
+DJANGO_DEBUG=1</code></pre>
+    <div class="dica"><strong>Dica:</strong> O volume <code>dados_db</code> guarda os dados do banco fora do container: você pode parar, apagar e subir os containers de novo sem perder nenhum contato. Só o <code>docker compose down -v</code> (com <code>-v</code>) apaga o volume — use com cuidado.</div>
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "agenda"),
-        "USER": os.environ.get("POSTGRES_USER", "agenda"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
-        "HOST": "db",
-        "PORT": "5432",
-    }
-}</code></pre>
-<pre class="codigo"><code>docker compose up --build
+    <h2>Os comandos do dia a dia</h2>
+<pre class="codigo"><code>docker compose up --build -d
+docker compose ps
 docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
+docker compose logs -f web
 docker compose down</code></pre>
-    <div class="dica"><strong>Dica:</strong> O volume <code>dados_db</code> guarda os dados do banco: você pode parar e subir os containers de novo sem perder nada. Senhas de verdade ficam no <code>.env</code> (aula 177), fora do Git.</div>
+    <ul>
+      <li><code>up --build -d</code> constrói a imagem e sobe tudo em segundo plano (<code>-d</code>);</li>
+      <li><code>ps</code> mostra o que está rodando;</li>
+      <li><code>exec web ...</code> roda um comando <strong>dentro</strong> do container <code>web</code>;</li>
+      <li><code>logs -f web</code> acompanha as mensagens do Django (Ctrl+C para sair dos logs);</li>
+      <li><code>down</code> para e apaga os containers (os volumes ficam).</li>
+    </ul>
+    <p class="saida">NAME &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMAGE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SERVICE &nbsp;&nbsp;STATUS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PORTS<br>
+agenda-db-1 &nbsp;&nbsp;&nbsp;&nbsp;postgres:16 &nbsp;&nbsp;&nbsp;db &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Up 20 seconds (healthy) &nbsp;5432/tcp<br>
+agenda-web-1 &nbsp;&nbsp;&nbsp;agenda-web &nbsp;&nbsp;&nbsp;&nbsp;web &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Up 8 seconds &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.0.0.0:8000-&gt;8000/tcp</p>
+    <p>Agora abra <code>http://127.0.0.1:8000/</code> no navegador: é a agenda da aula 207, rodando com PostgreSQL.</p>
+    <div class="atencao"><strong>Atenção:</strong> Erro <code>port is already allocated</code>? Outro programa (talvez um <code>runserver</code> que você esqueceu aberto) já usa a porta 8000. Feche-o ou troque a linha para <code>"8001:8000"</code> e abra <code>http://127.0.0.1:8001/</code>.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -96,10 +237,66 @@ docker compose down</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Você mudou o <code>requirements.txt</code> e acrescentou uma biblioteca. O que precisa fazer para ela entrar no container?</p>
+      <p><strong>2.</strong> Você acrescentou uma biblioteca no <code>requirements.txt</code>. O que precisa fazer para ela entrar no container, e por quê?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>docker compose up --build</code></pre>
-      <p>A imagem precisa ser reconstruída, porque o <code>pip install</code> acontece no <code>build</code>.</p>
+<pre class="codigo"><code>docker compose up --build -d</code></pre>
+      <p>A imagem precisa ser reconstruída (<code>--build</code>), porque o <code>pip install</code> acontece na hora de construir a imagem, não quando o container começa.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Use <code>urlsplit</code> para desmontar <code>postgres://loja:abc123@banco.exemplo.com:6543/vendas</code> e mostre servidor, porta e nome do banco. Depois mostre que, numa URL sem porta, <code>url.port</code> é <code>None</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import urlsplit
+
+url = urlsplit("postgres://loja:abc123@banco.exemplo.com:6543/vendas")
+print(url.hostname, url.port, url.path.lstrip("/"))
+
+sem_porta = urlsplit("postgres://loja:abc123@db/vendas")
+print(sem_porta.port, sem_porta.port or 5432)</code></pre>
+      <p class="saida">banco.exemplo.com 6543 vendas<br>
+None 5432</p>
+      <p>É por isso que a função <code>banco_da_url</code> usa <code>url.port or 5432</code>: a porta padrão do PostgreSQL.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Escreva uma função <code>ler_bool(nome, padrao)</code> que lê uma variável de ambiente e aceita <code>"1"</code>, <code>"true"</code>, <code>"sim"</code> e <code>"yes"</code> (maiúsculas ou minúsculas) como verdadeiro. Teste com <code>DJANGO_DEBUG</code> valendo <code>"True"</code>, <code>"0"</code> e sem a variável.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import os
+
+
+def ler_bool(nome, padrao=False):
+    valor = os.environ.get(nome)
+    if valor is None:
+        return padrao
+    return valor.strip().lower() in {"1", "true", "sim", "yes"}
+
+
+os.environ["DJANGO_DEBUG"] = "True"
+print(ler_bool("DJANGO_DEBUG"))
+os.environ["DJANGO_DEBUG"] = "0"
+print(ler_bool("DJANGO_DEBUG"))
+del os.environ["DJANGO_DEBUG"]
+print(ler_bool("DJANGO_DEBUG", padrao=True))</code></pre>
+      <p class="saida">True<br>
+False<br>
+True</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> O container do Django sobe, os logs dizem <code>Starting development server at http://127.0.0.1:8000/</code>, mas o navegador não abre a página. Qual é o problema e como resolver?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O runserver está ouvindo em 127.0.0.1, que dentro do container quer dizer "só o próprio container".<br>
+Troque no Dockerfile (ou no compose) para: python manage.py runserver 0.0.0.0:8000<br>
+e confira se o compose.yaml tem ports: "8000:8000". Depois: docker compose up --build</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Para que serve o arquivo <code>.dockerignore</code> e por que o <code>.env</code> deve estar nele?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">O .dockerignore lista o que o COPY . . NÃO deve levar para dentro da imagem:<br>
+o .venv, o __pycache__, o banco de teste e o .git só deixam a imagem maior e mais lenta.<br>
+O .env tem senhas: se entrasse na imagem, qualquer pessoa com a imagem poderia lê-las.<br>
+As senhas chegam ao container pelo env_file do compose, na hora de rodar.</p>
       </details>
     </div>
 

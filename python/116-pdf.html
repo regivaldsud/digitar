@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 116 · Ler, juntar e dividir PDF (pypdf) — Curso de Python · DIGITAR</title>
-<meta name="description" content="Extraia texto, junte vários PDFs em um e separe páginas usando a biblioteca pypdf.">
+<meta name="description" content="Extraia texto, junte vários PDFs em um, separe e gire páginas usando a biblioteca pypdf.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,16 +20,39 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Instalar e abrir PDFs com <code>pypdf</code></li>
-        <li>Extrair o texto das páginas</li>
-        <li>Juntar e dividir arquivos PDF</li>
+        <li>Instalar a biblioteca <code>pypdf</code> e abrir um PDF com <code>PdfReader</code></li>
+        <li>Contar páginas e extrair o texto delas</li>
+        <li>Juntar vários PDFs em um só com <code>PdfWriter</code></li>
+        <li>Dividir um PDF, separar só algumas páginas e girar páginas</li>
+        <li>Entender por que PDF é um arquivo binário (modo <code>"wb"</code>)</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>Instalando</h2>
-<pre class="codigo"><code>pip install pypdf</code></pre>
-    <p>Para treinar, coloque dois PDFs quaisquer na pasta do projeto, por exemplo <code>boletim.pdf</code> e <code>atestado.pdf</code>.</p>
+    <h2>Para que mexer em PDF pelo Python</h2>
+    <p>Boletins, apostilas, contas e documentos quase sempre chegam em PDF. Fazer à mão tarefas como "juntar 30 PDFs num só" ou "tirar a página 3 de todos os arquivos da pasta" é demorado e cansativo. Com a biblioteca <strong>pypdf</strong>, um programa de poucas linhas faz isso em segundos.</p>
+    <p>A pypdf não vem com o Python: é um pacote de terceiros, então esta aula é para o computador.</p>
+
+    <h2>Instalando e preparando a pasta</h2>
+    <p>Com o ambiente virtual ativado (aula 60):</p>
+<pre class="codigo"><code>python -m pip install pypdf</code></pre>
+    <p>Para treinar, crie uma pasta <code>treino_pdf</code> e coloque nela dois PDFs quaisquer — por exemplo, salve duas páginas da internet com <strong>Imprimir → Salvar como PDF</strong> e chame de <code>boletim.pdf</code> e <code>atestado.pdf</code>. Rode os programas de dentro dessa pasta.</p>
+
+    <h2>PDF é um arquivo binário</h2>
+    <p>Um arquivo de texto guarda letras. Um PDF guarda <strong>bytes</strong>: fontes, imagens e instruções de desenho, misturados. Todo PDF começa com os bytes <code>%PDF-</code>, e é assim que um programa pode desconfiar se um arquivo é PDF de verdade:</p>
+<pre class="codigo" data-executar="sim"><code>def parece_pdf(conteudo):
+    return conteudo[:5] == b"%PDF-"
+
+arquivo_pdf = b"%PDF-1.7\n%...bytes do documento..."
+arquivo_txt = "Minhas anotações".encode("utf-8")
+
+print(parece_pdf(arquivo_pdf))
+print(parece_pdf(arquivo_txt))
+print(type(arquivo_pdf).__name__, arquivo_pdf[:8])</code></pre>
+    <p class="saida">True<br>
+False<br>
+bytes b'%PDF-1.7'</p>
+    <p>No computador, você leria esses bytes com <code>open("boletim.pdf", "rb").read(5)</code>. É por isso que, ao gravar um PDF, usamos o modo <code>"wb"</code> (write binary) e não <code>"w"</code>.</p>
 
     <h2>Lendo páginas e texto</h2>
 <pre class="codigo"><code>from pypdf import PdfReader
@@ -38,30 +61,86 @@ leitor = PdfReader("boletim.pdf")
 print("Páginas:", len(leitor.pages))
 
 primeira = leitor.pages[0]
-print(primeira.extract_text()[:200])   # os 200 primeiros caracteres</code></pre>
-    <div class="atencao"><strong>Atenção:</strong> <code>extract_text</code> só funciona em PDFs que têm texto de verdade. Um documento escaneado é uma foto: o texto vem vazio. Para isso seria preciso OCR, que é outro assunto.</div>
+texto = primeira.extract_text()
+print(texto[:60])        # os 60 primeiros caracteres
+print("Tem a palavra Matemática?", "Matemática" in texto)</code></pre>
+    <p class="saida">Páginas: 2<br>
+Boletim escolar - 1º bimestre<br>
+Aluna: Ana Souza<br>
+Matemática: 8<br>
+Tem a palavra Matemática? True</p>
+    <ul>
+      <li><code>PdfReader(nome)</code> abre o arquivo;</li>
+      <li><code>leitor.pages</code> funciona como uma lista: tem <code>len</code>, índice <code>[0]</code> e dá para usar no <code>for</code>;</li>
+      <li><code>extract_text()</code> devolve o texto da página como uma <code>str</code> comum.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> <code>extract_text</code> só funciona em PDFs que têm texto de verdade. Um documento escaneado é uma foto: o texto vem vazio (<code>""</code>). Para isso seria preciso OCR (reconhecimento de letras em imagens), que é outro assunto.</div>
 
-    <h2>Juntando e dividindo</h2>
-<pre class="codigo"><code>from pypdf import PdfReader, PdfWriter
+    <h2>Juntando PDFs</h2>
+    <p>O <code>PdfWriter</code> é um PDF "em branco" onde você vai colocando páginas. No fim, ele é gravado num arquivo:</p>
+<pre class="codigo"><code>from pathlib import Path
+from pypdf import PdfReader, PdfWriter
 
-# juntar: todas as páginas dos dois arquivos em um só
 juntos = PdfWriter()
-for nome in ["boletim.pdf", "atestado.pdf"]:
-    for pagina in PdfReader(nome).pages:
+for arquivo in sorted(Path(".").glob("*.pdf")):
+    if arquivo.name == "documentos.pdf":
+        continue                      # não junta o resultado dentro dele mesmo
+    leitor = PdfReader(arquivo)
+    for pagina in leitor.pages:
         juntos.add_page(pagina)
+    print(arquivo.name, "-&gt;", len(leitor.pages), "página(s)")
+
 with open("documentos.pdf", "wb") as f:
     juntos.write(f)
+print("Total:", len(juntos.pages), "páginas em documentos.pdf")</code></pre>
+    <p class="saida">atestado.pdf -&gt; 1 página(s)<br>
+boletim.pdf -&gt; 2 página(s)<br>
+Total: 3 páginas em documentos.pdf</p>
+    <div class="dica"><strong>Dica:</strong> <code>sorted(...glob("*.pdf"))</code> junta em ordem alfabética. Se a ordem importa, comece os nomes com números: <code>01_capa.pdf</code>, <code>02_boletim.pdf</code>…</div>
 
-# dividir: cada página vira um arquivo
+    <h2>Dividindo e escolhendo páginas</h2>
+    <p>Para dividir, cada página vai para um <code>PdfWriter</code> próprio. Para tirar só algumas, use fatiamento em <code>leitor.pages</code>, igual a uma lista:</p>
+<pre class="codigo"><code>from pypdf import PdfReader, PdfWriter
+
 leitor = PdfReader("documentos.pdf")
+
+# cada página vira um arquivo
 for i, pagina in enumerate(leitor.pages, start=1):
     sozinha = PdfWriter()
     sozinha.add_page(pagina)
     with open(f"pagina_{i}.pdf", "wb") as f:
         sozinha.write(f)
-print("Pronto!")</code></pre>
-    <p>Repare no modo <code>"wb"</code>: PDF não é texto, é um arquivo <strong>binário</strong>, então abrimos com <code>b</code>.</p>
-    <div class="dica"><strong>Dica:</strong> Junte com <code>pathlib</code> (aula 103): <code>sorted(Path("notas").glob("*.pdf"))</code> pega todos os PDFs de uma pasta em ordem de nome.</div>
+    print("gravei", f"pagina_{i}.pdf")
+
+# só as páginas 2 e 3, e a 3 girada
+parte = PdfWriter()
+for pagina in leitor.pages[1:3]:
+    parte.add_page(pagina)
+parte.pages[1].rotate(90)
+with open("parte.pdf", "wb") as f:
+    parte.write(f)
+print("parte.pdf com", len(parte.pages), "páginas")</code></pre>
+    <p class="saida">gravei pagina_1.pdf<br>
+gravei pagina_2.pdf<br>
+gravei pagina_3.pdf<br>
+parte.pdf com 2 páginas</p>
+    <div class="atencao"><strong>Atenção:</strong> O Python conta as páginas a partir de <strong>0</strong>, mas as pessoas contam a partir de 1. A "página 2" do leitor de PDF é <code>leitor.pages[1]</code>. Esquecer disso tira a página errada.</div>
+    <p>Programas de PDF costumam pedir as páginas como texto, por exemplo <code>"1-3,5"</code>. Transformar esse texto em índices do Python é pura lógica — e roda aqui no site:</p>
+<pre class="codigo" data-executar="sim"><code>def paginas_escolhidas(texto):
+    indices = []
+    for parte in texto.split(","):
+        if "-" in parte:
+            inicio, fim = parte.split("-")
+            indices.extend(range(int(inicio) - 1, int(fim)))
+        else:
+            indices.append(int(parte) - 1)
+    return indices
+
+print(paginas_escolhidas("1-3,5"))
+print(paginas_escolhidas("2"))</code></pre>
+    <p class="saida">[0, 1, 2, 4]<br>
+[1]</p>
+    <p>Com esses índices, bastaria fazer <code>for i in indices: novo.add_page(leitor.pages[i])</code>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -70,20 +149,61 @@ print("Pronto!")</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva um programa que mostre quantas páginas tem cada PDF da pasta <code>apostilas</code>.</p>
+      <p><strong>1.</strong> Escreva um programa que mostre quantas páginas tem cada PDF da pasta <code>apostilas</code>, e o total no fim.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from pathlib import Path
 from pypdf import PdfReader
 
+total = 0
 for arquivo in sorted(Path("apostilas").glob("*.pdf")):
-    print(arquivo.name, len(PdfReader(arquivo).pages), "páginas")</code></pre>
+    paginas = len(PdfReader(arquivo).pages)
+    total += paginas
+    print(arquivo.name, paginas, "páginas")
+print("Total:", total, "páginas")</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Por que abrimos o arquivo de saída com <code>"wb"</code> e não com <code>"w"</code>?</p>
+      <p><strong>2.</strong> Escreva um programa que procure a palavra <code>"Aprovado"</code> em todas as páginas de <code>boletim.pdf</code> e diga em quais páginas (contando a partir de 1) ela aparece.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Porque PDF é um arquivo binário, não um texto. O modo "wb" grava bytes;<br>
-o modo "w" espera textos e daria erro (ou estragaria o arquivo).</p>
+<pre class="codigo"><code>from pypdf import PdfReader
+
+leitor = PdfReader("boletim.pdf")
+for numero, pagina in enumerate(leitor.pages, start=1):
+    if "Aprovado" in pagina.extract_text():
+        print("Aparece na página", numero)</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Crie <code>sem_capa.pdf</code> com todas as páginas de <code>apostila.pdf</code>, menos a primeira.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from pypdf import PdfReader, PdfWriter
+
+leitor = PdfReader("apostila.pdf")
+novo = PdfWriter()
+for pagina in leitor.pages[1:]:
+    novo.add_page(pagina)
+with open("sem_capa.pdf", "wb") as f:
+    novo.write(f)</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Complete a função <code>nomes_das_partes(nome, quantidade)</code> para devolver os nomes dos arquivos que um programa de dividir PDF criaria. Exemplo: <code>nomes_das_partes("prova.pdf", 3)</code> deve dar <code>['prova_1.pdf', 'prova_2.pdf', 'prova_3.pdf']</code>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>def nomes_das_partes(nome, quantidade):
+    base = nome.removesuffix(".pdf")
+    return [f"{base}_{i}.pdf" for i in range(1, quantidade + 1)]
+
+print(nomes_das_partes("prova.pdf", 3))</code></pre>
+      <p class="saida">['prova_1.pdf', 'prova_2.pdf', 'prova_3.pdf']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Por que abrimos o arquivo de saída com <code>"wb"</code> e não com <code>"w"</code>? E por que um PDF escaneado devolve texto vazio?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">PDF é um arquivo binário (bytes), não um texto. O modo "wb" grava bytes;<br>
+o modo "w" espera str e daria erro.<br>
+O PDF escaneado é só uma imagem das páginas: não existem letras guardadas<br>
+nele para extrair. Seria preciso OCR para reconhecer o texto da imagem.</p>
       </details>
     </div>
 

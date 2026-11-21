@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 240 · Comandos de terminal mais usados (Linux, Mac, WSL2) — Curso de Python · DIGITAR</title>
-<meta name="description" content="Os comandos de terminal que todo programador usa no Linux, no macOS e no WSL2 do Windows, comparados com os do Prompt de Comando.">
+<meta name="description" content="Os comandos de terminal que todo programador usa no Linux, no macOS e no WSL2 do Windows, comparados com os do Windows e com o mesmo trabalho feito em Python.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,50 +20,170 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Navegar e mexer em pastas e arquivos com <code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>mkdir</code>, <code>cp</code>, <code>mv</code> e <code>rm</code></li>
-        <li>Comparar os comandos do Linux/Mac com os do Prompt de Comando do Windows</li>
-        <li>Instalar o WSL2 para ter um Linux dentro do Windows</li>
+        <li>Saber onde você está e navegar entre pastas com <code>pwd</code>, <code>ls</code> e <code>cd</code></li>
+        <li>Entender caminhos absolutos e relativos, <code>.</code>, <code>..</code> e <code>~</code></li>
+        <li>Criar, copiar, mover e apagar com <code>mkdir</code>, <code>touch</code>, <code>cp</code>, <code>mv</code> e <code>rm</code></li>
+        <li>Ver e procurar dentro de arquivos com <code>cat</code>, <code>head</code>, <code>grep</code> e <code>wc</code></li>
+        <li>Comparar os comandos do Linux/Mac com os do Windows e fazer o mesmo em Python</li>
+        <li>Saber o que é a variável de ambiente <code>PATH</code> e instalar o WSL2</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Por que aprender o terminal do Linux</h2>
-    <p>Na aula 03 você usou o Prompt de Comando do Windows. Só que a maioria dos servidores da internet roda Linux, e o macOS usa praticamente os mesmos comandos. Por isso vale aprender os dois "sotaques" do terminal.</p>
+    <p>Na aula 03 você usou o terminal do Windows. Só que quase todos os servidores da internet rodam Linux, e o macOS usa praticamente os mesmos comandos. Quando você for publicar um site (aula 220) ou usar o Docker (aula 210), vai digitar esses comandos. Por isso vale aprender os dois "sotaques" do terminal.</p>
     <p>No Windows 10 e 11 dá para ter um Linux de verdade, sem apagar nada, com o <strong>WSL2</strong> (Subsistema do Windows para Linux). Abra o PowerShell como administrador e digite:</p>
 <pre class="codigo"><code>wsl --install</code></pre>
-    <p>Depois de reiniciar o computador, procure <strong>Ubuntu</strong> no menu Iniciar, crie um usuário e uma senha, e pronto: você tem um terminal Linux.</p>
+    <p>Depois de reiniciar o computador, procure <strong>Ubuntu</strong> no menu Iniciar, crie um usuário e uma senha, e pronto: você tem um terminal Linux. No macOS, abra o aplicativo <strong>Terminal</strong> (procure com Cmd + Espaço).</p>
+    <div class="dica"><strong>Dica:</strong> Ao digitar a senha no Linux, nada aparece na tela — nem bolinhas. É de propósito, para ninguém contar as letras. Digite e aperte Enter.</div>
 
-    <h2>Os comandos do dia a dia</h2>
-<pre class="codigo"><code>pwd                     # mostra em que pasta você está
-ls                      # lista os arquivos (ls -la mostra os ocultos e detalhes)
-cd projetos             # entra na pasta projetos
-cd ..                   # volta uma pasta
-cd ~                    # vai para a sua pasta pessoal
-mkdir jogos             # cria a pasta jogos
-touch anotacoes.txt     # cria um arquivo vazio
-cat anotacoes.txt       # mostra o conteúdo do arquivo
-cp ola.py copia.py      # copia um arquivo
-mv copia.py velho.py    # move ou renomeia
-rm velho.py             # apaga o arquivo (não vai para a lixeira!)
-clear                   # limpa a tela</code></pre>
-    <p>No terminal do Linux, o texto depois de <code>#</code> é um comentário, igual no Python.</p>
-    <p>Comparando com o Windows: <code>dir</code> vira <code>ls</code>, <code>cls</code> vira <code>clear</code>, <code>copy</code> vira <code>cp</code>, <code>move</code> vira <code>mv</code>, <code>del</code> vira <code>rm</code> e <code>type</code> vira <code>cat</code>. No Linux, as pastas são separadas por <code>/</code> (como em <code>/home/ana/projetos</code>); no Windows, por <code>\</code>.</p>
-    <div class="atencao"><strong>Atenção:</strong> O <code>rm</code> apaga para sempre, sem lixeira. E <code>rm -r pasta</code> apaga a pasta inteira com tudo dentro. Confira duas vezes o nome antes de apertar Enter.</div>
-    <div class="dica"><strong>Dica:</strong> No Linux e no Mac, o Python costuma se chamar <code>python3</code> no terminal: use <code>python3 ola.py</code> e <code>python3 -m venv .venv</code>.</div>
+    <h2>Onde estou? pwd, ls e cd</h2>
+    <p>O terminal sempre está "dentro" de uma pasta, chamada <strong>pasta atual</strong>. Os três comandos mais usados servem para se localizar:</p>
+<pre class="codigo"><code>pwd                 # mostra a pasta atual, por exemplo /home/ana
+ls                  # lista o que tem na pasta atual
+ls -la              # lista tudo, com detalhes e arquivos ocultos
+cd projetos         # entra na pasta projetos
+cd ..               # sobe uma pasta
+cd ~                # vai para a sua pasta pessoal
+cd -                # volta para a pasta onde você estava antes</code></pre>
+    <p>No terminal do Linux, o texto depois de <code>#</code> é um comentário, igual no Python. A tecla <strong>Tab</strong> completa nomes de pastas e arquivos: digite <code>cd proj</code> e aperte Tab.</p>
+    <p>Em Python, <code>Path.cwd()</code> faz o papel do <code>pwd</code>, <code>iterdir()</code> o do <code>ls</code> e <code>os.chdir()</code> o do <code>cd</code>. Rode e veja (o programa cria uma pasta temporária só para o teste, que some no fim):</p>
+<pre class="codigo" data-executar="sim"><code>import os
+import tempfile
+from pathlib import Path
 
-    <h2>O mesmo trabalho feito pelo Python</h2>
-    <p>Tudo o que você faz no terminal também dá para fazer em Python, com o <code>pathlib</code> (visto na aula 103). Este script cria uma pasta, coloca um arquivo nela e lista o que tem dentro — o equivalente a <code>mkdir</code>, <code>touch</code> e <code>ls</code>:</p>
-<pre class="codigo"><code>from pathlib import Path
+with tempfile.TemporaryDirectory() as raiz:
+    os.chdir(raiz)                       # cd raiz
+    Path("projetos/jogos").mkdir(parents=True)
+    Path("notas.txt").write_text("oi", encoding="utf-8")
 
-pasta = Path("exercicios")
-pasta.mkdir(exist_ok=True)
-(pasta / "ola.py").write_text('print("oi")\n', encoding="utf-8")
-(pasta / "notas.txt").write_text("Estudar terminal\n", encoding="utf-8")
+    print("ls:", sorted(p.name for p in Path.cwd().iterdir()))
+    os.chdir("projetos")                 # cd projetos
+    print("pwd termina em:", Path.cwd().name)
+    os.chdir("..")                       # cd ..
+    print("de volta em:", Path.cwd() == Path(raiz).resolve())
+    os.chdir(Path.home())                # cd ~  (sai antes de apagar a pasta)</code></pre>
+    <p class="saida">ls: ['notas.txt', 'projetos']<br>
+pwd termina em: projetos<br>
+de volta em: True</p>
 
-for arquivo in sorted(pasta.iterdir()):
-    print(arquivo.name)</code></pre>
-    <p class="saida">notas.txt<br>
-ola.py</p>
+    <h2>Caminhos absolutos e relativos</h2>
+    <p>Um <strong>caminho absoluto</strong> começa na raiz do disco e funciona de qualquer lugar: <code>/home/ana/projetos/jogo.py</code> no Linux, <code>C:\Users\Ana\projetos\jogo.py</code> no Windows. Um <strong>caminho relativo</strong> parte da pasta atual: <code>projetos/jogo.py</code>.</p>
+    <p>Dois nomes especiais aparecem em todo lugar: <code>.</code> é a pasta atual e <code>..</code> é a pasta de cima. E <code>~</code> é a sua pasta pessoal.</p>
+<pre class="codigo" data-executar="sim"><code>from pathlib import PurePosixPath, PureWindowsPath
+
+linux = PurePosixPath("/home/ana/projetos/jogo.py")
+windows = PureWindowsPath(r"C:\Users\Ana\projetos\jogo.py")
+
+print("Absoluto?", linux.is_absolute(), windows.is_absolute())
+print("Relativo?", PurePosixPath("projetos/jogo.py").is_absolute())
+print("Pasta:", linux.parent)
+print("Nome:", windows.name)
+print("Subindo duas pastas:", linux.parent.parent)</code></pre>
+    <p class="saida">Absoluto? True True<br>
+Relativo? False<br>
+Pasta: /home/ana/projetos<br>
+Nome: jogo.py<br>
+Subindo duas pastas: /home/ana</p>
+    <div class="atencao"><strong>Atenção:</strong> No Linux e no Mac, maiúsculas e minúsculas fazem diferença: <code>Fotos</code> e <code>fotos</code> são pastas diferentes. No Windows, não. Um programa que funciona no seu Windows pode quebrar no servidor Linux por causa de uma letra maiúscula.</div>
+
+    <h2>Criar, copiar, mover e apagar</h2>
+<pre class="codigo"><code>mkdir jogos                 # cria a pasta jogos
+mkdir -p escola/2026/notas  # cria a pasta e as de cima, se faltarem
+touch anotacoes.txt         # cria um arquivo vazio
+cp ola.py copia.py          # copia um arquivo
+cp -r jogos jogos_backup    # copia uma pasta inteira (-r = recursivo)
+mv copia.py velho.py        # renomeia
+mv velho.py jogos/          # move para dentro de jogos
+rm velho.py                 # apaga o arquivo (não vai para a lixeira!)
+rm -r jogos_backup          # apaga a pasta com tudo dentro
+clear                       # limpa a tela</code></pre>
+    <p>O mesmo trabalho em Python usa <code>pathlib</code> (aula 103) e <code>shutil</code> (aula 104):</p>
+<pre class="codigo" data-executar="sim"><code>import os
+import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as raiz:
+    os.chdir(raiz)
+    Path("escola/2026/notas").mkdir(parents=True)   # mkdir -p
+    Path("ola.py").touch()                          # touch
+    shutil.copy("ola.py", "copia.py")               # cp
+    shutil.copytree("escola", "escola_backup")      # cp -r
+    shutil.move("copia.py", "velho.py")             # mv (renomear)
+    Path("velho.py").unlink()                       # rm
+    shutil.rmtree("escola_backup")                  # rm -r
+
+    print(sorted(p.name for p in Path(".").iterdir()))
+    os.chdir(Path.home())</code></pre>
+    <p class="saida">['escola', 'ola.py']</p>
+    <div class="atencao"><strong>Atenção:</strong> O <code>rm</code> e o <code>rm -r</code> apagam para sempre, sem lixeira e sem perguntar. Nunca rode um comando com <code>rm</code> que você copiou da internet sem entender. Confira duas vezes o nome antes de apertar Enter.</div>
+
+    <h2>Ver e procurar dentro dos arquivos</h2>
+<pre class="codigo"><code>cat notas.txt            # mostra o arquivo inteiro
+head -n 3 notas.txt      # mostra só as 3 primeiras linhas
+tail -n 3 notas.txt      # mostra só as 3 últimas
+grep Python notas.txt    # mostra as linhas que têm a palavra Python
+wc -l notas.txt          # conta as linhas
+ls | grep .py            # o | (pipe) manda a saída de um comando para o outro</code></pre>
+    <p>O <code>|</code> (chamado <strong>pipe</strong>) é um superpoder: ele liga comandos pequenos para fazer algo maior. Em Python, cada um vira poucas linhas:</p>
+<pre class="codigo" data-executar="sim"><code>import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as raiz:
+    arquivo = Path(raiz) / "notas.txt"
+    arquivo.write_text("Estudar Python\nTreinar digitação\nRevisar Python\nDormir cedo\n",
+                       encoding="utf-8")
+    linhas = arquivo.read_text(encoding="utf-8").splitlines()
+
+    print("head -n 2:", linhas[:2])
+    print("tail -n 1:", linhas[-1:])
+    print("grep Python:", [l for l in linhas if "Python" in l])
+    print("wc -l:", len(linhas))</code></pre>
+    <p class="saida">head -n 2: ['Estudar Python', 'Treinar digitação']<br>
+tail -n 1: ['Dormir cedo']<br>
+grep Python: ['Estudar Python', 'Revisar Python']<br>
+wc -l: 4</p>
+
+    <h2>Linux, Windows e Python lado a lado</h2>
+    <ul>
+      <li><code>pwd</code> — Windows: <code>cd</code> (sozinho) ou <code>Get-Location</code> — Python: <code>Path.cwd()</code></li>
+      <li><code>ls</code> — Windows: <code>dir</code> — Python: <code>Path(".").iterdir()</code></li>
+      <li><code>cd pasta</code> — Windows: <code>cd pasta</code> — Python: <code>os.chdir("pasta")</code></li>
+      <li><code>mkdir -p a/b</code> — Windows: <code>mkdir a\b</code> — Python: <code>Path("a/b").mkdir(parents=True)</code></li>
+      <li><code>touch x.txt</code> — Windows (PowerShell): <code>New-Item x.txt</code> — Python: <code>Path("x.txt").touch()</code></li>
+      <li><code>cp</code> / <code>cp -r</code> — Windows: <code>copy</code> / <code>xcopy</code> — Python: <code>shutil.copy</code> / <code>shutil.copytree</code></li>
+      <li><code>mv</code> — Windows: <code>move</code> ou <code>ren</code> — Python: <code>shutil.move</code></li>
+      <li><code>rm</code> / <code>rm -r</code> — Windows: <code>del</code> / <code>rmdir /s</code> — Python: <code>Path.unlink()</code> / <code>shutil.rmtree</code></li>
+      <li><code>cat</code> — Windows: <code>type</code> — Python: <code>Path.read_text()</code></li>
+      <li><code>grep</code> — Windows: <code>findstr</code> — Python: <code>[l for l in linhas if "x" in l]</code></li>
+      <li><code>clear</code> — Windows: <code>cls</code></li>
+    </ul>
+    <p>No PowerShell do Windows, <code>ls</code>, <code>cat</code>, <code>cp</code>, <code>mv</code> e <code>rm</code> também funcionam, como apelidos. No Linux, as pastas são separadas por <code>/</code>; no Windows, por <code>\</code>.</p>
+    <div class="dica"><strong>Dica:</strong> No Linux e no Mac, o Python costuma se chamar <code>python3</code> no terminal: use <code>python3 ola.py</code> e <code>python3 -m venv .venv</code>. No Windows, é <code>py</code> ou <code>python</code>.</div>
+
+    <h2>A variável PATH</h2>
+    <p>Quando você digita <code>python</code> ou <code>git</code>, como o terminal sabe onde está o programa? Ele procura numa lista de pastas guardada na <strong>variável de ambiente</strong> <code>PATH</code>. Se a pasta do programa não estiver lá, aparece <code>command not found</code> (Linux) ou "não é reconhecido como um comando" (Windows).</p>
+<pre class="codigo"><code>echo $PATH          # Linux e Mac: mostra as pastas, separadas por :
+echo $env:Path      # PowerShell: separadas por ;
+which python3       # Linux e Mac: em que pasta está o programa
+where python        # Windows: o mesmo</code></pre>
+    <p>O Python lê o <code>PATH</code> com <code>os.environ</code> e procura programas com <code>shutil.which</code>. Aqui usamos um PATH de exemplo, escrito no próprio código, para ver como ele é dividido:</p>
+<pre class="codigo" data-executar="sim"><code>from pathlib import PurePosixPath
+
+path_exemplo = "/usr/local/bin:/usr/bin:/bin:/home/ana/.local/bin"
+
+for numero, pasta in enumerate(path_exemplo.split(":"), start=1):
+    print(numero, pasta)
+
+print("Onde o terminal procuraria 'python3':",
+      [str(PurePosixPath(p) / "python3") for p in path_exemplo.split(":")][:2], "...")</code></pre>
+    <p class="saida">1 /usr/local/bin<br>
+2 /usr/bin<br>
+3 /bin<br>
+4 /home/ana/.local/bin<br>
+Onde o terminal procuraria 'python3': ['/usr/local/bin/python3', '/usr/bin/python3'] ...</p>
+    <p>No seu computador, troque o texto de exemplo por <code>os.environ["PATH"]</code> e o <code>":"</code> por <code>os.pathsep</code> (que vale <code>;</code> no Windows e <code>:</code> no Linux).</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -72,37 +192,78 @@ ola.py</p>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva os comandos do Linux para criar a pasta <code>escola</code>, entrar nela, criar o arquivo <code>tarefas.txt</code> e listar o conteúdo da pasta.</p>
+      <p><strong>1.</strong> Escreva os comandos do Linux para criar a pasta <code>escola</code>, entrar nela, criar o arquivo <code>tarefas.txt</code>, listar o conteúdo da pasta e voltar para a pasta de cima.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>mkdir escola
 cd escola
 touch tarefas.txt
-ls</code></pre>
+ls
+cd ..</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Qual é o comando do Linux equivalente a cada comando do Windows: <code>dir</code>, <code>cls</code>, <code>del nota.txt</code>?</p>
+      <p><strong>2.</strong> Qual é o comando do Linux equivalente a cada comando do Windows: <code>dir</code>, <code>cls</code>, <code>type nota.txt</code>, <code>del nota.txt</code>?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>ls
 clear
+cat nota.txt
 rm nota.txt</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>3.</strong> Faça um script Python que crie a pasta <code>backup</code> e, dentro dela, os arquivos <code>dia1.txt</code>, <code>dia2.txt</code> e <code>dia3.txt</code>, mostrando os nomes no fim.</p>
+      <p><strong>3.</strong> Você está em <code>/home/ana/projetos/jogo</code>. Para onde vai cada comando: <code>cd ..</code>, <code>cd ../..</code>, <code>cd ~</code> e <code>cd /tmp</code>? Confira as duas primeiras com <code>PurePosixPath</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>from pathlib import Path
+<pre class="codigo" data-executar="sim"><code>from pathlib import PurePosixPath
 
-backup = Path("backup")
-backup.mkdir(exist_ok=True)
-for numero in range(1, 4):
-    (backup / f"dia{numero}.txt").write_text("", encoding="utf-8")
+atual = PurePosixPath("/home/ana/projetos/jogo")
+print("cd ..    -&gt;", atual.parent)
+print("cd ../.. -&gt;", atual.parent.parent)
+print("cd ~     -&gt; /home/ana (a pasta pessoal)")
+print("cd /tmp  -&gt; /tmp (caminho absoluto: não depende de onde você está)")</code></pre>
+      <p class="saida">cd .. &nbsp;&nbsp;&nbsp;-&gt; /home/ana/projetos<br>
+cd ../.. -&gt; /home/ana<br>
+cd ~ &nbsp;&nbsp;&nbsp;&nbsp;-&gt; /home/ana (a pasta pessoal)<br>
+cd /tmp &nbsp;-&gt; /tmp (caminho absoluto: não depende de onde você está)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça em Python o equivalente a <code>grep -c erro log.txt</code> (contar quantas linhas têm a palavra <code>erro</code>), usando um texto de log criado no próprio programa.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>log = """10:00 início
+10:01 erro ao abrir arquivo
+10:02 tudo certo
+10:05 erro de conexão
+10:06 fim"""
 
-for arquivo in sorted(backup.iterdir()):
-    print(arquivo.name)</code></pre>
-      <p class="saida">dia1.txt<br>
-dia2.txt<br>
-dia3.txt</p>
+quantas = sum(1 for linha in log.splitlines() if "erro" in linha)
+print(quantas)</code></pre>
+      <p class="saida">2</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Faça um script Python que, numa pasta temporária, crie a pasta <code>backup</code> com os arquivos <code>dia1.txt</code>, <code>dia2.txt</code> e <code>dia3.txt</code>, copie a pasta inteira para <code>backup_velho</code> (como <code>cp -r</code>) e mostre os nomes dentro da cópia.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as raiz:
+    backup = Path(raiz) / "backup"
+    backup.mkdir()
+    for numero in range(1, 4):
+        (backup / f"dia{numero}.txt").touch()
+
+    copia = shutil.copytree(backup, Path(raiz) / "backup_velho")
+    print(sorted(p.name for p in Path(copia).iterdir()))</code></pre>
+      <p class="saida">['dia1.txt', 'dia2.txt', 'dia3.txt']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Por que, depois de instalar um programa, às vezes o terminal diz que ele "não é reconhecido como um comando"? Como resolver?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Porque a pasta onde o programa foi instalado não está no PATH, ou o terminal foi aberto<br>
+antes da instalação e ainda tem o PATH antigo. Feche e abra o terminal de novo; se não<br>
+resolver, reinstale marcando a opção "Add to PATH" (como no instalador do Python).</p>
       </details>
     </div>
 

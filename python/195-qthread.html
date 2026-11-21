@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 195 · Tarefas longas sem travar a tela: QThread — Curso de Python · DIGITAR</title>
-<meta name="description" content="Rode tarefas demoradas em segundo plano com QThread para a janela continuar respondendo.">
+<meta name="description" content="Entenda por que tarefas demoradas congelam a janela e rode o trabalho em segundo plano com QThread, mandando o progresso para a tela com sinais.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,22 +20,136 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Entender por que tarefas demoradas congelam a janela</li>
-        <li>Mover o trabalho para um QThread com um objeto trabalhador</li>
-        <li>Mandar o progresso de volta para a tela com sinais próprios</li>
+        <li>Entender o laço de eventos e por que uma tarefa demorada congela a janela</li>
+        <li>Saber o que é uma thread e ver duas rodando ao mesmo tempo com <code>threading</code></li>
+        <li>Entender como um sinal funciona por dentro</li>
+        <li>Mover o trabalho para um <code>QThread</code> com um objeto trabalhador</li>
+        <li>Mandar o progresso para a tela com sinais próprios, sem mexer nos widgets da outra thread</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Por que a janela "congela"</h2>
-    <p>A janela só redesenha e responde a cliques quando o laço de eventos (<code>app.exec()</code>) está livre. Se um slot fica 10 segundos baixando um arquivo ou fazendo contas, o laço para e o Windows mostra "Não respondendo". A solução é rodar o trabalho em outra <strong>thread</strong> — uma linha de execução paralela.</p>
+    <p>Lembra do <code>app.exec()</code> da aula 190? Ele liga o <strong>laço de eventos</strong>: uma repetição que pega, um por um, os acontecimentos da fila (um clique, uma tecla, "redesenhe a janela") e chama o código certo para cada um.</p>
+    <p>O laço só atende o próximo evento quando o anterior termina. Se o seu slot demora 10 segundos (baixando um arquivo, contando palavras de um livro inteiro), durante esses 10 segundos ninguém redesenha a janela nem atende cliques. O Windows mostra "Não respondendo". Este laço de mentira mostra o problema:</p>
+<pre class="codigo" data-executar="sim"><code>eventos = ["desenhar a janela", "clique em Começar", "mover o mouse", "redesenhar a barra"]
+duracao = {"clique em Começar": 10}  # o clique dispara uma tarefa de 10 segundos
+
+relogio = 0
+for evento in eventos:
+    print(f"t={relogio:&gt;2}s  atendendo: {evento}")
+    relogio += duracao.get(evento, 0)
+print(f"t={relogio:&gt;2}s  fila vazia")</code></pre>
+    <p class="saida">t= 0s &nbsp;atendendo: desenhar a janela<br>
+t= 0s &nbsp;atendendo: clique em Começar<br>
+t=10s &nbsp;atendendo: mover o mouse<br>
+t=10s &nbsp;atendendo: redesenhar a barra<br>
+t=10s &nbsp;fila vazia</p>
+    <p>O movimento do mouse aconteceu logo depois do clique, mas só foi atendido 10 segundos depois. Para o usuário, o programa travou.</p>
+    <div class="atencao"><strong>Atenção:</strong> Colocar <code>time.sleep()</code> ou um laço demorado dentro de um slot é a causa número um de janelas travadas. O laço de eventos precisa ficar livre o tempo todo.</div>
+
+    <h2>Uma saída simples: dividir o trabalho em pedaços</h2>
+    <p>Uma ideia é fazer a tarefa em pedacinhos e devolver a vez para o laço de eventos entre um pedaço e outro. Um gerador (aula 52) faz isso bem: cada <code>yield</code> é uma pausa.</p>
+<pre class="codigo" data-executar="sim"><code>def tarefa_longa():
+    for parte in range(1, 6):
+        yield f"parte {parte} de 5 pronta"
+
+
+tarefa = tarefa_longa()
+outros_eventos = ["mouse", "tecla", "redesenhar"]
+
+for passo in tarefa:
+    print("trabalho:", passo)
+    if outros_eventos:
+        print("   janela atende:", outros_eventos.pop(0))</code></pre>
+    <p class="saida">trabalho: parte 1 de 5 pronta<br>
+&nbsp;&nbsp;&nbsp;janela atende: mouse<br>
+trabalho: parte 2 de 5 pronta<br>
+&nbsp;&nbsp;&nbsp;janela atende: tecla<br>
+trabalho: parte 3 de 5 pronta<br>
+&nbsp;&nbsp;&nbsp;janela atende: redesenhar<br>
+trabalho: parte 4 de 5 pronta<br>
+trabalho: parte 5 de 5 pronta</p>
+    <p>No Qt, esse revezamento é feito com um <code>QTimer</code> que chama um pedaço da tarefa de tempos em tempos. Funciona para tarefas que dá para cortar em partes. Quando não dá (uma única operação demorada, como esperar a resposta da internet), a solução é uma <strong>thread</strong>.</p>
+
+    <h2>Threads: duas linhas de execução</h2>
+    <p>Uma <strong>thread</strong> é uma linha de execução: um caminho que o computador vai percorrendo no seu código. Todo programa começa com uma, a <strong>thread principal</strong>, que é a da janela. Você pode criar outras para rodar trabalho <strong>ao mesmo tempo</strong>.</p>
+    <p>O módulo <code>threading</code> da biblioteca padrão mostra a ideia. A outra thread não conversa direto com a principal: ela coloca recados numa <code>queue.Queue</code> (uma fila segura para threads), e a principal lê os recados.</p>
+    <p>Salve como <code>threads.py</code> e rode com <code>python threads.py</code> (o navegador deste site não consegue criar threads, por isso este bloco não tem o botão Executar):</p>
+<pre class="codigo"><code>import queue
+import threading
+import time
+
+
+def trabalhador(recados):
+    for i in range(1, 6):
+        time.sleep(0.1)          # finge um trabalho demorado
+        recados.put(i * 20)      # avisa o progresso
+    recados.put(None)            # avisa que terminou
+
+
+recados = queue.Queue()
+t = threading.Thread(target=trabalhador, args=(recados,))
+t.start()
+print("A thread principal continua livre!")
+
+while True:
+    valor = recados.get()
+    if valor is None:
+        break
+    print(f"progresso: {valor}%")
+
+t.join()
+print("Trabalho terminado.")</code></pre>
+    <p class="saida">A thread principal continua livre!<br>
+progresso: 20%<br>
+progresso: 40%<br>
+progresso: 60%<br>
+progresso: 80%<br>
+progresso: 100%<br>
+Trabalho terminado.</p>
+    <ul>
+      <li><code>Thread(target=..., args=...)</code> prepara a thread com a função que ela vai rodar;</li>
+      <li><code>start()</code> começa a rodar; a linha seguinte do programa já roda junto, sem esperar;</li>
+      <li><code>join()</code> espera a thread acabar.</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Repare que a frase "A thread principal continua livre!" apareceu <strong>antes</strong> do progresso. É exatamente isso que queremos numa janela: o trabalho anda numa thread e a tela continua respondendo na outra.</div>
+
+    <h2>Sinais: como um trabalhador avisa a janela</h2>
+    <p>No Qt, o jeito certo de uma thread dar recados para a janela é com <strong>sinais</strong> (aula 192). Por dentro, um sinal é simples: uma lista de funções que são chamadas quando alguém "emite". Esta versão de brinquedo roda aqui:</p>
+<pre class="codigo" data-executar="sim"><code>class Sinal:
+    def __init__(self):
+        self.slots = []
+
+    def connect(self, funcao):
+        self.slots.append(funcao)
+
+    def emit(self, *valores):
+        for funcao in self.slots:
+            funcao(*valores)
+
+
+progresso = Sinal()
+progresso.connect(lambda v: print(f"barra em {v}%"))
+progresso.connect(lambda v: print("  título: Copiando...", v))
+
+for v in (25, 50, 100):
+    progresso.emit(v)</code></pre>
+    <p class="saida">barra em 25%<br>
+&nbsp;&nbsp;título: Copiando... 25<br>
+barra em 50%<br>
+&nbsp;&nbsp;título: Copiando... 50<br>
+barra em 100%<br>
+&nbsp;&nbsp;título: Copiando... 100</p>
+    <p>O Qt faz uma coisa a mais, que a versão de brinquedo não faz: quando o sinal é emitido numa thread e o slot pertence a um widget da thread principal, o Qt <strong>coloca o recado na fila do laço de eventos</strong> em vez de chamar o slot na hora. Assim, quem mexe na barra é sempre a thread da janela.</p>
 
     <h2>O padrão trabalhador + QThread</h2>
+    <p>Juntando tudo: um objeto <strong>trabalhador</strong> (<code>QObject</code>) com sinais próprios, movido para um <code>QThread</code>. Instale o PySide6 no ambiente virtual (<code>pip install pyside6</code>), salve como <code>progresso.py</code> e rode com <code>python progresso.py</code>:</p>
 <pre class="codigo"><code>import sys
 import time
 from PySide6.QtCore import QObject, QThread, Signal
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
-                               QPushButton, QProgressBar)
+                               QPushButton, QProgressBar, QLabel)
 
 
 class Trabalhador(QObject):
@@ -52,10 +166,13 @@ class Trabalhador(QObject):
 class Janela(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Tarefa longa")
         self.barra = QProgressBar()
+        self.aviso = QLabel("Clique em Começar e tente mexer na janela.")
         self.botao = QPushButton("Começar")
         self.botao.clicked.connect(self.comecar)
         layout = QVBoxLayout(self)
+        layout.addWidget(self.aviso)
         layout.addWidget(self.barra)
         layout.addWidget(self.botao)
 
@@ -67,17 +184,60 @@ class Janela(QWidget):
         self.thread.started.connect(self.trabalhador.rodar)
         self.trabalhador.progresso.connect(self.barra.setValue)
         self.trabalhador.terminou.connect(self.thread.quit)
-        self.thread.finished.connect(lambda: self.botao.setEnabled(True))
+        self.thread.finished.connect(self.acabou)
         self.thread.start()
+
+    def acabou(self):
+        self.aviso.setText("Pronto!")
+        self.botao.setEnabled(True)
 
 
 app = QApplication(sys.argv)
 janela = Janela()
 janela.show()
 sys.exit(app.exec())</code></pre>
-    <p>O <code>Trabalhador</code> nunca mexe nos widgets diretamente: ele só <strong>emite sinais</strong> (<code>progresso</code>, <code>terminou</code>). O Qt entrega esses sinais na thread da janela, que atualiza a barra com segurança.</p>
-    <div class="atencao"><strong>Atenção:</strong> Nunca altere um widget de dentro da outra thread (por exemplo, <code>self.barra.setValue(i)</code> dentro de <code>rodar</code>). Isso pode travar ou fechar o programa sem aviso. Use sinais.</div>
-    <div class="dica"><strong>Dica:</strong> Guarde a thread e o trabalhador em <code>self.</code> — se forem variáveis locais, o Python os apaga no fim do método enquanto ainda estão rodando.</div>
+    <p class="saida">(abre a janela "Tarefa longa"; ao clicar em Começar, a barra vai de 0% a 100% em uns 5 segundos)<br>
+(durante esse tempo dá para arrastar e redimensionar a janela normalmente)<br>
+(no fim, o texto muda para "Pronto!" e o botão volta a funcionar)</p>
+    <p>Passo a passo do que acontece no <code>comecar</code>:</p>
+    <ul>
+      <li><code>moveToThread</code> diz que o trabalhador vai viver na thread nova;</li>
+      <li><code>thread.started</code> → <code>trabalhador.rodar</code>: quando a thread começar, ela roda o trabalho;</li>
+      <li><code>progresso</code> → <code>barra.setValue</code>: cada número emitido vira um recado para a janela;</li>
+      <li><code>terminou</code> → <code>thread.quit</code> e <code>finished</code> → <code>acabou</code>: no fim, a thread para e a janela se arruma.</li>
+    </ul>
+    <div class="atencao"><strong>Atenção:</strong> Nunca altere um widget de dentro da outra thread (por exemplo, <code>self.barra.setValue(i)</code> direto dentro de <code>rodar</code>). Isso pode travar ou fechar o programa sem nenhuma mensagem. A outra thread só <strong>emite sinais</strong>.</div>
+    <div class="dica"><strong>Dica:</strong> Guarde a thread e o trabalhador em <code>self.thread</code> e <code>self.trabalhador</code>. Se forem variáveis locais, o Python os apaga quando o método <code>comecar</code> termina, com a thread ainda rodando, e o programa fecha com <code>QThread: Destroyed while thread is still running</code>.</div>
+
+    <h2>Cancelando no meio</h2>
+    <p>A outra thread não pode ser "arrancada" à força. O jeito educado é ela olhar, a cada volta, se alguém pediu para parar. Uma variável combinada entre as duas partes resolve, como neste ensaio em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>class Trabalhador:
+    def __init__(self):
+        self.cancelado = False
+
+    def rodar(self, avisar):
+        for i in range(1, 11):
+            if self.cancelado:
+                print("Parei no passo", i)
+                return
+            avisar(i)
+
+
+t = Trabalhador()
+
+
+def avisar(i):
+    print("passo", i)
+    if i == 3:
+        t.cancelado = True  # é o que o botão "Cancelar" faria
+
+
+t.rodar(avisar)</code></pre>
+    <p class="saida">passo 1<br>
+passo 2<br>
+passo 3<br>
+Parei no passo 4</p>
+    <p>No programa de verdade, o botão <strong>Cancelar</strong> só faz <code>self.trabalhador.cancelado = True</code>, e o laço de <code>rodar</code> termina na próxima volta.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -86,7 +246,7 @@ sys.exit(app.exec())</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie um sinal <code>mensagem</code> que envia um texto (<code>str</code>) e emita "Metade feita!" quando <code>i</code> chegar a 50. Mostre só a classe Trabalhador.</p>
+      <p><strong>1.</strong> Crie um sinal <code>mensagem</code> que envia um texto (<code>str</code>) e emita "Metade feita!" quando <code>i</code> chegar a 50. Mostre só a classe <code>Trabalhador</code>.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>import time
 from PySide6.QtCore import QObject, Signal
@@ -104,13 +264,108 @@ class Trabalhador(QObject):
             if i == 50:
                 self.mensagem.emit("Metade feita!")
         self.terminou.emit()</code></pre>
+      <p>Na janela, ligue o sinal a um rótulo: <code>self.trabalhador.mensagem.connect(self.aviso.setText)</code>.</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Por que o botão "Começar" é desativado em <code>comecar</code> e só reativado no <code>finished</code> da thread?</p>
+      <p><strong>2.</strong> Por que o botão "Começar" é desativado em <code>comecar</code> e só reativado quando a thread termina?</p>
       <details class="resposta"><summary>Ver resposta</summary>
-      <p class="saida">Para o usuário não clicar de novo e iniciar uma segunda thread enquanto a primeira<br>
-ainda está rodando. Quando a thread termina, o botão volta a funcionar.</p>
+      <p class="saida">Para o usuário não clicar de novo e iniciar uma segunda thread enquanto a<br>
+primeira ainda está rodando. Quando a thread termina (sinal finished), o<br>
+botão volta a funcionar.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Melhore a classe <code>Sinal</code> de brinquedo com um método <code>disconnect(funcao)</code> que tira uma função da lista. Teste ligando duas funções, desligando uma e emitindo de novo.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class Sinal:
+    def __init__(self):
+        self.slots = []
+
+    def connect(self, funcao):
+        self.slots.append(funcao)
+
+    def disconnect(self, funcao):
+        self.slots.remove(funcao)
+
+    def emit(self, *valores):
+        for funcao in self.slots:
+            funcao(*valores)
+
+
+def na_barra(v):
+    print("barra:", v)
+
+
+def no_titulo(v):
+    print("título:", v)
+
+
+s = Sinal()
+s.connect(na_barra)
+s.connect(no_titulo)
+s.emit(10)
+s.disconnect(no_titulo)
+s.emit(20)</code></pre>
+      <p class="saida">barra: 10<br>
+título: 10<br>
+barra: 20</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Com <code>threading</code>, crie duas threads: uma soma os números de 1 a 500 e a outra de 501 a 1000. Cada uma guarda o resultado num dicionário. Espere as duas com <code>join</code> e mostre a soma total. (Rode no seu computador.)</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import threading
+
+resultados = {}
+
+
+def somar(nome, inicio, fim):
+    resultados[nome] = sum(range(inicio, fim + 1))
+
+
+a = threading.Thread(target=somar, args=("a", 1, 500))
+b = threading.Thread(target=somar, args=("b", 501, 1000))
+a.start()
+b.start()
+a.join()
+b.join()
+print(resultados["a"], "+", resultados["b"], "=", resultados["a"] + resultados["b"])</code></pre>
+      <p class="saida">125250 + 375250 = 500500</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Acrescente à janela do exemplo um botão <strong>Cancelar</strong>. Mostre o que muda no <code>Trabalhador</code> e o slot da janela.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>import time
+from PySide6.QtCore import QObject, Signal
+
+
+class Trabalhador(QObject):
+    progresso = Signal(int)
+    terminou = Signal()
+
+    def __init__(self):
+        super().__init__()
+        self.cancelado = False
+
+    def rodar(self):
+        for i in range(1, 101):
+            if self.cancelado:
+                break
+            time.sleep(0.05)
+            self.progresso.emit(i)
+        self.terminou.emit()
+
+
+# na Janela, no __init__:
+#     self.botao_cancelar = QPushButton("Cancelar")
+#     self.botao_cancelar.clicked.connect(self.cancelar)
+#     layout.addWidget(self.botao_cancelar)
+
+def cancelar(self):
+    self.trabalhador.cancelado = True</code></pre>
+      <p>O trabalhador termina na próxima volta do laço e emite <code>terminou</code> mesmo assim, para a thread parar e o botão Começar voltar.</p>
       </details>
     </div>
 

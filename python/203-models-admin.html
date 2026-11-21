@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 203 · Models, migrações e área administrativa — Curso de Python · DIGITAR</title>
-<meta name="description" content="Descreva suas tabelas com models, crie o banco com migrações e gerencie os dados pela área administrativa.">
+<meta name="description" content="Descreva suas tabelas com models, crie e altere o banco com migrações, use os registros no shell e gerencie os dados pela área administrativa do Django.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,17 +20,20 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Criar um model com campos de tipos diferentes</li>
-        <li>Gerar e aplicar migrações com <code>makemigrations</code> e <code>migrate</code></li>
-        <li>Criar um superusuário e registrar o model no admin</li>
+        <li>Entender o que é um model e por que ele substitui o SQL escrito à mão</li>
+        <li>Criar um model com campos de tipos diferentes e as opções <code>blank</code>, <code>null</code> e <code>default</code></li>
+        <li>Gerar e aplicar migrações com <code>makemigrations</code> e <code>migrate</code>, e ver o SQL com <code>sqlmigrate</code></li>
+        <li>Mudar um model que já tem dados sem quebrar o banco</li>
+        <li>Criar um superusuário e registrar o model na área administrativa</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Models: tabelas escritas em Python</h2>
-    <p>Um <strong>model</strong> é uma classe que vira uma tabela no banco de dados. Cada atributo é uma coluna. Você não precisa escrever SQL: o Django faz isso.</p>
-<pre class="codigo"><code># contatos/models.py
-from django.db import models
+    <p>No módulo 9 você criou tabelas escrevendo SQL: <code>CREATE TABLE</code>, <code>INSERT</code>, <code>SELECT</code>. Funciona, mas é fácil errar uma vírgula, e cada banco (SQLite, PostgreSQL, MySQL) tem as suas diferenças.</p>
+    <p>No Django, você descreve a tabela como uma <strong>classe Python</strong>, chamada <strong>model</strong>. Cada atributo da classe é uma coluna, e cada objeto é uma linha. O Django escreve o SQL por você, no "sotaque" do banco que estiver usando.</p>
+    <p>Arquivo <code>contatos/models.py</code>:</p>
+<pre class="codigo"><code>from django.db import models
 
 
 class Contato(models.Model):
@@ -46,29 +49,138 @@ class Contato(models.Model):
 
     def __str__(self):
         return self.nome</code></pre>
-    <ul>
-      <li><code>blank=True</code> deixa o campo opcional nos formulários; <code>null=True</code> permite vazio no banco.</li>
-      <li><code>auto_now_add=True</code> grava a data e hora da criação sozinho.</li>
-      <li><code>__str__</code> (aula 81) define como o contato aparece nas listas do admin.</li>
-    </ul>
+    <p>Esse código sozinho ainda não muda nada no banco: ele é a <strong>descrição</strong> da tabela. Quem cria a tabela de verdade é a migração, logo abaixo. O Django ainda acrescenta sozinho uma coluna <code>id</code>, a chave primária (aula 170), que numera os contatos.</p>
 
-    <h2>Migrações</h2>
-    <p>Uma <strong>migração</strong> é um arquivo com as mudanças a fazer no banco. Sempre que mudar um model, rode os dois comandos:</p>
+    <h2>Os tipos de campo e as opções</h2>
+    <p>Cada campo diz que tipo de dado a coluna guarda e já traz validações:</p>
+    <ul>
+      <li><code>CharField(max_length=...)</code>: texto curto, com tamanho máximo obrigatório;</li>
+      <li><code>TextField()</code>: texto longo, como a descrição de uma receita;</li>
+      <li><code>IntegerField()</code> e <code>PositiveIntegerField()</code>: números inteiros (o segundo não aceita negativos);</li>
+      <li><code>DecimalField(max_digits=8, decimal_places=2)</code>: dinheiro, sem a imprecisão do float (aula 29);</li>
+      <li><code>BooleanField()</code>: verdadeiro ou falso;</li>
+      <li><code>DateField()</code> e <code>DateTimeField()</code>: data, ou data e hora (aula 101);</li>
+      <li><code>EmailField()</code>: um <code>CharField</code> que confere se o texto parece um e-mail.</li>
+    </ul>
+    <p>E as opções mais usadas:</p>
+    <ul>
+      <li><code>blank=True</code>: o campo pode ficar vazio nos <strong>formulários</strong> (aula 205);</li>
+      <li><code>null=True</code>: o <strong>banco</strong> aceita "sem valor" (<code>NULL</code>). Use em datas e números opcionais; em textos, prefira só <code>blank=True</code>, que guarda o texto vazio <code>""</code>;</li>
+      <li><code>default=...</code>: o valor quando ninguém informar outro;</li>
+      <li><code>auto_now_add=True</code>: grava a data e hora da criação sozinho.</li>
+    </ul>
+    <p>O <code>class Meta</code> guarda configurações do model: <code>ordering = ["nome"]</code> faz toda busca vir em ordem alfabética. O <code>__str__</code> (aula 81) define como cada contato aparece no shell e no admin.</p>
+    <p>O que um model faz por dentro? Ele é uma descrição que vira SQL. Veja a ideia num "mini Django" em Python puro, que gera o <code>CREATE TABLE</code> a partir de uma lista de campos e o roda no SQLite:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+TIPOS = {"texto": "varchar(100)", "inteiro": "integer", "booleano": "bool"}
+
+campos_do_model = {
+    "nome": "texto",
+    "idade": "inteiro",
+    "favorito": "booleano",
+}
+
+
+def gerar_create(tabela, campos):
+    colunas = ['"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT']
+    for nome, tipo in campos.items():
+        colunas.append(f'"{nome}" {TIPOS[tipo]} NOT NULL')
+    return f'CREATE TABLE "{tabela}" (' + ", ".join(colunas) + ");"
+
+
+sql = gerar_create("contatos_amigo", campos_do_model)
+print(sql)
+
+con = sqlite3.connect(":memory:")
+con.execute(sql)
+for coluna in con.execute("PRAGMA table_info(contatos_amigo)"):
+    print(coluna[1], "-&gt;", coluna[2])
+con.close()</code></pre>
+    <p class="saida">CREATE TABLE "contatos_amigo" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "nome" varchar(100) NOT NULL, "idade" integer NOT NULL, "favorito" bool NOT NULL);<br>
+id -&gt; INTEGER<br>
+nome -&gt; varchar(100)<br>
+idade -&gt; INTEGER<br>
+favorito -&gt; bool</p>
+    <p>O nome da tabela segue o padrão do Django: <code>nomedoapp_nomedomodel</code>, tudo em minúsculas.</p>
+
+    <h2>Migrações: levando o model para o banco</h2>
+    <p>Uma <strong>migração</strong> é um arquivo Python, guardado na pasta <code>contatos/migrations/</code>, que lista as mudanças a fazer no banco. O trabalho tem dois passos, e você vai repetir esses dois comandos <strong>toda vez</strong> que mudar um model:</p>
 <pre class="codigo"><code>python manage.py makemigrations
 python manage.py migrate</code></pre>
+    <p>O primeiro <strong>escreve</strong> o arquivo da migração comparando o model com a última migração. O segundo <strong>aplica</strong> no banco as migrações que ainda não rodaram. Na primeira vez, o <code>migrate</code> também cria as tabelas dos apps que já vêm com o Django (usuários, sessões, admin):</p>
     <p class="saida">Migrations for 'contatos':<br>
 &nbsp;&nbsp;contatos\migrations\0001_initial.py<br>
 &nbsp;&nbsp;&nbsp;&nbsp;+ Create model Contato<br>
 Operations to perform:<br>
 &nbsp;&nbsp;Apply all migrations: admin, auth, contatos, contenttypes, sessions<br>
 Running migrations:<br>
-&nbsp;&nbsp;Applying contatos.0001_initial... OK</p>
-    <p>Por padrão o banco é um arquivo SQLite, <code>db.sqlite3</code>, na pasta do projeto (aula 174).</p>
+&nbsp;&nbsp;Applying contenttypes.0001_initial... OK<br>
+&nbsp;&nbsp;Applying auth.0001_initial... OK<br>
+&nbsp;&nbsp;(... outras linhas parecidas ...)<br>
+&nbsp;&nbsp;Applying contatos.0001_initial... OK<br>
+&nbsp;&nbsp;Applying sessions.0001_initial... OK</p>
+    <p>Por padrão, o banco é o arquivo SQLite <code>db.sqlite3</code>, na pasta do projeto (aula 174). Quer ver o SQL que a migração gerou? Use o <code>sqlmigrate</code>:</p>
+<pre class="codigo"><code>python manage.py sqlmigrate contatos 0001</code></pre>
+    <p class="saida">BEGIN;<br>
+--<br>
+-- Create model Contato<br>
+--<br>
+CREATE TABLE "contatos_contato" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "nome" varchar(100) NOT NULL, "telefone" varchar(20) NOT NULL, "email" varchar(254) NOT NULL, "nascimento" date NULL, "favorito" bool NOT NULL, "criado_em" datetime NOT NULL);<br>
+COMMIT;</p>
+    <p>Compare com o model: <code>max_length=100</code> virou <code>varchar(100)</code>, o <code>null=True</code> da data virou <code>date NULL</code>, e todos os outros campos ficaram <code>NOT NULL</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Mudou o model e a página mostra <code>no such table: contatos_contato</code> ou <code>no such column</code>? Você esqueceu o <code>makemigrations</code> e o <code>migrate</code>. E se o <code>makemigrations</code> responder <code>No changes detected</code>, confira se o app está em <code>INSTALLED_APPS</code> e se você salvou o <code>models.py</code>.</div>
+    <div class="dica"><strong>Dica:</strong> Os arquivos da pasta <code>migrations</code> fazem parte do projeto: guarde-os no Git (aula 244). É com eles que o banco de outro computador, ou do servidor, fica igual ao seu.</div>
+
+    <h2>Mudando um model que já tem dados</h2>
+    <p>Agora imagine que o banco já tem contatos e você acrescenta <code>apelido = models.CharField(max_length=50)</code>. O que o banco deve pôr nas linhas antigas? Como o campo é <code>NOT NULL</code> e não tem padrão, o <code>makemigrations</code> para e pergunta:</p>
+    <p class="saida">It is impossible to add a non-nullable field 'apelido' to contato without specifying a default. This is because the database needs something to populate existing rows.<br>
+Please select a fix:<br>
+&nbsp;1) Provide a one-off default now (will be set on all existing rows with a null value for this column)<br>
+&nbsp;2) Quit and manually define a default value in models.py.<br>
+Select an option:</p>
+    <p>O jeito mais simples é escolher a opção 2 e dar um padrão no próprio model: <code>apelido = models.CharField(max_length=50, blank=True, default="")</code>. Veja no SQLite o mesmo problema e a mesma solução — a coluna nova precisa de um valor para as linhas que já existiam:</p>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE contatos (id INTEGER PRIMARY KEY, nome TEXT NOT NULL)")
+con.execute("INSERT INTO contatos (nome) VALUES ('Ana')")
+con.execute("INSERT INTO contatos (nome) VALUES ('Bruno')")
+
+try:
+    con.execute("ALTER TABLE contatos ADD COLUMN apelido TEXT NOT NULL")
+except sqlite3.OperationalError as erro:
+    print("Sem padrão:", erro)
+
+con.execute("ALTER TABLE contatos ADD COLUMN apelido TEXT NOT NULL DEFAULT ''")
+for linha in con.execute("SELECT id, nome, apelido FROM contatos"):
+    print(linha)
+con.close()</code></pre>
+    <p class="saida">Sem padrão: Cannot add a NOT NULL column with default value NULL<br>
+(1, 'Ana', '')<br>
+(2, 'Bruno', '')</p>
+    <p>Depois de corrigir o model, rode <code>makemigrations</code> (que cria <code>0002_contato_apelido.py</code>) e <code>migrate</code>.</p>
+
+    <h2>Usando o model no shell</h2>
+    <p>O <code>python manage.py shell</code> abre o Python já com o seu projeto carregado. É ótimo para experimentar o model (a aula 204 aprofunda as buscas):</p>
+<pre class="codigo"><code>from contatos.models import Contato
+
+ana = Contato.objects.create(nome="Ana", telefone="81 99999-0000", favorito=True)
+print(ana.id, ana.nome, ana.favorito)
+print(ana)
+print(repr(ana))
+print(Contato.objects.count())</code></pre>
+    <p class="saida">1 Ana True<br>
+Ana<br>
+&lt;Contato: Ana&gt;<br>
+1</p>
+    <p>O <code>print(ana)</code> mostra <code>Ana</code> por causa do <code>__str__</code>. Sem ele, apareceria o pouco útil <code>Contato object (1)</code>.</p>
 
     <h2>A área administrativa</h2>
-    <p>O Django já vem com um painel para cadastrar e editar dados. Registre o model e crie um usuário administrador:</p>
-<pre class="codigo"><code># contatos/admin.py
-from django.contrib import admin
+    <p>O Django vem com um painel pronto para cadastrar, editar, buscar e apagar dados: o <strong>admin</strong>. Para um model aparecer lá, registre-o.</p>
+    <p>Arquivo <code>contatos/admin.py</code>:</p>
+<pre class="codigo"><code>from django.contrib import admin
+
 from .models import Contato
 
 
@@ -77,10 +189,16 @@ class ContatoAdmin(admin.ModelAdmin):
     list_display = ["nome", "telefone", "favorito"]
     search_fields = ["nome", "email"]
     list_filter = ["favorito"]</code></pre>
+    <ul>
+      <li><code>list_display</code>: as colunas da lista de contatos;</li>
+      <li><code>search_fields</code>: os campos em que a caixa de busca procura;</li>
+      <li><code>list_filter</code>: os filtros da barra lateral (ex.: só os favoritos).</li>
+    </ul>
+    <p>Para entrar no admin é preciso um usuário administrador. Crie o seu e ligue o servidor:</p>
 <pre class="codigo"><code>python manage.py createsuperuser
 python manage.py runserver</code></pre>
-    <p>Entre em <code>http://127.0.0.1:8000/admin/</code> com o usuário criado.</p>
-    <div class="atencao"><strong>Atenção:</strong> Mudou o model e apareceu <code>no such column</code> ou <code>no such table</code>? Você esqueceu do <code>makemigrations</code> e do <code>migrate</code>.</div>
+    <p>O <code>createsuperuser</code> pergunta o nome de usuário, o e-mail (pode deixar vazio) e a senha duas vezes; a senha não aparece enquanto você digita. Entre em <code>http://127.0.0.1:8000/admin/</code>: depois do login aparece "Administração do Site" com o grupo <strong>Contatos</strong>. Clicando nele, você vê a tabela com as colunas Nome, Telefone e Favorito, a caixa de busca e o filtro "Por favorito" à direita. Buscando <code>car</code>, só a Carla aparece.</p>
+    <div class="dica"><strong>Dica:</strong> O admin é para você e a sua equipe, não para os visitantes do site. Para os visitantes, você vai criar páginas próprias com formulários (aulas 205 e 207).</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -89,7 +207,7 @@ python manage.py runserver</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Crie um model <code>Receita</code> com <code>titulo</code> (texto até 120), <code>minutos</code> (número inteiro) e <code>vegetariana</code> (verdadeiro/falso, padrão falso), com <code>__str__</code> devolvendo o título.</p>
+      <p><strong>1.</strong> Crie um model <code>Receita</code> com <code>titulo</code> (texto até 120), <code>minutos</code> (inteiro positivo), <code>vegetariana</code> (verdadeiro/falso, padrão falso) e <code>__str__</code> devolvendo o título. Quais comandos levam o model para o banco?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from django.db import models
 
@@ -101,16 +219,74 @@ class Receita(models.Model):
 
     def __str__(self):
         return self.titulo</code></pre>
-      <p>Depois rode <code>makemigrations</code> e <code>migrate</code>.</p>
+<pre class="codigo"><code>python manage.py makemigrations
+python manage.py migrate</code></pre>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Você acrescentou o campo <code>apelido = models.CharField(max_length=50)</code> num model que já tem dados. O <code>makemigrations</code> pergunta o que fazer com as linhas antigas. Qual é a saída mais simples?</p>
+      <p><strong>2.</strong> Você acrescentou <code>apelido = models.CharField(max_length=50)</code> num model que já tem dados, e o <code>makemigrations</code> perguntou o que fazer com as linhas antigas. Qual é a saída mais simples?</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from django.db import models
 
 apelido = models.CharField(max_length=50, blank=True, default="")</code></pre>
-      <p>Dê um valor padrão (<code>default=""</code>) ou permita vazio; assim os contatos antigos recebem um apelido vazio.</p>
+      <p>Com <code>default=""</code>, os contatos antigos recebem um apelido vazio, e <code>blank=True</code> deixa o campo opcional nos formulários.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Para cada dado, escolha o campo do Django: o preço de um produto, a descrição longa de um filme, a data de uma prova e se um aluno é monitor da turma.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">preço &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; models.DecimalField(max_digits=8, decimal_places=2)<br>
+descrição longa -&gt; models.TextField()<br>
+data da prova &nbsp;&nbsp;-&gt; models.DateField()<br>
+é monitor? &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; models.BooleanField(default=False)</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Usando a função <code>gerar_create</code> do "mini Django" da aula, gere e rode o <code>CREATE TABLE</code> de uma tabela <code>escola_livro</code> com os campos <code>titulo</code> (texto), <code>paginas</code> (inteiro) e <code>emprestado</code> (booleano). Mostre as colunas criadas.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import sqlite3
+
+TIPOS = {"texto": "varchar(100)", "inteiro": "integer", "booleano": "bool"}
+
+
+def gerar_create(tabela, campos):
+    colunas = ['"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT']
+    for nome, tipo in campos.items():
+        colunas.append(f'"{nome}" {TIPOS[tipo]} NOT NULL')
+    return f'CREATE TABLE "{tabela}" (' + ", ".join(colunas) + ");"
+
+
+campos = {"titulo": "texto", "paginas": "inteiro", "emprestado": "booleano"}
+con = sqlite3.connect(":memory:")
+con.execute(gerar_create("escola_livro", campos))
+print([coluna[1] for coluna in con.execute("PRAGMA table_info(escola_livro)")])
+con.close()</code></pre>
+      <p class="saida">['id', 'titulo', 'paginas', 'emprestado']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Registre o model <code>Receita</code> no admin mostrando as colunas título e minutos, com busca pelo título e filtro por vegetariana.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code># receitas/admin.py
+from django.contrib import admin
+
+from .models import Receita
+
+
+@admin.register(Receita)
+class ReceitaAdmin(admin.ModelAdmin):
+    list_display = ["titulo", "minutos"]
+    search_fields = ["titulo"]
+    list_filter = ["vegetariana"]</code></pre>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Qual é a diferença entre <code>blank=True</code> e <code>null=True</code>?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">blank=True &nbsp;-&gt; vale para os formulários e o admin: o campo pode ficar em branco.<br>
+null=True &nbsp;&nbsp;-&gt; vale para o banco: a coluna aceita NULL ("sem valor").<br>
+Em datas e números opcionais, use os dois. Em textos, use só blank=True:<br>
+o vazio fica guardado como "" e você não tem dois tipos de "vazio" (None e "").</p>
       </details>
     </div>
 

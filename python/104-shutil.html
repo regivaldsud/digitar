@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 104 · Copiar, mover e apagar com shutil — Curso de Python · DIGITAR</title>
-<meta name="description" content="Use o módulo shutil para copiar arquivos e pastas inteiras, mover, renomear e apagar pastas com segurança.">
+<meta name="description" content="Use o módulo shutil para copiar arquivos e pastas inteiras, mover, renomear, compactar em .zip e apagar pastas com segurança.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,59 +20,198 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Copiar arquivos com <code>shutil.copy</code> e pastas com <code>shutil.copytree</code></li>
+        <li>Entender a diferença entre o que o <code>pathlib</code> faz e o que o <code>shutil</code> faz</li>
+        <li>Copiar arquivos com <code>shutil.copy</code> e <code>shutil.copy2</code>, e pastas inteiras com <code>shutil.copytree</code></li>
         <li>Mover e renomear com <code>shutil.move</code></li>
         <li>Apagar pastas inteiras com <code>shutil.rmtree</code> sem susto</li>
+        <li>Compactar uma pasta em <code>.zip</code> com <code>shutil.make_archive</code> e ver o espaço livre do disco</li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
     <h2>Por que shutil</h2>
-    <p>O <code>pathlib</code> (aula 103) cria, lê e lista arquivos. Para copiar e mover em grande quantidade, o Python tem o <code>shutil</code> ("shell utilities", utilidades do terminal). Ele é ótimo para automatizar tarefas chatas, como fazer backup da pasta de trabalhos da escola.</p>
-    <p>Esta aula é para o computador porque você vai mexer em arquivos de verdade. Teste sempre numa pasta de treino, nunca nos seus documentos importantes.</p>
-
-    <h2>Copiar e mover</h2>
-    <p>Salve como <code>organizar.py</code> numa pasta vazia de treino e rode com <code>python organizar.py</code>:</p>
-<pre class="codigo"><code>import shutil
+    <p>O <code>pathlib</code> (aula 103) cria pastas, lê, escreve e lista arquivos. Mas ele não sabe <strong>copiar</strong> um arquivo nem copiar uma pasta com tudo dentro. Para isso o Python tem o <code>shutil</code> ("shell utilities", utilidades do terminal): são as mesmas tarefas que você faz arrastando pastas no explorador de arquivos, só que automáticas.</p>
+    <p>Ele é ótimo para tarefas chatas e repetidas: fazer backup da pasta de trabalhos da escola, separar fotos por ano, limpar arquivos temporários.</p>
+    <p>Esta aula é para o computador porque, no fim, você vai mexer em arquivos de verdade. Mas os exemplos com o botão Executar funcionam aqui no site: eles criam uma <strong>pasta temporária</strong> com <code>tempfile.TemporaryDirectory()</code>, que some sozinha quando o bloco <code>with</code> termina. É o jeito mais seguro de treinar.</p>
+<pre class="codigo" data-executar="sim"><code>import tempfile
 from pathlib import Path
 
-# prepara uma pasta de treino
-treino = Path("treino")
-treino.mkdir(exist_ok=True)
-(treino / "redacao.txt").write_text("Minhas férias em Salvador", encoding="utf-8")
+with tempfile.TemporaryDirectory() as pasta:
+    treino = Path(pasta)
+    (treino / "lista.txt").write_text("arroz\nfeijão\n", encoding="utf-8")
+    print("Dentro da pasta:", [p.name for p in treino.iterdir()])
+    print("Existe?", treino.exists())
 
-# copia um arquivo (o original continua lá)
-shutil.copy(treino / "redacao.txt", treino / "redacao_copia.txt")
+print("Depois do with, existe?", treino.exists())</code></pre>
+    <p class="saida">Dentro da pasta: ['lista.txt']<br>
+Existe? True<br>
+Depois do with, existe? False</p>
+    <div class="dica"><strong>Dica:</strong> Use pastas temporárias (ou uma pasta chamada <code>treino</code>) sempre que estiver testando um programa que copia, move ou apaga. Só aponte para as suas pastas de verdade quando tiver certeza de que o programa faz o que você quer.</div>
 
-# copia a pasta inteira, com tudo dentro
-shutil.copytree(treino, "backup", dirs_exist_ok=True)
-
-# move (ou renomeia) um arquivo
-shutil.move(str(treino / "redacao_copia.txt"), str(treino / "redacao_v2.txt"))
-
-print("treino:", sorted(p.name for p in treino.iterdir()))
-print("backup:", sorted(p.name for p in Path("backup").iterdir()))</code></pre>
-    <p class="saida">treino: ['redacao.txt', 'redacao_v2.txt']<br>
-backup: ['redacao.txt', 'redacao_copia.txt']</p>
-    <ul>
-      <li><code>copy(origem, destino)</code> copia um arquivo;</li>
-      <li><code>copytree(origem, destino)</code> copia uma pasta inteira; <code>dirs_exist_ok=True</code> deixa copiar por cima de uma pasta que já existe;</li>
-      <li><code>move(origem, destino)</code> move; se o destino estiver na mesma pasta com outro nome, é o mesmo que renomear.</li>
-    </ul>
-
-    <h2>Apagar pastas</h2>
-    <p><code>Path.unlink()</code> apaga um arquivo e <code>Path.rmdir()</code> só apaga pastas <strong>vazias</strong>. Para apagar uma pasta com tudo dentro, use <code>shutil.rmtree</code>:</p>
-<pre class="codigo"><code>import shutil
+    <h2>Copiar um arquivo: copy e copy2</h2>
+    <p><code>shutil.copy(origem, destino)</code> copia o conteúdo de um arquivo. O original continua onde estava. O destino pode ser um nome de arquivo novo ou uma pasta (aí a cópia fica com o mesmo nome dentro dela).</p>
+    <p><code>shutil.copy2</code> faz a mesma coisa e ainda copia as informações do arquivo, como a data da última modificação. Use <code>copy2</code> em backups, para a cópia "lembrar" quando o original foi alterado.</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
 from pathlib import Path
 
-lixo = Path("temporario/cache")
-lixo.mkdir(parents=True, exist_ok=True)
-(lixo / "a.tmp").write_text("x", encoding="utf-8")
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    redacao = base / "redacao.txt"
+    redacao.write_text("Minhas férias em Salvador", encoding="utf-8")
 
-shutil.rmtree("temporario")
-print("Ainda existe?", Path("temporario").exists())</code></pre>
-    <p class="saida">Ainda existe? False</p>
-    <div class="atencao"><strong>Atenção:</strong> <code>rmtree</code> apaga <strong>para sempre</strong>: os arquivos não vão para a Lixeira. Antes de rodar, mostre na tela o caminho que será apagado e confira. Um erro de digitação no caminho pode apagar a pasta errada.</div>
+    # cópia com outro nome, na mesma pasta
+    shutil.copy(redacao, base / "redacao_copia.txt")
+
+    # cópia para dentro de outra pasta (mantém o nome)
+    entregas = base / "entregas"
+    entregas.mkdir()
+    destino = shutil.copy2(redacao, entregas)
+
+    print("Cópia criada:", Path(destino).relative_to(base))
+    print("Conteúdo:", (entregas / "redacao.txt").read_text(encoding="utf-8"))
+    print("Na pasta base:", sorted(p.name for p in base.iterdir()))</code></pre>
+    <p class="saida">Cópia criada: entregas\redacao.txt<br>
+Conteúdo: Minhas férias em Salvador<br>
+Na pasta base: ['entregas', 'redacao.txt', 'redacao_copia.txt']</p>
+    <p>As funções de cópia <strong>devolvem</strong> o caminho do arquivo criado. Isso ajuda a mostrar na tela o que o programa fez.</p>
+    <div class="atencao"><strong>Atenção:</strong> Se o destino já existe, <code>copy</code> <strong>escreve por cima</strong> sem perguntar. E se a pasta de destino não existe, dá <code>FileNotFoundError</code>: crie a pasta antes com <code>mkdir(parents=True, exist_ok=True)</code>.</div>
+
+    <h2>Copiar uma pasta inteira: copytree</h2>
+    <p><code>shutil.copytree(origem, destino)</code> copia a pasta com todas as subpastas e arquivos. Por padrão, a pasta de destino <strong>não pode existir</strong>; com <code>dirs_exist_ok=True</code>, ele copia por cima de uma pasta que já existe (bom para backups repetidos).</p>
+    <p>Também dá para pular arquivos que você não quer no backup com <code>ignore=shutil.ignore_patterns(...)</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    escola = base / "escola"
+    (escola / "matematica").mkdir(parents=True)
+    (escola / "historia").mkdir()
+    (escola / "matematica" / "lista1.txt").write_text("2 + 2", encoding="utf-8")
+    (escola / "historia" / "resumo.txt").write_text("Brasil Colônia", encoding="utf-8")
+    (escola / "historia" / "rascunho.tmp").write_text("lixo", encoding="utf-8")
+
+    shutil.copytree(escola, base / "backup", ignore=shutil.ignore_patterns("*.tmp"))
+
+    for arquivo in sorted((base / "backup").rglob("*")):
+        print(arquivo.relative_to(base))</code></pre>
+    <p class="saida">backup\historia<br>
+backup\historia\resumo.txt<br>
+backup\matematica<br>
+backup\matematica\lista1.txt</p>
+    <p>O arquivo <code>rascunho.tmp</code> ficou de fora do backup, como pedimos.</p>
+    <div class="atencao"><strong>Atenção:</strong> Rodar <code>copytree</code> duas vezes para o mesmo destino dá <code>FileExistsError</code> na segunda vez. Se a ideia é atualizar o backup, use <code>dirs_exist_ok=True</code>.</div>
+
+    <h2>Mover e renomear: move</h2>
+    <p><code>shutil.move(origem, destino)</code> tira o arquivo (ou a pasta) de um lugar e coloca em outro. Se o destino estiver na mesma pasta, mas com outro nome, mover é o mesmo que <strong>renomear</strong>.</p>
+    <p>Um uso clássico: organizar a pasta de downloads separando os arquivos pela extensão.</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    downloads = Path(pasta)
+    for nome in ["foto1.jpg", "trabalho.pdf", "foto2.jpg", "musica.mp3", "prova.pdf"]:
+        (downloads / nome).write_text("x", encoding="utf-8")
+
+    for arquivo in list(downloads.iterdir()):
+        if arquivo.is_file():
+            tipo = arquivo.suffix[1:]            # ".jpg" vira "jpg"
+            destino = downloads / tipo
+            destino.mkdir(exist_ok=True)
+            shutil.move(arquivo, destino / arquivo.name)
+
+    for item in sorted(downloads.rglob("*")):
+        if item.is_file():
+            print(item.relative_to(downloads))</code></pre>
+    <p class="saida">jpg\foto1.jpg<br>
+jpg\foto2.jpg<br>
+mp3\musica.mp3<br>
+pdf\prova.pdf<br>
+pdf\trabalho.pdf</p>
+    <div class="dica"><strong>Dica:</strong> Repare no <code>list(downloads.iterdir())</code>: primeiro fazemos a lista completa dos arquivos e só depois mexemos neles. Mover arquivos enquanto ainda estamos percorrendo a mesma pasta pode confundir o laço.</div>
+
+    <h2>Apagar pastas: rmtree</h2>
+    <p>Para apagar, você já conhece duas ferramentas do <code>pathlib</code>: <code>Path.unlink()</code> apaga um arquivo e <code>Path.rmdir()</code> apaga uma pasta <strong>vazia</strong>. Para apagar uma pasta com tudo dentro, use <code>shutil.rmtree</code>:</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    cache = base / "temporario" / "cache"
+    cache.mkdir(parents=True)
+    (cache / "a.tmp").write_text("x", encoding="utf-8")
+
+    try:
+        (base / "temporario").rmdir()
+    except OSError:
+        print("rmdir não apaga pasta com coisas dentro")
+
+    alvo = base / "temporario"
+    print("Vou apagar:", alvo.relative_to(base))
+    shutil.rmtree(alvo)
+    print("Ainda existe?", alvo.exists())</code></pre>
+    <p class="saida">rmdir não apaga pasta com coisas dentro<br>
+Vou apagar: temporario<br>
+Ainda existe? False</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>rmtree</code> apaga <strong>para sempre</strong>: os arquivos não vão para a Lixeira. Antes de rodar, mostre na tela o caminho que será apagado e confira. Um erro de digitação no caminho pode apagar a pasta errada. Nunca rode <code>rmtree</code> num caminho montado com o que o usuário digitou sem conferir antes.</div>
+
+    <h2>Compactar em .zip e ver o espaço do disco</h2>
+    <p><code>shutil.make_archive(nome, "zip", pasta)</code> cria um arquivo <code>nome.zip</code> com tudo o que está na pasta. Para abrir de volta, use <code>shutil.unpack_archive</code>. E <code>shutil.disk_usage</code> diz quanto espaço o disco tem — útil antes de copiar muita coisa.</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    fotos = base / "fotos"
+    fotos.mkdir()
+    for i in range(1, 4):
+        (fotos / f"praia{i}.txt").write_text("imagem " * 100, encoding="utf-8")
+
+    zip_criado = shutil.make_archive(base / "fotos_backup", "zip", fotos)
+    print("Criado:", Path(zip_criado).name)
+
+    shutil.unpack_archive(zip_criado, base / "restaurado")
+    print("Restaurado:", sorted(p.name for p in (base / "restaurado").iterdir()))</code></pre>
+    <p class="saida">Criado: fotos_backup.zip<br>
+Restaurado: ['praia1.txt', 'praia2.txt', 'praia3.txt']</p>
+    <p>Atenção ao primeiro argumento de <code>make_archive</code>: é o nome <strong>sem</strong> a extensão. O Python acrescenta <code>.zip</code> sozinho.</p>
+<pre class="codigo" data-executar="sim"><code>import shutil
+
+uso = shutil.disk_usage(".")
+gb = 1024 ** 3
+print(f"Total: {uso.total / gb:.1f} GB")
+print(f"Livre: {uso.free / gb:.1f} GB")</code></pre>
+    <p class="saida"><em>(exemplo — a sua saída pode ser diferente)</em><br>
+Total: 476.3 GB<br>
+Livre: 182.9 GB</p>
+
+    <h2>No seu computador: um backup de verdade</h2>
+    <p>Agora junte tudo num programa que roda no seu computador. Crie uma pasta vazia de treino, salve o código como <code>backup.py</code> dentro dela e rode com <code>py backup.py</code> (no Linux ou macOS, <code>python3 backup.py</code>):</p>
+<pre class="codigo"><code>import shutil
+from datetime import date
+from pathlib import Path
+
+origem = Path("trabalhos")
+# cria alguns arquivos só para o exemplo funcionar na primeira vez
+(origem / "ciencias").mkdir(parents=True, exist_ok=True)
+(origem / "ciencias" / "relatorio.txt").write_text("Fotossíntese", encoding="utf-8")
+(origem / "poema.txt").write_text("Batatinha quando nasce", encoding="utf-8")
+
+destino = Path("backups") / f"trabalhos_{date(2026, 11, 21):%Y-%m-%d}"
+print("Copiando", origem, "para", destino)
+shutil.copytree(origem, destino, dirs_exist_ok=True)
+
+arquivos = [p for p in destino.rglob("*") if p.is_file()]
+print("Arquivos no backup:", len(arquivos))</code></pre>
+    <p class="saida">Copiando trabalhos para backups\trabalhos_2026-11-21<br>
+Arquivos no backup: 2</p>
+<pre class="codigo"><code>py backup.py</code></pre>
+    <p>Cada dia gera uma pasta nova em <code>backups</code>, com a data no nome. No programa de verdade, troque <code>date(2026, 11, 21)</code> por <code>date.today()</code>.</p>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
@@ -81,22 +220,25 @@ print("Ainda existe?", Path("temporario").exists())</code></pre>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva um programa que copie todos os arquivos <code>.txt</code> da pasta <code>textos</code> para a pasta <code>copias</code>.</p>
+      <p><strong>1.</strong> Escreva um programa que copie todos os arquivos <code>.txt</code> de uma pasta <code>textos</code> para uma pasta <code>copias</code>, deixando de fora os outros tipos. Use uma pasta temporária.</p>
       <details class="resposta"><summary>Ver resposta</summary>
-<pre class="codigo"><code>import shutil
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
 from pathlib import Path
 
-textos = Path("textos")
-textos.mkdir(exist_ok=True)
-for nome in ["a.txt", "b.txt", "foto.jpg"]:
-    (textos / nome).write_text("x", encoding="utf-8")
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    textos = base / "textos"
+    textos.mkdir()
+    for nome in ["a.txt", "b.txt", "foto.jpg"]:
+        (textos / nome).write_text("x", encoding="utf-8")
 
-copias = Path("copias")
-copias.mkdir(exist_ok=True)
-for arquivo in textos.glob("*.txt"):
-    shutil.copy(arquivo, copias / arquivo.name)
+    copias = base / "copias"
+    copias.mkdir()
+    for arquivo in textos.glob("*.txt"):
+        shutil.copy(arquivo, copias / arquivo.name)
 
-print(sorted(p.name for p in copias.iterdir()))</code></pre>
+    print(sorted(p.name for p in copias.iterdir()))</code></pre>
       <p class="saida">['a.txt', 'b.txt']</p>
       </details>
     </div>
@@ -105,6 +247,80 @@ print(sorted(p.name for p in copias.iterdir()))</code></pre>
       <details class="resposta"><summary>Ver resposta</summary>
       <p class="saida">rmdir() só apaga a pasta se ela estiver vazia (senão dá OSError).<br>
 shutil.rmtree() apaga a pasta e tudo o que está dentro dela, sem passar pela Lixeira.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Renomeie todos os arquivos <code>.jpeg</code> de uma pasta para a extensão <code>.jpg</code> usando <code>shutil.move</code>. Mostre os nomes no fim.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    fotos = Path(pasta)
+    for nome in ["gato.jpeg", "cachorro.jpeg", "nota.txt"]:
+        (fotos / nome).write_text("x", encoding="utf-8")
+
+    for arquivo in list(fotos.glob("*.jpeg")):
+        shutil.move(arquivo, arquivo.with_suffix(".jpg"))
+
+    print(sorted(p.name for p in fotos.iterdir()))</code></pre>
+      <p class="saida">['cachorro.jpg', 'gato.jpg', 'nota.txt']</p>
+      <p><code>with_suffix(".jpg")</code> monta o mesmo caminho trocando só a extensão. Mover para outro nome na mesma pasta é renomear.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Faça um backup da pasta <code>projeto</code> para <code>projeto_backup</code>, ignorando os arquivos <code>.pyc</code> e a pasta <code>__pycache__</code>. Mostre o que foi copiado.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    projeto = base / "projeto"
+    (projeto / "__pycache__").mkdir(parents=True)
+    (projeto / "main.py").write_text("print('oi')", encoding="utf-8")
+    (projeto / "util.pyc").write_text("x", encoding="utf-8")
+    (projeto / "__pycache__" / "main.cpython-312.pyc").write_text("x", encoding="utf-8")
+
+    shutil.copytree(projeto, base / "projeto_backup",
+                    ignore=shutil.ignore_patterns("*.pyc", "__pycache__"))
+
+    for item in sorted((base / "projeto_backup").rglob("*")):
+        print(item.relative_to(base))</code></pre>
+      <p class="saida">projeto_backup\main.py</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Compacte uma pasta <code>notas</code> num arquivo <code>notas.zip</code> e depois confira, com o módulo <code>zipfile</code>, quais arquivos estão dentro do zip.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>import shutil
+import tempfile
+import zipfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as pasta:
+    base = Path(pasta)
+    notas = base / "notas"
+    notas.mkdir()
+    (notas / "bimestre1.txt").write_text("8.5", encoding="utf-8")
+    (notas / "bimestre2.txt").write_text("9.0", encoding="utf-8")
+
+    caminho_zip = shutil.make_archive(base / "notas", "zip", notas)
+
+    with zipfile.ZipFile(caminho_zip) as z:
+        print(sorted(z.namelist()))</code></pre>
+      <p class="saida">['bimestre1.txt', 'bimestre2.txt']</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Um colega escreveu <code>shutil.rmtree(input("Pasta para apagar: "))</code>. O que pode dar errado e como deixar mais seguro?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Qualquer erro de digitação (ou um caminho como C:\Users) apaga a pasta errada<br>
+para sempre, sem passar pela Lixeira. Mais seguro: conferir se a pasta existe,<br>
+mostrar o caminho completo e o número de arquivos, pedir uma confirmação<br>
+("digite SIM") e só aceitar pastas dentro de uma pasta de treino conhecida.</p>
       </details>
     </div>
 

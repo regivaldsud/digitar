@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aula 205 · Formulários, ModelForm, validação e csrf_token — Curso de Python · DIGITAR</title>
-<meta name="description" content="Receba dados do usuário com segurança usando formulários do Django, ModelForm e validação.">
+<meta name="description" content="Receba dados do usuário com segurança usando formulários do Django: GET e POST, forms.Form, ModelForm, validação de campos, mensagens de erro e csrf_token.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/estilo.css">
 <script src="../assets/site.js" defer></script>
@@ -20,15 +20,105 @@
     <div class="objetivos">
       <h2>Nesta aula você vai aprender</h2>
       <ul>
-        <li>Criar um <code>ModelForm</code> a partir de um model</li>
-        <li>Tratar GET e POST na mesma view e validar com <code>is_valid()</code></li>
-        <li>Escrever validações próprias e entender o <code>csrf_token</code></li>
+        <li>Entender o caminho de um formulário: o HTML, o envio por GET ou POST e o que chega no servidor</li>
+        <li>Criar formulários com <code>forms.Form</code> e com <code>ModelForm</code></li>
+        <li>Validar com <code>is_valid()</code>, ler <code>cleaned_data</code> e mostrar <code>errors</code> por campo</li>
+        <li>Escrever validações próprias com <code>clean_&lt;campo&gt;</code> e <code>clean</code></li>
+        <li>Tratar GET e POST na mesma view e redirecionar depois de salvar</li>
+        <li>Entender para que serve o <code>{% csrf_token %}</code></li>
       </ul>
     </div>
     <div class="atencao"><strong>Aula para fazer no computador:</strong> o assunto desta aula precisa do seu computador. Os códigos sem o botão Executar devem ser copiados para um arquivo <code>.py</code> no VS Code e rodados no seu computador, como mostrado na aula 03.</div>
 
-    <h2>ModelForm</h2>
-    <p>Um <strong>ModelForm</strong> cria o formulário a partir do model: os campos, os tipos e as validações básicas vêm prontos.</p>
+    <h2>O caminho de um formulário</h2>
+    <p>Um formulário é a forma de a pessoa <strong>mandar</strong> dados para o site: cadastrar um contato, fazer login, escrever um comentário. No HTML, ele é a tag <code>&lt;form&gt;</code>, com campos <code>&lt;input&gt;</code> e um botão.</p>
+    <p>Cada campo tem um <code>name</code>. Quando a pessoa aperta o botão, o navegador junta tudo num texto do tipo <code>nome=Ana&amp;telefone=81+99999-0000</code> e manda para o servidor.</p>
+    <ul>
+      <li>Com <code>method="get"</code>, esse texto vai <strong>no endereço</strong>, depois do <code>?</code>. Serve para buscas: <code>/?q=ana</code>.</li>
+      <li>Com <code>method="post"</code>, o texto vai <strong>escondido no corpo do pedido</strong>. Serve para tudo que grava, muda ou apaga dados.</li>
+    </ul>
+    <p>O Django lê esse texto para você e entrega um dicionário: <code>request.GET</code> ou <code>request.POST</code>. Veja como esse texto é desmontado, usando só a biblioteca padrão:</p>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import parse_qs
+
+corpo = "nome=Ana+Souza&amp;telefone=81+99999-0000&amp;favorito=on&amp;email="
+dados = parse_qs(corpo, keep_blank_values=True)
+print(dados)
+print("Nome:", dados["nome"][0])
+print("Favorito marcado?", "favorito" in dados)
+print("E-mail vazio?", dados["email"][0] == "")</code></pre>
+    <p class="saida">{'nome': ['Ana Souza'], 'telefone': ['81 99999-0000'], 'favorito': ['on'], 'email': ['']}<br>
+Nome: Ana Souza<br>
+Favorito marcado? True<br>
+E-mail vazio? True</p>
+    <p>Repare que o <code>+</code> virou espaço e que cada valor vem numa lista (um campo pode aparecer mais de uma vez). Uma caixa de seleção (checkbox) desmarcada simplesmente <strong>não é enviada</strong> — por isso testamos com <code>in</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> Tudo o que chega de um formulário é <strong>texto</strong>, até a idade e o preço. E pode vir qualquer coisa: vazio, letras no lugar de números, um texto gigante. Nunca grave no banco sem validar.</div>
+
+    <h2>Validar: um formulário feito à mão</h2>
+    <p>Antes de ver o jeito do Django, vale montar um validador pequeno em Python puro. Ele faz o mesmo trabalho que um formulário do Django: confere cada campo, guarda os <strong>erros por campo</strong> e, se tudo estiver certo, entrega os dados já limpos e convertidos em <code>cleaned_data</code>.</p>
+<pre class="codigo" data-executar="sim"><code>class FormularioContato:
+    def __init__(self, dados):
+        self.dados = dados
+        self.errors = {}
+        self.cleaned_data = {}
+
+    def is_valid(self):
+        nome = self.dados.get("nome", "").strip()
+        if len(nome) &lt; 2:
+            self.errors["nome"] = "O nome precisa de pelo menos 2 letras."
+        else:
+            self.cleaned_data["nome"] = nome.title()
+
+        telefone = self.dados.get("telefone", "")
+        digitos = "".join(c for c in telefone if c.isdigit())
+        if len(digitos) &lt; 10:
+            self.errors["telefone"] = "Informe o DDD e o número."
+        else:
+            self.cleaned_data["telefone"] = digitos
+
+        self.cleaned_data["favorito"] = "favorito" in self.dados
+        return not self.errors
+
+
+ruim = FormularioContato({"nome": " a", "telefone": "9999-0000"})
+print(ruim.is_valid(), ruim.errors)
+
+bom = FormularioContato({"nome": "  ana souza ", "telefone": "(81) 99999-0000", "favorito": "on"})
+print(bom.is_valid(), bom.cleaned_data)</code></pre>
+    <p class="saida">False {'nome': 'O nome precisa de pelo menos 2 letras.', 'telefone': 'Informe o DDD e o número.'}<br>
+True {'nome': 'Ana Souza', 'telefone': '81999990000', 'favorito': True}</p>
+    <p>Essa é a ideia central de todo formulário: <strong>dados crus entram, dados limpos ou uma lista de erros saem</strong>. O Django faz isso com muito mais campos prontos, mensagens em português e proteção contra ataques.</p>
+
+    <h2>forms.Form: o formulário do Django</h2>
+    <p>No Django, um formulário é uma classe que herda de <code>forms.Form</code>. Cada atributo é um campo, com o tipo e as regras dele. Crie o arquivo <code>contatos/forms.py</code>:</p>
+<pre class="codigo"><code># contatos/forms.py
+from django import forms
+
+
+class InscricaoForm(forms.Form):
+    nome = forms.CharField(max_length=100)
+    email = forms.EmailField()
+    idade = forms.IntegerField(min_value=8, max_value=120)</code></pre>
+    <p>Teste no shell (<code>python manage.py shell</code>), sem precisar de página nenhuma:</p>
+<pre class="codigo"><code>from contatos.forms import InscricaoForm
+
+form = InscricaoForm({"nome": "Ana", "email": "ana@exemplo", "idade": "5"})
+print(form.is_valid())
+for campo, erros in form.errors.items():
+    print(campo, "-&gt;", erros[0])
+
+form = InscricaoForm({"nome": "Ana", "email": "ana@exemplo.com", "idade": "12"})
+print(form.is_valid())
+print(form.cleaned_data)</code></pre>
+    <p class="saida">False<br>
+email -&gt; Informe um endereço de email válido.<br>
+idade -&gt; Certifique-se que este valor seja maior ou igual a 8.<br>
+True<br>
+{'nome': 'Ana', 'email': 'ana@exemplo.com', 'idade': 12}</p>
+    <p>As mensagens saem em português porque o projeto usa <code>LANGUAGE_CODE = "pt-br"</code> no <code>settings.py</code>. Repare que, em <code>cleaned_data</code>, a idade já virou o <strong>número</strong> <code>12</code>, não o texto <code>"12"</code>.</p>
+    <div class="atencao"><strong>Atenção:</strong> <code>cleaned_data</code> só existe <strong>depois</strong> de chamar <code>is_valid()</code>. Escrever <code>form.cleaned_data["nome"]</code> antes disso dá <code>AttributeError</code>. A ordem é sempre: criar o formulário com os dados, chamar <code>is_valid()</code>, e só então ler <code>cleaned_data</code>.</div>
+
+    <h2>ModelForm: o formulário que nasce do model</h2>
+    <p>Quando o formulário serve para salvar um model, não precisa repetir os campos: o <strong>ModelForm</strong> lê o model <code>Contato</code> (aula 203) e cria os campos, os tipos e as validações básicas sozinho. Ele ainda ganha o método <code>save()</code>, que grava no banco.</p>
 <pre class="codigo"><code># contatos/forms.py
 from django import forms
 from .models import Contato
@@ -37,7 +127,14 @@ from .models import Contato
 class ContatoForm(forms.ModelForm):
     class Meta:
         model = Contato
-        fields = ["nome", "telefone", "email", "favorito"]
+        fields = ["nome", "telefone", "email", "nascimento", "favorito"]
+        widgets = {"nascimento": forms.DateInput(attrs={"type": "date"})}
+
+    def clean_nome(self):
+        nome = self.cleaned_data["nome"].strip()
+        if len(nome) &lt; 2:
+            raise forms.ValidationError("O nome precisa de pelo menos 2 letras.")
+        return nome
 
     def clean_telefone(self):
         telefone = self.cleaned_data["telefone"]
@@ -45,10 +142,18 @@ class ContatoForm(forms.ModelForm):
         if len(digitos) &lt; 10:
             raise forms.ValidationError("Informe o DDD e o número.")
         return telefone</code></pre>
-    <p>Um método <code>clean_&lt;campo&gt;</code> valida um campo: se algo estiver errado, lance <code>ValidationError</code> com a mensagem que o usuário vai ver.</p>
+    <p class="saida">(não imprime nada: este arquivo só define a classe ContatoForm)</p>
+    <ul>
+      <li><code>fields</code> diz quais campos do model aparecem. Campos automáticos, como <code>criado_em</code>, ficam de fora.</li>
+      <li><code>widgets</code> troca o jeito de desenhar um campo; <code>type="date"</code> mostra um calendário no navegador.</li>
+      <li>Um método <code>clean_&lt;campo&gt;</code> valida <strong>um</strong> campo: lance <code>ValidationError</code> com a mensagem que o usuário vai ver, ou devolva o valor (pode devolver arrumado, como o nome sem espaços).</li>
+    </ul>
+    <div class="dica"><strong>Dica:</strong> Para uma regra que envolve <strong>dois campos juntos</strong> (por exemplo, "senha" e "confirme a senha" iguais), use o método <code>clean(self)</code>: ele roda depois dos <code>clean_&lt;campo&gt;</code> e enxerga todo o <code>cleaned_data</code>. Para marcar o erro num campo, use <code>self.add_error("campo", "mensagem")</code>.</div>
 
-    <h2>A view: mostrar e receber</h2>
-<pre class="codigo"><code>from django.shortcuts import redirect, render
+    <h2>A view: mostrar no GET, receber no POST</h2>
+    <p>A mesma view atende duas situações. Na primeira visita (GET) ela mostra o formulário vazio. Quando a pessoa envia (POST), ela valida: se estiver tudo certo, salva e <strong>redireciona</strong>; se não, mostra o formulário de novo, com o que foi digitado e as mensagens de erro.</p>
+<pre class="codigo"><code># contatos/views.py
+from django.shortcuts import redirect, render
 from .forms import ContatoForm
 
 
@@ -61,35 +166,57 @@ def novo(request):
     else:
         form = ContatoForm()
     return render(request, "contatos/form.html", {"form": form})</code></pre>
-<pre class="codigo"><code>&lt;form method="post"&gt;
+    <p class="saida">GET &nbsp;/novo/ &nbsp;-&gt; 200, formulário vazio<br>
+POST /novo/ com telefone "123" &nbsp;-&gt; 200, formulário de volta com "Informe o DDD e o número."<br>
+POST /novo/ com dados certos &nbsp;-&gt; 302, redireciona para a lista</p>
+    <p>E o template <code>contatos/templates/contatos/form.html</code>:</p>
+<pre class="codigo"><code>{% extends "base.html" %}
+{% block conteudo %}
+&lt;form method="post"&gt;
   {% csrf_token %}
   {{ form.as_p }}
   &lt;button type="submit"&gt;Salvar&lt;/button&gt;
-&lt;/form&gt;</code></pre>
-    <p>Na primeira visita (GET) o formulário aparece vazio. Ao enviar (POST), se for inválido, ele volta com os dados digitados e as mensagens de erro.</p>
-    <div class="atencao"><strong>Atenção:</strong> Sem <code>{% csrf_token %}</code> dentro do <code>&lt;form method="post"&gt;</code>, o Django recusa o envio com <strong>403 Forbidden (CSRF verification failed)</strong>. Esse código protege contra sites que tentam enviar formulários em seu nome.</div>
-    <div class="dica"><strong>Dica:</strong> Depois de salvar, sempre faça <code>redirect</code>. Assim, se a pessoa apertar F5, o navegador não reenvia o formulário e não cria um contato repetido.</div>
+&lt;/form&gt;
+{% endblock %}</code></pre>
+    <p><code>{{ form.as_p }}</code> desenha cada campo dentro de um <code>&lt;p&gt;</code>, já com o rótulo e os erros. Se quiser controlar o desenho, percorra os campos:</p>
+<pre class="codigo"><code>{% for campo in form %}
+  &lt;p&gt;
+    {{ campo.label_tag }} {{ campo }}
+    {% for erro in campo.errors %}&lt;span class="erro"&gt;{{ erro }}&lt;/span&gt;{% endfor %}
+  &lt;/p&gt;
+{% endfor %}</code></pre>
+    <div class="dica"><strong>Dica:</strong> Depois de salvar, <strong>sempre</strong> faça <code>redirect</code>. Se a view devolvesse a página direto, a pessoa que apertasse F5 reenviaria o formulário e criaria um contato repetido. Esse costume tem até nome: <strong>Post/Redirect/Get</strong>.</div>
 
-    <h2>A regra da validação, testada à parte</h2>
-    <p>A lógica do <code>clean_telefone</code> é Python puro e dá para testar aqui:</p>
-<pre class="codigo" data-executar="sim"><code>def telefone_valido(telefone):
-    digitos = "".join(c for c in telefone if c.isdigit())
-    return len(digitos) &gt;= 10
+    <h2>csrf_token: a proteção contra envios falsos</h2>
+    <p>Imagine que você está logado na sua agenda e abre um site mal-intencionado. Esse site pode ter um formulário escondido que envia um POST para a <strong>sua</strong> agenda — e o seu navegador manda junto o seu login! Esse ataque se chama <strong>CSRF</strong> (falsificação de pedido entre sites).</p>
+    <p>A defesa é um código secreto: o Django coloca no formulário um campo escondido com um valor que só a página dele conhece. No POST, ele confere o código; o site falso não tem como saber esse valor. A ideia, em Python puro:</p>
+<pre class="codigo" data-executar="sim"><code>import hmac
+import secrets
+
+token_da_sessao = secrets.token_urlsafe(16)          # o Django guarda isso para você
+pagina = f'&lt;input type="hidden" name="csrfmiddlewaretoken" value="{token_da_sessao}"&gt;'
 
 
-print(telefone_valido("(81) 99999-0000"))
-print(telefone_valido("9999-0000"))</code></pre>
-    <p class="saida">True<br>
-False</p>
+def post_aceito(token_enviado):
+    return hmac.compare_digest(token_enviado, token_da_sessao)
+
+
+print("Pedido da página verdadeira:", post_aceito(token_da_sessao))
+print("Pedido do site falso:", post_aceito("chute-qualquer"))
+print("Tamanho do código:", len(token_da_sessao), "caracteres")</code></pre>
+    <p class="saida">Pedido da página verdadeira: True<br>
+Pedido do site falso: False<br>
+Tamanho do código: 22 caracteres</p>
+    <div class="atencao"><strong>Atenção:</strong> Sem <code>{% csrf_token %}</code> dentro do <code>&lt;form method="post"&gt;</code>, o Django recusa o envio com <strong>403 Forbidden — CSRF verification failed</strong>. Se aparecer esse erro, a primeira coisa a conferir é se a tag está dentro do <code>&lt;form&gt;</code>. Formulários com <code>method="get"</code> não precisam dela, porque não devem mudar nada.</div>
 
     <div class="digite">
       <strong>Pratique no DIGITAR:</strong> digite este trecho no modo <em>Programar</em> do app.
-<pre class="codigo"><code>if form.is_valid():</code></pre>
+<pre class="codigo"><code>if form.is_valid(): form.save()</code></pre>
     </div>
 
     <h2>Exercícios</h2>
     <div class="exercicio">
-      <p><strong>1.</strong> Escreva <code>clean_nome</code> que recusa nomes com menos de 2 letras e devolve o nome com <code>strip()</code> e só a primeira letra de cada palavra maiúscula.</p>
+      <p><strong>1.</strong> Escreva o método <code>clean_nome</code> para o <code>ContatoForm</code> que recusa nomes com menos de 2 letras e devolve o nome sem espaços nas pontas e com a primeira letra de cada palavra maiúscula.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo"><code>from django import forms
 
@@ -99,15 +226,87 @@ def clean_nome(self):
     if len(nome) &lt; 2:
         raise forms.ValidationError("O nome precisa de pelo menos 2 letras.")
     return nome.title()</code></pre>
-      <p>Esse método vai dentro da classe <code>ContatoForm</code>.</p>
+      <p>Esse método vai <strong>dentro</strong> da classe <code>ContatoForm</code>, em <code>contatos/forms.py</code> (por isso o <code>self</code>).</p>
       </details>
     </div>
     <div class="exercicio">
-      <p><strong>2.</strong> Teste a transformação do exercício anterior com Python comum para "  maria clara ".</p>
+      <p><strong>2.</strong> Teste em Python comum a transformação do exercício anterior para o texto <code>"  maria clara "</code>: mostre se o tamanho é aceito e como o nome fica.</p>
       <details class="resposta"><summary>Ver resposta</summary>
 <pre class="codigo" data-executar="sim"><code>nome = "  maria clara ".strip()
 print(len(nome) &gt;= 2, nome.title())</code></pre>
       <p class="saida">True Maria Clara</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>3.</strong> Um formulário de busca enviou <code>q=bolo+de+cenoura&amp;pagina=2</code>. Use <code>parse_qs</code> para mostrar o texto buscado e a página <strong>como número inteiro</strong>.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>from urllib.parse import parse_qs
+
+dados = parse_qs("q=bolo+de+cenoura&amp;pagina=2")
+busca = dados["q"][0]
+pagina = int(dados["pagina"][0])
+print(busca, pagina, pagina + 1)</code></pre>
+      <p class="saida">bolo de cenoura 2 3</p>
+      <p>Somar 1 prova que a página virou <code>int</code>. No Django você usaria <code>request.GET.get("q")</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>4.</strong> Acrescente ao <code>FormularioContato</code> feito à mão um campo <code>idade</code> opcional: se vier vazio, <code>cleaned_data["idade"]</code> fica <code>None</code>; se vier, precisa ser um número de 0 a 120.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo" data-executar="sim"><code>class FormularioContato:
+    def __init__(self, dados):
+        self.dados = dados
+        self.errors = {}
+        self.cleaned_data = {}
+
+    def is_valid(self):
+        nome = self.dados.get("nome", "").strip()
+        if len(nome) &lt; 2:
+            self.errors["nome"] = "O nome precisa de pelo menos 2 letras."
+        else:
+            self.cleaned_data["nome"] = nome
+        idade = self.dados.get("idade", "").strip()
+        if idade == "":
+            self.cleaned_data["idade"] = None
+        elif not idade.isdigit() or int(idade) &gt; 120:
+            self.errors["idade"] = "Idade deve ser um número de 0 a 120."
+        else:
+            self.cleaned_data["idade"] = int(idade)
+        return not self.errors
+
+
+for dados in [{"nome": "Ana"}, {"nome": "Ana", "idade": "13"}, {"nome": "Ana", "idade": "treze"}]:
+    f = FormularioContato(dados)
+    print(f.is_valid(), f.cleaned_data, f.errors)</code></pre>
+      <p class="saida">True {'nome': 'Ana', 'idade': None} {}<br>
+True {'nome': 'Ana', 'idade': 13} {}<br>
+False {'nome': 'Ana'} {'idade': 'Idade deve ser um número de 0 a 120.'}</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>5.</strong> Num formulário de cadastro com os campos <code>senha</code> e <code>confirmacao</code>, escreva o método <code>clean</code> que avisa quando as duas são diferentes.</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+<pre class="codigo"><code>from django import forms
+
+
+class CadastroForm(forms.Form):
+    senha = forms.CharField(widget=forms.PasswordInput)
+    confirmacao = forms.CharField(widget=forms.PasswordInput)
+
+    def clean(self):
+        dados = super().clean()
+        if dados.get("senha") != dados.get("confirmacao"):
+            self.add_error("confirmacao", "As senhas não são iguais.")
+        return dados</code></pre>
+      <p>Use <code>dados.get(...)</code> e não <code>dados[...]</code>: se um dos campos já falhou na sua própria validação, ele não está em <code>cleaned_data</code>.</p>
+      </details>
+    </div>
+    <div class="exercicio">
+      <p><strong>6.</strong> Você criou um formulário com <code>method="post"</code>, preencheu, apertou Salvar e apareceu "403 Forbidden — CSRF verification failed". O que provavelmente faltou e por que o Django faz isso?</p>
+      <details class="resposta"><summary>Ver resposta</summary>
+      <p class="saida">Faltou {% csrf_token %} dentro do &lt;form method="post"&gt;.<br>
+O Django exige esse código secreto em todo POST para ter certeza de que o envio<br>
+veio de uma página do próprio site, e não de um site falso usando o seu login.</p>
       </details>
     </div>
 
