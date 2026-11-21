@@ -26,7 +26,7 @@
   /* Contador de visitas (serviço em site-next/, publicado na Vercel). Vazio = desligado.
      Este é o único lugar para configurar o endereço: ferramentas/montar.mjs também o leva para o app.
      O contador nunca bloqueia a página: se o endereço não responder, nada acontece. */
-  var CONTADOR_URL = "";
+  var CONTADOR_URL = "https://digitar-contador.regivaldo2017.workers.dev";
   function ligarContador() {
     if (!CONTADOR_URL || !/^https?:$/.test(location.protocol) || window.Contador) return;
     var s = document.createElement("script");

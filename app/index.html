@@ -3087,7 +3087,7 @@ if (!alunoAtual().nome) abrirAlunos(true);
  * O endereço vem de CONTADOR_URL em site/assets/site.js (ferramentas/montar.mjs coloca aqui).
  * Escuta os eventos do motor pelo aoEvento: não mexe em lições, teste nem jogo. */
 (function(){
-  const CONTADOR_URL = "";
+  const CONTADOR_URL = "https://digitar-contador.regivaldo2017.workers.dev";
   if (!/^https?:$/.test(location.protocol)) return;
   if (!CONTADOR_URL || CONTADOR_URL.indexOf("__") === 0) return;
 
