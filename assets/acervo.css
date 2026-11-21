@@ -1,0 +1,177 @@
+/* DIGITAR — Acervo do GitHub (usa os tokens de estilo.css) */
+
+:root {
+  --selo-repositorio: #1a55a8; --selo-repositorio-fundo: #eaf2fd;
+  --selo-skill: #7a4d00;       --selo-skill-fundo: #fff4d6;
+  --selo-agente: #1f6b45;      --selo-agente-fundo: #e5f5ec;
+  --selo-plugin: #6b3fa0;      --selo-plugin-fundo: #f1eafb;
+  --selo-mcp: #8a2f4b;         --selo-mcp-fundo: #fbe9ef;
+  --selo-lista: #4a5160;       --selo-lista-fundo: #eef0f3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --selo-repositorio: #9cc8ff; --selo-repositorio-fundo: #15253d;
+    --selo-skill: #f3c75e;       --selo-skill-fundo: #2c2412;
+    --selo-agente: #7fd6a6;      --selo-agente-fundo: #13291e;
+    --selo-plugin: #c9a8f2;      --selo-plugin-fundo: #241a33;
+    --selo-mcp: #f2a0b9;         --selo-mcp-fundo: #33161f;
+    --selo-lista: #b7bdc8;       --selo-lista-fundo: #252930;
+  }
+}
+
+.acervo-cabeca { position: relative; max-width: none; padding-bottom: 1.25rem; }
+.acervo-cabeca h1 { max-width: 20ch; }
+.acervo-idiomas { display: flex; gap: 0.25rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.acervo-idiomas button {
+  font: inherit; font-size: var(--t-0); color: var(--suave); background: none; cursor: pointer;
+  border: 1px solid transparent; border-radius: 999px; padding: 0.2rem 0.7rem;
+}
+.acervo-idiomas button:hover { color: var(--tinta); border-color: var(--linha-forte); }
+.acervo-idiomas button[aria-pressed="true"] { color: var(--tinta); border-color: var(--linha-forte); background: var(--papel); font-weight: 700; }
+
+/* busca: um terminal com cursor, como o resto do site */
+.busca {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem; max-width: 52rem;
+  background: var(--papel); border: 2px solid var(--linha-forte); border-bottom-width: 5px; border-radius: 16px;
+}
+.busca:focus-within { border-color: var(--azul); }
+.busca-prompt { font-family: var(--mono); font-weight: 600; font-size: var(--t-2); color: var(--azul); }
+.busca input {
+  flex: 1; min-width: 0; font: inherit; font-family: var(--mono); font-size: var(--t-2);
+  color: var(--tinta); background: none; border: 0; outline: 0; padding: 0.45rem 0;
+}
+.busca input::placeholder { color: var(--suave); opacity: 0.75; }
+.busca input::-webkit-search-cancel-button { cursor: pointer; }
+@media (max-width: 560px) { .busca-atalho { display: none; } .busca input { font-size: var(--t-1); } .busca .botao { padding-inline: 0.9rem; } }
+
+.temas { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.25rem 0 0; max-width: 60rem; }
+.tema {
+  font: inherit; font-size: var(--t-0); font-weight: 500; color: var(--tinta); cursor: pointer;
+  background: var(--tecla-face); border: 1px solid var(--linha-forte); border-bottom: 3px solid var(--tecla-lado);
+  border-radius: 9px; padding: 0.35rem 0.7rem 0.3rem;
+}
+.tema span { color: var(--suave); font-family: var(--mono); font-size: 0.9em; margin-left: 0.15rem; }
+.tema:hover { background: var(--azul-tinta); }
+.tema:active { transform: translateY(2px); border-bottom-width: 1px; margin-bottom: 2px; }
+.tema[aria-pressed="true"] { background: var(--azul); color: #fff; border-color: var(--azul); border-bottom-color: var(--azul-fundo); }
+.tema[aria-pressed="true"] span { color: #dbe8fb; }
+
+/* ajustes: tipo, destino, terminal */
+.ajustes {
+  display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-start;
+  margin-top: 2rem; padding: 1rem 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha);
+}
+.ajuste { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.ajuste-rotulo { font-size: var(--t-0); font-weight: 700; color: var(--suave); }
+.segmentos { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.segmentos button {
+  font: inherit; font-size: var(--t-0); color: var(--tinta); cursor: pointer;
+  background: none; border: 1px solid var(--linha); border-radius: 8px; padding: 0.3rem 0.65rem;
+}
+.segmentos button:hover { border-color: var(--linha-forte); background: var(--papel); }
+.segmentos button[aria-pressed="true"] { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); }
+.destino-livre {
+  font: inherit; font-family: var(--mono); font-size: var(--t-0); color: var(--tinta);
+  background: var(--papel); border: 1px solid var(--linha-forte); border-radius: 8px; padding: 0.35rem 0.6rem; width: 16rem; max-width: 100%;
+}
+
+.acervo-resumo { color: var(--suave); margin: 1.5rem 0 1rem; scroll-margin-top: 5.5rem; }
+
+/* cartões */
+.cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); gap: 1rem; }
+.cartao {
+  display: flex; flex-direction: column; min-width: 0;
+  padding: 1.1rem 1.15rem 1rem; border-radius: 16px; background: var(--papel); border: 1px solid var(--linha);
+}
+.cartao:hover { border-color: var(--linha-forte); }
+.cartao-topo { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.selo {
+  display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+  padding: 0.15rem 0.5rem; border-radius: 6px;
+}
+.selo-repositorio { color: var(--selo-repositorio); background: var(--selo-repositorio-fundo); }
+.selo-skill { color: var(--selo-skill); background: var(--selo-skill-fundo); }
+.selo-agente { color: var(--selo-agente); background: var(--selo-agente-fundo); }
+.selo-plugin { color: var(--selo-plugin); background: var(--selo-plugin-fundo); }
+.selo-mcp { color: var(--selo-mcp); background: var(--selo-mcp-fundo); }
+.selo-lista { color: var(--selo-lista); background: var(--selo-lista-fundo); }
+.kit-botao {
+  font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--suave); cursor: pointer;
+  background: none; border: 1px dashed var(--linha-forte); border-radius: 999px; padding: 0.15rem 0.6rem;
+}
+.kit-botao:hover { color: var(--tinta); border-style: solid; }
+.kit-botao[aria-pressed="true"] { color: var(--ok); border: 1px solid currentColor; }
+.cartao h3 { font-size: var(--t-2); margin: 0 0 0.1rem; overflow-wrap: anywhere; }
+.cartao h3 a { color: var(--tinta); text-decoration: none; }
+.cartao h3 a:hover { color: var(--link); text-decoration: underline; }
+.cartao-repo { font-family: var(--mono); font-size: 0.8rem; color: var(--suave); margin: 0 0 0.6rem; overflow-wrap: anywhere; }
+.cartao-caminho { opacity: 0.8; }
+.cartao-desc { margin: 0 0 0.6rem; }
+.cartao-meta { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; list-style: none; padding: 0; margin: 0 0 0.75rem; font-size: 0.8rem; color: var(--suave); }
+.cartao-meta li { margin: 0; }
+.cartao-meta li:first-child { color: var(--tinta); font-weight: 700; }
+.cartao-meta li:first-child span[aria-hidden] { color: var(--ambar); }
+.cartao-alerta {
+  font-size: 0.8rem; margin: 0 0 0.75rem; padding: 0.4rem 0.6rem; border-radius: 8px;
+  background: var(--ambar-tinta); border-left: 3px solid var(--ambar-borda);
+}
+
+.comando { margin-top: auto; }
+.comando-abas { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-bottom: 0.35rem; }
+.comando-abas button {
+  font: inherit; font-size: 0.75rem; color: var(--suave); cursor: pointer;
+  background: none; border: 0; border-radius: 6px; padding: 0.2rem 0.45rem;
+}
+.comando-abas button:hover { color: var(--tinta); background: var(--azul-tinta); }
+.comando-abas button[aria-pressed="true"] { color: var(--tinta); background: var(--azul-tinta); font-weight: 700; }
+.comando-caixa {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  background: var(--cod-fundo); border: 1px solid var(--cod-linha); border-radius: 10px; padding: 0.55rem 0.5rem 0.55rem 0.75rem;
+}
+.comando-caixa pre {
+  flex: 1; min-width: 0; margin: 0; max-height: 7.5rem; overflow: auto;
+  font-size: 0.78rem; line-height: 1.5; color: var(--cod-texto); white-space: pre-wrap; word-break: break-all;
+}
+.comando-caixa .botao { flex: none; }
+.comando-caixa .botao.feito { background: var(--ok); border-bottom-color: #145233; }
+.comando-nota { font-size: 0.75rem; color: var(--suave); margin: 0.4rem 0 0; }
+
+.ao-vivo { margin-top: 3.5rem; }
+.ao-vivo-topo h2 { font-size: var(--t-3); margin-bottom: 0.3rem; }
+.ao-vivo-topo p { color: var(--suave); max-width: var(--texto); }
+.ao-vivo .cartao { border-style: dashed; }
+
+.sugerir { margin-top: 4rem; }
+
+/* kit: gaveta fixa no canto */
+body.com-kit .rodape { padding-bottom: 14rem; }
+.kit {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 30; width: min(24rem, calc(100vw - 2rem));
+  background: var(--papel); border: 1px solid var(--linha-forte); border-bottom: 5px solid var(--tecla-lado);
+  border-radius: 16px; box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.35); padding: 0.85rem 1rem 1rem;
+}
+.kit-topo { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.kit h2 { font-size: var(--t-1); margin: 0; letter-spacing: 0; }
+.kit-conta {
+  display: inline-grid; place-items: center; min-width: 1.6rem; height: 1.6rem; padding: 0 0.35rem; margin-left: 0.25rem;
+  font-family: var(--mono); font-size: 0.85rem; background: var(--azul); color: #fff; border-radius: 999px;
+}
+.kit-recolher { font: inherit; font-size: var(--t-0); color: var(--link); background: none; border: 0; cursor: pointer; padding: 0.2rem; }
+.kit-corpo { margin-top: 0.75rem; }
+.kit.fechado .kit-corpo { display: none; }
+.kit-lista { list-style: none; padding: 0; margin: 0 0 0.85rem; max-height: 11rem; overflow: auto; }
+.kit-lista li { display: flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0.3rem 0; border-bottom: 1px solid var(--linha); font-size: var(--t-0); }
+.kit-lista b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kit-lista button { font: inherit; font-size: 1.1rem; line-height: 1; color: var(--suave); background: none; border: 0; cursor: pointer; padding: 0.1rem 0.35rem; border-radius: 6px; }
+.kit-lista button:hover { color: var(--erro); background: var(--erro-fundo); }
+.kit .botoes { gap: 0.4rem; }
+
+.aviso-copia {
+  position: fixed; left: 50%; bottom: 1.25rem; z-index: 40; transform: translate(-50%, 1rem);
+  background: var(--tinta); color: var(--fundo); padding: 0.55rem 1rem; border-radius: 10px;
+  font-size: var(--t-0); font-weight: 700; opacity: 0; pointer-events: none; transition: opacity 160ms, transform 160ms;
+}
+.aviso-copia.visivel { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 620px) { .kit { right: 0.5rem; left: 0.5rem; bottom: 0.5rem; width: auto; } }
+@media (prefers-reduced-motion: reduce) { .aviso-copia { transition: none; } }

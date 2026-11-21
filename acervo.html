@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acervo do GitHub — DIGITAR</title>
+<meta name="description" content="Digite um tema e encontre os melhores repositórios, skills, agentes, plugins e servidores MCP do GitHub, com o comando pronto para copiar para o seu projeto.">
+<meta name="theme-color" content="#2a78d6">
+<link rel="icon" href="assets/digitar.svg" type="image/svg+xml">
+<link rel="icon" href="assets/digitar-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/digitar-256.png">
+<meta property="og:title" content="Acervo do GitHub: o melhor de cada tema, pronto para copiar">
+<meta property="og:description" content="Repositórios, skills, agentes e servidores MCP conferidos, com o comando para levar ao seu projeto.">
+<meta property="og:image" content="assets/digitar-256.png">
+<link rel="alternate" hreflang="pt-BR" href="acervo.html?lang=pt">
+<link rel="alternate" hreflang="en" href="acervo.html?lang=en">
+<link rel="alternate" hreflang="es" href="acervo.html?lang=es">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="assets/estilo.css">
+<link rel="stylesheet" href="assets/acervo.css">
+<script src="assets/site.js" defer></script>
+<script src="assets/acervo.js" defer></script>
+</head>
+<body>
+<div id="topo"></div>
+<main class="pagina acervo">
+
+  <header class="cabeca-pagina acervo-cabeca">
+    <div class="acervo-idiomas" role="group" aria-label="Idioma / Language / Idioma">
+      <button type="button" data-lang="pt" lang="pt-BR">Português</button>
+      <button type="button" data-lang="en" lang="en">English</button>
+      <button type="button" data-lang="es" lang="es">Español</button>
+    </div>
+    <h1 data-t="titulo">O melhor do GitHub, tema por tema</h1>
+    <p class="lead" data-t="lead">Digite o que você quer construir. Aparecem os repositórios, skills, agentes, plugins e servidores MCP mais úteis, cada um com o comando pronto para copiar para o seu projeto.</p>
+  </header>
+
+  <form class="busca" role="search" id="busca">
+    <label class="visualmente-oculto" for="termo" data-t="rotuloBusca">Tema</label>
+    <span class="busca-prompt" aria-hidden="true">&gt;</span>
+    <input id="termo" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search"
+      placeholder="python, react, segurança, bim, jogos…">
+    <kbd class="busca-atalho" aria-hidden="true">/</kbd>
+    <button class="botao" type="submit" data-t="buscar">Buscar</button>
+  </form>
+
+  <div class="temas" id="temas" aria-label="Temas"></div>
+
+  <section class="ajustes" aria-label="Ajustes dos comandos">
+    <div class="ajuste">
+      <span class="ajuste-rotulo" data-t="tipo">Tipo</span>
+      <div class="segmentos" id="filtro-tipo" role="group"></div>
+    </div>
+    <div class="ajuste">
+      <span class="ajuste-rotulo" data-t="destino">Copiar para</span>
+      <div class="segmentos" id="destino" role="group"></div>
+      <input class="destino-livre" id="destino-livre" type="text" spellcheck="false" hidden aria-label="Pasta">
+    </div>
+    <div class="ajuste">
+      <span class="ajuste-rotulo" data-t="terminal">Terminal</span>
+      <div class="segmentos" id="shell" role="group"></div>
+    </div>
+  </section>
+
+  <p class="acervo-resumo" id="resumo" aria-live="polite"></p>
+  <div class="cartoes" id="resultados"></div>
+
+  <section class="ao-vivo" id="ao-vivo" hidden>
+    <div class="ao-vivo-topo">
+      <h2 data-t="aoVivoTitulo">Direto do GitHub, agora</h2>
+      <p data-t="aoVivoTexto">Os repositórios com mais estrelas para este tema. Não foram conferidos por nós: veja a licença antes de copiar.</p>
+    </div>
+    <p class="acervo-resumo" id="ao-vivo-estado" aria-live="polite"></p>
+    <div class="cartoes" id="ao-vivo-lista"></div>
+  </section>
+
+  <section class="faixa sugerir">
+    <div>
+      <h2 data-t="sugerirTitulo">Falta algum recurso?</h2>
+      <p data-t="sugerirTexto">O acervo é aberto. Sugira um repositório, skill ou agente e ele entra na próxima conferência.</p>
+    </div>
+    <a class="botao secundario" id="sugerir" href="https://github.com/regivaldsud/digitar/issues/new" data-t="sugerirBotao">Sugerir no GitHub</a>
+  </section>
+
+  <aside class="kit" id="kit" hidden aria-labelledby="kit-titulo">
+    <div class="kit-topo">
+      <h2 id="kit-titulo"><span data-t="kit">Meu kit</span> <span class="kit-conta" id="kit-conta">0</span></h2>
+      <button type="button" class="kit-recolher" id="kit-recolher" aria-expanded="true" data-t="recolher">Recolher</button>
+    </div>
+    <div class="kit-corpo" id="kit-corpo">
+      <ul class="kit-lista" id="kit-lista"></ul>
+      <div class="botoes">
+        <button type="button" class="botao pequeno" id="kit-copiar" data-t="kitCopiar">Copiar script</button>
+        <button type="button" class="botao pequeno secundario" id="kit-baixar" data-t="kitBaixar">Baixar script</button>
+        <button type="button" class="botao pequeno secundario" id="kit-link" data-t="kitLink">Copiar link do kit</button>
+        <button type="button" class="botao pequeno secundario" id="kit-limpar" data-t="kitLimpar">Esvaziar</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="aviso-copia" id="aviso" role="status" aria-live="polite"></div>
+</main>
+<div id="rodape"></div>
+</body>
+</html>

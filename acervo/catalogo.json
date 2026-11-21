@@ -1,0 +1,2574 @@
+{
+  "versao": 1,
+  "atualizado": "2026-11-21",
+  "temas": [
+    {
+      "id": "claude-code",
+      "nome": {
+        "pt": "Agentes de IA e Claude Code",
+        "en": "AI agents and Claude Code",
+        "es": "Agentes de IA y Claude Code"
+      },
+      "apelidos": [
+        "claude",
+        "claude code",
+        "agente",
+        "agentes",
+        "agents",
+        "subagent",
+        "subagentes",
+        "skill",
+        "skills",
+        "habilidades",
+        "plugin",
+        "plugins",
+        "ia",
+        "ai",
+        "codex",
+        "cursor",
+        "copilot",
+        "agentes de ia"
+      ],
+      "itens": [
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/frontend-design",
+          "nome": "frontend-design",
+          "desc": "Skill oficial da Anthropic para interfaces com direção visual própria, sem cara de modelo pronto."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/skill-creator",
+          "nome": "skill-creator",
+          "desc": "Skill oficial que ensina o agente a criar, testar e melhorar novas skills."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/mcp-builder",
+          "nome": "mcp-builder",
+          "desc": "Guia para construir servidores MCP de qualidade, em TypeScript ou Python."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/webapp-testing",
+          "nome": "webapp-testing",
+          "desc": "Testa aplicações web locais com Playwright: cliques, capturas de tela e logs."
+        },
+        {
+          "tipo": "skill",
+          "repo": "obra/superpowers",
+          "caminho": "skills/systematic-debugging",
+          "nome": "systematic-debugging",
+          "desc": "Depuração em quatro fases: achar a causa raiz antes de qualquer correção."
+        },
+        {
+          "tipo": "skill",
+          "repo": "obra/superpowers",
+          "caminho": "skills/test-driven-development",
+          "nome": "test-driven-development",
+          "desc": "Disciplina de TDD: teste falhando primeiro, depois o código mínimo."
+        },
+        {
+          "tipo": "skill",
+          "repo": "obra/superpowers",
+          "caminho": "skills/writing-plans",
+          "nome": "writing-plans",
+          "desc": "Transforma um pedido em plano de implementação detalhado, passo a passo."
+        },
+        {
+          "tipo": "skill",
+          "repo": "obra/superpowers",
+          "caminho": "skills/brainstorming",
+          "nome": "brainstorming",
+          "desc": "Refina uma ideia solta em desenho claro, com perguntas antes de codar."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "anthropics/skills",
+          "nome": "document-skills",
+          "mercado": "anthropic-agent-skills",
+          "desc": "Pacote oficial com as skills de Word, Excel, PowerPoint e PDF."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "anthropics/claude-code",
+          "nome": "code-review",
+          "mercado": "claude-code-plugins",
+          "desc": "Plugin oficial de revisão de código do Claude Code."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "anthropics/claude-code",
+          "nome": "feature-dev",
+          "mercado": "claude-code-plugins",
+          "desc": "Fluxo guiado para desenvolver uma funcionalidade do começo ao fim."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "obra/superpowers",
+          "nome": "superpowers",
+          "mercado": "superpowers-dev",
+          "desc": "Biblioteca completa de skills de engenharia: TDD, planos, depuração, revisão."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "full-stack-orchestration",
+          "mercado": "claude-code-workflows",
+          "desc": "Orquestra agentes de backend, frontend, testes e deploy numa só tarefa."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-code-reviewer.md",
+          "nome": "code-reviewer",
+          "desc": "Revisor focado em correção, segurança e manutenção, não em estilo."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-minimal-change-engineer.md",
+          "nome": "minimal-change-engineer",
+          "desc": "Corrige só o que foi pedido, com o menor diff possível."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "testing/testing-reality-checker.md",
+          "nome": "reality-checker",
+          "desc": "Exige prova antes de declarar algo pronto para produção."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/05-data-ai/prompt-engineer.md",
+          "nome": "prompt-engineer",
+          "desc": "Escreve, testa e otimiza prompts para LLMs."
+        },
+        {
+          "tipo": "lista",
+          "repo": "hesreallyhim/awesome-claude-code",
+          "nome": "awesome-claude-code",
+          "desc": "A lista mais completa de comandos, hooks, skills e fluxos para Claude Code."
+        },
+        {
+          "tipo": "lista",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "nome": "awesome-claude-code-subagents",
+          "desc": "Mais de cem subagentes organizados em dez categorias."
+        },
+        {
+          "tipo": "lista",
+          "repo": "msitarzewski/agency-agents",
+          "nome": "agency-agents",
+          "desc": "Uma agência inteira de agentes: engenharia, design, testes, segurança, marketing."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "wshobson/agents",
+          "nome": "agents",
+          "desc": "Dezenas de plugins com agentes, comandos e skills para cada área."
+        }
+      ]
+    },
+    {
+      "id": "mcp",
+      "nome": {
+        "pt": "Servidores MCP",
+        "en": "MCP servers",
+        "es": "Servidores MCP"
+      },
+      "apelidos": [
+        "mcp",
+        "model context protocol",
+        "conectores",
+        "connectors",
+        "ferramentas",
+        "tools",
+        "integracao",
+        "integração"
+      ],
+      "itens": [
+        {
+          "tipo": "mcp",
+          "repo": "upstash/context7",
+          "nome": "context7",
+          "comando": "claude mcp add context7 -- npx -y @upstash/context7-mcp",
+          "desc": "Documentação atualizada de bibliotecas direto no contexto do agente."
+        },
+        {
+          "tipo": "mcp",
+          "repo": "microsoft/playwright-mcp",
+          "nome": "playwright",
+          "comando": "claude mcp add playwright -- npx -y @playwright/mcp@latest",
+          "desc": "O agente abre e controla um navegador de verdade para testar páginas."
+        },
+        {
+          "tipo": "mcp",
+          "repo": "github/github-mcp-server",
+          "nome": "github",
+          "comando": "claude mcp add --transport http github https://api.githubcopilot.com/mcp/",
+          "desc": "Servidor oficial do GitHub: issues, pull requests, código e Actions."
+        },
+        {
+          "tipo": "mcp",
+          "repo": "modelcontextprotocol/servers",
+          "caminho": "src/filesystem",
+          "nome": "filesystem",
+          "comando": "claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem .",
+          "desc": "Leitura e escrita de arquivos numa pasta que você escolhe."
+        },
+        {
+          "tipo": "mcp",
+          "repo": "modelcontextprotocol/servers",
+          "caminho": "src/memory",
+          "nome": "memory",
+          "comando": "claude mcp add memory -- npx -y @modelcontextprotocol/server-memory",
+          "desc": "Memória persistente em grafo de conhecimento."
+        },
+        {
+          "tipo": "mcp",
+          "repo": "modelcontextprotocol/servers",
+          "caminho": "src/fetch",
+          "nome": "fetch",
+          "comando": "claude mcp add fetch -- uvx mcp-server-fetch",
+          "desc": "Busca páginas da web e entrega o conteúdo em Markdown."
+        },
+        {
+          "tipo": "lista",
+          "repo": "punkpeye/awesome-mcp-servers",
+          "nome": "awesome-mcp-servers",
+          "desc": "O maior catálogo comunitário de servidores MCP, por categoria."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "modelcontextprotocol/servers",
+          "nome": "servers",
+          "desc": "Servidores de referência mantidos pelo projeto MCP."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "modelcontextprotocol/typescript-sdk",
+          "nome": "typescript-sdk",
+          "desc": "SDK oficial para criar servidores e clientes MCP em TypeScript."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "modelcontextprotocol/python-sdk",
+          "nome": "python-sdk",
+          "desc": "SDK oficial para criar servidores e clientes MCP em Python."
+        }
+      ]
+    },
+    {
+      "id": "llm",
+      "nome": {
+        "pt": "IA generativa e LLMs",
+        "en": "Generative AI and LLMs",
+        "es": "IA generativa y LLMs"
+      },
+      "apelidos": [
+        "llm",
+        "llms",
+        "ia generativa",
+        "genai",
+        "rag",
+        "chatbot",
+        "gpt",
+        "modelo de linguagem",
+        "inteligencia artificial",
+        "inteligência artificial",
+        "artificial intelligence",
+        "inteligencia",
+        "openai",
+        "anthropic",
+        "ollama"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "anthropics/claude-cookbooks",
+          "nome": "claude-cookbooks",
+          "desc": "Receitas oficiais da Anthropic: ferramentas, RAG, agentes, visão."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "ollama/ollama",
+          "nome": "ollama",
+          "desc": "Rode modelos abertos no seu computador com um comando."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "langchain-ai/langchain",
+          "nome": "langchain",
+          "desc": "Framework para montar aplicações e agentes com LLMs."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "run-llama/llama_index",
+          "nome": "llama_index",
+          "desc": "Conecta seus dados a LLMs: indexação e busca para RAG."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "huggingface/transformers",
+          "nome": "transformers",
+          "desc": "Milhares de modelos pré-treinados de texto, visão e áudio."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "ggml-org/llama.cpp",
+          "nome": "llama.cpp",
+          "desc": "Inferência de LLMs em C/C++, rápida até em CPU."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "open-webui/open-webui",
+          "nome": "open-webui",
+          "desc": "Interface web completa para conversar com modelos locais."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/claude-api",
+          "nome": "claude-api",
+          "desc": "Skill oficial com referência da API do Claude: modelos, ferramentas, cache."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/05-data-ai/llm-architect.md",
+          "nome": "llm-architect",
+          "desc": "Desenha sistemas com LLM: escolha de modelo, RAG, avaliação, custo."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-ai-engineer.md",
+          "nome": "ai-engineer",
+          "desc": "Leva modelos e funções de IA para produção."
+        },
+        {
+          "tipo": "lista",
+          "repo": "Hannibal046/Awesome-LLM",
+          "nome": "Awesome-LLM",
+          "desc": "Artigos, modelos, ferramentas e cursos sobre LLMs."
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "nome": {
+        "pt": "Python",
+        "en": "Python",
+        "es": "Python"
+      },
+      "apelidos": [
+        "python",
+        "py",
+        "django",
+        "flask",
+        "fastapi",
+        "pip",
+        "uv",
+        "automacao",
+        "automação",
+        "automation",
+        "scripts"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "TheAlgorithms/Python",
+          "nome": "TheAlgorithms/Python",
+          "desc": "Todos os algoritmos clássicos implementados em Python, para estudar."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "fastapi/fastapi",
+          "nome": "fastapi",
+          "desc": "APIs web rápidas e tipadas, com documentação automática."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "django/django",
+          "nome": "django",
+          "desc": "Framework web completo: banco, admin, login e formulários."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "astral-sh/uv",
+          "nome": "uv",
+          "desc": "Gerenciador de pacotes e ambientes Python extremamente rápido."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "astral-sh/ruff",
+          "nome": "ruff",
+          "desc": "Verificador e formatador de código Python em Rust."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "pallets/flask",
+          "nome": "flask",
+          "desc": "Microframework web simples para começar pequeno."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/python-pro.md",
+          "nome": "python-pro",
+          "desc": "Especialista em Python moderno, tipagem e boas práticas."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/fastapi-developer.md",
+          "nome": "fastapi-developer",
+          "desc": "Constrói APIs com FastAPI, Pydantic e async."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "python-development",
+          "mercado": "claude-code-workflows",
+          "desc": "Agentes e skills de Python: projetos, testes, desempenho."
+        },
+        {
+          "tipo": "lista",
+          "repo": "vinta/awesome-python",
+          "nome": "awesome-python",
+          "desc": "A lista clássica de bibliotecas Python por assunto."
+        }
+      ]
+    },
+    {
+      "id": "javascript",
+      "nome": {
+        "pt": "JavaScript e TypeScript",
+        "en": "JavaScript and TypeScript",
+        "es": "JavaScript y TypeScript"
+      },
+      "apelidos": [
+        "javascript",
+        "js",
+        "typescript",
+        "ts",
+        "node",
+        "nodejs",
+        "node.js",
+        "deno",
+        "bun",
+        "npm"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "microsoft/TypeScript",
+          "nome": "TypeScript",
+          "desc": "A linguagem TypeScript: JavaScript com tipos."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "nodejs/node",
+          "nome": "node",
+          "desc": "O runtime JavaScript para servidores e ferramentas."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "oven-sh/bun",
+          "nome": "bun",
+          "desc": "Runtime, empacotador e gerenciador de pacotes num só binário."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "goldbergyoni/nodebestpractices",
+          "nome": "nodebestpractices",
+          "desc": "Mais de cem boas práticas de Node.js, explicadas."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "ryanmcdermott/clean-code-javascript",
+          "nome": "clean-code-javascript",
+          "desc": "Código limpo aplicado ao JavaScript, com exemplos."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/typescript-pro.md",
+          "nome": "typescript-pro",
+          "desc": "Especialista em TypeScript avançado e tipos seguros."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/javascript-pro.md",
+          "nome": "javascript-pro",
+          "desc": "JavaScript moderno, assíncrono e de alto desempenho."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "javascript-typescript",
+          "mercado": "claude-code-workflows",
+          "desc": "Agentes e skills para projetos JavaScript e TypeScript."
+        },
+        {
+          "tipo": "lista",
+          "repo": "sorrycc/awesome-javascript",
+          "nome": "awesome-javascript",
+          "desc": "Bibliotecas e recursos de JavaScript por categoria."
+        }
+      ]
+    },
+    {
+      "id": "frontend",
+      "nome": {
+        "pt": "Frontend, React e design de interface",
+        "en": "Frontend, React and UI design",
+        "es": "Frontend, React y diseño de interfaz"
+      },
+      "apelidos": [
+        "frontend",
+        "front-end",
+        "react",
+        "next",
+        "nextjs",
+        "next.js",
+        "vue",
+        "svelte",
+        "css",
+        "tailwind",
+        "ui",
+        "ux",
+        "design",
+        "interface",
+        "site",
+        "sites",
+        "web",
+        "landing page",
+        "shadcn"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "shadcn-ui/ui",
+          "nome": "shadcn/ui",
+          "desc": "Componentes bonitos e acessíveis para copiar para o seu projeto."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "vercel/next.js",
+          "nome": "next.js",
+          "desc": "Framework React para sites e aplicações web completas."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "react/react",
+          "nome": "react",
+          "desc": "A biblioteca de interfaces mais usada do mundo."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "tailwindlabs/tailwindcss",
+          "nome": "tailwindcss",
+          "desc": "CSS utilitário para montar layouts sem sair do HTML."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "vitejs/vite",
+          "nome": "vite",
+          "desc": "Servidor de desenvolvimento e build instantâneos."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "vuejs/core",
+          "nome": "vue",
+          "desc": "Framework progressivo para interfaces."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/frontend-design",
+          "nome": "frontend-design",
+          "desc": "Direção visual intencional para novas telas."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/web-artifacts-builder",
+          "nome": "web-artifacts-builder",
+          "desc": "Monta páginas interativas com React, Tailwind e shadcn/ui."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-frontend-developer.md",
+          "nome": "frontend-developer",
+          "desc": "Implementa interfaces modernas com foco em desempenho."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/react-specialist.md",
+          "nome": "react-specialist",
+          "desc": "Especialista em React, hooks e arquitetura de componentes."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/nextjs-developer.md",
+          "nome": "nextjs-developer",
+          "desc": "Next.js com App Router, renderização no servidor e SEO."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "testing/testing-accessibility-auditor.md",
+          "nome": "accessibility-auditor",
+          "desc": "Audita a interface contra o WCAG e leitores de tela."
+        },
+        {
+          "tipo": "lista",
+          "repo": "enaqx/awesome-react",
+          "nome": "awesome-react",
+          "desc": "Tudo sobre o ecossistema React, organizado."
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "nome": {
+        "pt": "Backend, APIs e arquitetura",
+        "en": "Backend, APIs and architecture",
+        "es": "Backend, APIs y arquitectura"
+      },
+      "apelidos": [
+        "backend",
+        "back-end",
+        "api",
+        "apis",
+        "rest",
+        "graphql",
+        "arquitetura",
+        "architecture",
+        "arquitectura",
+        "microservicos",
+        "microsserviços",
+        "microservices",
+        "system design",
+        "servidor",
+        "server"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "donnemartin/system-design-primer",
+          "nome": "system-design-primer",
+          "desc": "Como projetar sistemas grandes, com exercícios de entrevista."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "nestjs/nest",
+          "nome": "nest",
+          "desc": "Framework Node.js estruturado para APIs de servidor."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "expressjs/express",
+          "nome": "express",
+          "desc": "O servidor web minimalista do Node.js."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "spring-projects/spring-boot",
+          "nome": "spring-boot",
+          "desc": "Aplicações Java prontas para produção."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "gin-gonic/gin",
+          "nome": "gin",
+          "desc": "Framework web rápido em Go."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-backend-architect.md",
+          "nome": "backend-architect",
+          "desc": "Arquitetura de servidor, banco de dados e APIs escaláveis."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-api-platform-engineer.md",
+          "nome": "api-platform-engineer",
+          "desc": "APIs públicas com contrato, versionamento e SDKs."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "testing/testing-api-tester.md",
+          "nome": "api-tester",
+          "desc": "Valida APIs: contratos, carga e integrações."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "backend-development",
+          "mercado": "claude-code-workflows",
+          "desc": "Agentes de backend: APIs, arquitetura e integração."
+        },
+        {
+          "tipo": "lista",
+          "repo": "binhnguyennus/awesome-scalability",
+          "nome": "awesome-scalability",
+          "desc": "Como grandes empresas escalam seus sistemas."
+        }
+      ]
+    },
+    {
+      "id": "dados",
+      "nome": {
+        "pt": "Dados, ciência de dados e machine learning",
+        "en": "Data, data science and machine learning",
+        "es": "Datos, ciencia de datos y machine learning"
+      },
+      "apelidos": [
+        "dados",
+        "data",
+        "datos",
+        "ciencia de dados",
+        "ciência de dados",
+        "data science",
+        "machine learning",
+        "ml",
+        "aprendizado de maquina",
+        "pandas",
+        "estatistica",
+        "estatística",
+        "analise",
+        "análise",
+        "analytics",
+        "sql",
+        "banco de dados",
+        "database",
+        "postgres"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "pandas-dev/pandas",
+          "nome": "pandas",
+          "desc": "Tabelas de dados em Python: ler, limpar, cruzar e resumir."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "pola-rs/polars",
+          "nome": "polars",
+          "desc": "DataFrames muito rápidos, em Rust, com API em Python."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "scikit-learn/scikit-learn",
+          "nome": "scikit-learn",
+          "desc": "Machine learning clássico: classificação, regressão, agrupamento."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "pytorch/pytorch",
+          "nome": "pytorch",
+          "desc": "A biblioteca de redes neurais mais usada em pesquisa."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "jupyter/notebook",
+          "nome": "jupyter",
+          "desc": "Cadernos interativos de código, texto e gráficos."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "duckdb/duckdb",
+          "nome": "duckdb",
+          "desc": "Banco analítico embutido: SQL rápido em arquivos CSV e Parquet."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "supabase/supabase",
+          "nome": "supabase",
+          "desc": "Postgres com autenticação, armazenamento e API prontos."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "microsoft/ML-For-Beginners",
+          "nome": "ML-For-Beginners",
+          "desc": "Curso gratuito de machine learning em 12 semanas."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/xlsx",
+          "nome": "xlsx",
+          "desc": "Skill oficial para criar e editar planilhas com fórmulas."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/05-data-ai/data-scientist.md",
+          "nome": "data-scientist",
+          "desc": "Análise estatística, modelos e visualização."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/05-data-ai/postgres-pro.md",
+          "nome": "postgres-pro",
+          "desc": "Especialista em PostgreSQL: consultas, índices e ajuste."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-data-engineer.md",
+          "nome": "data-engineer",
+          "desc": "Pipelines de dados confiáveis e lakehouse."
+        },
+        {
+          "tipo": "lista",
+          "repo": "academic/awesome-datascience",
+          "nome": "awesome-datascience",
+          "desc": "Roteiro e recursos para aprender ciência de dados."
+        }
+      ]
+    },
+    {
+      "id": "devops",
+      "nome": {
+        "pt": "DevOps, nuvem e infraestrutura",
+        "en": "DevOps, cloud and infrastructure",
+        "es": "DevOps, nube e infraestructura"
+      },
+      "apelidos": [
+        "devops",
+        "docker",
+        "kubernetes",
+        "k8s",
+        "nuvem",
+        "cloud",
+        "nube",
+        "aws",
+        "azure",
+        "gcp",
+        "terraform",
+        "ci",
+        "cd",
+        "ci/cd",
+        "github actions",
+        "deploy",
+        "infraestrutura",
+        "infra",
+        "linux",
+        "servidores"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "kubernetes/kubernetes",
+          "nome": "kubernetes",
+          "desc": "Orquestração de contêineres em produção."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "opentofu/opentofu",
+          "nome": "opentofu",
+          "desc": "Infraestrutura como código, aberta e compatível com Terraform."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "docker/compose",
+          "nome": "docker compose",
+          "desc": "Sobe vários contêineres juntos com um arquivo."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "bregman-arie/devops-exercises",
+          "nome": "devops-exercises",
+          "desc": "Milhares de perguntas e exercícios de DevOps."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "nektos/act",
+          "nome": "act",
+          "desc": "Roda seus GitHub Actions no próprio computador."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-devops-automator.md",
+          "nome": "devops-automator",
+          "desc": "Automação de infraestrutura, CI/CD e operação na nuvem."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "kubernetes-operations",
+          "mercado": "claude-code-workflows",
+          "desc": "Agentes para operar e diagnosticar clusters Kubernetes."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "cicd-automation",
+          "mercado": "claude-code-workflows",
+          "desc": "Pipelines de CI/CD com agentes especializados."
+        },
+        {
+          "tipo": "lista",
+          "repo": "veggiemonk/awesome-docker",
+          "nome": "awesome-docker",
+          "desc": "Ferramentas, guias e projetos sobre Docker."
+        }
+      ]
+    },
+    {
+      "id": "seguranca",
+      "nome": {
+        "pt": "Segurança de aplicações",
+        "en": "Application security",
+        "es": "Seguridad de aplicaciones"
+      },
+      "apelidos": [
+        "seguranca",
+        "segurança",
+        "security",
+        "seguridad",
+        "owasp",
+        "appsec",
+        "ciberseguranca",
+        "cibersegurança",
+        "cybersecurity",
+        "pentest",
+        "senhas",
+        "secrets",
+        "vulnerabilidade"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "OWASP/CheatSheetSeries",
+          "nome": "OWASP Cheat Sheets",
+          "desc": "Guias curtos da OWASP para cada tema de segurança."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "OWASP/ASVS",
+          "nome": "OWASP ASVS",
+          "desc": "Padrão de verificação de segurança de aplicações."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "gitleaks/gitleaks",
+          "nome": "gitleaks",
+          "desc": "Encontra senhas e chaves esquecidas no repositório."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "semgrep/semgrep",
+          "nome": "semgrep",
+          "desc": "Análise estática leve para achar falhas no código."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "aquasecurity/trivy",
+          "nome": "trivy",
+          "desc": "Varre contêineres, dependências e IaC em busca de vulnerabilidades."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "security/security-appsec-engineer.md",
+          "nome": "appsec-engineer",
+          "desc": "Segurança no ciclo de desenvolvimento: ameaças e revisão."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "security/security-ai-generated-code-auditor.md",
+          "nome": "ai-generated-code-auditor",
+          "desc": "Caça os erros de segurança típicos de código gerado por IA."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "security/security-secrets-credential-engineer.md",
+          "nome": "secrets-credential-engineer",
+          "desc": "Ciclo de vida de segredos: detectar, guardar e trocar."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "security-scanning",
+          "mercado": "claude-code-workflows",
+          "desc": "Varredura de segurança com agentes especializados."
+        },
+        {
+          "tipo": "lista",
+          "repo": "sbilly/awesome-security",
+          "nome": "awesome-security",
+          "desc": "Ferramentas e materiais de segurança, organizados."
+        }
+      ]
+    },
+    {
+      "id": "testes",
+      "nome": {
+        "pt": "Testes e qualidade",
+        "en": "Testing and quality",
+        "es": "Pruebas y calidad"
+      },
+      "apelidos": [
+        "testes",
+        "teste",
+        "testing",
+        "tests",
+        "pruebas",
+        "qa",
+        "qualidade",
+        "quality",
+        "playwright",
+        "jest",
+        "vitest",
+        "pytest",
+        "e2e",
+        "tdd"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "microsoft/playwright",
+          "nome": "playwright",
+          "desc": "Testes de ponta a ponta em Chromium, Firefox e WebKit."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "vitest-dev/vitest",
+          "nome": "vitest",
+          "desc": "Testes unitários rápidos, integrados ao Vite."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "pytest-dev/pytest",
+          "nome": "pytest",
+          "desc": "O framework de testes padrão do Python."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "goldbergyoni/javascript-testing-best-practices",
+          "nome": "javascript-testing-best-practices",
+          "desc": "Boas práticas de testes em JavaScript, explicadas."
+        },
+        {
+          "tipo": "skill",
+          "repo": "obra/superpowers",
+          "caminho": "skills/test-driven-development",
+          "nome": "test-driven-development",
+          "desc": "TDD de verdade: vermelho, verde, refatorar."
+        },
+        {
+          "tipo": "skill",
+          "repo": "obra/superpowers",
+          "caminho": "skills/verification-before-completion",
+          "nome": "verification-before-completion",
+          "desc": "Rodar e provar antes de dizer que terminou."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "testing/testing-evidence-collector.md",
+          "nome": "evidence-collector",
+          "desc": "QA que só aceita prova: capturas e passos reproduzíveis."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "testing/testing-performance-benchmarker.md",
+          "nome": "performance-benchmarker",
+          "desc": "Mede e melhora desempenho com números."
+        },
+        {
+          "tipo": "mcp",
+          "repo": "microsoft/playwright-mcp",
+          "nome": "playwright",
+          "comando": "claude mcp add playwright -- npx -y @playwright/mcp@latest",
+          "desc": "O agente testa a página num navegador real."
+        }
+      ]
+    },
+    {
+      "id": "mobile",
+      "nome": {
+        "pt": "Aplicativos móveis",
+        "en": "Mobile apps",
+        "es": "Aplicaciones móviles"
+      },
+      "apelidos": [
+        "mobile",
+        "movel",
+        "móvel",
+        "celular",
+        "android",
+        "ios",
+        "app",
+        "aplicativo",
+        "flutter",
+        "react native",
+        "expo",
+        "kotlin",
+        "swift"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "flutter/flutter",
+          "nome": "flutter",
+          "desc": "Um código para Android, iOS, web e desktop."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "react/react-native",
+          "nome": "react-native",
+          "desc": "Aplicativos nativos escritos em React."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "expo/expo",
+          "nome": "expo",
+          "desc": "Ferramentas para criar e publicar apps React Native."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "android/compose-samples",
+          "nome": "compose-samples",
+          "desc": "Exemplos oficiais de Jetpack Compose para Android."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-mobile-app-builder.md",
+          "nome": "mobile-app-builder",
+          "desc": "Apps nativos e multiplataforma do zero à loja."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/flutter-expert.md",
+          "nome": "flutter-expert",
+          "desc": "Especialista em Flutter e Dart."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/expo-react-native-expert.md",
+          "nome": "expo-react-native-expert",
+          "desc": "Expo e React Native de ponta a ponta."
+        },
+        {
+          "tipo": "lista",
+          "repo": "Solido/awesome-flutter",
+          "nome": "awesome-flutter",
+          "desc": "Pacotes, exemplos e artigos de Flutter."
+        }
+      ]
+    },
+    {
+      "id": "jogos",
+      "nome": {
+        "pt": "Jogos e 3D",
+        "en": "Games and 3D",
+        "es": "Videojuegos y 3D"
+      },
+      "apelidos": [
+        "jogos",
+        "jogo",
+        "games",
+        "game",
+        "juegos",
+        "videojuegos",
+        "3d",
+        "godot",
+        "unity",
+        "three",
+        "threejs",
+        "three.js",
+        "webgl",
+        "blender",
+        "gamedev"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "godotengine/godot",
+          "nome": "godot",
+          "desc": "Motor de jogos 2D e 3D livre e completo."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "mrdoob/three.js",
+          "nome": "three.js",
+          "desc": "3D no navegador com WebGL e WebGPU."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "phaserjs/phaser",
+          "nome": "phaser",
+          "desc": "Framework de jogos 2D em JavaScript."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "bevyengine/bevy",
+          "nome": "bevy",
+          "desc": "Motor de jogos orientado a dados, em Rust."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "blender/blender",
+          "nome": "blender",
+          "desc": "Modelagem, animação e renderização 3D."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "wshobson/agents",
+          "nome": "game-development",
+          "mercado": "claude-code-workflows",
+          "desc": "Agentes para desenvolvimento de jogos."
+        },
+        {
+          "tipo": "lista",
+          "repo": "Calinou/awesome-gamedev",
+          "nome": "awesome-gamedev",
+          "desc": "Recursos livres para criar jogos: arte, som, motores."
+        }
+      ]
+    },
+    {
+      "id": "carreira",
+      "nome": {
+        "pt": "Estudar programação e carreira",
+        "en": "Learning to code and careers",
+        "es": "Aprender programación y carrera"
+      },
+      "apelidos": [
+        "estudar",
+        "estudos",
+        "aprender",
+        "learn",
+        "aprender a programar",
+        "iniciante",
+        "beginner",
+        "principiante",
+        "carreira",
+        "career",
+        "carrera",
+        "entrevista",
+        "interview",
+        "algoritmos",
+        "algorithms",
+        "roadmap",
+        "livros",
+        "books",
+        "curso",
+        "cursos"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "nilbuild/developer-roadmap",
+          "nome": "developer-roadmap",
+          "desc": "Roteiros visuais do que estudar em cada carreira."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "EbookFoundation/free-programming-books",
+          "nome": "free-programming-books",
+          "desc": "Milhares de livros gratuitos de programação, em vários idiomas."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "freeCodeCamp/freeCodeCamp",
+          "nome": "freeCodeCamp",
+          "desc": "Currículo gratuito com certificados."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "jwasham/coding-interview-university",
+          "nome": "coding-interview-university",
+          "desc": "Plano completo de estudo para entrevistas técnicas."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "practical-tutorials/project-based-learning",
+          "nome": "project-based-learning",
+          "desc": "Aprenda construindo projetos reais, em várias linguagens."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "codecrafters-io/build-your-own-x",
+          "nome": "build-your-own-x",
+          "desc": "Recrie Git, Redis, um banco de dados e mais, do zero."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "ossu/computer-science",
+          "nome": "ossu/computer-science",
+          "desc": "Faculdade de ciência da computação gratuita e online."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "monkeytypegame/monkeytype",
+          "nome": "monkeytype",
+          "desc": "Treino de digitação de código aberto, para medir sua velocidade."
+        },
+        {
+          "tipo": "agente",
+          "repo": "msitarzewski/agency-agents",
+          "caminho": "engineering/engineering-codebase-onboarding-engineer.md",
+          "nome": "codebase-onboarding-engineer",
+          "desc": "Explica um projeto desconhecido lendo o próprio código."
+        },
+        {
+          "tipo": "lista",
+          "repo": "sindresorhus/awesome",
+          "nome": "awesome",
+          "desc": "A lista de listas: um ponto de partida para qualquer assunto."
+        }
+      ]
+    },
+    {
+      "id": "bim",
+      "nome": {
+        "pt": "Arquitetura, engenharia e BIM",
+        "en": "Architecture, engineering and BIM",
+        "es": "Arquitectura, ingeniería y BIM"
+      },
+      "apelidos": [
+        "bim",
+        "aec",
+        "revit",
+        "ifc",
+        "arquitetura",
+        "engenharia",
+        "engenharia civil",
+        "ingenieria",
+        "ingeniería",
+        "construcao",
+        "construção",
+        "construction",
+        "cad",
+        "dynamo",
+        "openbim",
+        "autocad"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "IfcOpenShell/IfcOpenShell",
+          "nome": "IfcOpenShell",
+          "desc": "Lê, cria e edita arquivos IFC; inclui o Bonsai para Blender."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "ThatOpen/engine_components",
+          "nome": "That Open Engine",
+          "desc": "Componentes para visualizar e editar BIM no navegador."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "pyrevitlabs/pyRevit",
+          "nome": "pyRevit",
+          "desc": "Ferramentas e scripts Python dentro do Revit."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "DynamoDS/Dynamo",
+          "nome": "Dynamo",
+          "desc": "Programação visual para projeto computacional."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "specklesystems/speckle-server",
+          "nome": "Speckle",
+          "desc": "Troca de dados entre Revit, Rhino, Blender e mais."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "FreeCAD/FreeCAD",
+          "nome": "FreeCAD",
+          "desc": "Modelagem paramétrica livre, com bancada BIM."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "buildingSMART/IFC4.x-development",
+          "nome": "IFC 4.3",
+          "desc": "Desenvolvimento oficial do esquema IFC 4.3 pela buildingSMART."
+        }
+      ]
+    },
+    {
+      "id": "rust-go",
+      "nome": {
+        "pt": "Rust, Go e sistemas",
+        "en": "Rust, Go and systems",
+        "es": "Rust, Go y sistemas"
+      },
+      "apelidos": [
+        "rust",
+        "go",
+        "golang",
+        "c",
+        "c++",
+        "cpp",
+        "sistemas",
+        "systems",
+        "baixo nivel",
+        "embarcados",
+        "embedded",
+        "wasm",
+        "webassembly"
+      ],
+      "itens": [
+        {
+          "tipo": "repositorio",
+          "repo": "rust-lang/rustlings",
+          "nome": "rustlings",
+          "desc": "Exercícios pequenos para aprender Rust no terminal."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "rust-lang/book",
+          "nome": "The Rust Book",
+          "desc": "O livro oficial da linguagem Rust."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "tokio-rs/tokio",
+          "nome": "tokio",
+          "desc": "Runtime assíncrono para aplicações de rede em Rust."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "golang/go",
+          "nome": "go",
+          "desc": "A linguagem Go."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "tauri-apps/tauri",
+          "nome": "tauri",
+          "desc": "Apps desktop leves com interface web e núcleo em Rust."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/rust-engineer.md",
+          "nome": "rust-engineer",
+          "desc": "Rust seguro e rápido, do ownership ao async."
+        },
+        {
+          "tipo": "agente",
+          "repo": "VoltAgent/awesome-claude-code-subagents",
+          "caminho": "categories/02-language-specialists/golang-pro.md",
+          "nome": "golang-pro",
+          "desc": "Go idiomático, concorrência e serviços."
+        },
+        {
+          "tipo": "lista",
+          "repo": "rust-unofficial/awesome-rust",
+          "nome": "awesome-rust",
+          "desc": "Bibliotecas e ferramentas de Rust."
+        },
+        {
+          "tipo": "lista",
+          "repo": "avelino/awesome-go",
+          "nome": "awesome-go",
+          "desc": "Bibliotecas e ferramentas de Go."
+        }
+      ]
+    },
+    {
+      "id": "documentos",
+      "nome": {
+        "pt": "Documentos, planilhas e automação de escritório",
+        "en": "Documents, spreadsheets and office automation",
+        "es": "Documentos, hojas de cálculo y automatización de oficina"
+      },
+      "apelidos": [
+        "documentos",
+        "docs",
+        "documents",
+        "word",
+        "excel",
+        "planilha",
+        "planilhas",
+        "spreadsheet",
+        "pdf",
+        "powerpoint",
+        "slides",
+        "apresentacao",
+        "apresentação",
+        "escritorio",
+        "escritório",
+        "office"
+      ],
+      "itens": [
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/docx",
+          "nome": "docx",
+          "desc": "Cria e edita documentos Word com formatação real."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/xlsx",
+          "nome": "xlsx",
+          "desc": "Planilhas com fórmulas, formatação e gráficos."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/pptx",
+          "nome": "pptx",
+          "desc": "Apresentações PowerPoint a partir de conteúdo."
+        },
+        {
+          "tipo": "skill",
+          "repo": "anthropics/skills",
+          "caminho": "skills/pdf",
+          "nome": "pdf",
+          "desc": "Junta, divide, preenche e extrai texto de PDFs."
+        },
+        {
+          "tipo": "plugin",
+          "repo": "anthropics/skills",
+          "nome": "document-skills",
+          "mercado": "anthropic-agent-skills",
+          "desc": "As quatro skills de documentos num só pacote."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "jgm/pandoc",
+          "nome": "pandoc",
+          "desc": "Converte entre Markdown, Word, PDF, HTML e dezenas de formatos."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "python-openxml/python-docx",
+          "nome": "python-docx",
+          "desc": "Gera documentos Word com Python."
+        },
+        {
+          "tipo": "repositorio",
+          "repo": "stirling-tools/Stirling-PDF",
+          "nome": "Stirling-PDF",
+          "desc": "Canivete suíço de PDF que roda no seu servidor."
+        }
+      ]
+    }
+  ],
+  "repos": {
+    "academic/awesome-datascience": {
+      "estrelas": 30351,
+      "descricao": ":memo: An awesome Data Science repository to learn and apply for real world problems.",
+      "licenca": "MIT",
+      "linguagem": null,
+      "atualizado": "2026-11-20",
+      "ramo": "live",
+      "arquivado": false
+    },
+    "android/compose-samples": {
+      "estrelas": 23567,
+      "descricao": "Official Jetpack Compose samples.",
+      "licenca": "Apache-2.0",
+      "linguagem": "Kotlin",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "anthropics/claude-code": {
+      "estrelas": 156503,
+      "descricao": "Claude Code is an agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster by executing routine tasks, explaining complex code, and handling git workflows - all through natural language commands.",
+      "licenca": null,
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "anthropics/claude-cookbooks": {
+      "estrelas": 54929,
+      "descricao": "A collection of notebooks/recipes showcasing some fun and effective ways of using Claude.",
+      "licenca": "MIT",
+      "linguagem": "Jupyter Notebook",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "anthropics/skills": {
+      "estrelas": 198200,
+      "descricao": "Public repository for Agent Skills",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2026-11-16",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "aquasecurity/trivy": {
+      "estrelas": 39586,
+      "descricao": "Find vulnerabilities, misconfigurations, secrets, SBOM in containers, Kubernetes, code repositories, clouds and more",
+      "licenca": "Apache-2.0",
+      "linguagem": "Go",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "astral-sh/ruff": {
+      "estrelas": 51336,
+      "descricao": "An extremely fast Python linter and code formatter, written in Rust.",
+      "licenca": "MIT",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "astral-sh/uv": {
+      "estrelas": 92478,
+      "descricao": "An extremely fast Python package and project manager, written in Rust.",
+      "licenca": "Apache-2.0",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "avelino/awesome-go": {
+      "estrelas": 195102,
+      "descricao": "A curated list of awesome Go frameworks, libraries and software",
+      "licenca": "MIT",
+      "linguagem": "Go",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "bevyengine/bevy": {
+      "estrelas": 49902,
+      "descricao": "A refreshingly simple data-driven game engine built in Rust",
+      "licenca": "Apache-2.0",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "binhnguyennus/awesome-scalability": {
+      "estrelas": 75921,
+      "descricao": "The Patterns of Scalable, Reliable, and Performant Large-Scale Systems",
+      "licenca": "MIT",
+      "linguagem": null,
+      "atualizado": "2026-01-04",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "blender/blender": {
+      "estrelas": 22289,
+      "descricao": "Official mirror of Blender",
+      "licenca": null,
+      "linguagem": "C++",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "bregman-arie/devops-exercises": {
+      "estrelas": 86903,
+      "descricao": "Linux, Jenkins, AWS, SRE, Prometheus, Docker, Python, Ansible, Git, Kubernetes, Terraform, OpenStack, SQL, NoSQL, Azure, GCP, DNS, Elastic, Network, Virtualization. DevOps Interview Questions",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2025-12-27",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "buildingSMART/IFC4.x-development": {
+      "estrelas": 246,
+      "descricao": "Repository to collect updates to the IFC4.x specification",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "ifc4.3-main",
+      "arquivado": false
+    },
+    "Calinou/awesome-gamedev": {
+      "estrelas": 3229,
+      "descricao": "A collection of free software and free culture resources for making amazing games. (mirror)",
+      "licenca": "CC-BY-SA-4.0",
+      "linguagem": null,
+      "atualizado": "2026-08-25",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "codecrafters-io/build-your-own-x": {
+      "estrelas": 564206,
+      "descricao": "Master programming by recreating your favorite technologies from scratch.",
+      "licenca": null,
+      "linguagem": "Markdown",
+      "atualizado": "2026-11-19",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "django/django": {
+      "estrelas": 91884,
+      "descricao": "The Web framework for perfectionists with deadlines.",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Python",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "docker/compose": {
+      "estrelas": 39066,
+      "descricao": "Define and run multi-container applications with Docker",
+      "licenca": "Apache-2.0",
+      "linguagem": "Go",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "donnemartin/system-design-primer": {
+      "estrelas": 378678,
+      "descricao": "Learn how to design large-scale systems. Prep for the system design interview.  Includes Anki flashcards.",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2026-09-15",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "duckdb/duckdb": {
+      "estrelas": 43216,
+      "descricao": "DuckDB is a high-performance analytical database system",
+      "licenca": "MIT",
+      "linguagem": "C++",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "DynamoDS/Dynamo": {
+      "estrelas": 2057,
+      "descricao": "Open Source Graphical Programming for Computational Design and Automation",
+      "licenca": "Apache-2.0",
+      "linguagem": "HTML",
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "EbookFoundation/free-programming-books": {
+      "estrelas": 401985,
+      "descricao": ":books: Freely available programming books",
+      "licenca": "CC-BY-4.0",
+      "linguagem": "Python",
+      "atualizado": "2026-11-12",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "enaqx/awesome-react": {
+      "estrelas": 75354,
+      "descricao": "A collection of awesome things regarding React ecosystem",
+      "licenca": null,
+      "linguagem": null,
+      "atualizado": "2026-09-04",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "expo/expo": {
+      "estrelas": 53697,
+      "descricao": "An open-source framework for making universal native apps with React. Expo runs on Android, iOS, and the web.",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "expressjs/express": {
+      "estrelas": 69671,
+      "descricao": "Fast, unopinionated, minimalist web framework for node.",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2026-11-19",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "fastapi/fastapi": {
+      "estrelas": 104986,
+      "descricao": "FastAPI framework, high performance, easy to learn, fast to code, ready for production",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-18",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "flutter/flutter": {
+      "estrelas": 181321,
+      "descricao": "Flutter makes it easy and fast to build beautiful apps for mobile and beyond",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Dart",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "FreeCAD/FreeCAD": {
+      "estrelas": 35654,
+      "descricao": "Official source code of FreeCAD, a free and opensource multiplatform 3D parametric modeler.",
+      "licenca": "LGPL-2.1",
+      "linguagem": "C++",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "freeCodeCamp/freeCodeCamp": {
+      "estrelas": 459406,
+      "descricao": "freeCodeCamp.org's open-source codebase and curriculum. Learn math, programming, and computer science for free.",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "ggml-org/llama.cpp": {
+      "estrelas": 135898,
+      "descricao": "LLM inference in C/C++",
+      "licenca": "MIT",
+      "linguagem": "C++",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "gin-gonic/gin": {
+      "estrelas": 89558,
+      "descricao": "Gin is a high-performance HTTP web framework written in Go. It provides a Martini-like API but with significantly better performance—up to 40 times faster—thanks to httprouter. Gin is designed for building REST APIs, web applications, and microservices.",
+      "licenca": "MIT",
+      "linguagem": "Go",
+      "atualizado": "2026-10-10",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "github/github-mcp-server": {
+      "estrelas": 34635,
+      "descricao": "GitHub's official MCP Server",
+      "licenca": "MIT",
+      "linguagem": "Go",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "gitleaks/gitleaks": {
+      "estrelas": 31230,
+      "descricao": "Find secrets with Gitleaks 🔑",
+      "licenca": "MIT",
+      "linguagem": "Go",
+      "atualizado": "2026-10-28",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "godotengine/godot": {
+      "estrelas": 120502,
+      "descricao": "Godot Engine – Multi-platform 2D and 3D game engine",
+      "licenca": "MIT",
+      "linguagem": "C++",
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "golang/go": {
+      "estrelas": 140119,
+      "descricao": "The Go programming language",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Go",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "goldbergyoni/javascript-testing-best-practices": {
+      "estrelas": 24612,
+      "descricao": "📗🌐 🚢 Comprehensive and exhaustive JavaScript & Node.js testing best practices (August 2025)",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2024-06-27",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "goldbergyoni/nodebestpractices": {
+      "estrelas": 105760,
+      "descricao": "✅ The Node.js best practices list (July 2026)",
+      "licenca": "CC-BY-SA-4.0",
+      "linguagem": "Dockerfile",
+      "atualizado": "2026-06-15",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "Hannibal046/Awesome-LLM": {
+      "estrelas": 27514,
+      "descricao": "Awesome-LLM: a curated list of Large Language Model",
+      "licenca": "CC0-1.0",
+      "linguagem": null,
+      "atualizado": "2025-07-31",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "hesreallyhim/awesome-claude-code": {
+      "estrelas": 58492,
+      "descricao": "A hand-picked collection of the finest of resources for the most awesome of agents, Claude Code, the undisputed champion of coding companions, from the unstoppable team at Anthropic PBC (no affiliation). A delectable showcase of top tier skills, ambidextrous agents, scintillating status lines, top notch developer tooling, and also we have plugins",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "huggingface/transformers": {
+      "estrelas": 169336,
+      "descricao": "🤗 Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training. ",
+      "licenca": "Apache-2.0",
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "IfcOpenShell/IfcOpenShell": {
+      "estrelas": 2982,
+      "descricao": "Open source IFC library and geometry engine",
+      "licenca": "LGPL-3.0",
+      "linguagem": "C++",
+      "atualizado": "2026-11-20",
+      "ramo": "v0.9.0",
+      "arquivado": false
+    },
+    "jgm/pandoc": {
+      "estrelas": 47021,
+      "descricao": "Universal markup converter",
+      "licenca": "GPL-2.0",
+      "linguagem": "Haskell",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "jupyter/notebook": {
+      "estrelas": 13476,
+      "descricao": "Jupyter Interactive Notebook",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Jupyter Notebook",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "jwasham/coding-interview-university": {
+      "estrelas": 364705,
+      "descricao": "A complete computer science study plan to become a software engineer.",
+      "licenca": "CC-BY-SA-4.0",
+      "linguagem": null,
+      "atualizado": "2026-11-07",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "kubernetes/kubernetes": {
+      "estrelas": 129304,
+      "descricao": "Production-Grade Container Scheduling and Management",
+      "licenca": "Apache-2.0",
+      "linguagem": "Go",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "langchain-ai/langchain": {
+      "estrelas": 149986,
+      "descricao": "The agent engineering platform.",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "microsoft/ML-For-Beginners": {
+      "estrelas": 92365,
+      "descricao": "12 weeks, 26 lessons, 52 quizzes, classic Machine Learning for all",
+      "licenca": "MIT",
+      "linguagem": "Jupyter Notebook",
+      "atualizado": "2026-11-07",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "microsoft/playwright": {
+      "estrelas": 100704,
+      "descricao": "Playwright is a framework for Web Testing and Automation. It allows testing Chromium, Firefox and WebKit with a single API. ",
+      "licenca": "Apache-2.0",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "microsoft/playwright-mcp": {
+      "estrelas": 39952,
+      "descricao": "Playwright MCP server",
+      "licenca": "Apache-2.0",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-18",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "microsoft/TypeScript": {
+      "estrelas": 111869,
+      "descricao": "TypeScript is a superset of JavaScript that compiles to clean JavaScript output.",
+      "licenca": "Apache-2.0",
+      "linguagem": "Go",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "modelcontextprotocol/python-sdk": {
+      "estrelas": 24919,
+      "descricao": "The official Python SDK for Model Context Protocol servers and clients",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-17",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "modelcontextprotocol/servers": {
+      "estrelas": 92140,
+      "descricao": "Model Context Protocol Reference Servers",
+      "licenca": null,
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "modelcontextprotocol/typescript-sdk": {
+      "estrelas": 13794,
+      "descricao": "The official TypeScript SDK for Model Context Protocol servers and clients",
+      "licenca": null,
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "monkeytypegame/monkeytype": {
+      "estrelas": 21072,
+      "descricao": "The most customizable typing website with a minimalistic design and a ton of features. Test yourself in various modes, track your progress and improve your speed.",
+      "licenca": "GPL-3.0",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "mrdoob/three.js": {
+      "estrelas": 119053,
+      "descricao": "JavaScript 3D Library.",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2026-11-20",
+      "ramo": "dev",
+      "arquivado": false
+    },
+    "msitarzewski/agency-agents": {
+      "estrelas": 169592,
+      "descricao": "A complete AI agency at your fingertips - From frontend wizards to Reddit community ninjas, from whimsy injectors to reality checkers. Each agent is a specialized expert with personality, processes, and proven deliverables.",
+      "licenca": "MIT",
+      "linguagem": "Shell",
+      "atualizado": "2026-11-09",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "nektos/act": {
+      "estrelas": 72756,
+      "descricao": "Run your GitHub Actions locally 🚀",
+      "licenca": "MIT",
+      "linguagem": "Go",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "nestjs/nest": {
+      "estrelas": 77112,
+      "descricao": "A progressive TypeScript framework for Node.js backends: from a small API in one file to efficient, scalable, enterprise-grade systems 🚀",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "nilbuild/developer-roadmap": {
+      "estrelas": 372469,
+      "descricao": "Interactive roadmaps, guides and other educational content to help developers grow in their careers.",
+      "licenca": null,
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "nodejs/node": {
+      "estrelas": 123809,
+      "descricao": "Node.js JavaScript runtime ✨🐢🚀✨",
+      "licenca": null,
+      "linguagem": "JavaScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "obra/superpowers": {
+      "estrelas": 323053,
+      "descricao": "An agentic skills framework & software development methodology that works.",
+      "licenca": "MIT",
+      "linguagem": "Shell",
+      "atualizado": "2026-11-03",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "ollama/ollama": {
+      "estrelas": 187801,
+      "descricao": "Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models.",
+      "licenca": "MIT",
+      "linguagem": "Go",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "open-webui/open-webui": {
+      "estrelas": 159191,
+      "descricao": "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)",
+      "licenca": null,
+      "linguagem": "Svelte",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "opentofu/opentofu": {
+      "estrelas": 30946,
+      "descricao": "OpenTofu lets you declaratively manage your cloud infrastructure.",
+      "licenca": "MPL-2.0",
+      "linguagem": "Go",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "ossu/computer-science": {
+      "estrelas": 211377,
+      "descricao": "🎓 Path to a free self-taught education in Computer Science!",
+      "licenca": "MIT",
+      "linguagem": "HTML",
+      "atualizado": "2026-11-09",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "oven-sh/bun": {
+      "estrelas": 96817,
+      "descricao": "Incredibly fast JavaScript runtime, bundler, test runner, and package manager – all in one",
+      "licenca": null,
+      "linguagem": "Rust",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "OWASP/ASVS": {
+      "estrelas": 3807,
+      "descricao": "Application Security Verification Standard",
+      "licenca": "CC-BY-SA-4.0",
+      "linguagem": "HTML",
+      "atualizado": "2026-11-17",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "OWASP/CheatSheetSeries": {
+      "estrelas": 34148,
+      "descricao": "The OWASP Cheat Sheet Series was created to provide a concise collection of high value information on specific application security topics.",
+      "licenca": "CC-BY-SA-4.0",
+      "linguagem": "JavaScript",
+      "atualizado": "2026-11-19",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "pallets/flask": {
+      "estrelas": 75300,
+      "descricao": "The Python micro framework for building web applications.",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Python",
+      "atualizado": "2026-10-30",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "pandas-dev/pandas": {
+      "estrelas": 50584,
+      "descricao": "Flexible and powerful data analysis / manipulation library for Python, providing labeled data structures similar to R data.frame objects, statistical functions, and much more",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Python",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "phaserjs/phaser": {
+      "estrelas": 40754,
+      "descricao": "Phaser is a fun, free and fast 2D game framework for making HTML5 games for desktop and mobile web browsers, supporting Canvas and WebGL rendering.",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2026-08-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "pola-rs/polars": {
+      "estrelas": 40412,
+      "descricao": "Extremely fast Query Engine for DataFrames, written in Rust",
+      "licenca": "MIT",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "practical-tutorials/project-based-learning": {
+      "estrelas": 290136,
+      "descricao": "Curated list of project-based tutorials",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-16",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "punkpeye/awesome-mcp-servers": {
+      "estrelas": 98338,
+      "descricao": "A collection of MCP servers.",
+      "licenca": "MIT",
+      "linguagem": null,
+      "atualizado": "2026-11-17",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "pyrevitlabs/pyRevit": {
+      "estrelas": 2057,
+      "descricao": "Rapid Application Development (RAD) Environment for Autodesk Revit®",
+      "licenca": "GPL-3.0",
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "develop",
+      "arquivado": false
+    },
+    "pytest-dev/pytest": {
+      "estrelas": 14725,
+      "descricao": "The pytest framework makes it easy to write small tests, yet scales to support complex functional testing",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "python-openxml/python-docx": {
+      "estrelas": 5777,
+      "descricao": "Create and modify Word documents with Python",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-08-01",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "pytorch/pytorch": {
+      "estrelas": 105762,
+      "descricao": "Tensors and Dynamic neural networks in Python with strong GPU acceleration",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "react/react": {
+      "estrelas": 252839,
+      "descricao": "The library for web and native user interfaces.",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "react/react-native": {
+      "estrelas": 126984,
+      "descricao": "A framework for building native applications using React",
+      "licenca": "MIT",
+      "linguagem": "C++",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "run-llama/llama_index": {
+      "estrelas": 52973,
+      "descricao": "LlamaIndex is the document processing platform for AI",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "rust-lang/book": {
+      "estrelas": 18603,
+      "descricao": "The Rust Programming Language",
+      "licenca": null,
+      "linguagem": "Rust",
+      "atualizado": "2026-11-19",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "rust-lang/rustlings": {
+      "estrelas": 64757,
+      "descricao": ":crab: Small exercises to get you used to reading and writing Rust code!",
+      "licenca": "MIT",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-10",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "rust-unofficial/awesome-rust": {
+      "estrelas": 60699,
+      "descricao": "A curated list of Rust code and resources.",
+      "licenca": "CC0-1.0",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "ryanmcdermott/clean-code-javascript": {
+      "estrelas": 94691,
+      "descricao": "Clean Code concepts adapted for JavaScript",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2024-07-29",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "sbilly/awesome-security": {
+      "estrelas": 15137,
+      "descricao": "A collection of awesome software, libraries, documents, books, resources and cools stuffs about security.",
+      "licenca": "MIT",
+      "linguagem": null,
+      "atualizado": "2026-01-11",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "scikit-learn/scikit-learn": {
+      "estrelas": 68277,
+      "descricao": "scikit-learn: machine learning in Python",
+      "licenca": "BSD-3-Clause",
+      "linguagem": "Python",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "semgrep/semgrep": {
+      "estrelas": 17868,
+      "descricao": "Lightweight static analysis for many languages. Find bug variants with patterns that look like source code.",
+      "licenca": "LGPL-2.1",
+      "linguagem": "C",
+      "atualizado": "2026-11-20",
+      "ramo": "develop",
+      "arquivado": false
+    },
+    "shadcn-ui/ui": {
+      "estrelas": 128667,
+      "descricao": "Composable, accessible components with thoughtful defaults. Build your own component library with code you can customize, extend, and make your own.",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "sindresorhus/awesome": {
+      "estrelas": 540185,
+      "descricao": "😎 Awesome lists about all kinds of interesting topics [NOTE: Pull requests are temporarily disabled until I have a chance to catch up with the existing ones]",
+      "licenca": "CC0-1.0",
+      "linguagem": null,
+      "atualizado": "2026-09-02",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "Solido/awesome-flutter": {
+      "estrelas": 61990,
+      "descricao": "An awesome list that curates the best Flutter libraries, tools, tutorials, articles and more.",
+      "licenca": null,
+      "linguagem": "Dart",
+      "atualizado": "2026-09-03",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "sorrycc/awesome-javascript": {
+      "estrelas": 35039,
+      "descricao": "🐢 A collection of awesome browser-side  JavaScript libraries, resources and shiny things.",
+      "licenca": null,
+      "linguagem": null,
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "specklesystems/speckle-server": {
+      "estrelas": 863,
+      "descricao": "The Speckle Server, Frontend, 3D Viewer, & other JS utilities.",
+      "licenca": null,
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-12",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "spring-projects/spring-boot": {
+      "estrelas": 81911,
+      "descricao": "Spring Boot helps you to create Spring-powered, production-grade applications and services with absolute minimum fuss.",
+      "licenca": "Apache-2.0",
+      "linguagem": "Java",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "stirling-tools/Stirling-PDF": {
+      "estrelas": 97127,
+      "descricao": "#1 PDF Application on GitHub that lets you edit PDFs on any device anywhere",
+      "licenca": null,
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "supabase/supabase": {
+      "estrelas": 115215,
+      "descricao": "The Postgres development platform. Supabase gives you a dedicated Postgres database to build your web, mobile, and AI applications.",
+      "licenca": "Apache-2.0",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-21",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "tailwindlabs/tailwindcss": {
+      "estrelas": 98717,
+      "descricao": "A utility-first CSS framework for rapid UI development.",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "tauri-apps/tauri": {
+      "estrelas": 113033,
+      "descricao": "Build smaller, faster, and more secure desktop and mobile applications with a web frontend.",
+      "licenca": "Apache-2.0",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-21",
+      "ramo": "dev",
+      "arquivado": false
+    },
+    "ThatOpen/engine_components": {
+      "estrelas": 749,
+      "descricao": "",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-08",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "TheAlgorithms/Python": {
+      "estrelas": 226356,
+      "descricao": "All Algorithms implemented in Python",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-13",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "tokio-rs/tokio": {
+      "estrelas": 33751,
+      "descricao": "A runtime for writing reliable asynchronous applications with Rust. Provides I/O, networking, scheduling, timers, ...",
+      "licenca": "MIT",
+      "linguagem": "Rust",
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "upstash/context7": {
+      "estrelas": 65202,
+      "descricao": "Context7 Platform -- Up-to-date docs for AI agents",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "veggiemonk/awesome-docker": {
+      "estrelas": 37276,
+      "descricao": ":whale: A curated list of Docker resources and projects",
+      "licenca": "Apache-2.0",
+      "linguagem": null,
+      "atualizado": "2026-11-18",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "vercel/next.js": {
+      "estrelas": 143628,
+      "descricao": "The React Framework",
+      "licenca": "MIT",
+      "linguagem": "JavaScript",
+      "atualizado": "2026-11-21",
+      "ramo": "canary",
+      "arquivado": false
+    },
+    "vinta/awesome-python": {
+      "estrelas": 336127,
+      "descricao": "The definitive list that answers \"I want to do X in Python, which tool should I use?\"",
+      "licenca": null,
+      "linguagem": "Python",
+      "atualizado": "2026-11-17",
+      "ramo": "master",
+      "arquivado": false
+    },
+    "vitejs/vite": {
+      "estrelas": 84008,
+      "descricao": "Next generation frontend tooling. It's fast!",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "vitest-dev/vitest": {
+      "estrelas": 17416,
+      "descricao": "Next generation testing framework powered by Vite.",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "VoltAgent/awesome-claude-code-subagents": {
+      "estrelas": 26710,
+      "descricao": "A collection of 100+ specialized Claude Code subagents covering a wide range of development use cases",
+      "licenca": "MIT",
+      "linguagem": "Shell",
+      "atualizado": "2026-11-02",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "vuejs/core": {
+      "estrelas": 55058,
+      "descricao": "🖖 Vue.js is a progressive, incrementally-adoptable JavaScript framework for building UI on the web.",
+      "licenca": "MIT",
+      "linguagem": "TypeScript",
+      "atualizado": "2026-11-20",
+      "ramo": "main",
+      "arquivado": false
+    },
+    "wshobson/agents": {
+      "estrelas": 42757,
+      "descricao": "Plugins, agents, skills, and commands for Claude Code, Codex CLI, Cursor, OpenCode, Antigravity CLI, GitHub Copilot, and Pi, written once in Markdown and adapted to each tool by generators with validation and evals.",
+      "licenca": "MIT",
+      "linguagem": "Python",
+      "atualizado": "2026-11-18",
+      "ramo": "main",
+      "arquivado": false
+    }
+  }
+}
