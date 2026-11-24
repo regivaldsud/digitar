@@ -1,0 +1,100 @@
+{
+  "id": "./",
+  "name": "DIGITAR — aprenda a digitar e a programar",
+  "short_name": "DIGITAR",
+  "description": "Curso gratuito de digitação com os dez dedos no teclado ABNT2, com o programa de treino e um curso completo de Python. Funciona sem internet.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./app/?origem=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#fafafa",
+  "theme_color": "#2a78d6",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "assets/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/pwa-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/digitar.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/captura-larga.png",
+      "sizes": "1280x820",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Lição de digitação com o teclado e as mãos"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Treinar digitação",
+      "short_name": "Treinar",
+      "url": "./app/?origem=atalho",
+      "icons": [
+        {
+          "src": "assets/pwa-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Curso de Python",
+      "short_name": "Python",
+      "url": "./python/index.html",
+      "icons": [
+        {
+          "src": "assets/pwa-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Como aprender",
+      "short_name": "Como aprender",
+      "url": "./como-aprender.html",
+      "icons": [
+        {
+          "src": "assets/pwa-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

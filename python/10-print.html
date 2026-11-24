@@ -3,6 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PWA:INICIO — gerado por ferramentas/pwa.mjs -->
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#2a78d6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DIGITAR">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  addEventListener("load", function () {
+    navigator.serviceWorker.register("../sw.js", { scope: "../" }).then(function (reg) {
+      // versão nova instalada enquanto a página estava aberta: avisa e troca quando o aluno quiser
+      function avisar(sw) {
+        if (!sw || !navigator.serviceWorker.controller || document.getElementById("pwa-nova-versao")) return;
+        var a = document.createElement("div");
+        a.id = "pwa-nova-versao";
+        a.setAttribute("role", "status");
+        a.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:10px;background:#18181b;color:#fafafa;font:14px/1.4 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.25)";
+        a.innerHTML = '<span>Há uma versão nova do DIGITAR.</span><button type="button" style="font:inherit;padding:6px 12px;border:0;border-radius:8px;background:#2a78d6;color:#fff;cursor:pointer">Atualizar</button>';
+        a.querySelector("button").onclick = function () { sw.postMessage("pular-espera"); };
+        document.body.appendChild(a);
+      }
+      if (reg.waiting) avisar(reg.waiting);
+      reg.addEventListener("updatefound", function () {
+        var novo = reg.installing;
+        if (novo) novo.addEventListener("statechange", function () { if (novo.state === "installed") avisar(novo); });
+      });
+    }).catch(function () {});
+    var recarregou = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (recarregou || !document.getElementById("pwa-nova-versao")) return;
+      recarregou = true; location.reload();
+    });
+  });
+}
+</script>
+<!-- PWA:FIM -->
+
 <title>Aula 10 · A função print: separador e fim de linha — Curso de Python · DIGITAR</title>
 <meta name="description" content="Domine o print: vários valores numa linha, separadores com sep, final de linha com end, linhas em branco e quebras com \n.">
 <link rel="icon" href="../assets/digitar.svg" type="image/svg+xml">

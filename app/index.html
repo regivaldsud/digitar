@@ -2,6 +2,45 @@
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PWA:INICIO — gerado por ferramentas/pwa.mjs -->
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#2a78d6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DIGITAR">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  addEventListener("load", function () {
+    navigator.serviceWorker.register("../sw.js", { scope: "../" }).then(function (reg) {
+      // versão nova instalada enquanto a página estava aberta: avisa e troca quando o aluno quiser
+      function avisar(sw) {
+        if (!sw || !navigator.serviceWorker.controller || document.getElementById("pwa-nova-versao")) return;
+        var a = document.createElement("div");
+        a.id = "pwa-nova-versao";
+        a.setAttribute("role", "status");
+        a.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:10px;background:#18181b;color:#fafafa;font:14px/1.4 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.25)";
+        a.innerHTML = '<span>Há uma versão nova do DIGITAR.</span><button type="button" style="font:inherit;padding:6px 12px;border:0;border-radius:8px;background:#2a78d6;color:#fff;cursor:pointer">Atualizar</button>';
+        a.querySelector("button").onclick = function () { sw.postMessage("pular-espera"); };
+        document.body.appendChild(a);
+      }
+      if (reg.waiting) avisar(reg.waiting);
+      reg.addEventListener("updatefound", function () {
+        var novo = reg.installing;
+        if (novo) novo.addEventListener("statechange", function () { if (novo.state === "installed") avisar(novo); });
+      });
+    }).catch(function () {});
+    var recarregou = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (recarregou || !document.getElementById("pwa-nova-versao")) return;
+      recarregou = true; location.reload();
+    });
+  });
+}
+</script>
+<!-- PWA:FIM -->
+
 <title>DIGITAR — aprenda a digitar e a programar</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="DIGITAR"%3E%3Cdefs%3E%3ClinearGradient id="dg-fundo" x1="0" y1="0" x2="1" y2="1"%3E%3Cstop offset="0" stop-color="#3b8cf0"/%3E%3Cstop offset="1" stop-color="#1a55a8"/%3E%3C/linearGradient%3E%3ClinearGradient id="dg-tecla" x1="0" y1="0" x2="0" y2="1"%3E%3Cstop offset="0" stop-color="#ffffff"/%3E%3Cstop offset="1" stop-color="#e4edfa"/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="512" height="512" rx="116" fill="url(#dg-fundo)"/%3E%3Crect x="92" y="132" width="328" height="300" rx="74" fill="#0e3d80"/%3E%3Crect x="92" y="92" width="328" height="300" rx="74" fill="url(#dg-tecla)"/%3E%3Cpolyline points="172,178 252,242 172,306" fill="none" stroke="#2a78d6" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/%3E%3Crect x="270" y="284" width="86" height="28" rx="14" fill="#eda100"/%3E%3C/svg%3E">
 <style>
