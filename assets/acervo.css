@@ -175,3 +175,9 @@ body.com-kit .rodape { padding-bottom: 14rem; }
 .aviso-copia.visivel { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 620px) { .kit { right: 0.5rem; left: 0.5rem; bottom: 0.5rem; width: auto; } }
 @media (prefers-reduced-motion: reduce) { .aviso-copia { transition: none; } }
+
+/* convite de kit vindo de link: precisa de confirmação */
+.kit-convite { margin: 0 0 1rem; padding: 1rem 1.1rem; max-width: 52rem; border-radius: 14px; background: var(--ambar-tinta); border: 1px solid var(--ambar-borda); }
+.kit-convite p { margin: 0 0 0.5rem; font-weight: 700; }
+.kit-convite ul { margin: 0 0 0.75rem; padding-left: 1.1rem; font-size: var(--t-0); }
+.kit-convite li span { color: var(--suave); font-family: var(--mono); font-size: 0.85em; }
