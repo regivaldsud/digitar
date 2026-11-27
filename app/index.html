@@ -3,6 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- PWA:INICIO — gerado por ferramentas/pwa.mjs -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; manifest-src 'self'; worker-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://digitar-contador.regivaldo2017.workers.dev">
 <link rel="manifest" href="../manifest.webmanifest">
 <meta name="theme-color" content="#2a78d6">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1061,8 +1062,21 @@ function normalizarDados(d){
     if (/^\d{1,2}\.\d$/.test(k) && ehObj(m)) melhores[k]={ est:numOk(m.est,1,3,1)|0, ppm:numOk(m.ppm,0,300,0), prec:numOk(m.prec,0,100,0) };
   }
   const conquistas={};
-  for (const k in obj("conquistas")) if (Number.isFinite(+d.conquistas[k])) conquistas[k]=+d.conquistas[k];
-  return { ...structuredClone(PADRAO), ...d,
+  for (const k in obj("conquistas")) if (/^[\w-]{1,40}$/.test(k) && Number.isFinite(+d.conquistas[k])) conquistas[k]=+d.conquistas[k];
+  // tudo que vira tela passa por aqui: um arquivo importado não pode levar HTML nem valores fora da faixa
+  const niveis={}, aprov={}, prog={};
+  for (const k in obj("niveis")) if (/^[1-9]$/.test(k) && Number.isFinite(+d.niveis[k])) niveis[k]=+d.niveis[k];
+  for (const k in obj("aprov")) if (/^\d{1,2}\.\d{1,2}$/.test(k)) aprov[k]=numOk(d.aprov[k],0,10,0)|0;
+  for (const k in obj("prog")){
+    const p=d.prog[k];
+    if (/^\d{1,3}$/.test(k) && ehObj(p)) prog[k]={ est:numOk(p.est,0,3,0)|0, prec:numOk(p.prec,0,100,0), ppm:numOk(p.ppm,0,300,0) };
+  }
+  const m0=obj("missoes"), missoes = /^\d{4}-\d{2}-\d{2}$/.test(m0.dia) && Array.isArray(m0.lista) ? {
+    dia:m0.dia, bau:m0.bau===true,
+    lista:m0.lista.filter(ehObj).slice(0,3).map(m=>({ id:/^[a-z0-9-]{1,16}$/i.test(m.id) ? m.id : "x", txt:String(m.txt??"").slice(0,120),
+      meta:numOk(m.meta,1,1e5,1), feito:numOk(m.feito,0,1e5,0), ok:m.ok===true })) } : {};
+  const objetivo = ["zero","velocidade","programar"].includes(obj("perfil").objetivo) ? d.perfil.objetivo : PADRAO.perfil.objetivo;
+  return { ...structuredClone(PADRAO),
     sessoes:(Array.isArray(d.sessoes)? d.sessoes : []).map(limparRegistro).filter(Boolean),
     testes:(Array.isArray(d.testes)? d.testes : []).map(limparRegistro).filter(Boolean),
     teclas:limparContagens(d.teclas, k=>k.length===1),
@@ -1070,9 +1084,9 @@ function normalizarDados(d){
     melhores, conquistas,
     jogo:{ recorde:numOk(obj("jogo").recorde,0,1e7,0), partidas:numOk(obj("jogo").partidas,0,1e7,0) },
     config:cfg,
-    xp:Number.isFinite(d.xp)? d.xp : 0,
-    niveis:obj("niveis"), aprov:obj("aprov"), missoes:obj("missoes"), prog:obj("prog"),
-    perfil:{...PADRAO.perfil, ...obj("perfil")} };
+    xp:numOk(d.xp,0,1e9,0),
+    niveis, aprov, missoes, prog,
+    perfil:{ objetivo } };
 }
 function carregarDados(bruto){
   try{ return normalizarDados(JSON.parse(bruto)); }catch(e){ return structuredClone(PADRAO); }
@@ -1093,7 +1107,8 @@ function carregarArmazem(){
   }
   for (const id in arm.alunos){
     const a=arm.alunos[id];
-    if (!ehObj(a)){ delete arm.alunos[id]; continue; }
+    // id entra em onclick="...('id')": só letras e números, como os que novoId() cria
+    if (!ehObj(a) || !/^a[0-9a-z]{1,30}$/.test(id)){ delete arm.alunos[id]; continue; }
     a.dados=normalizarDados(a.dados); a.nome=String(a.nome||""); a.avatar=String(a.avatar||"🙂");
   }
   if (!arm.alunos[arm.ativo]) arm.ativo=Object.keys(arm.alunos)[0]||null;
@@ -2935,7 +2950,7 @@ function renderInicio(){
   el.innerHTML = `
     <div class="inicio-topo">
       <div class="inicio-ola">
-        <div class="inicio-avatar">${a.avatar}</div>
+        <div class="inicio-avatar">${esc(a.avatar)}</div>
         <div><h2>Olá, ${esc(a.nome || "aluno")}!</h2>
           <p>${Natual ? `Você está no nível <b>${Natual.icone} ${Natual.nome}</b>.` : "Vamos começar pela linha principal do teclado."}
           ${Nprox ? ` Próximo: <b>${Nprox.nome}</b>.` : " Você completou todos os níveis! 🎉"}</p></div>
@@ -2954,7 +2969,7 @@ function renderInicio(){
       <section class="cartao"><h3>Missões de hoje</h3><div class="sub">+${XP_MISSAO} XP cada · cumpra as três e ganhe +${XP_BAU} XP</div>
         ${M.lista.map(m => `<div class="missao ${m.ok?"ok":""}"><span>${m.ok?"✅":"⬜"}</span><div><div>${esc(m.txt)}</div>
           <div class="mini-barra"><i style="width:${Math.round(100*m.feito/m.meta)}%"></i></div></div>
-          <small>${m.id==="min" ? Math.floor(m.feito/60)+"/"+Math.round(m.meta/60)+" min" : m.feito+"/"+m.meta}</small></div>`).join("")}
+          <small>${esc(m.id==="min" ? Math.floor(m.feito/60)+"/"+Math.round(m.meta/60)+" min" : m.feito+"/"+m.meta)}</small></div>`).join("")}
         <div class="bau ${M.bau?"ok":""}">${M.bau ? "🎁 Baú do dia aberto!" : "🎁 Baú do dia: cumpra as 3 missões"}</div>
       </section>
       <section class="cartao inicio-caminho"><h3>Seu caminho</h3><div class="sub">Cada nível vale um troféu, XP e um certificado com o seu nome</div>
@@ -3029,7 +3044,7 @@ function abrirAlunos(boasVindas){
     let nv = 0; for (const N of NIVEIS){ if (d.niveis && d.niveis[N.n]) nv = N.n; else break; }
     const Nn = NIVEIS.find(N => N.n === nv);
     return `<div class="aluno-linha ${id===ARMAZEM.ativo?"ativo":""}">
-      <span class="aluno-av">${x.avatar}</span><div><b>${esc(x.nome)}</b><small>${Nn ? Nn.icone+" "+Nn.nome : "começando"} · ${d.xp||0} XP</small></div>
+      <span class="aluno-av">${esc(x.avatar)}</span><div><b>${esc(x.nome)}</b><small>${Nn ? Nn.icone+" "+Nn.nome : "começando"} · ${d.xp||0} XP</small></div>
       ${id===ARMAZEM.ativo ? `<span class="aluno-tag">praticando</span>` : `<button class="btn mini primario" onclick="Progresso.trocarAluno('${id}')">Entrar</button>`}
       <button class="btn mini" title="Renomear" aria-label="Renomear ${esc(x.nome)}" onclick="Progresso.renomear('${id}')">✏️</button>
       ${ids.length > 1 ? `<button class="btn mini perigo" title="Remover" aria-label="Remover ${esc(x.nome)}" onclick="Progresso.remover('${id}')">🗑</button>` : ""}
@@ -3064,7 +3079,7 @@ function salvarNovo(e){
     const id = novoId(); ARMAZEM.alunos[id] = novoAluno(nome, avatar); ARMAZEM.alunos[id].dados.perfil.objetivo = objetivo;
     trocarAluno(id);
   }
-  mostrarToast(`${avatar} Olá, <b>${esc(nome)}</b>! Bons estudos.`);
+  mostrarToast(`${esc(avatar)} Olá, <b>${esc(nome)}</b>! Bons estudos.`);
   return true;
 }
 function trocarAluno(id){
@@ -3120,30 +3135,150 @@ if (!alunoAtual().nome) abrirAlunos(true);
 
 </script>
 <script>
-/* Contador de visitas do site (serviço em site-next/).
- * Só roda quando o DIGITAR é aberto pelo site (http/https). No programa instalado (file://) não carrega
- * nada e não envia nada. Se o endereço do contador não estiver configurado ou não responder, nada quebra.
- * O endereço vem de CONTADOR_URL em site/assets/site.js (ferramentas/montar.mjs coloca aqui).
+window.CONTADOR_CONFIG = {"endpoint":"https://digitar-contador.regivaldo2017.workers.dev","fase":"app"};
+/*!
+ * Contador do DIGITAR — visitantes, tempo no site e fases alcançadas.
+ * Sem cookies e sem dados pessoais: guarda só um identificador aleatório no navegador.
+ * Respeita "Do Not Track" e "Global Privacy Control" (nesses casos não envia nada).
+ *
+ * Uso numa página (tag script com src apontando para uma cópia deste arquivo, defer e os atributos abaixo).
+ * No app ele vai embutido e a configuração vem de window.CONTADOR_CONFIG = { endpoint, fase }.
+ * - data-fase (opcional): fase desta página. Sem ela, a fase sai do endereço da página.
+ * - data-endpoint (opcional): endereço da API; o padrão é o mesmo domínio deste script.
+ * - <a data-fase-clique="download"> registra a fase ao clicar (links para .exe já contam como download).
+ * - <span data-contador-visitantes></span> mostra o total de pessoas que já visitaram.
+ * - Em código: window.Contador.fase("exercicio")
+ */
+(function () {
+  "use strict";
+  if (window.Contador) return;
+  var script = document.currentScript;
+  // embutido no app (sem <script src>): a configuração vem de window.CONTADOR_CONFIG = { endpoint, fase }
+  var cfg = window.CONTADOR_CONFIG || {};
+  var noop = { fase: function () {}, ativo: false };
+  if (!/^https?:$/.test(location.protocol)) { window.Contador = noop; return; } // programa offline (file://)
+  var privado = navigator.globalPrivacyControl === true || navigator.doNotTrack === "1" || window.doNotTrack === "1";
+
+  var base = cfg.endpoint || (script && script.getAttribute("data-endpoint")) || (script && script.src ? new URL(script.src).origin : location.origin);
+  // os dados só vão para um endereço https (ou o servidor local de testes)
+  if (!/^https:\/\/[a-z0-9.-]+(:\d+)?\/?$|^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/i.test(base)) { window.Contador = noop; return; }
+  base = base.replace(/\/$/, "");
+  var URL_EVENTO = base + "/api/metricas/evento";
+  var URL_PUBLICO = base + "/api/metricas/publico";
+
+  function idAleatorio() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  }
+  function guardado(area, chave) {
+    try {
+      var v = area.getItem(chave);
+      if (!v) { v = idAleatorio(); area.setItem(chave, v); }
+      return v;
+    } catch { return idAleatorio(); }
+  }
+
+  /* selo público (funciona mesmo com privacidade ligada: só lê um número) */
+  function mostrarSelos() {
+    var alvos = document.querySelectorAll("[data-contador-visitantes]");
+    if (!alvos.length) return;
+    fetch(URL_PUBLICO, { mode: "cors" }).then(function (r) { return r.json(); }).then(function (j) {
+      if (typeof j.visitantes !== "number") return;
+      var txt = j.visitantes.toLocaleString("pt-BR");
+      alvos.forEach(function (el) { el.textContent = txt; });
+      document.querySelectorAll("[data-contador-selo]").forEach(function (el) { el.hidden = false; });
+    }).catch(function () {});
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mostrarSelos);
+  else mostrarSelos();
+
+  // navegador controlado por automação (testes, robôs com Playwright/Puppeteer/Selenium) não é visitante
+  if (privado || navigator.webdriver === true) { window.Contador = noop; return; }
+
+  var visitante = guardado(localStorage, "digitar.visitante");
+  var sessao = guardado(sessionStorage, "digitar.sessao");
+
+  function enviar(eventos, usarBeacon) {
+    var corpo = JSON.stringify(eventos);
+    if (usarBeacon && navigator.sendBeacon) {
+      try { if (navigator.sendBeacon(URL_EVENTO, new Blob([corpo], { type: "text/plain" }))) return; } catch {}
+    }
+    try {
+      fetch(URL_EVENTO, { method: "POST", body: corpo, headers: { "Content-Type": "text/plain" }, keepalive: true, mode: "cors" }).catch(function () {});
+    } catch {}
+  }
+  function evento(tipo, extra) {
+    var e = { tipo: tipo, v: visitante, s: sessao };
+    for (var k in extra) e[k] = extra[k];
+    return e;
+  }
+
+  var enviadas = {};
+  function fase(id) {
+    if (!id || enviadas[id]) return;
+    enviadas[id] = true;
+    enviar([evento("fase", { fase: String(id) })]);
+  }
+
+  /* fase da página: atributo do script, do <body>, ou pelo endereço */
+  function faseDoEndereco() {
+    var p = location.pathname.toLowerCase();
+    if (/\/python\/\d+[^/]*\.html$/.test(p)) return "aula-python";
+    if (/\/python\/?(index\.html)?$/.test(p) || /programar/.test(p)) return "programar";
+    if (/como-aprender/.test(p)) return "como-aprender";
+    if (/baixar/.test(p)) return "baixar";
+    if (/\/app\/?(index\.html)?$|digitar\.html$|sigerdig\.html$/.test(p)) return "app";
+    return null;
+  }
+  function iniciar() {
+    var f = cfg.fase || (script && script.getAttribute("data-fase")) || (document.body && document.body.getAttribute("data-fase")) || faseDoEndereco();
+    var inicio = [evento("visita", { caminho: location.pathname })];
+    if (f) { enviadas[f] = true; inicio.push(evento("fase", { fase: f })); }
+    enviar(inicio);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);
+  else iniciar();
+
+  /* cliques que contam como fase */
+  document.addEventListener("click", function (ev) {
+    var el = ev.target && ev.target.closest ? ev.target.closest("[data-fase-clique], a[href]") : null;
+    if (!el) return;
+    var f = el.getAttribute("data-fase-clique");
+    if (!f && /\.(exe|msi|zip)(\?|#|$)/i.test(el.getAttribute("href") || "")) f = "download";
+    if (f) { enviadas[f] = false; fase(f); }
+  }, true);
+
+  /* tempo no site: só conta com a aba visível; envia a cada 15 s e ao sair */
+  var acumulado = 0, desde = document.visibilityState === "visible" ? Date.now() : null;
+  function fecharTrecho() {
+    if (desde !== null) { acumulado += (Date.now() - desde) / 1000; desde = Date.now(); }
+  }
+  function enviarTempo(usarBeacon) {
+    fecharTrecho();
+    var seg = Math.floor(acumulado);
+    if (seg < 1) return;
+    acumulado -= seg;
+    while (seg > 0) { var parte = Math.min(seg, 30); enviar([evento("tempo", { seg: parte })], usarBeacon); seg -= parte; }
+  }
+  setInterval(function () { if (document.visibilityState === "visible") enviarTempo(false); }, 15000);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") { enviarTempo(true); desde = null; }
+    else desde = Date.now();
+  });
+  window.addEventListener("pagehide", function () { enviarTempo(true); });
+
+  window.Contador = { fase: fase, ativo: true };
+})();
+
+/* Contador de visitas do programa (serviço em contador-cloudflare/).
+ * Só roda quando o DIGITAR é aberto pelo site (http/https). No programa instalado (file://) não envia nada.
+ * O cliente do contador (contador-cloudflare/public/contador.js) vai EMBUTIDO logo antes deste arquivo por
+ * ferramentas/montar.mjs: o app não executa código baixado de outro servidor, só manda os números para a API.
+ * O endereço vem de CONTADOR_URL em site/assets/site.js. Se a API não responder, nada quebra.
  * Escuta os eventos do motor pelo aoEvento: não mexe em lições, teste nem jogo. */
 (function(){
-  const CONTADOR_URL = "https://digitar-contador.regivaldo2017.workers.dev";
-  if (!/^https?:$/.test(location.protocol)) return;
-  if (!CONTADOR_URL || CONTADOR_URL.indexOf("__") === 0) return;
-
-  const fila = [];
-  let pronto = false;
-  function fase(id){
-    if (pronto && window.Contador) { try { window.Contador.fase(id); } catch(e) {} }
-    else if (fila.length < 50) fila.push(id);
-  }
-  const s = document.createElement("script");
-  s.src = CONTADOR_URL.replace(/\/$/, "") + "/contador.js";
-  s.defer = true;
-  s.setAttribute("data-fase", "app");
-  s.onload = () => { pronto = true; fila.splice(0).forEach(fase); };
-  s.onerror = () => { fila.length = 0; };
-  document.head.appendChild(s);
-
+  if (!window.Contador || !window.Contador.ativo) return;
+  const fase = id => { try { window.Contador.fase(id); } catch(e) {} };
   aoEvento("sessao", ev => {
     fase("exercicio");
     if (!ev.custom && !ev.prog && typeof ev.licao === "number") fase("licao-" + (ev.licao + 1));

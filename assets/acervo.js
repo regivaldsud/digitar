@@ -149,7 +149,7 @@
     livre: ler("livre", "./.claude"),
     shell: ler("shell", /win/i.test(navigator.platform || navigator.userAgent) ? "ps" : "bash"),
     formato: {},
-    kit: ler("kit", []) // [{id, item}]
+    kit: [] // [{id, item}]: refeito do catálogo ao carregar; nada salvo no navegador vira comando sem conferência
   };
   function t(k) { return T[estado.lang][k] != null ? T[estado.lang][k] : T.pt[k]; }
 
@@ -163,13 +163,25 @@
   function data(iso) { if (!iso) return ""; try { return new Intl.DateTimeFormat(LOCAL[estado.lang], { dateStyle: "medium" }).format(new Date(iso + "T12:00:00")); } catch (e) { return iso; } }
   function idDe(i) { return i.tipo + ":" + i.repo + (i.caminho ? "/" + i.caminho : (i.tipo === "plugin" || i.tipo === "mcp") ? "#" + i.nome : ""); }
   function info(i) { return (catalogo && catalogo.repos && catalogo.repos[i.repo]) || i.gh || {}; }
-  function ramo(i) { return info(i).ramo || "HEAD"; }
+  // tudo que entra num comando só pode ter letras, números e . _ / @ - (nada de ; $ ` | & espaço)
+  var SEGURO = /^[\w.\/@-]+$/;
+  function ramo(i) { var r = info(i).ramo; return r && SEGURO.test(r) ? r : "HEAD"; }
+  function itemSeguro(i) {
+    // o nome só vira pasta ou arquivo em skill, agente e plugin; em repositório e lista é só o título do cartão
+    var nomeNoComando = i && (i.tipo === "skill" || i.tipo === "agente" || i.tipo === "plugin");
+    return !!i && SEGURO.test(i.repo || "") && (!nomeNoComando || SEGURO.test(i.nome || "")) &&
+      (!i.caminho || SEGURO.test(i.caminho)) && (!i.mercado || SEGURO.test(i.mercado));
+  }
   function urlGitHub(i) {
     var b = "https://github.com/" + i.repo;
     if (!i.caminho) return b;
     return b + (i.tipo === "agente" ? "/blob/" : "/tree/") + ramo(i) + "/" + i.caminho;
   }
-  function aspas(p) { return /[\s'"$&()]/.test(p) ? '"' + p.replace(/"/g, '\\"') + '"' : p; }
+  // pasta escolhida pela pessoa: aspas simples, que nem bash nem PowerShell expandem ($(...), `...`)
+  function aspas(p) {
+    if (/^(\$HOME\/|~\/)?[\w.\/@:+-]+$/.test(p)) return p;
+    return estado.shell === "ps" ? "'" + p.replace(/'/g, "''") + "'" : "'" + p.replace(/'/g, "'\\''") + "'";
+  }
 
   /* ---------- comandos ---------- */
   function pastaBase() {
@@ -367,7 +379,7 @@
     promessa.then(function (l) {
       if (aoVivo.q !== q) return;
       var curados = {}; itens.forEach(function (i) { curados[i.repo.toLowerCase()] = 1; });
-      aoVivo.itens = l.filter(function (i) { return !curados[i.repo.toLowerCase()]; });
+      aoVivo.itens = l.filter(function (i) { return !curados[i.repo.toLowerCase()] && itemSeguro(i); });
       aoVivo.itens.forEach(function (i) { vivosPorId[idDe(i)] = i; });
       aoVivo.estado = aoVivo.itens.length ? "ok" : "vazio"; desenharAoVivo();
     }).catch(function (e) {
@@ -387,7 +399,6 @@
   function itemPorId(id) {
     if (porId[id]) return porId[id];
     if (vivosPorId[id]) return vivosPorId[id];
-    for (var k = 0; k < estado.kit.length; k++) if (estado.kit[k].id === id) return estado.kit[k].item;
     var m = /^repositorio:([\w.-]+\/[\w.-]+)$/.exec(id); // repositório de fora da curadoria, vindo de um link
     return m ? { tipo: "repositorio", repo: m[1], nome: m[1].split("/")[1], desc: "" } : null;
   }
@@ -406,7 +417,7 @@
     document.body.classList.toggle("com-kit", !!estado.kit.length);
     $("kit-conta").textContent = estado.kit.length;
     $("kit-lista").innerHTML = estado.kit.map(function (k) {
-      return '<li><span class="selo selo-' + k.item.tipo + '">' + t(k.item.tipo) + "</span> <b>" + esc(k.item.nome) + '</b> <button type="button" data-remover="' + esc(k.id) + '" aria-label="' + esc(t("remover") + " " + k.item.nome) + '">×</button></li>';
+      return '<li><span class="selo selo-' + esc(k.item.tipo) + '">' + t(k.item.tipo) + "</span> <b>" + esc(k.item.nome) + '</b> <button type="button" data-remover="' + esc(k.id) + '" aria-label="' + esc(t("remover") + " " + k.item.nome) + '">×</button></li>';
     }).join("");
   }
   function scriptDoKit() {
@@ -504,13 +515,18 @@
     if (!r.ok) throw new Error("HTTP " + r.status); return r.json();
   }).then(function (c) {
     catalogo = c;
-    c.temas.forEach(function (tema) { tema.itens.forEach(function (i) { var id = idDe(i); if (!porId[id]) { porId[id] = i; itens.push(i); } }); });
+    c.temas.forEach(function (tema) { tema.itens.forEach(function (i) { var id = idDe(i); if (!porId[id] && itemSeguro(i)) { porId[id] = i; itens.push(i); } }); });
     // kit vindo de um link compartilhado: soma ao kit salvo
     var doLink = params.get("kit");
-    if (doLink) {
-      doLink.split(",").forEach(function (id) { if (!noKit(id)) { var i = itemPorId(id); if (i) estado.kit.push({ id: id, item: i }); } });
-      gravar("kit", estado.kit);
+    // kit salvo e kit de link: só entram ids do catálogo (ou repositório com nome válido), refeitos daqui
+    function somarAoKit(id) {
+      if (typeof id !== "string" || id.length > 300 || noKit(id)) return;
+      var i = itemPorId(id); if (i && itemSeguro(i)) estado.kit.push({ id: id, item: i });
     }
+    var salvo = ler("kit", []);
+    (Array.isArray(salvo) ? salvo : []).forEach(function (k) { somarAoKit(k && k.id); });
+    if (doLink) doLink.split(",").slice(0, 50).forEach(somarAoKit);
+    gravar("kit", estado.kit);
     // no celular a gaveta do kit começa recolhida, para não cobrir os cartões
     if (window.matchMedia("(max-width: 620px)").matches) { $("kit").classList.add("fechado"); $("kit-recolher").setAttribute("aria-expanded", "false"); }
     ligar(); desenharTudo();

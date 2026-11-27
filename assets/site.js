@@ -29,8 +29,10 @@
   var CONTADOR_URL = "https://digitar-contador.regivaldo2017.workers.dev";
   function ligarContador() {
     if (!CONTADOR_URL || !/^https?:$/.test(location.protocol) || window.Contador) return;
+    // cópia local do cliente (gerada por ferramentas/montar.mjs): nenhum script de outro servidor roda no site
     var s = document.createElement("script");
-    s.src = CONTADOR_URL.replace(/\/$/, "") + "/contador.js";
+    s.src = url("assets/contador.js");
+    s.setAttribute("data-endpoint", CONTADOR_URL.replace(/\/$/, ""));
     s.defer = true;
     document.head.appendChild(s);
   }

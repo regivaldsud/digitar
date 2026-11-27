@@ -8,6 +8,7 @@
 
   var PYODIDE_JS = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
   var PYODIDE_BASE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  var PYODIDE_SRI = "sha384-i3R37b3tF+HWudsUf1VSEOY2YxwSNMqY8DQa9Z0O3xh+NkJ9o+yjcGyIi5huj+nB";
 
   function esc(t) {
     return String(t).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; });
@@ -50,6 +51,10 @@
       if (window.loadPyodide) return ok();
       var s = document.createElement("script");
       s.src = PYODIDE_JS;
+      // Subresource Integrity: se o arquivo do CDN for alterado, o navegador se recusa a rodá-lo.
+      // Hash da versão 0.26.4 (confere com o publicado pelo jsDelivr). Ao trocar a versão, recalcule.
+      s.integrity = PYODIDE_SRI;
+      s.crossOrigin = "anonymous";
       s.onload = function () { ok(); };
       s.onerror = function () { s.remove(); falha(new Error("rede")); };
       document.head.appendChild(s);
